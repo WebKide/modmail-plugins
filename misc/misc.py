@@ -9,7 +9,7 @@ import urllib.request
 from discord.ext import commands
 
 
-class Misc:
+class Misc(commands.Cog):
     """Useful commands to make your life easier"""
     def __init__(self, bot):
         self.bot = bot
