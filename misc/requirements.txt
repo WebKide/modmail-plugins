@@ -1,4 +1,4 @@
-unicodedata==1.0.23
+unicodedata2
 inspect
 aiohttp
 pytz
