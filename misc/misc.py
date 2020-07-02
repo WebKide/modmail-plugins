@@ -1,4 +1,10 @@
-import discord, unicodedata, inspect, urllib.request
+import discord
+import unicodedata2 as unicodedata
+try:
+    import inspect
+except:
+    pass
+import urllib.request
 
 from discord.ext import commands
 
