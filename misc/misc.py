@@ -14,7 +14,7 @@ _HEADERS = {'User-Agent': 'Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 6.1; WO
 
 
 class Misc(commands.Cog):
-    """Useful commands to make your life easier"""
+    """(∩｀-´)⊃━☆ﾟ.*･｡ﾟ Useful commands to make your life easier"""
     def __init__(self, bot):
         self.bot = bot
         self._last_result = None
@@ -131,7 +131,7 @@ class Misc(commands.Cog):
                 pos = 0
             search_terms = "+".join(search_terms)
             url = "http://api.urbandictionary.com/v0/define?term=" + search_terms
-            async with bot.session.get(url) as r:
+            async with self.bot.session.get(url) as r:
                 result = await r.json()
             emb = discord.Embed()
             emb.colour = (discord.Colour(0xed791d))
