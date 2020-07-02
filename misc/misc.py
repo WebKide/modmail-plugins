@@ -1,4 +1,4 @@
-import discord, asyncio, random, textwrap, traceback, wikipedia, urllib.request, unicodedata2 as unicodedata
+import discord, asyncio, random, textwrap, traceback, wikipedia, urllib.request, unicodedata2 as unicodedata, datetime as dt
 try:
     import inspect, requests
 except:
@@ -131,7 +131,7 @@ class Misc(commands.Cog):
                 pos = 0
             search_terms = "+".join(search_terms)
             url = "http://api.urbandictionary.com/v0/define?term=" + search_terms
-            async with ctx.session.get(url) as r:
+            async with bot.session.get(url) as r:
                 result = await r.json()
             emb = discord.Embed()
             emb.colour = (discord.Colour(0xed791d))
@@ -148,7 +148,11 @@ class Misc(commands.Cog):
             else:
                 emb.title = f"Didn't find anything for *{search_terms}*"
 
-            await ctx.send(embed=emb)
+            try:
+                await ctx.send(embed=emb)
+            except Exception as e:
+                tb = traceback.format_exc()
+                return await ctx.send(f'```css\n[OOPS, I DID IT AGAIN]\n{e}```\n```py\nヾ(ﾟ∀ﾟ○)ﾂ三ヾ(●ﾟдﾟ)ﾉ\n\n{tb}```')
 
     # +------------------------------------------------------------+
     # |                          WIKIPEDIA                         |
@@ -317,12 +321,136 @@ class Misc(commands.Cog):
             return await ctx.send(f'```css\n[OOPS, I DID IT AGAIN]\n{e}```\n```py\nヾ(ﾟ∀ﾟ○)ﾂ三ヾ(●ﾟдﾟ)ﾉ\n\n{tb}```')
 
     # +------------------------------------------------------------+
-    # |                                                            |
+    # |                          SAY                               |
     # +------------------------------------------------------------+
+    @commands.command(no_pm=True)
+    async def say(self, ctx, *, msg=''):
+        """ Bot sends message """
+        if f'{ctx.prefix}{ctx.invoked_with}' in msg:
+            return await ctx.send("Don't ya dare spam. ( ᗒᗣᗕ)")
+
+        if not msg:
+            return await ctx.send('Nice try. (｡◝‿◜｡)')
+
+        else:
+            msg = ctx.message.content
+            said = ' '.join(msg.split("say ")[1:])
+            await ctx.send(said)  # Now it works!
 
     # +------------------------------------------------------------+
-    # |                                                            |
+    # |                     SAY DELET                              |
     # +------------------------------------------------------------+
+    @commands.command(no_pm=True)
+    async def sayd(self, ctx, *, msg=''):
+        """ Bot sends message and deletes command """
+        if f'{ctx.prefix}{ctx.invoked_with}' in msg:
+            return await ctx.send("Don't ya dare spam. ( ᗒᗣᗕ)")
+
+        if not msg:
+            return await ctx.send('Nice try. (｡◝‿◜｡)')
+
+        else:
+            msg = ctx.message.content
+            said = ' '.join(msg.split("say ")[1:])
+
+            try:
+                await ctx.message.delete()
+            except discord.Forbidden:
+                pass
+            finally:
+                await ctx.send(said)  # Now it works!
+
+    # +------------------------------------------------------------+
+    # |                      GEN                                   |
+    # +------------------------------------------------------------+
+    @commands.command(aliases=['general'], no_pm=True)
+    async def gen(self, ctx, channel: discord.TextChannel, *, message: str = None):
+        """ Send a msg to another channel """
+        ma = ctx.message.author.display_name
+        if not channel:
+            return await ctx.send(f'To what channel should I send a message {ma}?')
+
+        if message is None:
+            return await ctx.send('To send a message to a channel, tell me which channel first')
+
+        if message is not None:
+            try:
+                await channel.send(message)
+                try:
+                    await ctx.message.add_reaction('\N{WHITE HEAVY CHECK MARK}')
+                except discord.Forbidden:
+                    pass
+                return await ctx.channel.send(f'Success {ma}!')
+
+            except discord.Forbidden:
+                await ctx.send(f"{ma}, I don't have permissions to message in {channel}")
+
+        else:
+            pass
+
+    # +------------------------------------------------------------+
+    # |                     Word/Name-generator                    |
+    # +------------------------------------------------------------+
+    @commands.command(aliases=['word_ai'])
+    async def wordai(self, ctx):
+        """ Generate words artificially """
+        vow = ['a', 'i', 'u', 'e', 'o', 'y', '', 'a', 'i', 'u', 'e', 'o', '']
+        con = [
+            'qu', 'w', 'wh', 'r', 't', 'th', 'y', 'p', 'mp', 's', 'ss', 'd', 'f', 'g', 'gü',
+            'ß', 'h', 'j', 'ji', 'k', '', 'l', 'z', 'x', 'c', 'v', 'b', 'n', 'm', ''
+        ]
+        word = f'{random.choice(vow)}{random.choice(con)}{random.choice(vow)}' \
+               f'{random.choice(vow)}{random.choice(con)}{random.choice(vow)}' \
+               f'{random.choice(con)}{random.choice(vow)}{random.choice(con)}'
+        word = word.title()
+        x = random.randint(3, 9)
+
+        try:
+            await ctx.message.delete()
+        except discord.Forbidden:
+            pass
+        finally:
+            await ctx.send(word[:x], delete_after=69)
+
+    # +------------------------------------------------------------+
+    # |              Shrink text and make it tiny                  |
+    # +------------------------------------------------------------+
+    @commands.command(no_pm=True)
+    async def tiny(self, ctx, *, text: str = None):
+        """Convert any text into a tiny ᵗᵉˣᵗ"""
+        if text is None:
+            return await ctx.send("You have to input some text first.", delete_after=23)
+
+        if text.lower() is not None:
+            msg = ""
+            char = "abcdefghijklmnopqrstuvwxyz0123456789+-+()."
+            tran = "ᵃᵇᶜᵈᵉᶠᵍʰⁱʲᵏˡᵐⁿᵒᵖ٩ʳˢᵗᵘᵛʷˣʸᶻ₀₁₂₃₄₅₆₇₈₉₊₋₌₍₎•"
+            table = str.maketrans(char, tran)
+            tinify = text.translate(table)
+            result = f'{msg}{tinify[::1]}'
+            await ctx.send(result)
+        
+    # +------------------------------------------------------------+
+    # |                       PURGE                                |
+    # +------------------------------------------------------------+
+    @commands.command(aliases=['del', 'p', 'prune'], bulk=True, no_pm=True)
+    async def purge(self, ctx, limit: int):
+        """ Delete a number of messages """
+        try:
+            if not limit:
+                return await ctx.send('Enter the number of messages you want me to delete.', delete_after=23)
+
+            if limit < 99:
+                await ctx.message.delete()
+                deleted = await ctx.channel.purge(limit=limit)
+                succ = f'₍₍◝(°꒳°)◜₎₎ Successfully deleted {len(deleted)} message(s)'
+                await ctx.channel.send(succ, delete_after=9)
+
+            else:
+                await ctx.send(f'Cannot delete `{limit}`, try less than 100.', delete_after=23)
+             
+        except discord.Forbidden:
+            pass
 
     # +------------------------------------------------------------+
     # |                                                            |
