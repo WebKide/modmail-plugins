@@ -140,7 +140,7 @@ class Misc(commands.Cog):
 
         if text is not None:
             try:
-                await bot.edit_profile(username=str(text[6:]))
+                await self.bot.edit_profile(username=str(text[6:]))
                 await ctx.send(f'Thanks for renaming me: {text}')
                 await ctx.message.delete()
             except Exception as e:
@@ -164,9 +164,9 @@ class Misc(commands.Cog):
                 # with urllib.request.urlopen(link) as response:
                     #img = response.read()
                     #await ctx.bot.edit_profile(avatar=img)
-                async with bot.session.get(link) as r:
+                async with self.bot.session.get(link) as r:
                     img = await r.read()
-                    await bot.user.edit(avatar=img)
+                    await self.bot.user.edit(avatar=img)
                     return await ctx.send('New logo added successfully!')
                     
             except Exception as e:
