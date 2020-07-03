@@ -140,7 +140,7 @@ class Misc(commands.Cog):
 
         if text is not None:
             try:
-                await ctx.bot.edit_profile(username=str(text[6:]))
+                await bot.edit_profile(username=str(text[6:]))
                 await ctx.send(f'Thanks for renaming me: {text}')
                 await ctx.message.delete()
             except Exception as e:
@@ -159,16 +159,18 @@ class Misc(commands.Cog):
         if link is None:
             return await ctx.send('You need to use an image URL as a link.')
 
-        if link is not None:
+        else:
             try:
-                with urllib.request.urlopen(link) as response:
-                    img = response.read()
-                    await ctx.bot.edit_profile(avatar=img)
-                    await ctx.send('New logo added successfully!', delete_after=5)
-                    await ctx.message.delete()
+                # with urllib.request.urlopen(link) as response:
+                    #img = response.read()
+                    #await ctx.bot.edit_profile(avatar=img)
+                async with bot.session.get(link) as r:
+                    img = await r.read()
+                    await bot.user.edit(avatar=img)
+                    return await ctx.send('New logo added successfully!')
+                    
             except Exception as e:
-                await ctx.send(f'Failed to update logo image!\n```{e}```')
-                pass
+                return await ctx.send(f'Failed to update logo image!\n```{e}```')
 
     # +------------------------------------------------------------+
     # |                     SAUCE                                  |
