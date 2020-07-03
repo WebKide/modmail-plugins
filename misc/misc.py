@@ -1,6 +1,6 @@
-import discord, asyncio, random, textwrap, traceback, wikipedia, urllib.request, unicodedata2 as unicodedata, datetime as dt
+import discord, asyncio, datetime as dt, random, textwrap, traceback, unicodedata2 as unicodedata, requests, urllib.request, wikipedia
 try:
-    import inspect, requests
+    import inspect
 except:
     pass
 
@@ -11,6 +11,8 @@ _HEADERS = {'User-Agent': 'Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 6.1; WO
                           '2.0.50727; .NET CLR 3.5.30729; .NET CLR 3.0.30729; Media Center PC 6.0; MS-RTC LM 8; '
                           'InfoPath.3; .NET4.0C; .NET4.0E) chromeframe/8.0.552.224',
             'Accept-Language': 'en-us'}
+
+dev_list = [323578534763298816]
 
 
 class Misc(commands.Cog):
@@ -24,12 +26,115 @@ class Misc(commands.Cog):
         self.query_url = "https://en.oxforddictionaries.com/definition/"
         self.sess = requests.Session()
 
+    async def format_mod_embed(self, ctx, user, success, method):
+        """ Helper func to format an embed to prevent extra code """
+        emb = discord.Embed()
+        emb.set_author(name=method.title(), icon_url=user.avatar_url)
+        emb.colour = (discord.Colour(0xed791d))
+        emb.set_footer(text=f'User ID: {user.id}')
+        if success:
+            if method == 'ban':
+                emb.description = f'{user} was just {method}ned.'
+            else:
+                emb.description = f'{user} was just {method}ed.'
+        else:
+            emb.description = f"You do not have the permissions to {method} users."
+
+        return emb
+
+    # +------------------------------------------------------------+
+    # |                        HACKBAN                             |
+    # +------------------------------------------------------------+
+    @commands.command(description='Ban using ID if they are no longer in server', no_pm=True)
+    async def hackban(self, ctx, userid, *, reason=None):
+        """ Ban someone using ID """
+        if ctx.author.id not in dev_list:
+            return
+
+        try:
+            userid = int(userid)
+        except:
+            await ctx.send('Invalid ID!', delete_after=3)
+
+        try:
+            await ctx.guild.ban(discord.Object(userid), reason=reason)
+        except:
+            success = False
+        else:
+            success = True
+
+        if success:
+            async for entry in ctx.guild.audit_logs(limit=1, user=ctx.guild.me, action=discord.AuditLogAction.ban):
+                emb = await self.format_mod_embed(ctx, entry.target, success, 'hackban')
+        else:
+            emb = await self.format_mod_embed(ctx, userid, success, 'hackban')
+        try:
+            return await ctx.send(embed=emb)
+        except discord.HTTPException as e:
+            if ctx.author.id == 323578534763298816:
+                return await ctx.error(f'​`​`​`py\n{e}​`​`​`')
+            else:
+                pass
+
+    # +------------------------------------------------------------+
+    # |                        ADD ROLE                            |
+    # +------------------------------------------------------------+
+    @commands.command(no_pm=True)
+    @commands.has_any_role('Admin', 'Mod', 'Journalist', 'Owner')
+    async def addrole(self, ctx, member: discord.Member, *, rolename: str = None):
+        """
+        Add a role to someone else
+        Usage:
+        addrole @name Listener
+        """
+        if ctx.author.id not in dev_list:
+            return
+
+        if not member and rolename is None:
+            return await ctx.send('To whom do I add which role? ╰(⇀ᗣ↼‶)╯')
+
+        if rolename is not None:
+            role = discord.utils.find(lambda m: rolename.lower() in m.name.lower(), ctx.message.guild.roles)
+            if not role:
+                return await ctx.send('That role does not exist. ╰(⇀ᗣ↼‶)╯')
+            try:
+                await member.add_roles(role)
+                await ctx.message.delete()
+                await ctx.send(f'Added: **`{role.name}`** role to *{member.display_name}*')
+            except:
+                await ctx.send("I don't have the perms to add that role. ╰(⇀ᗣ↼‶)╯")
+
+        else:
+            return await ctx.send('Please mention the member and role to give them. ╰(⇀ᗣ↼‶)╯')
+
+    # +------------------------------------------------------------+
+    # |                     REMOVE ROLE                            |
+    # +------------------------------------------------------------+
+    @commands.command(no_pm=True)
+    async def removerole(self, ctx, member: discord.Member, *, rolename: str):
+        """Remove a role from someone else."""
+        if ctx.author.id not in dev_list:
+            pass
+
+        role = discord.utils.find(lambda m: rolename.lower() in m.name.lower(), ctx.message.guild.roles)
+        if not role:
+            return await ctx.send('That role does not exist. ╰(⇀ᗣ↼‶)╯')
+        try:
+            await member.remove_roles(role)
+            await ctx.message.delete()
+            await ctx.send(f'Removed: `{role.name}` role from *{member.display_name}*')
+        except:
+            await ctx.send("I don't have the perms to remove that role. ╰(⇀ᗣ↼‶)╯")
+
     # +------------------------------------------------------------+
     # |                     NAME                                   |
     # +------------------------------------------------------------+
     @commands.command(no_pm=True)
     async def name(self, ctx, text: str = None):
         """ Change Bot's name """
+        if ctx.author.id not in dev_list:
+            return
+
         if text is None:
             return await ctx.send("What's my new name going to be?")
 
@@ -48,6 +153,9 @@ class Misc(commands.Cog):
     @commands.command(no_pm=True)
     async def logo(self, ctx, link: str = None):
         """ Change Bot's avatar img """
+        if ctx.author.id not in dev_list:
+            return
+
         if link is None:
             return await ctx.send('You need to use an image URL as a link.')
 
@@ -68,6 +176,9 @@ class Misc(commands.Cog):
     @commands.command(no_pm=True)
     async def sauce(self, ctx, *, command: str = None):
         """ See the source code for any command """
+        if ctx.author.id not in dev_list:
+            return
+
         if command is not None:
             i = str(inspect.getsource(self.bot.get_command(command).callback))
 
@@ -115,7 +226,7 @@ class Misc(commands.Cog):
     async def urban(self, ctx, *, search_terms: str = None):
         """Searches up a term in Urban Dictionary"""
         if search_terms is None:
-            return await ctx.send('What should I search for in ud?```css\nurban ')
+            return await ctx.send('What should I search for you?')
 
         else:
             search_terms = search_terms.split()
@@ -161,12 +272,12 @@ class Misc(commands.Cog):
     async def wiki(self, ctx, *, search: str = None):
         """Addictive Wikipedia search command!"""
         if search == None:
-            await ctx.channel.send(f'Usage: `{ctx.prefix}wiki [search terms]`')
+            await ctx.channel.send(f'Usage: `{ctx.prefix}wiki [search terms]`', delete_after=23)
             return
 
         results = wikipedia.search(search)
         if not len(results):
-            no_results = await ctx.channel.send("Sorry, didn't find any result.")
+            no_results = await ctx.channel.send("Sorry, didn't find any result.", delete_after=23)
             await asyncio.sleep(5)
             await ctx.message.delete(no_results)
             return
@@ -175,7 +286,7 @@ class Misc(commands.Cog):
         try:
             wik = wikipedia.page(newSearch)
         except wikipedia.DisambiguationError:
-            more_details = await ctx.channel.send('Please input more details.')
+            more_details = await ctx.channel.send('Please input more details.', delete_after=23)
             await asyncio.sleep(5)
             await ctx.message.delete(more_details)
             return
@@ -327,10 +438,10 @@ class Misc(commands.Cog):
     async def say(self, ctx, *, msg=''):
         """ Bot sends message """
         if f'{ctx.prefix}{ctx.invoked_with}' in msg:
-            return await ctx.send("Don't ya dare spam. ( ᗒᗣᗕ)")
+            return await ctx.send("Don't ya dare spam. ( ᗒᗣᗕ)", delete_after=23)
 
         if not msg:
-            return await ctx.send('Nice try. (｡◝‿◜｡)')
+            return await ctx.send('Nice try. (｡◝‿◜｡)', delete_after=23)
 
         else:
             msg = ctx.message.content
@@ -344,27 +455,27 @@ class Misc(commands.Cog):
     async def sayd(self, ctx, *, msg=''):
         """ Bot sends message and deletes command """
         if f'{ctx.prefix}{ctx.invoked_with}' in msg:
-            return await ctx.send("Don't ya dare spam. ( ᗒᗣᗕ)")
+            return await ctx.send("Don't ya dare spam. ( ᗒᗣᗕ)", delete_after=23)
 
         if not msg:
             return await ctx.send('Nice try. (｡◝‿◜｡)')
 
         else:
             msg = ctx.message.content
-            said = ' '.join(msg.split("say ")[1:])
+            said = ' '.join(msg.split("sayd ")[1:])
 
             try:
                 await ctx.message.delete()
             except discord.Forbidden:
                 pass
             finally:
-                await ctx.send(said)  # Now it works!
+                return await ctx.send(said)  # Now it works!
 
     # +------------------------------------------------------------+
     # |                      GEN                                   |
     # +------------------------------------------------------------+
     @commands.command(aliases=['general'], no_pm=True)
-    async def gen(self, ctx, channel: discord.TextChannel, *, message: str = None):
+    async def g(self, ctx, channel: discord.TextChannel, *, message: str = None):
         """ Send a msg to another channel """
         ma = ctx.message.author.display_name
         if not channel:
@@ -383,7 +494,7 @@ class Misc(commands.Cog):
                 return await ctx.channel.send(f'Success {ma}!')
 
             except discord.Forbidden:
-                await ctx.send(f"{ma}, I don't have permissions to message in {channel}")
+                await ctx.send(f"{ma}, I don't have permissions to message in {channel}", delete_after=23)
 
         else:
             pass
@@ -436,21 +547,25 @@ class Misc(commands.Cog):
     @commands.command(aliases=['del', 'p', 'prune'], bulk=True, no_pm=True)
     async def purge(self, ctx, limit: int):
         """ Delete a number of messages """
-        try:
-            if not limit:
-                return await ctx.send('Enter the number of messages you want me to delete.', delete_after=23)
+        if ctx.author.id not in dev_list:
+            return
 
-            if limit < 99:
-                await ctx.message.delete()
-                deleted = await ctx.channel.purge(limit=limit)
-                succ = f'₍₍◝(°꒳°)◜₎₎ Successfully deleted {len(deleted)} message(s)'
-                await ctx.channel.send(succ, delete_after=9)
+        else:
+            try:
+                if not limit:
+                    return await ctx.send('Enter the number of messages you want me to delete.', delete_after=23)
 
-            else:
-                await ctx.send(f'Cannot delete `{limit}`, try less than 100.', delete_after=23)
-             
-        except discord.Forbidden:
-            pass
+                if limit < 99:
+                    await ctx.message.delete()
+                    deleted = await ctx.channel.purge(limit=limit)
+                    succ = f'₍₍◝(°꒳°)◜₎₎ Successfully deleted {len(deleted)} message(s)'
+                    await ctx.channel.send(succ, delete_after=9)
+
+                else:
+                    await ctx.send(f'Cannot delete `{limit}`, try less than 100.', delete_after=23)
+                 
+            except discord.Forbidden:
+                pass
 
     # +------------------------------------------------------------+
     # |                                                            |
