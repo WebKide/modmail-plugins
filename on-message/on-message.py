@@ -31,7 +31,7 @@ class OnMessage(commands.Cog):
     # +------------------------------------------------------------+
     # |               RESPONDS TO TEXT IN MESSAGE                  |
     # +------------------------------------------------------------+
-hello = random.choice(['Hello ', 'Hi there ', 'Howdy '])
+hello = random.c(['Hello ', 'Hi there ', 'Howdy '])
 msg = message.content[4:]
 
 async def on_message(message):
