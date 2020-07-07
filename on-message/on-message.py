@@ -19,6 +19,7 @@ SOFTWARE.
 """
 
 import discord
+from discord.ext import commands
 from random import choice as c
 
 class OnMessage(commands.Cog):
