@@ -20,7 +20,6 @@ SOFTWARE.
 
 import discord, random
 from discord.ext import commands
-from random import choice as c
 
 class OnMessage(commands.Cog):
     """(∩｀-´)⊃━☆ﾟ.*･｡ﾟ non-commands, bot responds to text in message """
@@ -31,7 +30,7 @@ class OnMessage(commands.Cog):
     # +------------------------------------------------------------+
     # |               RESPONDS TO TEXT IN MESSAGE                  |
     # +------------------------------------------------------------+
-hello = random.c(['Hello ', 'Hi there ', 'Howdy '])
+hello = random.choice(['Hello ', 'Hi there ', 'Howdy '])
 msg = message.content[4:]
 
 async def on_message(message):
