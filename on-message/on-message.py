@@ -33,7 +33,7 @@ class OnMessage(commands.Cog):
 hello = random.choice(['Hello ', 'Hi there ', 'Howdy '])
 iam = 'I am **Moderator** 🅑🅞🅣, pleased to meet you.'
 
-@bot.event
+# @bot.event
 async def on_message(m):
     if m.content.startswith('I am'):
         msg = m.content[4:]
