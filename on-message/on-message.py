@@ -32,10 +32,11 @@ class OnMessage(commands.Cog):
     # +------------------------------------------------------------+
 hello = random.choice(['Hello ', 'Hi there ', 'Howdy '])
 msg = message.content[4:]
+iam = 'I am **Moderator** 🅑🅞🅣, pleased to meet you.'
 
 async def on_message(message):
     if message.content.startswith('I am'):
-        await client.send_message(message.channel, f'{hello}' + f'*{msg}*' + ', I am **Moderator** 🅑🅞🅣')
+        await client.send_message(message.channel, f'{hello}' + f'*{msg}*' + f', {iam}')
     else:
         pass
 
