@@ -37,7 +37,7 @@ iam = 'I am **Moderator** 🅑🅞🅣, pleased to meet you.'
 async def on_message(m):
     if m.content.startswith('I am'):
         msg = m.content[4:]
-        await client.send_message(m.channel, f'{hello}' + f'*{msg}*' + f', {iam}')
+        await bot.send_message(m.channel, f'{hello}' + f'*{msg}*' + f', {iam}')
     else:
         pass
 
