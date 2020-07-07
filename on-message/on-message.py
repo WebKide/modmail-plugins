@@ -34,7 +34,10 @@ hello = random.choice(['Hello ', 'Hi there ', 'Howdy '])
 iam = 'I am **Moderator** 🅑🅞🅣, pleased to meet you.'
 
 # @bot.event
-async def on_message(m):
+async def on_message(self, m):
+    if m.author.bot:
+        return
+
     if m.content.startswith('I am'):
         msg = m.content[4:]
         await bot.send_message(m.channel, f'{hello}' + f'*{msg}*' + f', {iam}')
