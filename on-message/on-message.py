@@ -48,5 +48,5 @@ async def on_message(self, message: discord.Message):
     # |                                                            |
     # +------------------------------------------------------------+
     
-def setup(bot):
-    bot.add_cog(OnMessage(bot))
+# def setup(bot):
+    # bot.add_cog(OnMessage(bot))
