@@ -26,25 +26,26 @@ class OnMessage(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
+    @commands.Cog.listener()
+    async def on_ready(self):
+        pass
 
+@commands.Cog.listener('on_message')
     # +------------------------------------------------------------+
     # |               RESPONDS TO TEXT IN MESSAGE                  |
     # +------------------------------------------------------------+
-hello = random.choice(['Hello ', 'Hi there ', 'Howdy '])
-iam = 'I am **Moderator** 🅑🅞🅣, pleased to meet you.'
+    async def on_message(self, message: discord.Message):
+        if message.author.bot:
+            return
 
-@client.event
-async def on_message(m):
-    if m.author.bot:
-        return
+        if message.content.startswith('I am'):
+            hello = random.choice(['Hello ', 'Hi there ', 'Howdy '])
+            iam = 'I am **Moderator** 🅑🅞🅣, pleased to meet you.'
+            msg = message.content[4:]
+            await message.channel.send((f'{hello}' + f'*{msg}*' + f', {iam}')
 
-    if m.content.startswith('I am'):
-        msg = m.content[4:]
-        channel = m.channel
-        await channel.send(f'{hello}' + f'*{msg}*' + f', {iam}')
-
-    else:
-        pass
+        else:
+            pass
 
     # +------------------------------------------------------------+
     # |                                                            |
