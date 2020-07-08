@@ -1,6 +1,6 @@
 from discord.ext import commands
 import datetime
-from emb import CustomEmbeds
+from starboard2.emb import CustomEmbeds
 
 
 class Starboard:
