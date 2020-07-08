@@ -33,14 +33,16 @@ class OnMessage(commands.Cog):
 hello = random.choice(['Hello ', 'Hi there ', 'Howdy '])
 iam = 'I am **Moderator** 🅑🅞🅣, pleased to meet you.'
 
-# @bot.event
-async def on_message(self, m):
+@client.event
+async def on_message(m):
     if m.author.bot:
         return
 
     if m.content.startswith('I am'):
         msg = m.content[4:]
-        await bot.send_message(m.channel, f'{hello}' + f'*{msg}*' + f', {iam}')
+        channel = m.channel
+        await channel.send(f'{hello}' + f'*{msg}*' + f', {iam}')
+
     else:
         pass
 
