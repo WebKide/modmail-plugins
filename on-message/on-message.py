@@ -44,9 +44,6 @@ async def on_message(self, message: discord.Message):
         msg = message.content[4:]
         await message.channel.send((f'{hello}' + f'*{msg}*' + f', {iam}')
 
-    else:
-        pass
-
     # +------------------------------------------------------------+
     # |                                                            |
     # +------------------------------------------------------------+
