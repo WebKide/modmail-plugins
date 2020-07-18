@@ -2,12 +2,14 @@ import discord, datetime
 from discord.ext import commands
 from discord.embeds import EmptyEmbed
 
+desc = f'{message.content}\n [Jump To](https://discordapp.com/channels/{message.guild.id}/{message.channel.id}/{message.id})'
+
 
 class CustomEmbeds:
     @classmethod
     def starboard(cls, message, **kwargs):
         title = kwargs.get('title', EmptyEmbed)
-        description = kwargs.get('description', f'{message.content}\n [Jump To](https://discordapp.com/channels/{message.guild.id}/{message.channel.id}/{message.id})')
+        description = kwargs.get('description', f'{desc}')
         url = kwargs.get('url', EmptyEmbed)
         color = kwargs.get('color', 13103696)
         author = kwargs.get('author', ':star: Starboard :star:')
@@ -43,8 +45,10 @@ class StarboardCog(commands.Cog, name="Starboard"):
     """Cog for creating advanced starboards"""
     def __init__(self, bot):
         self.bot = bot
-        self.starboards_collection = bot.db["starboard"]
-        self.starboard_sent_collection = bot.db["starboard_sent"]
+        self.db = bot.plugin_db.get_partition(self)
+        self.starboards_collection = 
+        # self.starboards_collection = bot.db["starboard"]
+        # self.starboard_sent_collection = bot.db["starboard_sent"]
 
     @commands.group(name='starboard')
     async def starboard(self, ctx):
