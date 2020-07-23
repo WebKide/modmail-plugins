@@ -142,9 +142,12 @@ class Calculator(commands.Cog):
         thanks to Paul McGuire's fourFn.py. """
         person = ctx.message.author
         formula = formula.replace('x', '*').replace('minus', '-').replace('plus', '+').replace('into', '/') \
-            .replace('sub', '-').replace('pi', 'PI').replace('divide', '/').replace('multiply', '*') \
-            .replace('add', '+').replace('div', '/').replace('mult', '*').replace('mul', '*') \
-            .replace('π', 'PI').replace('÷', '/')
+                    .replace('sub', '-').replace('pi', 'PI').replace('divide', '/').replace('multiply', '*') \
+                    .replace('add', '+').replace('div', '/').replace('mult', '*').replace('mul', '*') \
+                    .replace('π', 'PI').replace('÷', '/')
+
+        if AttributeError:
+            return await ctx.send(msg, delete_after=23)
 
         if formula == None:
             # How can it calculate an empty message? Reee!
