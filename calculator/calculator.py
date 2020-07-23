@@ -141,7 +141,7 @@ class Calculator(commands.Cog):
         """ ✔ Do some math
         thanks to Paul McGuire's fourFn.py. """
         person = ctx.message.author
-        if formulas is None:
+        if not formulas:
             msg = f'\u200BUsage: `{ctx.prefix}{ctx.invoked_with} [any Maths formula]`'
             return await ctx.send(msg, delete_after=23)
 
