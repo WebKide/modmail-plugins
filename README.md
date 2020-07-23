@@ -1,5 +1,15 @@
-# modmail-plugins
-plugins to expand Modmail2020's functionality
+<div align="center">
+<h1>
+modmail-plugins
+</h1>
+<p><b><i>plugins to expand Modmail2020's functionality</i> 「ReWrite」</b></p>
+</div>
+
+<div align="center">
+<a href="#">
+<img src="http://forthebadge.com/images/badges/built-with-love.svg?style=for-the-badge" alt="built with love" />
+</a>
+</div>
 
 ✔ Calculator: it works fully, still need to make a Readme with usage samples...
 
@@ -19,7 +29,11 @@ Games: need to add 'em here... because reasons...
 
 Presence: there's already a command that works, but I might add one to loop a list of presence statuses
 
-===
+<div>
+<a href="#">
+<img src="http://forthebadge.com/images/badges/made-with-crayons.svg?style=for-the-badge" alt="made with crayons" />
+</a>
+</div>
 
 List of Misc commands:
 
