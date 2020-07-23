@@ -11,31 +11,40 @@ modmail-plugins
 </a>
 </div>
 
-✔ Calculator: it works fully, still need to make a Readme with usage samples...
+## ✔ Calculator:
+it works fully, still need to make a Readme with usage samples...
 
-✔ Misc*: a bunch of random commands that I need in my personal guild!!
+## ✔ Misc*:
+a bunch of random commands that I need in my personal guild!!
 
-on-message: not working, I'll fix it eventually ;P
+## on-message:
+not working, I'll fix it eventually ;P
 
-Starboard2: have to fix so it uses db correctly
+## Starboard2:
+have to fix so it uses db correctly
 
-✔ Translate: fully working, a very old cog from another abandoned project... rip
+## ✔ Translate:
+fully working, a very old cog from another abandoned project... rip
 
-Prediction: still in the process of being converted from old cog to Modmail-plugin (8ball, oracle, tarot)
+## Prediction:
+still in the process of being converted from old cog to Modmail-plugin (8ball, oracle, tarot)
 
-✔ Timezone: made this one because members from all over the world get confused about timezones for events, smh
+## ✔ Timezone:
+made this one because members from all over the world get confused about timezones for events, smh
 
-Games: need to add 'em here... because reasons...
+## Games:
+need to add 'em here... because reasons...
 
-Presence: there's already a command that works, but I might add one to loop a list of presence statuses
+## Presence:
+there's already a command that works, but I might add one to loop a list of presence statuses
 
-<div>
+<div align="center">
 <a href="#">
 <img src="http://forthebadge.com/images/badges/made-with-crayons.svg?style=for-the-badge" alt="made with crayons" />
 </a>
 </div>
 
-List of Misc commands:
+# List of Misc commands:
 
     addrole - Add a role to someone else
     
@@ -82,4 +91,6 @@ List of Misc commands:
 
 ===
 
-TODO: pray, youtube, show_color, $modbot, Base (bg, sb, cc, search_group)
+# TODO:
+
+> pray, youtube, show_color, $modbot, Base (bg, sb, cc, search_group)
