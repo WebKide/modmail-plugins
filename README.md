@@ -1,8 +1,8 @@
 <div align="center">
 <h1>
-modmail-plugins
+「modmail-plugins」
 </h1>
-<p><b><i>plugins to expand Modmail2020's functionality</i> 「ReWrite」</b></p>
+<p><b><i>plugins to expand Modmail2020's functionality</i></b></p>
 </div>
 
 <div align="center">
@@ -11,32 +11,44 @@ modmail-plugins
 </a>
 </div>
 
+
+- - - -
+
 ## ✔ Calculator:
-it works fully, still need to make a Readme with usage samples...
+- [x] it works fully, still need to make a Readme with usage samples...
+- - - -
 
 ## ✔ Misc*:
-a bunch of random commands that I need in my personal guild!!
+- [x] a bunch of random commands that I need in my personal guild!! stay away!!
+- - - -
 
 ## on-message:
 not working, I'll fix it eventually ;P
+- - - -
 
 ## Starboard2:
 have to fix so it uses db correctly
+- - - -
 
 ## ✔ Translate:
-fully working, a very old cog from another abandoned project... rip
+- [x] fully working, a very old cog from another abandoned project... rip
+- - - -
 
 ## Prediction:
 still in the process of being converted from old cog to Modmail-plugin (8ball, oracle, tarot)
+- - - -
 
 ## ✔ Timezone:
-made this one because members from all over the world get confused about timezones for events, smh
+- [x] made this one because members from all over the world get confused about timezones for events, smh
+- - - -
 
 ## Games:
 need to add 'em here... because reasons...
+- - - -
 
 ## Presence:
 there's already a command that works, but I might add one to loop a list of presence statuses
+- - - -
 
 <div align="center">
 <a href="#">
@@ -46,47 +58,47 @@ there's already a command that works, but I might add one to loop a list of pres
 
 # List of Misc commands:
 
-    addrole - Add a role to someone else
+    - [x] addrole - Add a role to someone else
     
-    charinfo - Return UNICODE characters
+    - [x] charinfo - Return UNICODE characters
     
-    choose - Pick an item from a list
+    - [x] choose - Pick an item from a list
     
-    clap - Clap that message!
+    - [x] clap - Clap that message!
     
-    dict - Search definitions in English
+    - [x] dict - Search definitions in English
     
-    flip - Flips a coin... or some text.
+    - [x] flip - Flips a coin... or some text.
     
-    g - Send a msg to another channel
+    - [x] g - Send a msg to another channel
     
-    guess - Write number between 1 and 11
+    - [x] guess - Write number between 1 and 11
     
-    hackban - Ban someone using ID
+    - [x] hackban - Ban someone using ID
     
-    logo - Change Bot's avatar img
+    - [ ] logo - Change Bot's avatar img
     
-    name - Change Bot's name
+    - [ ] name - Change Bot's name
     
-    purge - Delete a number of messages
+    - [x] purge - Delete a number of messages
     
-    removerole - Remove a role from someone else
+    - [x] removerole - Remove a role from someone else
     
-    sauce - Show source code for any command
+    - [x] sauce - Show source code for any command
     
-    say - Bot sends message
+    - [x] say - Bot sends message
     
-    sayd - Sends message and delete original
+    - [x] sayd - Sends message and delete original
     
-    settle - Play rock paper scissors lizard spock
+    - [x] settle - Play rock paper scissors lizard spock
     
-    tiny - Convert any text into a tiny ᵗᵉˣᵗ
+    - [x] tiny - Convert any text into a tiny ᵗᵉˣᵗ
     
-    urban - Urban Dictionary search
+    - [x] urban - Urban Dictionary search
     
-    wiki - Wikipedia search command
+    - [x] wiki - Wikipedia search command
     
-    wordai - Generate words artificially
+    - [x] wordai - Generate words artificially
 
 
 ===
