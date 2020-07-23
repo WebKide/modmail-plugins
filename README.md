@@ -7,7 +7,7 @@ plugins to expand Modmail2020's functionality
 
 on-message: not working, I'll fix it eventually ;P
 
-Starboard2: have to fix to it uses db correctly
+Starboard2: have to fix so it uses db correctly
 
 ✔ Translate: fully working, a very old cog from another abandoned project... rip
 
@@ -22,27 +22,50 @@ Presence: there's already a command that works, but I might add one to loop a li
 ===
 
 List of Misc commands:
+
     addrole - Add a role to someone else
+    
     charinfo - Return UNICODE characters
+    
     choose - Pick an item from a list
+    
     clap - Clap that message!
+    
     dict - Search definitions in English
+    
     flip - Flips a coin... or some text.
+    
     g - Send a msg to another channel
+    
     guess - Write number between 1 and 11
+    
     hackban - Ban someone using ID
+    
     logo - Change Bot's avatar img
+    
     name - Change Bot's name
+    
     purge - Delete a number of messages
+    
     removerole - Remove a role from someone else
+    
     sauce - Show source code for any command
+    
     say - Bot sends message
+    
     sayd - Sends message and delete original
+    
     settle - Play rock paper scissors lizard spock
+    
     tiny - Convert any text into a tiny ᵗᵉˣᵗ
+    
     urban - Urban Dictionary search
+    
     wiki - Wikipedia search command
+    
     wordai - Generate words artificially
 
+
+===
 
 TODO: pray, youtube, show_color, $modbot, Base (bg, sb, cc, search_group)
