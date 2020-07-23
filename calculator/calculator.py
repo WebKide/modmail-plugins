@@ -137,7 +137,7 @@ class Calculator(commands.Cog):
         self.mod_color = discord.Colour(0x7289da) ## blurple
 
     @commands.command(description='Scientific calculator', aliases=['calculate', 'maths'])
-    async def calc(self, ctx, *, formula = NoAttr):
+    async def calc(self, ctx, *, formula = None):
         """ ✔ Do some math
         thanks to Paul McGuire's fourFn.py. """
         person = ctx.message.author
@@ -145,6 +145,10 @@ class Calculator(commands.Cog):
                     .replace('sub', '-').replace('pi', 'PI').replace('divide', '/').replace('multiply', '*') \
                     .replace('add', '+').replace('div', '/').replace('mult', '*').replace('mul', '*') \
                     .replace('π', 'PI').replace('÷', '/')
+
+        if formula is None:
+            msg = f'\u200BUsage: `{ctx.prefix}{ctx.invoked_with} [any maths formula]`'
+            return await ctx.send(msg, delete_after=23)
 
         if formula == None:
             # How can it calculate an empty message? Reee!
