@@ -58,51 +58,51 @@
 
 # List of Misc commands:
 
-- [x] addrole - Add a role to someone else
+- [x] <b>`addrole`</b> - Add a role to someone else
 
-- [x] charinfo - Return UNICODE characters
+- [x] <b>`charinfo`</b> - Return UNICODE characters
 
-- [x] choose - Pick an item from a list
+- [x] <b>`choose`</b> - Pick an item from a list
 
-- [x] clap - Clap that message!
+- [x] <b>`clap`</b> - Clap that message!
 
-- [x] dict - Search definitions in English
+- [x] <b>`dict`</b> - Search definitions in English
 
-- [x] flip - Flips a coin... or some text.
+- [x] <b>`flip`</b> - Flips a coin... or some text.
 
-- [x] g - Send a msg to another channel
+- [x] <b>`g`</b> - Send a msg to another channel
 
-- [x] guess - Write number between 1 and 11
+- [x] <b>`guess`</b> - Write number between 1 and 11
 
-- [x] hackban - Ban someone using ID
+- [x] <b>`hackban`</b> - Ban someone using ID
 
-- [ ] logo - Change Bot's avatar img
+- [ ] <b>`logo`</b> - Change Bot's avatar img
 
-- [ ] name - Change Bot's name
+- [ ] <b>`name`</b> - Change Bot's name
 
-- [x] purge - Delete a number of messages
+- [x] <b>`purge`</b> - Delete a number of messages
 
-- [x] removerole - Remove a role from someone else
+- [x] <b>`removerole`</b> - Remove a role from someone else
 
-- [x] sauce - Show source code for any command
+- [x] <b>`sauce`</b> - Show source code for any command
 
-- [x] say - Bot sends message
+- [x] <b>`say`</b> - Bot sends message
 
-- [x] sayd - Sends message and delete original
+- [x] <b>`sayd`</b> - Sends message and delete original
 
-- [x] settle - Play rock paper scissors lizard spock
+- [x] <b>`settle`</b> - Play rock paper scissors lizard spock
 
-- [x] tiny - Convert any text into a tiny ᵗᵉˣᵗ
+- [x] <b>`tiny`</b> - Convert any text into a tiny ᵗᵉˣᵗ
 
-- [x] urban - Urban Dictionary search
+- [x] <b>`urban`</b> - Urban Dictionary search
 
-- [x] wiki - Wikipedia search command
+- [x] <b>`wiki`</b> - Wikipedia search command
 
-- [x] wordai - Generate words artificially
+- [x] <b>`wordai`</b> - Generate words artificially
 
 
 ===
 
 # TODO:
 
-> pray, youtube, show_color, $modbot, Base (bg, sb, cc, search_group)
+> `pray`, `youtube`, `show_color`, `$modbot`, `Base` (`bg`, `sb`, `cc`, `search_group`)
