@@ -305,7 +305,7 @@ class Translate(commands.Cog):
     # +------------------------------------------------------------+
     # |                   Available Langs                          |
     # +------------------------------------------------------------+
-    @translate.command()
+    @tr.command()
     async def langs(self, ctx):
         """ List of available languages """
         available = ', '.join(conv.values())
