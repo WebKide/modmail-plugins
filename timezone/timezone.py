@@ -29,7 +29,7 @@ dev_list = [
 ]
 
 
-class Calculator(commands.Cog):
+class TimeZone(commands.Cog):
     """(∩｀-´)⊃━☆ﾟ.*･｡ﾟ Timezone list of places
     https://gist.github.com/mjrulesamrat/0c1f7de951d3c508fb3a20b4b0b33a98
     """
