@@ -137,11 +137,11 @@ class Calculator(commands.Cog):
         self.mod_color = discord.Colour(0x7289da) ## blurple
 
     @commands.command(description='Scientific calculator', aliases=['calculate', 'maths'])
-    async def calc(self, ctx, *, formulas = None):
+    async def calc(self, ctx, *, formulas: str=None):
         """ ✔ Do some math
         thanks to Paul McGuire's fourFn.py. """
         person = ctx.message.author
-        if not formulas:
+        if formulas is None:
             msg = f'\u200BUsage: `{ctx.prefix}{ctx.invoked_with} [any Maths formula]`'
             return await ctx.send(msg, delete_after=23)
 
