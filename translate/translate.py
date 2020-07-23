@@ -20,6 +20,7 @@ SOFTWARE.
 import discord, traceback
 
 from discord.ext import commands
+from core import checks
 from mtranslate import translate
 
 
@@ -216,6 +217,16 @@ class Translate(commands.Cog):
         self.bot = bot
         self.user_color = discord.Colour(0xed791d) ## orange
         self.mod_color = discord.Colour(0x7289da) ## blurple
+        self.db = bot.plugin_db.get_partition(self)
+        self.translator = translate(message, en)
+        self.tt = set()
+        self.enabled = True
+        asyncio.create_task(self._set_config())
+    
+    async def _set_config(self):
+        config = await self.db.find_one({'_id': 'config'})
+        self.enabled = config.get('enabled', True)
+        self.tt = set(config.get('auto-translate', []))
 
 
     # +------------------------------------------------------------+
@@ -320,6 +331,96 @@ class Translate(commands.Cog):
         except discord.Forbidden:
             msg = f'Available languages:\n```bf\n{available}```\n{foo}'
             await ctx.send(msg, delete_after=420)
+
+    # +------------------------------------------------------------+
+    # |                 Auto Translate Text                        |
+    # +------------------------------------------------------------+
+    @commands.command(aliases=["tt"])
+    async def translatetext(self, ctx, *, message):
+        """
+        Translates given messageID into English
+        original command by officialpiyush
+        """
+        tmsg = self.translator.translate(message, en)
+        em = discord.Embed()
+        em.color = 4388013
+        em.description = tmsg.text
+        await ctx.channel.send(embed=em)
+
+    # +------------------------------------------------------------+
+    # |                 Auto Translate Text                        |
+    # +------------------------------------------------------------+
+    @commands.command(aliases=["att"])
+    @checks.has_permissions(PermissionLevel.SUPPORTER)
+    @checks.thread_only()
+    async def auto_translate_thread(self, ctx):
+        """ to be used inside ticket threads
+        original command by officialpiyush
+        """
+        if "User ID:" not in ctx.channel.topic:
+            await ctx.send("The Channel Is Not A Modmail Thread")
+            return
+
+        if ctx.channel.id in self.tt:
+            self.tt.remove(ctx.channel.id)
+            removed = True
+
+        else:
+            self.tt.add(ctx.channel.id)
+            removed = False
+        
+        await self.db.update_one(
+            {'_id': 'config'},
+            {'$set': {'auto-translate': list(self.tt)}}, 
+            upsert=True
+            )
+
+        await ctx.send(f"{'Removed' if removed else 'Added'} Channel {'from' if removed else 'to'} Auto Translations List.")
+    
+    # +------------------------------------------------------------+
+    # |                 Auto Translate Text                        |
+    # +------------------------------------------------------------+
+    @commands.command(aliases=["tat"])
+    @checks.has_permissions(PermissionLevel.SUPPORTER)
+    @checks.thread_only()
+    async def toggle_auto_translations(self, ctx, enabled: bool):
+        """ to be used inside ticket threads
+        original command by officialpiyush
+        """
+        self.enabled = enabled
+        await self.coll.update_one(
+            {'_id': 'config'},
+            {'$set': {'at-enabled': self.enabled}}, 
+            upsert=True
+            )
+        await ctx.send(f"{'Enabled' if enabled else 'Disabled'} Auto Translations")
+    
+    async def on_message(self, message):
+        if not self.enabled:
+            return
+        
+        channel = message.channel
+
+        if channel.id not in self.tt:
+            return
+        
+        if isinstance(message.author,User):
+            return
+        
+        if "User ID:" not in channel.topic:
+            return
+        
+        if not message.embeds:
+            return
+        
+        msg = message.embeds[0].description
+        tmsg = self.translator.translate(msg, en)
+        em = discord.Embed()
+        em.description = tmsg.text
+        em.color = 4388013
+        em.footer = "Auto Translate Plugin"
+
+        await channel.send(embed=em)
 
 def setup(bot):
     bot.add_cog(Translate(bot))
