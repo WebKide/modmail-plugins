@@ -1,44 +1,48 @@
 # modmail-plugins
 plugins to expand Modmail2020's functionality
 
-source
+✔ Calculator: it works fully, still need to make a Readme with usage samples...
 
-gen
+✔ Misc*: a bunch of random commands that I need in my personal guild!!
 
-Base
-  bg
-  sb
-  cc
-  search
+on-message: not working, I'll fix it eventually ;P
 
-youtube
+Starboard2: have to fix to it uses db correctly
 
-presence
+✔ Translate: fully working, a very old cog from another abandoned project... rip
 
-tz
+Prediction: still in the process of being converted from old cog to Modmail-plugin (8ball, oracle, tarot)
 
-Textgame
-  clap
-  flip
-  guess
-  hexa
-  pick
-  settle
+✔ Timezone: made this one because members from all over the world get confused about timezones for events, smh
 
-Prediction
-  eightball
-  oracle
-  tarot
+Games: need to add 'em here... because reasons...
 
-pray
+Presence: there's already a command that works, but I might add one to loop a list of presence statuses
 
-show_color
+===
 
-charinfo
+List of Misc commands:
+    addrole - Add a role to someone else
+    charinfo - Return UNICODE characters
+    choose - Pick an item from a list
+    clap - Clap that message!
+    dict - Search definitions in English
+    flip - Flips a coin... or some text.
+    g - Send a msg to another channel
+    guess - Write number between 1 and 11
+    hackban - Ban someone using ID
+    logo - Change Bot's avatar img
+    name - Change Bot's name
+    purge - Delete a number of messages
+    removerole - Remove a role from someone else
+    sauce - Show source code for any command
+    say - Bot sends message
+    sayd - Sends message and delete original
+    settle - Play rock paper scissors lizard spock
+    tiny - Convert any text into a tiny ᵗᵉˣᵗ
+    urban - Urban Dictionary search
+    wiki - Wikipedia search command
+    wordai - Generate words artificially
 
-Definition
-  wiki
-  urban
-  dict
 
-$modbot
+TODO: pray, youtube, show_color, $modbot, Base (bg, sb, cc, search_group)
