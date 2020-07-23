@@ -268,7 +268,7 @@ class Translate(commands.Cog):
                 em = discord.Embed(color=self.user_color)
                 em.set_author(name=m, icon_url=ctx.message.author.avatar_url),
                 em.add_field(name='Original Message', value=f'*```css\n{text}```*', inline=False)
-                em.add_field(name=f'Translation to {lang}', value=f'```css\n{tn}```', inline=False)
+                em.add_field(name=f'Translation to {language}', value=f'```css\n{tn}```', inline=False)
                 em.set_footer(text=duration, icon_url='https://i.imgur.com/yeHFKgl.png')
                 try:
                     await ctx.message.add_reaction('\N{WHITE HEAVY CHECK MARK}')
