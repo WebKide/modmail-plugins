@@ -147,6 +147,7 @@ class Calculator(commands.Cog):
                     .replace('π', 'PI').replace('÷', '/')
 
         if AttributeError:
+            msg = f'\u200BUsage: `{ctx.prefix}{ctx.invoked_with} [any maths formula]`'
             return await ctx.send(msg, delete_after=23)
 
         if formula == None:
