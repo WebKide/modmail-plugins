@@ -30,8 +30,8 @@ dev_list = [
 
 
 class TimeZone(commands.Cog):
-    """(∩｀-´)⊃━☆ﾟ.*･｡ﾟ Timezone list of places
-    https://gist.github.com/mjrulesamrat/0c1f7de951d3c508fb3a20b4b0b33a98
+    """(∩｀-´)⊃━☆ﾟ.*･｡ﾟ Timezone command
+    Full list of locations: https://gist.github.com/mjrulesamrat/0c1f7de951d3c508fb3a20b4b0b33a98
     """
     def __init__(self, bot):
         self.bot = bot
