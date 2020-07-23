@@ -1,6 +1,5 @@
 """
 MIT License
-Copyright (c) 2020 WebKide [d.id @323578534763298816]
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
@@ -223,13 +222,14 @@ class Translate(commands.Cog):
     # |                   Translate cmd                            |
     # +------------------------------------------------------------+
     @commands.group(description='Command to translate across languages', aliases=['translate'],  invoke_without_command=True)
-    async def tr(self, ctx, lang: str = None, *, text: str = None):
+    async def tr(self, ctx, language: str = None, *, text: str = None):
         """
-        Translate text between languages
+        (∩｀-´)⊃━☆ﾟ.*･｡ﾟ translate text from one language to another
 
-        Use subcommand to show short list of languages:
-        {prefix}tr langs
+        Usage:
+        {prefix}tr Zulu hello world, welcome to this server
         """
+        lang = language.title()
         available = ', '.join(conv.values())
         languages = 'Albanian, Arabic, Aymara, Belarusian, Bulgarian, Catalan, Chinese, Croatian, Czech, ' \
                     'Danish, Dutch, English, Estonian, Fijian, Finnish, French, Georgian, German, Greek, ' \
@@ -267,8 +267,8 @@ class Translate(commands.Cog):
                 tn = f'{translate(text, lang)}'
                 em = discord.Embed(color=self.user_color)
                 em.set_author(name=m, icon_url=ctx.message.author.avatar_url),
-                em.add_field(name='Original2', value=f'*```css\n{text}```*', inline=False)
-                em.add_field(name='Translation2', value=f'```css\n{tn}```', inline=False)
+                em.add_field(name='Original Message', value=f'*```css\n{text}```*', inline=False)
+                em.add_field(name=f'Translation to {lang}', value=f'```css\n{tn}```', inline=False)
                 em.set_footer(text=duration, icon_url='https://i.imgur.com/yeHFKgl.png')
                 try:
                     await ctx.message.add_reaction('\N{WHITE HEAVY CHECK MARK}')
@@ -277,7 +277,6 @@ class Translate(commands.Cog):
                 await ctx.send(embed=em)
 
             else:
-                # await ctx.send(f'​`Language not available.​`\n\n{traceback.format_exc()}', delete_after=69)
                 await ctx.send(msg, delete_after=23)
 
         except discord.Forbidden:
@@ -295,7 +294,6 @@ class Translate(commands.Cog):
                     pass
 
             else:
-                # await ctx.send(f'​`Language not available.​`\n\n{traceback.format_exc()}', delete_after=69)
                 await ctx.send(msg, delete_after=23)
                 try:
                     await ctx.message.add_reaction('\N{BLACK QUESTION MARK ORNAMENT}')
@@ -317,11 +315,11 @@ class Translate(commands.Cog):
         em.set_footer(text=foo, icon_url='https://i.imgur.com/yeHFKgl.png')
 
         try:
-            await ctx.send(embed=em, delete_after=123)
+            await ctx.send(embed=em, delete_after=420)
 
         except discord.Forbidden:
             msg = f'Available languages:\n```bf\n{available}```\n{foo}'
-            await ctx.send(msg, delete_after=123)
+            await ctx.send(msg, delete_after=420)
 
 def setup(bot):
     bot.add_cog(Translate(bot))
