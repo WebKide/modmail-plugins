@@ -47,14 +47,14 @@ class Words(commands.Cog):
     # +------------------------------------------------------------+
     # |                       URBAN                                |
     # +------------------------------------------------------------+
-    @commands.command(aliases=['ub'])
+    @commands.command(aliases=['ud'])
     async def urban(self, ctx, *, search_terms: str = None):
-        """ Urban Dictionary search
+        """(∩｀-´)⊃━☆ﾟ.*･｡ﾟ Urban Dictionary search
         retrieves up to 10 results for same word
         
         Usage:
         {prefix}urban <query>
-        {prefix}ub oof 5
+        {prefix}ud oof 5
         """
         if search_terms is None:
             return await ctx.send('What should I search for you?')
@@ -99,12 +99,12 @@ class Words(commands.Cog):
     # +------------------------------------------------------------+
     # |                          WIKIPEDIA                         |
     # +------------------------------------------------------------+
-    @commands.command()
+    @commands.command(aliases=['wikipedia'])
     async def wiki(self, ctx, *, search: str = None):
-        """ Wikipedia search command
+        """(∩｀-´)⊃━☆ﾟ.*･｡ﾟ Wikipedia search command
         
         Usage:
-        {prefix}wiki <term>
+        {prefix}wikipedia <term>
         {prefix}wiki origami
         """
         if search == None:
@@ -140,8 +140,8 @@ class Words(commands.Cog):
     # +------------------------------------------------------------+
     @commands.command(name='dict', description='Oxford English Dictionary', aliases=['oed'])
     async def _dict(self, ctx, *, term: str = None):
-        """ Search definitions in English
-        from the Oxford English Dictionary
+        """(∩｀-´)⊃━☆ﾟ.*･｡ﾟ Search definitions in English
+        using Oxford English Dictionary database
         
         Usage:
         {prefix}dict <word> [synonyms|proverbs|examples]"""
