@@ -9,6 +9,8 @@
 <a href="#">
 <img src="http://forthebadge.com/images/badges/built-with-love.svg?style=for-the-badge" alt="built with love" />
 </a>
+![GitHub issues](https://img.shields.io/github/issues/WebKide/modmail-plugins?style=for-the-badge)
+![GitHub stars](https://img.shields.io/github/stars/WebKide/modmail-plugins?style=for-the-badge)
 </div>
 
 
