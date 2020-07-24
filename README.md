@@ -2,17 +2,15 @@
 <h1>
 「modmail-plugins」
 </h1>
-<p><b><i>plugins to expand Modmail2020's functionality</i></b></p>
+<p><b><i>plugins to expand Modmail2020's functionality 🍆💦🍑</i></b></p>
 </div>
 
 <div align="center">
 <a href="#">
 <img src="http://forthebadge.com/images/badges/built-with-love.svg?style=for-the-badge" alt="built with love" />
 </a>
-![GitHub issues](https://img.shields.io/github/issues/WebKide/modmail-plugins?style=for-the-badge)
-![GitHub stars](https://img.shields.io/github/stars/WebKide/modmail-plugins?style=for-the-badge)
+  <p>🛠️ if you experience a problem with any <b>modmail-plugin</b> in this repo, please open an issue or submit a pull-request</p>
 </div>
-
 
 - - - -
 
@@ -41,11 +39,21 @@
 - - - -
 
 ## ✔ Timezone:
-- [x] made this one because members from all over the world get confused about timezones for events, smh
+🔸 <b>Installation</b>: `{prefix}add WebKide/modmail-plugins/timezone`
+
+- [x] `{prefix}tz :flag_gb:` — get timezone using a flag
+- [x] `{prefix}tz EST` — get timezone using abbreviation
+- [x] `{prefix}tz Mexico` — get timezone usinc country
 - - - -
 
-## Games:
-- [ ] need to add 'em here... because reasons...
+## TextGames:
+🔸 <b>Installation</b>: `{prefix}add WebKide/modmail-plugins/textgames`
+
+- [x] `choose` — Choose an item from a list.
+- [x] `flip` — Flips a coin... or some text.
+- [x] `guess` — Guess a number between 1 and 11
+- [x] `settle` — Play: rock paper scissors lizard spock
+- [ ] `score` — database to record wins, losses, and draws per command
 - - - -
 
 ## Presence:
@@ -107,4 +115,4 @@
 
 # TODO:
 
-> `pray`, `youtube`, `show_color`, `$modbot`, `Base` (`bg`, `sb`, `cc`, `search_group`)
+> `youtube`, `show_color`, `$modbot`, `Base` (`bg`, `sb`, `cc`, `search_group`)
