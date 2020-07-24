@@ -145,10 +145,10 @@ class Calculator(commands.Cog):
             msg = f'\u200BUsage: `{ctx.prefix}{ctx.invoked_with} [any Maths formula]`'
             return await ctx.send(msg, delete_after=23)
 
-        formula = formulas.replace('x', '*').replace('minus', '-').replace('plus', '+').replace('into', '/') \
-                    .replace('sub', '-').replace('pi', 'PI').replace('divide', '/').replace('multiply', '*') \
-                    .replace('add', '+').replace('div', '/').replace('mult', '*').replace('mul', '*') \
-                    .replace('π', 'PI').replace('÷', '/')
+        formula = formulas.replace(',', '').replace('x', '*').replace('minus', '-').replace('plus', '+') \
+                    .replace('into', '/').replace('sub', '-').replace('pi', 'PI').replace('divide', '/') \
+                    .replace('multiply', '*').replace('add', '+').replace('div', '/').replace('mult', '*') \
+                    .replace('mul', '*').replace('π', 'PI').replace('÷', '/')
 
         if formula == None:
             # How can it calculate an empty message? Reee!
