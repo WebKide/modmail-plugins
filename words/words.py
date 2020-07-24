@@ -33,7 +33,7 @@ _HEADERS = {'User-Agent': 'Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 6.1; WO
 dev_list = [323578534763298816]
 
 class Words(commands.Cog):
-    """(∩｀-´)⊃━☆ﾟ.*･｡ﾟ Useful commands to make your life easier"""
+    """(∩｀-´)⊃━☆ﾟ.*･｡ﾟ find definitions of English words """
     def __init__(self, bot):
         self.bot = bot
         self._last_result = None
@@ -47,9 +47,15 @@ class Words(commands.Cog):
     # +------------------------------------------------------------+
     # |                       URBAN                                |
     # +------------------------------------------------------------+
-    @commands.command()
+    @commands.command(aliases=['ub'])
     async def urban(self, ctx, *, search_terms: str = None):
-        """ Urban Dictionary search """
+        """ Urban Dictionary search
+        retrieves up to 10 results for same word
+        
+        Usage:
+        {prefix}urban <query>
+        {prefix}ub oof 5
+        """
         if search_terms is None:
             return await ctx.send('What should I search for you?')
 
@@ -95,7 +101,12 @@ class Words(commands.Cog):
     # +------------------------------------------------------------+
     @commands.command()
     async def wiki(self, ctx, *, search: str = None):
-        """ Wikipedia search command """
+        """ Wikipedia search command
+        
+        Usage:
+        {prefix}wiki <term>
+        {prefix}wiki origami
+        """
         if search == None:
             await ctx.channel.send(f'Usage: `{ctx.prefix}wiki [search terms]`', delete_after=23)
             return
@@ -129,7 +140,11 @@ class Words(commands.Cog):
     # +------------------------------------------------------------+
     @commands.command(name='dict', description='Oxford English Dictionary', aliases=['oed'])
     async def _dict(self, ctx, *, term: str = None):
-        """ Search definitions in English """
+        """ Search definitions in English
+        from the Oxford English Dictionary
+        
+        Usage:
+        {prefix}dict <word> [synonyms|proverbs|examples]"""
         if term is None:  # Simple usage return for invoking an empty cmd
             sample = random.choice(['lecture', 'fantasy', 'gathering', 'gradually ', 'international', 'desire'])
             v = f'{ctx.prefix}{ctx.invoked_with} {sample}'
@@ -239,7 +254,7 @@ class Words(commands.Cog):
             except IndexError:  # ResultSet object has no attribute '.text'
                 pass
             # ================== copyright acknowledgments ================================
-            e.set_footer(text=f'Oxford University Press © 2018 | Duration: {self.bot.ws.latency * 1000:.2f} ms')
+            e.set_footer(text=f'Oxford University Press © 2020 | Duration: {self.bot.ws.latency * 1000:.2f} ms')
             # ================== Fail-safe for words without a definition =================
             if not definition:
                 e.description = f"Whoopsie! I couldn't find a definition for *{query}*.\n" \
