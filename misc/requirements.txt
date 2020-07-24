@@ -1,11 +1,4 @@
-unicodedata2
-# inspect
-aiohttp
 pytz
 Pillow
 pyfiglet==0.7.5
 pyparsing==2.2.0
-requests
-wikipedia
-urbandict
-mtranslate
