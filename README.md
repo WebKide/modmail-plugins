@@ -11,12 +11,12 @@
 <p> </p>
 </div>
 
-> by default the prefix is `?` followed by a command: `?calc` but if you changed the prefix, then replace `{p}` with your custom prefix
+> 🔸 by default the prefix is `?` followed by a command: `?calc` but if you changed the prefix, then replace `{p}` with your custom prefix: `{p}calc` becomes `b!calc` if your new prefix is `b!`
 
 
 - - - -
 
-## ✔ Calculator ##
+## .:: ✔ Calculator ::. ##
 🔸 <b>Installation</b>: `{p}plugin add WebKide/modmail-plugins/calculator`
 
 - [x] `{p}calc` — powerful calculator command, supports addition, substraction, multiplication, division, PEMDAS...
@@ -39,20 +39,20 @@
 
 - - - -
 
-## ✔ Misc*: ##
+## .:: ✔ Misc* ::. ##
 - [x] a bunch of random commands that I need in my personal guild!! stay away!!
 - - - -
 
-## on-message: ##
+## .:: on-message ::. ##
 - [ ] not working, I'll fix it eventually ;P
 - - - -
 
-## Starboard2: ##
+## .:: Starboard2 ::. ##
 - [ ] have to fix so it uses db correctly
 - - - -
 
-## ✔ Translate: ##
-🔸 <b>Installation</b>: `{p}add WebKide/modmail-plugins/translate`
+## .:: ✔ Translate ::. ##
+🔸 <b>Installation</b>: `{p}plugin add WebKide/modmail-plugins/translate`
 
 - [x] `{p}tr langs` — list of supported/available languages
 - [x] `{p}tr <Language> <message>` — translate text from one language to another
@@ -62,20 +62,20 @@
 - [ ] `{p}tr {default_english}` — defaults translation to English if no target language is provided
 - - - -
 
-## Prediction: ##
+## .:: Prediction ::. ##
 - [ ] still in the process of being converted from old cog to Modmail-plugin (8ball, oracle, tarot)
 - - - -
 
-## ✔ Timezone: ##
-🔸 <b>Installation</b>: `{p}add WebKide/modmail-plugins/timezone`
+## .:: ✔ Timezone ::. ##
+🔸 <b>Installation</b>: `{p}plugin add WebKide/modmail-plugins/timezone`
 
 - [x] `{p}tz :flag_gb:` — get timezone using a flag
 - [x] `{p}tz EST` — get timezone using abbreviation
 - [x] `{p}tz Mexico` — get timezone usinc country
 - - - -
 
-## TextGames: ##
-🔸 <b>Installation</b>: `{p}add WebKide/modmail-plugins/textgames`
+## .:: TextGames ::. ##
+🔸 <b>Installation</b>: `{p}plugin add WebKide/modmail-plugins/textgames`
 
 - [x] `choose` — Choose an item from a list.
 - [x] `flip` — Flips a coin... or some text.
@@ -84,8 +84,8 @@
 - [ ] `score` — database to record wins, losses, and draws per command
 - - - -
 
-## Transform: ##
-🔸 <b>Installation</b>: `{p}add WebKide/modmail-plugins/transform`
+## .:: Transform ::. ##
+🔸 <b>Installation</b>: `{p}plugin add WebKide/modmail-plugins/transform`
 
 - [x] `{p}charinfo <🍆>` - Return UNICODE characters for emoji or character
 - [x] `{p}clap [message]` - Clap 👏 that 👏 message!
@@ -95,7 +95,7 @@
 - [ ] `{p}zalgo [name]` - <i>eye-rape</i> unreadable text
 - - - -
 
-## Presence: ##
+## .:: Presence ::. ##
 - [ ] there's already a command that works, but I might add one to loop a list of presence statuses
 - - - -
 
