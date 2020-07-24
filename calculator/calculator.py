@@ -146,9 +146,9 @@ class Calculator(commands.Cog):
             return await ctx.send(msg, delete_after=23)
 
         formula = formulas.replace(',', '').replace('x', '*').replace('minus', '-').replace('plus', '+') \
-                    .replace('into', '/').replace('sub', '-').replace('pi', 'PI').replace('divide', '/') \
-                    .replace('multiply', '*').replace('add', '+').replace('div', '/').replace('mult', '*') \
-                    .replace('mul', '*').replace('π', 'PI').replace('÷', '/')
+                    .replace('into', '/').replace('sub', '-').replace('pi', 'PI').replace('π', 'PI').replace('Pi', 'PI') \
+                    .replace('divide', '/').replace('multiply', '*').replace('add', '+').replace('div', '/') \
+                    .replace('mult', '*').replace('mul', '*').replace('÷', '/').replace('  ', ' ').replace(' ', '*')
 
         if formula == None:
             # How can it calculate an empty message? Reee!
