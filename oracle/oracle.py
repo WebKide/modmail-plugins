@@ -39,7 +39,7 @@ class Oracle(commands.Cog):
     @commands.command(aliases=['8ball'], no_pm=True)
     async def eightball(self, ctx, *, question=None):
         """ Ask questions to the 8ball """
-        with open('answers.json') as f:
+        with open('data/answers.json') as f:
             choices = json.load(f)
 
         if not question:
@@ -78,7 +78,7 @@ class Oracle(commands.Cog):
         """ 3 cards spread reading """
         u = ctx.author
         deck = 'https://i.imgur.com/rUAjxYx.png'
-        with open('tarot_major.json') as f:
+        with open('data/tarot_major.json') as f:
             choices = json.load(f)
 
         try:
@@ -127,7 +127,7 @@ class Oracle(commands.Cog):
         Usage:
         {prefix}oracle [yes/no question?]
         """
-        with open('oracle.json') as f:
+        with open('data/oracle.json') as f:
             choices = json.load(f)
 
         iching = 'http://i.imgur.com/biEvXBN.png'
