@@ -77,7 +77,8 @@ class Misc(commands.Cog):
     # |                ADD/REMOVE ROLE GROUP                       |
     # +------------------------------------------------------------+
     @commands.group(description='Give or remove roles',  invoke_without_command=True)
-    async def role(self, ctx):
+    async def role(self, ctx: str = None):
+        """ Add or Remove a role for any member """
         msg = f'Command for Mods to give or remove roles for others.\n\n{prefix} add @name RoleName\n{prefix} remove @name RoleName'
         return await ctx.send(msg, delete_after=23)
 
