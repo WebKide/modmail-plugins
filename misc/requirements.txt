@@ -2,4 +2,4 @@ pytz
 Pillow
 pyfiglet==0.7.5
 pyparsing==2.2.0
-inspect==3.5.0
+inspect2==0.1.2
