@@ -21,6 +21,7 @@ SOFTWARE.
 import discord, asyncio, random, textwrap, traceback
 
 from discord.ext import commands
+from inspect2 import getsource
 
 dev_list = [323578534763298816]
 
@@ -174,7 +175,7 @@ class Misc(commands.Cog):
         if ctx.author.id not in dev_list:    return
 
         if command is not None:
-            i = str(inspect.getsource(self.bot.get_command(command).callback))
+            i = str(inspect2.getsource(self.bot.get_command(command).callback))
 
             if len(i) < 1980:
                 source_full = i.replace('```', '`\u200b`\u200b`')
