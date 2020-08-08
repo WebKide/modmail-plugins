@@ -91,7 +91,7 @@ class Misc(commands.Cog):
         """ Add a role to someone else
         
         Usage:
-        {prefix}{invoked_with} @name Listener
+        {prefix} add @name Listener
         """
         if not member and rolename is None:
             return await ctx.send('To **whom** do I add **which** role? ╰(⇀ᗣ↼‶)╯', delete_after=23)
@@ -120,7 +120,7 @@ class Misc(commands.Cog):
         """ Remove a role from someone else
         
         Usage:
-        {prefix}{invoked_with} @name Listener
+        {prefix} remove @name Listener
         """
         role = discord.utils.find(lambda m: rolename.lower() in m.name.lower(), ctx.message.guild.roles)
         if not role:
@@ -136,7 +136,7 @@ class Misc(commands.Cog):
     # +------------------------------------------------------------+
     # |                     NAME                                   |
     # +------------------------------------------------------------+
-    @commands.command(no_pm=True)
+    @commands.command(no_pm=True, hidden=True)
     async def name(self, ctx, text: str = None):
         """ Change Bot's name """
         if ctx.author.id not in dev_list:    return
@@ -155,7 +155,7 @@ class Misc(commands.Cog):
     # +------------------------------------------------------------+
     # |                       LOGO                                 |
     # +------------------------------------------------------------+
-    @commands.command(no_pm=True)
+    @commands.command(no_pm=True, hidden=True)
     async def logo(self, ctx, link: str = None):
         """ Change Bot's avatar img """
         if ctx.author.id not in dev_list:    return
