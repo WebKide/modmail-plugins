@@ -74,54 +74,63 @@ class Misc(commands.Cog):
             else:    pass
 
     # +------------------------------------------------------------+
+    # |                ADD/REMOVE ROLE GROUP                       |
+    # +------------------------------------------------------------+
+    @commands.group(description='Give or remove roles',  invoke_without_command=True)
+    async def role(self, ctx):
+        msg = f'Command for Mods to give or remove roles for others.\n\n{prefix} add @name RoleName\n{prefix} remove @name RoleName'
+        return await ctx.send(msg, delete_after=23)
+
+    # +------------------------------------------------------------+
     # |                        ADD ROLE                            |
     # +------------------------------------------------------------+
-    @commands.command(no_pm=True)
-    @commands.has_any_role('Admin', 'Mod', 'Journalist', 'Owner')
-    async def addrole(self, ctx, member: discord.Member, *, rolename: str = None):
-        """
-        Add a role to someone else
+    @role.command(no_pm=True)
+    @commands.has_any_role('Admin', 'Mod', 'Moderator')
+    async def add(self, ctx, member: discord.Member, *, rolename: str = None):
+        """ Add a role to someone else
+        
         Usage:
-        addrole @name Listener
+        {prefix}{invoked_with} @name Listener
         """
-        if ctx.author.id not in dev_list:
-            return
-
         if not member and rolename is None:
-            return await ctx.send('To whom do I add which role? ╰(⇀ᗣ↼‶)╯')
+            return await ctx.send('To **whom** do I add **which** role? ╰(⇀ᗣ↼‶)╯', delete_after=23)
 
         if rolename is not None:
             role = discord.utils.find(lambda m: rolename.lower() in m.name.lower(), ctx.message.guild.roles)
             if not role:
-                return await ctx.send('That role does not exist. ╰(⇀ᗣ↼‶)╯')
+                return await ctx.send(f'That role `{rolename}` does not exist. ╰(⇀ᗣ↼‶)╯', delete_after=23)
+
             try:
                 await member.add_roles(role)
                 await ctx.message.delete()
                 await ctx.send(f'Added: **`{role.name}`** role to *{member.display_name}*')
             except:
-                await ctx.send("I don't have the perms to add that role. ╰(⇀ᗣ↼‶)╯")
+                await ctx.send("I don't have the perms to add that role. ╰(⇀ᗣ↼‶)╯", delete_after=23)
 
         else:
-            return await ctx.send('Please mention the member and role to give them. ╰(⇀ᗣ↼‶)╯')
+            return await ctx.send('Please mention the member and role you want me to give them. ╰(⇀ᗣ↼‶)╯', delete_after=23)
 
     # +------------------------------------------------------------+
     # |                     REMOVE ROLE                            |
     # +------------------------------------------------------------+
-    @commands.command(no_pm=True)
-    async def removerole(self, ctx, member: discord.Member, *, rolename: str):
-        """ Remove a role from someone else """
-        if ctx.author.id not in dev_list:
-            pass
-
+    @role.command(no_pm=True)
+    @commands.has_any_role('Admin', 'Mod', 'Moderator')
+    async def remove(self, ctx, member: discord.Member, *, rolename: str):
+        """ Remove a role from someone else
+        
+        Usage:
+        {prefix}{invoked_with} @name Listener
+        """
         role = discord.utils.find(lambda m: rolename.lower() in m.name.lower(), ctx.message.guild.roles)
         if not role:
-            return await ctx.send('That role does not exist. ╰(⇀ᗣ↼‶)╯')
+            return await ctx.send(f'That role `{rolename}` does not exist. ╰(⇀ᗣ↼‶)╯', delete_after=23)
+
         try:
             await member.remove_roles(role)
             await ctx.message.delete()
             await ctx.send(f'Removed: `{role.name}` role from *{member.display_name}*')
         except:
-            await ctx.send("I don't have the perms to remove that role. ╰(⇀ᗣ↼‶)╯")
+            await ctx.send("I don't have the perms to remove that role. ╰(⇀ᗣ↼‶)╯", delete_after=23)
 
     # +------------------------------------------------------------+
     # |                     NAME                                   |
