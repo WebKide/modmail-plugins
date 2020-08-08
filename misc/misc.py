@@ -18,10 +18,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-import discord, asyncio, random, textwrap, traceback
+import discord, asyncio, random, textwrap, traceback, inspect2
 
 from discord.ext import commands
-from inspect2 import getsource
 
 dev_list = [323578534763298816]
 
