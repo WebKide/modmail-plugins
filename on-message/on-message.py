@@ -23,26 +23,22 @@ from discord.ext import commands
 
 
 class OnMessage(commands.Cog):
-    """ (∩｀-´)⊃━☆ﾟ.*･｡ﾟ non-commands, bot responds to text in message """
+    """ (∩｀-´)⊃━☆ﾟ.*･｡ﾟ non-commands, bot responds to specific text in channel """
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.Cog.listener()
-    async def on_ready(self):
-        pass
-
-    @commands.Cog.listener('on_message')
     # +------------------------------------------------------------+
     # |               RESPONDS TO TEXT IN MESSAGE                  |
     # +------------------------------------------------------------+
-    async def on_message(self, message: discord.Message):
+    @commands.Cog.listener()
+    async def on_message(self, message):
         if message.author.bot:
             return
 
-        if message.content.startswith('I am'):
+        if message.content.startswith('I am '):
             hello = random.choice(['Hello ', 'Hi there ', 'Howdy '])
             iam = 'I am **Moderator** 🅑🅞🅣, pleased to meet you.'
-            msg = message.content[4:]
+            msg = message.content[5:]
             await message.channel.send((f'{hello}' + f'*{msg}*' + f', {iam}')
 
 def setup(bot):
