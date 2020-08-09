@@ -335,18 +335,16 @@ class Oracle(commands.Cog):
         Usage:
         {prefix}tarot reading
         """
-        i = await ctx.send('Please relax and focus on your question...')
-        await asyncio.sleep(6)
+        i = await ctx.send("Please relax and focus on your question...")
+        await asyncio.sleep(3)
 
-        ii = 'Inhale deeply through your nose...'
-        await i.edit(ii)
+        await i.edit()  # "Inhale deeply through your nose..."
         await asyncio.sleep(5)
 
-        iii = 'Exhale fully through your mouth...'
-        await i.edit(iii)
+        await i.edit("Exhale fully through your mouth...")
         await asyncio.sleep(5)
 
-        last = f'You are ready, type:\n**`{ctx.prefix}tarot reading`**\nI will shuffle the cards and pick three for you.'
+        last = f"You are ready, type:\n**`{ctx.prefix}tarot reading`**\nI will shuffle the cards and pick three for you."
         return await i.edit(last, delete_after=17)
 
     @tarot.command(no_pm=True)
