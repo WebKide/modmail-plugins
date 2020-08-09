@@ -338,7 +338,7 @@ class Oracle(commands.Cog):
         i = await ctx.send("Please relax and focus on your question...")
         await asyncio.sleep(3)
 
-        await i.edit()  # "Inhale deeply through your nose..."
+        await i.edit(None)  # "Inhale deeply through your nose..."
         await asyncio.sleep(5)
 
         await i.edit("Exhale fully through your mouth...")
@@ -386,7 +386,7 @@ class Oracle(commands.Cog):
         except discord.Forbidden:    await ctx.send('I need embed perms in this channel to send the full result.')
 
     # +------------------------------------------------------------+
-    # |            Prediction command: ORACLE                      |
+    # |            Prediction command: iCHING                      |
     # +------------------------------------------------------------+
     @commands.command(aliases=['crystalball', 'oracle', 'i-ching'], no_pm=True)
     async def iching(self, ctx, *, question: str = None):
