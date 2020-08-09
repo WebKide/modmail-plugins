@@ -1,0 +1,5 @@
+aiohttp
+pyfiglet==0.7.5
+requests
+urbandict
+wikipedia
