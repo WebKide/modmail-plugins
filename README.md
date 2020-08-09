@@ -18,7 +18,7 @@
 
 - - - -
 
-## .:: ✔ Calculator ::. ##
+## .:: 1 Calculator ::. ##
 🔸 <b>Installation</b>: `{p}plugin add WebKide/modmail-plugins/calculator@master`
 
 - [x] `{p}calc` — powerful calculator command, supports addition, substraction, multiplication, division, PEMDAS...
@@ -44,7 +44,7 @@
 - - - -
 <br>
 
-## .:: ✔ Misc* ::. ##
+## .:: 2 Misc* ::. ##
 🔸 <b>Installation</b>: `{p}plugin add WebKide/modmail-plugins/misc@master`
 
 - [x] <b>`role`</b> - group commands to add/remove role to user
@@ -59,19 +59,14 @@
 - - - -
 <br>
 
-## .:: ✔ on_message ::. ##
+## .:: 3 on_message ::. ##
 🔸 <b>Installation</b>: `{p}plugin add webkide/modmail-plugins/on_message@master`
 
 - [x] bot responds to matching `[str]` in messages starting with "I am"
 - - - -
 <br>
 
-## .:: Starboard2 ::. ##
-- [ ] have to fix so it uses db correctly
-- - - -
-<br>
-
-## .:: ✔ Translate ::. ##
+## .:: 4 Translate ::. ##
 🔸 <b>Installation</b>: `{p}plugin add WebKide/modmail-plugins/translate`
 
 - [x] `{p}tr langs` — list of supported/available languages
@@ -83,7 +78,7 @@
 - - - -
 <br>
 
-## .:: ✔ Oracle ::. ##
+## .:: 5 Oracle ::. ##
 🔸 <b>Installation</b>: `{p}plugin add WebKide/modmail-plugins/oracle@master`
 
 - [x] `{p}8ball <question?>`
@@ -92,7 +87,7 @@
 - - - -
 <br>
 
-## .:: ✔ Timezone ::. ##
+## .:: 6 Timezone ::. ##
 🔸 <b>Installation</b>: `{p}plugin add WebKide/modmail-plugins/timezone@master`
 
 - [x] `{p}tz :flag_gb:` — get timezone using a flag
@@ -101,7 +96,7 @@
 - - - -
 <br>
 
-## .:: TextGames ::. ##
+## .:: 7 TextGames ::. ##
 🔸 <b>Installation</b>: `{p}plugin add WebKide/modmail-plugins/textgames@master`
 
 - [x] `choose` — Choose an item from a list.
@@ -112,7 +107,7 @@
 - - - -
 <br>
 
-## .:: Transform ::. ##
+## .:: 8 Transform ::. ##
 🔸 <b>Installation</b>: `{p}plugin add WebKide/modmail-plugins/transform@master`
 
 - [x] `{p}charinfo <🍆>` - Return UNICODE characters for emoji `\U0001f346` or character `\N{AUBERGINE}`
@@ -124,11 +119,32 @@
 - - - -
 <br>
 
-## .:: Presence ::. ##
+## .:: 9 WordMeaning ::. ##
+🔸 <b>Installation</b>: `{p}plugin add webkide/modmail-plugins/wordmeaning@master`
+
+Modmail-plugins to find definitions of English words in Wikipedia, UrbanDictionary, and Oxford English Dictionary
+
+- [x] **`dict`** - Search definitions in English, supports **[synonyms|proverbs|examples]** as arguments
+- [x] **`urban`** - Urban Dictionary search, fetches up to 10 results per query
+- [x] **`wiki`** - Wikipedia search command that displays the abstract of the result
+
+> `{p}` will be your guild's prefix, by default it is **`?`** unless you changed it
+- - - -
+<br>
+
+### .:: 10 Starboard2 ::. ###
+- [ ] have to fix so it uses db correctly
+- - - -
+<br>
+
+### .:: 11 Presence ::. ###
 - [ ] there's already a command that works, but I might add one to loop a list of presence statuses
 - - - -
 - - - -
+<br>
 
 # .:: TO-DO ::. #
+
+At some point I might do these, or some other ones, it all depends on how bored I am...
 
 > `youtube`, `show_color`, `$modbot`, `Base` (`bg`, `sb`, `cc`, `search_group`)
