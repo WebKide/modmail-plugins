@@ -38,7 +38,7 @@ ball_answers = [
   "Most likely, but you have to take the first step",
   "Outlook is good, do your best!",
   "Yes",
-  "I͢fͪ yͧo̞u̎ c̮ͭa̴ͫn̳̊ rͣ̒e̤̿a̜ͣd͕͗ ṯ̭͗h́̉͝i̵̥͠ș̽ͤ m̺̤ͧę̏̌s̫͓̕s̟̐̀â͟ͅg̡̖͛ḛ̼̉, p͙̞̽l̪̤͞e͏͙͊ă̳̟s̳͋ͬé̎̑ \ns̞͑̂e͖͋́e̓̑̾ a̳̎̊ D͙̹ͅo̬ͦ̍c̔͊͟t̼̹̀o͏̄̑r̵̝ͦ a̰̳̔n̛̗̅d̮̔͘ a̒́͠s̃́̓k͓͍̿ f̰͐ͭo̳̚͢rͭ̏͏ b̿̐̍e͍̪͋ṭ̑̏t̶̗̙e̝ͮ͊ṙͧ͠ g̐͆͠ḷ͗͝aͫ̌̉s̖̩̽s̲̏̌e̴̓͗s̞̃̎",
+  "I͢fͪ yͧo̞u̎ c̮ͭa̴ͫn̛̗̅'t̼̹̀ rͣ̒e̤̿a̜ͣd͕͗ ṯ̭͗h́̉͝i̵̥͠ș̽ͤ m̺̤ͧę̏̌s̫͓̕s̟̐̀â͟ͅg̡̖͛ḛ̼̉, p͙̞̽l̪̤͞e͏͙͊ă̳̟s̳͋ͬé̎̑... \ns̞͑̂e͖͋́e̓̑̾ a̳̎̊ D͙̹ͅo̬ͦ̍c̔͊͟t̼̹̀o͏̄̑r̵̝ͦ a̰̳̔n̛̗̅d̮̔͘ a̒́͠s̃́̓k͓͍̿ f̰͐ͭo̳̚͢rͭ̏͏ b̿̐̍e͍̪͋ṭ̑̏t̶̗̙e̝ͮ͊ṙͧ͠ g̐͆͠ḷ͗͝aͫ̌̉s̖̩̽s̲̏̌e̴̓͗s̞̃̎",
   "Signs point to yes, but with some difficulty",
   "I'm busy right now, can you come by later? \nThank you",
   "Hazy reply, try again after a cold shower",
@@ -296,7 +296,7 @@ oracle_answer = [
 
 
 class Oracle(commands.Cog):
-    """(∩｀-´)⊃━☆ﾟ.*･｡ﾟ Understand any cituation with these oracle commands, but don't take them too seriously """
+    """(∩｀-´)⊃━☆ﾟ.*･｡ﾟ Understand any cituation with these oracle commands,\nbut don't take them too seriously """
     def __init__(self, bot):
         self.bot = bot
         self.mod_color = discord.Colour(0x7289da)  # Blurple
@@ -308,12 +308,12 @@ class Oracle(commands.Cog):
     @commands.command(aliases=['8ball'], no_pm=True)
     async def eightball(self, ctx, *, question=None):
         """ Ask questions to the 8ball """
-        if not question:
-            return await ctx.send('Where is your question?')
+        author = ctx.message.author
+
+        if not question:    return await ctx.send(f'What is your question {author.mention}?')  # 
 
         if question.endswith("?") and question != "?":
             response = random.choice(ball_answers)
-            author = ctx.message.author
 
             e = discord.Embed(color=self.user_color)
             e.set_author(name=f"{author.display_name}'s question:", icon_url=author.avatar_url)
@@ -321,32 +321,40 @@ class Oracle(commands.Cog):
             e.add_field(name='\N{BILLIARDS} answer:', value=f'```css\n{response}```')
             e.set_footer(text=f"ADVICE: Don't take this too seriously | {date.today()}")
 
-            try:
-                return await ctx.send(embed=e)
-            except discord.HTTPException:
-                await ctx.send(f'\N{BILLIARDS} answer: ```css\n{response}```')
+            try:    return await ctx.send(embed=e)
+            except discord.HTTPException:    await ctx.send(f'\N{BILLIARDS} answer: ```css\n{response}```')
 
-        else:
-            await ctx.send(f"*{question}* doesn't look like a yes/no question.")
+        else:    await ctx.send(f"*{question}* doesn't look like a yes/no question.")
 
     # +------------------------------------------------------------+
     # |            Prediction command: TAROT                       |
     # +------------------------------------------------------------+
     @commands.group(invoke_without_command=True, descriptions='3 cards spread reading', no_pm=True)
     async def tarot(self, ctx):
-        """ Reading of 3 cards for you """
-        msg = 'Relax and concentrate on your question, breathe in and out deeply, when you’re ready ' \
-            f'use **`{ctx.prefix}tarot reading`** to start your reading.'
-        return await ctx.send(msg, delete_after=69)
+        """ Basic Tarot spread
+        Usage:
+        {prefix}tarot reading
+        """
+        i = await ctx.send('Please relax and focus on your question...')
+        await asyncio.sleep(6)
 
-    @tarot.command(aliases=['cards'], no_pm=True)
-    async def reading(self, ctx):
+        await i.edit('Inhale deeply through your nose...')
+        await asyncio.sleep(5)
+
+        await i.edit('Exhale fully through your mouth...')
+        await asyncio.sleep(5)
+
+        last = f'You are ready, type:\n**`{ctx.prefix}tarot reading`**\nI will shuffle the cards and pick three for you.'
+        return await i.edit(last, delete_after=17)
+
+    @tarot.command(no_pm=True)
+    async def reading(self, ctx, *):
         """ 3 cards spread reading """
         u = ctx.author
         deck = 'https://i.imgur.com/rUAjxYx.png'
 
         try:
-            s = await ctx.send(f"Let me shuffle my tarot deck... {u.display_name}")
+            s = await ctx.send(f"Allow me to shuffle my Tarot deck... {u.display_name}")
             await ctx.channel.trigger_typing()
             await asyncio.sleep(5)
 
@@ -375,16 +383,14 @@ class Oracle(commands.Cog):
 
             await s.edit(embed=e)
 
-        except discord.Forbidden:
-            await ctx.send('I need embed perms to send result.')
+        except discord.Forbidden:    await ctx.send('I need embed perms in this channel to send the full result.')
 
     # +------------------------------------------------------------+
     # |            Prediction command: ORACLE                      |
     # +------------------------------------------------------------+
-    @commands.command(aliases=['crystalball', 'iching', 'i-ching'], no_pm=True)
-    async def oracle(self, ctx, *, question: str = None):
-        """
-        Oracle prediction
+    @commands.command(aliases=['crystalball', 'oracle', 'i-ching'], no_pm=True)
+    async def iching(self, ctx, *, question: str = None):
+        """ Ancient Oracle prediction
         Based on the ancient divination I Ching oracle,
         [use it as a guide]
         
@@ -395,16 +401,14 @@ class Oracle(commands.Cog):
         u = ctx.message.author
         p = ctx.invoked_with
 
-        if question is None:
-            return await ctx.send('You have to ask a yes/no question to use this command.', delete_after=23)
+        if question is None:    return await ctx.send('You have to ask a yes/no question to use this command.', delete_after=23)
 
         if question.endswith('?') and question != '?':
             try:
-                await ctx.send(f"Let me fetch your answer... {u.display_name}")
+                await ctx.send(f'Allow me to shuffle 3 ancient Chinese coins to answer your question... {u.display_name}')
                 await ctx.channel.trigger_typing()
                 await asyncio.sleep(5)
-            except discord.Forbidden:
-                pass
+            except discord.Forbidden:    pass
 
             e = discord.Embed(colour=discord.Colour(0xc5b358))
             e.set_thumbnail(url=iching)
@@ -413,8 +417,7 @@ class Oracle(commands.Cog):
             e.description = f'Meditation:\n{random.choice(oracle_answer)}'
             return await ctx.send(embed=e)
 
-        else:
-            return await ctx.send(f"*{question}*/ndoesn't look like a yes/no question.", delete_after=69)
+        else:    return await ctx.send(f"*{question}*/ndoesn't look like a yes/no question.", delete_after=69)
 
 
 def setup(bot):
