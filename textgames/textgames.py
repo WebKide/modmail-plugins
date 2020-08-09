@@ -218,25 +218,25 @@ class TextGames(commands.Cog):
         else:
             await ctx.channel.trigger_typing()
             flips = random.randint(3, 101)
-            toss = f'After being tossed up,\nthe coin flipped\n{flips} times in the air\nand landed showing:'
-            flop = f'*What are the odds?*\nAfter spinning {flips} times\nthe coin managed to\nland on its:'
+            toss = f'After being tossed up,\nthe coin flipped\n{flips} times in the air\nand landed showing: '
+            flop = f'*What are the odds?*\nAfter spinning {flips} times\nthe coin managed to\nland on its edge!'
 
-            heads = discord.Embed(color=0xa84300, description=toss)
+            heads = discord.Embed(color=0xa84300, description=toss + '**Heads**')
             heads.set_thumbnail(url=h)
             heads.set_author(name='Heads', icon_url=h)
-            heads.set_footer(text='1926 Golden Dollar')
+            heads.set_footer(text='1926 Golden Dollar', icon_url=h)
             # heads.add_field(name='\N{SMALL ORANGE DIAMOND} Heads', value='`1926 Golden Dollar`')
 
-            tails = discord.Embed(color=0x1f8b4c, description=toss)
+            tails = discord.Embed(color=0x1f8b4c, description=toss + '**Tails**')
             tails.set_thumbnail(url=t)
             tails.set_author(name='Heads', icon_url=t)
-            tails.set_footer(text='1926 Golden Dollar')
+            tails.set_footer(text='1926 Golden Dollar', icon_url=t)
             # tails.add_field(name='\N{SMALL ORANGE DIAMOND} Tails', value='`1926 Golden Dollar`')
 
             edge = discord.Embed(color=0x23272a, description=flop)  # odds are 11/1
             edge.set_thumbnail(url=e)
             edge.set_author(name='Heads', icon_url=e)
-            edge.set_footer(text='...try again')
+            edge.set_footer(text='...try again', icon_url=e)
             # edge.add_field(name='\N{BLACK SMALL SQUARE} Edge', value='...try again')
 
             result = random.choice([heads, tails, heads, tails, heads, tails, heads, tails, heads, tails, edge])
