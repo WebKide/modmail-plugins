@@ -32,7 +32,7 @@ _HEADERS = {'User-Agent': 'Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 6.1; WO
 
 dev_list = [323578534763298816]
 
-class Words(commands.Cog):
+class WordMeaning(commands.Cog):
     """(∩｀-´)⊃━☆ﾟ.*･｡ﾟ find definitions of English words """
     def __init__(self, bot):
         self.bot = bot
@@ -273,4 +273,4 @@ class Words(commands.Cog):
 
 
 def setup(bot):
-    bot.add_cog(Words(bot))
+    bot.add_cog(WordMeaning(bot))
