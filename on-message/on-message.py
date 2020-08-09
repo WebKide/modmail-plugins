@@ -27,9 +27,6 @@ class OnMessage(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    # +------------------------------------------------------------+
-    # |               RESPONDS TO TEXT IN MESSAGE                  |
-    # +------------------------------------------------------------+
     @commands.Cog.listener()
     async def on_message(self, message):
         if message.author.bot:
