@@ -348,7 +348,7 @@ class Oracle(commands.Cog):
         return await i.edit(last, delete_after=17)
 
     @tarot.command(no_pm=True)
-    async def reading(self, ctx):
+    async def reading(self, ctx, *, question: str = None):
         """ 3 cards spread reading """
         u = ctx.author
         deck = 'https://i.imgur.com/rUAjxYx.png'
