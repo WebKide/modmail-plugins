@@ -15,7 +15,7 @@
 
 # Oracle
 
-This modmail-plugin contains 3 main commands for prediction: 8ball [expanded version], Tarot [with major arcana], and iChing [ancient Chinese coins].
+This modmail-plugin contains 3 main commands for prediction: **`8ball`** [extended version], **`Tarot`** [with major arcana], and **`iChing`** [ancient Chinese coins].
 
 > Please keep in mind that the purpose of these commands is for entertainment or education, the answers aren't meant to replace expert legal or medical advise. Don't take it too seriously so you can enjoy it as much as we do.
 
