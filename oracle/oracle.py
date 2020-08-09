@@ -347,8 +347,8 @@ class Oracle(commands.Cog):
         last = f'You are ready, type:\n**`{ctx.prefix}tarot reading`**\nI will shuffle the cards and pick three for you.'
         return await i.edit(last, delete_after=17)
 
-    @tarot.command()
-    async def reading(self, ctx, *):
+    @tarot.command(no_pm=True)
+    async def reading(self, ctx):
         """ 3 cards spread reading """
         u = ctx.author
         deck = 'https://i.imgur.com/rUAjxYx.png'
