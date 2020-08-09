@@ -36,7 +36,7 @@ class OnMessage(commands.Cog):
             hello = random.choice(['Hello ', 'Hi there ', 'Howdy '])
             iam = 'I am **Moderator** 🅑🅞🅣, pleased to meet you.'
             msg = message.content[5:]
-            await message.channel.send((f'{hello}' + f'*{msg}*' + f', {iam}')
+            await message.channel.send(f'{hello}' + f'*{msg}*' + f', {iam}')
 
 def setup(bot):
     bot.add_cog(OnMessage(bot))
