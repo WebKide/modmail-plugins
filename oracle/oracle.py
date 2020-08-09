@@ -338,10 +338,12 @@ class Oracle(commands.Cog):
         i = await ctx.send('Please relax and focus on your question...')
         await asyncio.sleep(6)
 
-        await i.edit('Inhale deeply through your nose...')
+        ii = 'Inhale deeply through your nose...'
+        await i.edit(ii)
         await asyncio.sleep(5)
 
-        await i.edit('Exhale fully through your mouth...')
+        iii = 'Exhale fully through your mouth...'
+        await i.edit(iii)
         await asyncio.sleep(5)
 
         last = f'You are ready, type:\n**`{ctx.prefix}tarot reading`**\nI will shuffle the cards and pick three for you.'
