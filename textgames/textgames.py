@@ -223,19 +223,19 @@ class TextGames(commands.Cog):
 
             heads = discord.Embed(color=0xa84300, description=toss + '**Heads**')
             heads.set_thumbnail(url=h)
-            heads.set_author(name='Heads', icon_url=h)
+            heads.set_author(name='Coin Flip')
             heads.set_footer(text='1926 Golden Dollar', icon_url=h)
             # heads.add_field(name='\N{SMALL ORANGE DIAMOND} Heads', value='`1926 Golden Dollar`')
 
             tails = discord.Embed(color=0x1f8b4c, description=toss + '**Tails**')
             tails.set_thumbnail(url=t)
-            tails.set_author(name='Heads', icon_url=t)
+            tails.set_author(name='Coin Flip')
             tails.set_footer(text='1926 Golden Dollar', icon_url=t)
             # tails.add_field(name='\N{SMALL ORANGE DIAMOND} Tails', value='`1926 Golden Dollar`')
 
             edge = discord.Embed(color=0x23272a, description=flop)  # odds are 11/1
             edge.set_thumbnail(url=e)
-            edge.set_author(name='Heads', icon_url=e)
+            edge.set_author(name='Oops...', icon_url=e)
             edge.set_footer(text='...try again', icon_url=e)
             # edge.add_field(name='\N{BLACK SMALL SQUARE} Edge', value='...try again')
 
