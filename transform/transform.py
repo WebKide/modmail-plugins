@@ -18,7 +18,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-import discord, asyncio, random, textwrap, traceback, unicodedata2 as unicodedata
+import discord, asyncio, random, textwrap, traceback, unicodedata2 as unicodedata, string
 
 from discord.ext import commands
 
