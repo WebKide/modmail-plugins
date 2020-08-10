@@ -147,5 +147,25 @@ class Transform(commands.Cog):
                     await ctx.send(f'​`​`​`{e}​`​`​`', delete_after=15)
                 else:    pass
 
+    # +------------------------------------------------------------+
+    # |                     SMALLCAPS                              |
+    # +------------------------------------------------------------+
+    @commands.command(aliases=['sc'], no_pm=True)
+    async def smallcaps(self,ctx,*, msg: str = None):
+        """ ᴄᴏɴᴠᴇʀᴛ ᴀ ᴛᴇxᴛ ᴛᴏ ꜱᴍᴀʟʟ ᴄᴀᴘꜱ """
+        if msg is not None:
+            alpha = list(string.ascii_lowercase)     
+            converter = ['ᴀ', 'ʙ', 'ᴄ', 'ᴅ', 'ᴇ', 'ꜰ', 'ɢ', 'ʜ', 'ɪ', 'ᴊ', 'ᴋ', 'ʟ', 'ᴍ', 'ɴ', 'ᴏ', 'ᴘ', 'ǫ', 'ʀ', 'ꜱ', 'ᴛ', 'ᴜ', 'ᴠ', 'ᴡ', 'x', 'ʏ', 'ᴢ']
+            i = ''
+            exact = msg.lower()
+            for letter in exact:
+                if letter in alpha:
+                    index = alpha.index(letter)
+                    i += converter[index]
+                else:    i += letter
+            return await ctx.send(i)
+        else:    await ctx.send(f'**Usage:**\n`{ctx.prefix}{ctx.invoked_with} [text]`', delete_after=23)
+
+
 def setup(bot):
     bot.add_cog(Transform(bot))
