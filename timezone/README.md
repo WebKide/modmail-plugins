@@ -26,6 +26,6 @@ I made this modmail-plugin because the members of our guild have a hard time fig
 
 # Installation
 
-🔸 <b>Installation</b>: `{p}plugin add webkide/modmail-plugins/timezone@master`
+🔸 <b>Installation</b>: `{p}plugin add WebKide/modmail-plugins/timezone@master`
 
 > `{p}` will be your guild's prefix, by default it is **`?`** unless you changed it
