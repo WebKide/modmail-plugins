@@ -141,7 +141,7 @@ class TextGames(commands.Cog):
                     e.set_footer(text="\N{JAPANESE SYMBOL FOR BEGINNER} We're square")
                     await ctx.channel.send(embed=e)
 
-            except AttributeError:    return await ctx.send(errored, delete_after=369)
+            except AttributeError:    return await ctx.send(errored, delete_after=69)
 
     # +------------------------------------------------------------+
     # |                   Choose from list                         |
@@ -192,12 +192,13 @@ class TextGames(commands.Cog):
         Defaults to coin toss.
         
         Usage:
-        {prefix}flip @username
+        {prefix}flip [text]
         {prefix}tossacoin
         """
         h = 'https://media.discordapp.net/attachments/541059392951418880/556977776771596333/1926_heads.png'
         t = 'https://media.discordapp.net/attachments/541059392951418880/556977839166193674/1926_tails.png'
         e = 'https://media.discordapp.net/attachments/541059392951418880/556978114354348052/1926_edge.png'
+        c = '1926 Golden Dollar coin'
         if something is not None:
             char = "abcdefghijklmnopqrstuvwxyz"
             tran = "ɐqɔpǝɟƃɥᴉɾʞʅɯuodbɹsʇnʌʍxʎz"
@@ -221,7 +222,6 @@ class TextGames(commands.Cog):
             flips = random.randint(3, 101)
             toss = f'After being tossed up,\nthe coin flipped\n{flips} times in the air\nand landed showing: '
             flop = f'*What are the odds?*\nAfter spinning {flips} times\nthe coin managed to\nland on its edge!'
-            c = '1926 Golden Dollar coin'
 
             heads = discord.Embed(color=0xa84300, description=toss + '**Heads**')
             heads.set_thumbnail(url=h)
@@ -243,11 +243,11 @@ class TextGames(commands.Cog):
 
             result = random.choice([heads, tails, heads, tails, heads, tails, heads, tails, heads, tails, edge])
 
-            await asyncio.sleep(5)
+            await asyncio.sleep(8)
 
             try:    await tossing.edit(embed=result)
 
-            except discord.HTTPException:    await ctx.send(random.choice(['Heads', 'Tails']))
+            except discord.HTTPException:    await ctx.send(random.choice(['Heads', 'Tails']))  # odds are 50/50
 
     # +------------------------------------------------------------+
     # |                     Guess                                  |
