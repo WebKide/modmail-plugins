@@ -216,6 +216,7 @@ class TextGames(commands.Cog):
             except discord.HTTPException:    await ctx.send(name[:1980][::-1])
 
         else:
+            tossing = await ctx.send('Tosing the coin up in the air . . .')
             await ctx.channel.trigger_typing()
             flips = random.randint(3, 101)
             toss = f'After being tossed up,\nthe coin flipped\n{flips} times in the air\nand landed showing: '
@@ -224,13 +225,13 @@ class TextGames(commands.Cog):
 
             heads = discord.Embed(color=0xa84300, description=toss + '**Heads**')
             heads.set_thumbnail(url=h)
-            heads.set_author(name='Coin Flip')
+            heads.set_author(name='Coin Flip: Heads')
             heads.set_footer(text=c, icon_url=h)
             # heads.add_field(name='\N{SMALL ORANGE DIAMOND} Heads', value=c)
 
             tails = discord.Embed(color=0x1f8b4c, description=toss + '**Tails**')
             tails.set_thumbnail(url=t)
-            tails.set_author(name='Coin Flip')
+            tails.set_author(name='Coin Flip: Tails')
             tails.set_footer(text=c, icon_url=t)
             # tails.add_field(name='\N{SMALL ORANGE DIAMOND} Tails', value=c)
 
@@ -244,7 +245,7 @@ class TextGames(commands.Cog):
 
             await asyncio.sleep(5)
 
-            try:    await ctx.send(embed=result)
+            try:    await tossing.edit(embed=result)
 
             except discord.HTTPException:    await ctx.send(random.choice(['Heads', 'Tails']))
 
