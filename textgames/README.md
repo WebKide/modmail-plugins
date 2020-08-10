@@ -25,6 +25,6 @@ Just some random mini games:
 
 # Installation
 
-🔸 <b>Installation</b>: `{p}plugin add webkide/modmail-plugins/textgames@master`
+🔸 <b>Installation</b>: `{p}plugin add WebKide/modmail-plugins/textgames@master`
 
 > `{p}` will be your guild's prefix, by default it is **`?`** unless you changed it
