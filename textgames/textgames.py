@@ -220,18 +220,19 @@ class TextGames(commands.Cog):
             flips = random.randint(3, 101)
             toss = f'After being tossed up,\nthe coin flipped\n{flips} times in the air\nand landed showing: '
             flop = f'*What are the odds?*\nAfter spinning {flips} times\nthe coin managed to\nland on its edge!'
+            c = '1926 Golden Dollar coin'
 
             heads = discord.Embed(color=0xa84300, description=toss + '**Heads**')
             heads.set_thumbnail(url=h)
             heads.set_author(name='Coin Flip')
-            heads.set_footer(text='1926 Golden Dollar', icon_url=h)
-            # heads.add_field(name='\N{SMALL ORANGE DIAMOND} Heads', value='`1926 Golden Dollar`')
+            heads.set_footer(text=c, icon_url=h)
+            # heads.add_field(name='\N{SMALL ORANGE DIAMOND} Heads', value=c)
 
             tails = discord.Embed(color=0x1f8b4c, description=toss + '**Tails**')
             tails.set_thumbnail(url=t)
             tails.set_author(name='Coin Flip')
-            tails.set_footer(text='1926 Golden Dollar', icon_url=t)
-            # tails.add_field(name='\N{SMALL ORANGE DIAMOND} Tails', value='`1926 Golden Dollar`')
+            tails.set_footer(text=c, icon_url=t)
+            # tails.add_field(name='\N{SMALL ORANGE DIAMOND} Tails', value=c)
 
             edge = discord.Embed(color=0x23272a, description=flop)  # odds are 11/1
             edge.set_thumbnail(url=e)
@@ -278,7 +279,7 @@ class TextGames(commands.Cog):
         e = discord.Embed(color=self.user_color)
 
         if number is None:
-            return await ctx.send('please choose a number between 1 and 11', delete_after=23)
+            return await ctx.send('please write any number between 1 and 11', delete_after=23)
 
         if number is not None:
             if number < answer or number > answer:
