@@ -32,9 +32,14 @@ class OnMessage(commands.Cog):
         if message.author.bot:
             return
 
+        # => Only respond with a 33% chance
+        #if random.randint(1, 3) != 1:
+        #    return
+
+
         if message.content.startswith('I am '):
             hello = random.choice(['Hello ', 'Hi there ', 'Howdy '])
-            iam = 'I am **Moderator**:bot_tag:, pleased to meet you.'  # upload the BOT emoji as :bot_tag: in your Discord guild
+            iam = f'I am {bot.user.mention}<:bot_tag:729987217396727868>, pleased to meet you.'  # upload the BOT emoji as :bot_tag: in your Discord guild
             msg = message.content[5:]
             await message.channel.send(f'{hello}' + f'*{msg}*' + f', {iam}')
 
