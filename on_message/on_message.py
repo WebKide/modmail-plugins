@@ -21,6 +21,8 @@ SOFTWARE.
 import discord, random
 from discord.ext import commands
 
+_ignore = [338886043585609728, 544533175309959168]
+
 
 class OnMessage(commands.Cog):
     """ (∩｀-´)⊃━☆ﾟ.*･｡ﾟ non-commands, bot responds to specific text in channel """
@@ -32,16 +34,16 @@ class OnMessage(commands.Cog):
         if message.author.bot:
             return
 
-        # => Only respond with a 33% chance
-        #if random.randint(1, 3) != 1:
-        #    return
-
+        # => Only respond to 33.3% of messages
+        if random.randint(1, 3) != 1:
+            return
 
         if message.content.startswith('I am '):
             hello = random.choice(['Hello ', 'Hi there ', 'Howdy '])
             iam = f'I am {self.bot.user.mention}<:bot_tag:729987217396727868>, pleased to meet you.'  # upload the BOT emoji as :bot_tag: in your Discord guild
-            msg = message.content[5:]
-            await message.channel.send(f'{hello}' + f'*{msg}*' + f', {iam}')
+            msg = message.content[5:].replace('*', '')
+            m = ' '.join(msg.split(' ')[:7])
+            await message.channel.send(f'{hello}' + f'**{m}**' + f', {iam}')
 
 def setup(bot):
     bot.add_cog(OnMessage(bot))
