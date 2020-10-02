@@ -37,8 +37,8 @@ class Util(commands.Cog):
     async def util(self, ctx):
         """ Show Bot's env stats """
         try:
-            memory_usage = bot.process.memory_full_info().uss / 1024**2
-            cpu_usage = bot.process.cpu_percent() / psutil.cpu_count()
+            memory_usage = self.bot.process.memory_full_info().uss / 1024**2
+            cpu_usage = self.bot.process.cpu_percent() / psutil.cpu_count()
             
             cpu = f'CPU Usage:  {cpu_usage:.2f}% CPU processing'
             ram = f'RAM Usage:  {memory_usage:.2f} MiB of memory'
