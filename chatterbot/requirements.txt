@@ -1,1 +1,1 @@
-chatterbot
+chatterbot==10.2.3
