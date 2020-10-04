@@ -337,6 +337,66 @@ class Translate(commands.Cog):
             await ctx.send(msg, delete_after=420)
 
     # +------------------------------------------------------------+
+    # |                Translate plain text                        |
+    # +------------------------------------------------------------+
+    @commands.command(no_pm=True)
+    async def t(self, ctx, language: str = None, *, text: str = None):
+        """
+        (∩｀-´)⊃━☆ﾟ.*･｡ﾟ translate some text
+        """
+        lang = language.title()
+        available = ', '.join(conv.values())
+        try:
+            if lang in conv:
+                t = f'{translate(text, lang)}'
+                try:    await ctx.message.add_reaction('\N{WHITE HEAVY CHECK MARK}')
+                except discord.Forbidden:    pass
+                finally:
+                    if (len(t) > 2000):
+                        cropped = t[:2000]
+                        await ctx.send(cropped)
+                    else:
+                        await ctx.send(t)
+
+            lang = dict(zip(conv.values(), conv.keys())).get(lang.lower().title())
+            if lang:
+                tn = f'{translate(text, lang)}'
+                try:    await ctx.message.add_reaction('\N{WHITE HEAVY CHECK MARK}')
+                except discord.Forbidden:    pass
+                finally:
+                    if (len(tn) > 2000):
+                        cropped = tn[:2000]
+                        await ctx.send(cropped)
+                    else:
+                        await ctx.send(tn)
+            else:    return
+
+        except discord.Forbidden:
+            if lang in conv:
+                trans = translate(text, lang)
+                if (len(trans) > 2000):
+                        cropped = trans[:2000]
+                        return await ctx.send(cropped)
+                    else:
+                        return await ctx.send(trans)
+
+            lang = dict(zip(conv.values(), conv.keys())).get(lang.lower().title())
+            if lang:
+                trans = f'{ctx.message.author.mention} | *{translate(text, lang)}*'
+                if (len(trans) > 2000):
+                        cropped = trans[:2000]
+                        await ctx.send(cropped)
+                    else:
+                        await ctx.send(trans)
+                        
+                try:    await ctx.message.add_reaction('\N{WHITE HEAVY CHECK MARK}')
+                except discord.Forbidden:    return
+
+            else:
+                try:    await ctx.message.add_reaction('\N{BLACK QUESTION MARK ORNAMENT}')
+                except discord.Forbidden:    return
+
+    # +------------------------------------------------------------+
     # |              Translate Message with ID                     |
     # +------------------------------------------------------------+
     @commands.command(aliases=["tt"])
