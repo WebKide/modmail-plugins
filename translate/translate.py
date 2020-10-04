@@ -359,19 +359,19 @@ class Translate(commands.Cog):
             if lang in conv:
                 trans = translate(text, lang)
                 if (len(trans) > 2000):
-                        cropped = trans[:2000]
-                        return await ctx.send(cropped)
-                    else:
-                        return await ctx.send(trans)
+                    cropped = trans[:2000]
+                    return await ctx.send(cropped)
+                else:
+                    return await ctx.send(trans)
 
             lang = dict(zip(conv.values(), conv.keys())).get(lang.lower().title())
             if lang:
                 trans = f'{ctx.message.author.mention} | *{translate(text, lang)}*'
                 if (len(trans) > 2000):
-                        cropped = trans[:2000]
-                        await ctx.send(cropped)
-                    else:
-                        await ctx.send(trans)
+                    cropped = trans[:2000]
+                    await ctx.send(cropped)
+                else:
+                    await ctx.send(trans)
                         
                 try:
                     await ctx.message.add_reaction('\N{WHITE HEAVY CHECK MARK}')
