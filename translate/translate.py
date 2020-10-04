@@ -316,27 +316,6 @@ class Translate(commands.Cog):
                     pass
 
     # +------------------------------------------------------------+
-    # |                   Available Langs                          |
-    # +------------------------------------------------------------+
-    @tr.command()
-    async def langs(self, ctx):
-        """ List of available languages """
-        available = ', '.join(conv.values())
-        foo = 'Full list in https://github.com/WebKide/modmail-plugins/translate/langs.json'
-
-        em = discord.Embed(color=discord.Color.blue())
-        em.set_author(name='Available Languages:', icon_url=ctx.message.author.avatar_url),
-        em.description = f'```bf\n{available}```'
-        em.set_footer(text=foo, icon_url='https://i.imgur.com/yeHFKgl.png')
-
-        try:
-            await ctx.send(embed=em, delete_after=420)
-
-        except discord.Forbidden:
-            msg = f'Available languages:\n```bf\n{available}```\n{foo}'
-            await ctx.send(msg, delete_after=420)
-
-    # +------------------------------------------------------------+
     # |                Translate plain text                        |
     # +------------------------------------------------------------+
     @commands.command(no_pm=True)
@@ -349,8 +328,10 @@ class Translate(commands.Cog):
         try:
             if lang in conv:
                 t = f'{translate(text, lang)}'
-                try:    await ctx.message.add_reaction('\N{WHITE HEAVY CHECK MARK}')
-                except discord.Forbidden:    pass
+                try:
+                    await ctx.message.add_reaction('\N{WHITE HEAVY CHECK MARK}')
+                except discord.Forbidden:
+                    pass
                 finally:
                     if (len(t) > 2000):
                         cropped = t[:2000]
@@ -361,15 +342,18 @@ class Translate(commands.Cog):
             lang = dict(zip(conv.values(), conv.keys())).get(lang.lower().title())
             if lang:
                 tn = f'{translate(text, lang)}'
-                try:    await ctx.message.add_reaction('\N{WHITE HEAVY CHECK MARK}')
-                except discord.Forbidden:    pass
+                try:
+                    await ctx.message.add_reaction('\N{WHITE HEAVY CHECK MARK}')
+                except discord.Forbidden:
+                    pass
                 finally:
                     if (len(tn) > 2000):
                         cropped = tn[:2000]
                         await ctx.send(cropped)
                     else:
                         await ctx.send(tn)
-            else:    return
+            else:
+                return
 
         except discord.Forbidden:
             if lang in conv:
@@ -389,12 +373,37 @@ class Translate(commands.Cog):
                     else:
                         await ctx.send(trans)
                         
-                try:    await ctx.message.add_reaction('\N{WHITE HEAVY CHECK MARK}')
-                except discord.Forbidden:    return
+                try:
+                    await ctx.message.add_reaction('\N{WHITE HEAVY CHECK MARK}')
+                except discord.Forbidden:
+                    return
 
             else:
-                try:    await ctx.message.add_reaction('\N{BLACK QUESTION MARK ORNAMENT}')
-                except discord.Forbidden:    return
+                try:
+                    await ctx.message.add_reaction('\N{BLACK QUESTION MARK ORNAMENT}')
+                except discord.Forbidden:
+                    return
+
+    # +------------------------------------------------------------+
+    # |                   Available Langs                          |
+    # +------------------------------------------------------------+
+    @tr.command()
+    async def langs(self, ctx):
+        """ List of available languages """
+        available = ', '.join(conv.values())
+        foo = 'Full list in https://github.com/WebKide/modmail-plugins/translate/langs.json'
+
+        em = discord.Embed(color=discord.Color.blue())
+        em.set_author(name='Available Languages:', icon_url=ctx.message.author.avatar_url),
+        em.description = f'```bf\n{available}```'
+        em.set_footer(text=foo, icon_url='https://i.imgur.com/yeHFKgl.png')
+
+        try:
+            await ctx.send(embed=em, delete_after=420)
+
+        except discord.Forbidden:
+            msg = f'Available languages:\n```bf\n{available}```\n{foo}'
+            await ctx.send(msg, delete_after=420)
 
     # +------------------------------------------------------------+
     # |              Translate Message with ID                     |
