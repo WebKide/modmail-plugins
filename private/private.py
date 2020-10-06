@@ -46,7 +46,7 @@ class Private(commands.Cog):
         ─=≡Σ(つಠ益ಠ)つ command to send a Push-notification in text-channel
         
         Usage:
-        {prefix}{invoked_with} []
+        {prefix}{ctx.invoked_with} []
         """
         try:
             await ctx.message.delete()
