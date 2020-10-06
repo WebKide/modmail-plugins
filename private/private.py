@@ -36,7 +36,7 @@ class Private(commands.Cog):
     # |                        PUSH                                |
     # +------------------------------------------------------------+
     @commands.command(description='Personal Guild command', no_pm=True)
-    async def push(self, ctx, *, unique_event: str = None):  # channel: discord.TextChannel = None):
+    async def push(self, ctx, *, unique_event: str = None):
         """ ─=≡Σ(つಠ益ಠ)つ command to send a Push-notification reminder """
         try:
             await ctx.message.delete()
@@ -56,7 +56,7 @@ class Private(commands.Cog):
                 i =  '\U0001f538'
                 g = ctx.message.guild
                 if unique_event is not None:
-                    v = f" to celebrate together **{unique_event}**."
+                    v = f" where we gather together for the celebration of **{unique_event}**."
                 else:
                     v = random.choice([
                         " where are continuing yesterday's topic.",
