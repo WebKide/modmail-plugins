@@ -68,13 +68,13 @@ class Private(commands.Cog):
                 i =  '\U0001f538'
                 g = ctx.message.guild
                 if unique_event is not None:
-                    v = f" to gather together for the celebration of **{unique_event}**."
+                    v = f" and to gather together for the celebration of **{unique_event}**."
                 else:
                     v = random.choice([
                         " to continue with yesterday's topic.",
                         " where we'll pick up from yesterday's topic.",
                         " where we'll continue from where we left off yesterday.",
-                        " to partake in the continuation of yesterday's topic."
+                        " and partake in the continuation of yesterday's topic."
                     ])
                 m = f"{i} {str(x)} (IST) is a perfect day to listen to the "\
                     f"**{g}** podcast{v}\n{''.join(c_topic)}"
