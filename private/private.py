@@ -33,10 +33,10 @@ class Private(commands.Cog):
         self.bot = bot
 
     # +------------------------------------------------------------+
-    # |                        PUSH                                |
+    # |                 PUSH-NOTIFICATION                          |
     # +------------------------------------------------------------+
-    @commands.command(description='Personal Guild command', no_pm=True)
-    async def push(self, ctx, *, unique_event: str = None):
+    @commands.command(description='Personal Guild command', no_pm=True, aliases=['notification', 'push', 'poke', 'everyone'])
+    async def nudge(self, ctx, *, unique_event: str = None):
         """ ─=≡Σ(つಠ益ಠ)つ command to send a Push-notification reminder """
         try:
             await ctx.message.delete()
@@ -56,12 +56,13 @@ class Private(commands.Cog):
                 i =  '\U0001f538'
                 g = ctx.message.guild
                 if unique_event is not None:
-                    v = f" where we gather together for the celebration of **{unique_event}**."
+                    v = f" to gather together for the celebration of **{unique_event}**."
                 else:
                     v = random.choice([
-                        " where are continuing yesterday's topic.",
-                        " where will pick up from yesterday's topic.",
-                        " where we'll continuing from where we left off yesterday."
+                        " to continue with yesterday's topic.",
+                        " where we'll pick up from yesterday's topic.",
+                        " where we'll continue from where we left off yesterday.",
+                        " to partake in the continuation of yesterday's topic."
                     ])
                 m = f"{i} {str(x)} (IST) is a perfect day to listen to the **{g}** podcast{v}\n{''.join(channel_topic)}"
                 _msg = m.replace('1 ', '1ˢᵗ ').replace('2 ', '2ⁿᵈ ')\
