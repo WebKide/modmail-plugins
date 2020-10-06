@@ -42,7 +42,7 @@ class Private(commands.Cog):
     @commands.command(description='Personal Guild command', aliases=['notification', 'push', 'poke', 'everyone'], no_pm=True)
     @commands.has_any_role('Admin', 'Mod', 'DJ', 'Owner')
     async def nudge(self, ctx, *, unique_event: str = None):
-        """
+        f"""
         ─=≡Σ(つಠ益ಠ)つ command to send a Push-notification in text-channel
         
         Usage:
