@@ -63,7 +63,7 @@ class Private(commands.Cog):
             error_msg = f"{u}, update this channel's **Topic** for this `command` to work!"
             help_msg = "Tip: check other channel's Topics to get an idea of how to format their content."
             if '—' in channel.topic:
-                channel_topic = channel.topic.replace('\n', '— ').split('—')[-1:]
+                c_topic = channel.topic.replace('\n', '— ').split('—')[-1:]
                 x = t.now(z('Asia/Calcutta')).strftime(f'%A %B %d')
                 i =  '\U0001f538'
                 g = ctx.message.guild
