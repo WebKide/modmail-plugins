@@ -39,14 +39,15 @@ class Private(commands.Cog):
     # +------------------------------------------------------------+
     # |                 PUSH-NOTIFICATION                          |
     # +------------------------------------------------------------+
-    @commands.command(description='Personal Guild command', aliases=['notification', 'push', 'poke', 'everyone'], no_pm=True)
+    @commands.command(description='Personal Guild command', aliases=['poke', 'push', 'notification', 'everyone'], no_pm=True)
     @commands.has_any_role('Admin', 'Mod', 'DJ', 'Owner')
     async def nudge(self, ctx, *, unique_event: str = None):
-        f"""
+        """
         ─=≡Σ(つಠ益ಠ)つ command to send a Push-notification in text-channel
         
         Usage:
-        {prefix}{ctx.invoked_with} []
+        {prefix}poke [event or celebration]
+        {prefix}nudge [event or celebration]
         """
         try:
             await ctx.message.delete()
