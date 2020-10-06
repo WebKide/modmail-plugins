@@ -72,8 +72,8 @@ class Private(commands.Cog):
                     v = f" and to gather together for the celebration of **{unique_event}**."
                 else:
                     v = random.choice([
-                        " to continue with yesterday's topic.",
-                        " where we'll pick up from yesterday's topic.",
+                        " and to continue with yesterday's topic.",
+                        " where we shall pick up from yesterday's topic.",
                         " where we'll continue from where we left off yesterday.",
                         " and partake in the continuation of yesterday's topic."
                     ])
