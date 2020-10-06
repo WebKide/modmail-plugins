@@ -24,33 +24,45 @@ from datetime import datetime as t
 from pytz import timezone as z
 from discord.ext import commands
 
-_mods = [('ﾠ ﾠ#1502', 323578534763298816), ('DKD', 358420835108913153), ('VDD', 723061140816527412)]
-
 
 class Private(commands.Cog):
     """─=≡Σ(つಠ益ಠ)つ this is a private cog for my personal discord guild, so it won't work for yours! """
     def __init__(self, bot):
         self.bot = bot
+        self.mods = [
+            ('null', 323578534763298816),
+            ('DKD', 358420835108913153),
+            ('VDD', 723061140816527412),
+            ('alt', 324040201225633794)
+        ]
 
     # +------------------------------------------------------------+
     # |                 PUSH-NOTIFICATION                          |
     # +------------------------------------------------------------+
-    @commands.command(description='Personal Guild command', no_pm=True, aliases=['notification', 'push', 'poke', 'everyone'])
+    @commands.command(description='Personal Guild command', aliases=['notification', 'push', 'poke', 'everyone'], no_pm=True)
+    @commands.has_any_role('Admin', 'Mod', 'DJ', 'Owner')
     async def nudge(self, ctx, *, unique_event: str = None):
-        """ ─=≡Σ(つಠ益ಠ)つ command to send a Push-notification reminder """
+        """
+        ─=≡Σ(つಠ益ಠ)つ command to send a Push-notification in text-channel
+        
+        Usage:
+        {prefix}{invoked_with} []
+        """
         try:
             await ctx.message.delete()
         except discord.Forbidden:
             pass
 
-        if ctx.author.id not in (mod[1] for mod in _mods):
-            return
+        # if ctx.author.id not in (mod[1] for mod in self.mods):
+        #    return
 
         u = ctx.message.author.mention
         channel =  ctx.channel or ctx.message.channel
 
         if isinstance(channel, discord.TextChannel):
-            try:
+            error_msg = f"{u}, update this channel's **Topic** for this `command` to work!"
+            help_msg = "Tip: check other channel's Topics to get an idea of how to format their content."
+            if '—' in channel.topic:
                 channel_topic = channel.topic.replace('\n', '— ').split('—')[-1:]
                 x = t.now(z('Asia/Calcutta')).strftime(f'%A %B %d')
                 i =  '\U0001f538'
@@ -64,16 +76,15 @@ class Private(commands.Cog):
                         " where we'll continue from where we left off yesterday.",
                         " to partake in the continuation of yesterday's topic."
                     ])
-                m = f"{i} {str(x)} (IST) is a perfect day to listen to the **{g}** podcast{v}\n{''.join(channel_topic)}"
+                m = f"{i} {str(x)} (IST) is a perfect day to listen to the "\
+                    f"**{g}** podcast{v}\n{''.join(c_topic)}"
                 _msg = m.replace('1 ', '1ˢᵗ ').replace('2 ', '2ⁿᵈ ')\
                         .replace('3 ', '3ʳᵈ ').replace('4 ', '4ᵗʰ ')\
                         .replace('5 ', '5ᵗʰ ').replace('6 ', '6ᵗʰ ')\
                         .replace('7 ', '7ᵗʰ ').replace('8 ', '8ᵗʰ ')\
                         .replace('9 ', '9ᵗʰ ').replace('0 ', '0ᵗʰ ')
                 await ctx.send(_msg)
-            except Exception as e:
-                error_msg = f"{u}, update this channel's Topic for this `command` to work!\n\n`{e}`\n\n"
-                help_msg = "Tip: check other channel's Topics to get an idea of how to format their content."
+            else:
                 await ctx.send(error_msg + help_msg, delete_after=23)
         else:
             pass
