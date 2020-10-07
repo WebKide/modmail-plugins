@@ -68,7 +68,7 @@ class Private(commands.Cog):
                 #  x = t.now(z('Asia/Calcutta')).strftime(f'%A %B %d')
                 i =  '\U0001f538'
                 g = ctx.message.guild
-                day_fix = f"{str(t.now(z('Asia/Calcutta')).strftime(f'%A %B %d'))}"
+                day_fix = str(t.now(z('Asia/Calcutta')).strftime(f'%A %B %d'))
                 date_fixed = day_fix.replace('1 ', '1ˢᵗ ').replace('2 ', '2ⁿᵈ ')\
                                     .replace('3 ', '3ʳᵈ ').replace('4 ', '4ᵗʰ ')\
                                     .replace('5 ', '5ᵗʰ ').replace('6 ', '6ᵗʰ ')\
