@@ -62,39 +62,40 @@ class Private(commands.Cog):
         error_msg = f"{u}, update this channel's **Topic** for this `command` to work!"
         help_msg = "Tip: check other channel's Topics to get an idea of how to format their content."
 
-        if isinstance(channel, discord.TextChannel):
-            if '—' in channel.topic:
-                c_topic = channel.topic.replace('\n', '— ').split('—')[-1:]
-                #  x = t.now(z('Asia/Calcutta')).strftime(f'%A %B %d')
-                i =  '\U0001f538'
-                g = ctx.message.guild
-                day_fix = f"{str(t.now(z('Asia/Calcutta')).strftime(f'%A %B %d'))} (IST)"
-                date_fixed = day_fix.replace('1 ', '1ˢᵗ ').replace('2 ', '2ⁿᵈ ')\
-                                    .replace('3 ', '3ʳᵈ ').replace('4 ', '4ᵗʰ ')\
-                                    .replace('5 ', '5ᵗʰ ').replace('6 ', '6ᵗʰ ')\
-                                    .replace('7 ', '7ᵗʰ ').replace('8 ', '8ᵗʰ ')\
-                                    .replace('9 ', '9ᵗʰ ').replace('0 ', '0ᵗʰ ')
-                if unique_event is not None:
-                    h = random.choice(['for the celebration of', 'to observe', 'to honour'])
-                    v = f" and to gather together {h} **{unique_event}**."
-                else:
-                    v = random.choice([
-                        " and to continue with yesterday's topic of discussion.",
-                        " where we shall pick up from yesterday's topic.",
-                        " where we'll continue from where we left off yesterday.",
-                        " and take part in the continuation of yesterday's discussion."
-                    ])
-                m = f"{i} {date_fixed} is a perfect day to listen to the "\
-                    f"**{g}** podcast{v}\n{''.join(c_topic)}"
-                _nudge = await ctx.send(m)
-                try:
-                    await _nudge.add_reaction('thankful:695101751707303998')
-                except discord.HTTPException:
-                    pass
+        try:
+            if isinstance(channel, discord.TextChannel):
+                if '—' in channel.topic:
+                    c_topic = channel.topic.replace('\n', '— ').split('—')[-1:]
+                    #  x = t.now(z('Asia/Calcutta')).strftime(f'%A %B %d')
+                    i =  '\U0001f538'
+                    g = ctx.message.guild
+                    day_fix = f"{str(t.now(z('Asia/Calcutta')).strftime(f'%A %B %d'))} (IST)"
+                    date_fixed = day_fix.replace('1 ', '1ˢᵗ ').replace('2 ', '2ⁿᵈ ')\
+                                        .replace('3 ', '3ʳᵈ ').replace('4 ', '4ᵗʰ ')\
+                                        .replace('5 ', '5ᵗʰ ').replace('6 ', '6ᵗʰ ')\
+                                        .replace('7 ', '7ᵗʰ ').replace('8 ', '8ᵗʰ ')\
+                                        .replace('9 ', '9ᵗʰ ').replace('0 ', '0ᵗʰ ')
+                    if unique_event is not None:
+                        h = random.choice(['for the celebration of', 'to observe', 'to honour'])
+                        v = f" and to gather together {h} **{unique_event}**."
+                    else:
+                        v = random.choice([
+                            " and to continue with yesterday's topic of discussion.",
+                            " where we shall pick up from yesterday's topic.",
+                            " where we'll continue from where we left off yesterday.",
+                            " and take part in the continuation of yesterday's discussion."
+                        ])
+                    m = f"{i} {date_fixed} is a perfect day to listen to the "\
+                        f"**{g}** podcast{v}\n{''.join(c_topic)}"
+                    _nudge = await ctx.send(m)
+                    try:
+                        await _nudge.add_reaction('thankful:695101751707303998')
+                    except discord.HTTPException:
+                        pass
             else:
-                await ctx.send(error_msg + help_msg, delete_after=69)
-        else:
-            await ctx.send(error_msg + help_msg, delete_after=23)
+                await ctx.send(error_msg + help_msg, delete_after=23)
+        except discord.TypeError:
+            await ctx.send(error_msg + help_msg, delete_after=69)
 
 
 def setup(bot):
