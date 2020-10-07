@@ -59,36 +59,41 @@ class Private(commands.Cog):
 
         u = ctx.message.author.mention
         channel =  ctx.channel or ctx.message.channel
+        error_msg = f"{u}, update this channel's **Topic** for this `command` to work!"
+        help_msg = "Tip: check other channel's Topics to get an idea of how to format their content."
 
         if isinstance(channel, discord.TextChannel):
-            error_msg = f"{u}, update this channel's **Topic** for this `command` to work!"
-            help_msg = "Tip: check other channel's Topics to get an idea of how to format their content."
             if '—' in channel.topic:
                 c_topic = channel.topic.replace('\n', '— ').split('—')[-1:]
                 x = t.now(z('Asia/Calcutta')).strftime(f'%A %B %d')
                 i =  '\U0001f538'
                 g = ctx.message.guild
+                day_fix = str(x).replace('1 ', '1ˢᵗ ').replace('2 ', '2ⁿᵈ ')\
+                                .replace('3 ', '3ʳᵈ ').replace('4 ', '4ᵗʰ ')\
+                                .replace('5 ', '5ᵗʰ ').replace('6 ', '6ᵗʰ ')\
+                                .replace('7 ', '7ᵗʰ ').replace('8 ', '8ᵗʰ ')\
+                                .replace('9 ', '9ᵗʰ ').replace('0 ', '0ᵗʰ ')
                 if unique_event is not None:
-                    v = f" and to gather together for the celebration of **{unique_event}**."
+                    h = random.choice(['for the celebration', 'to observe', 'to honour'])
+                    v = f" and to gather together {h} of **{unique_event}**."
                 else:
                     v = random.choice([
-                        " and to continue with yesterday's topic.",
+                        " and to continue with yesterday's topic of discussion.",
                         " where we shall pick up from yesterday's topic.",
                         " where we'll continue from where we left off yesterday.",
-                        " and partake in the continuation of yesterday's topic."
+                        " and take part in the continuation of yesterday's discussion."
                     ])
-                m = f"{i} {str(x)} (IST) is a perfect day to listen to the "\
+                m = f"{i} {day_fix} (IST) is a perfect day to listen to the "\
                     f"**{g}** podcast{v}\n{''.join(c_topic)}"
-                _msg = m.replace('1 ', '1ˢᵗ ').replace('2 ', '2ⁿᵈ ')\
-                        .replace('3 ', '3ʳᵈ ').replace('4 ', '4ᵗʰ ')\
-                        .replace('5 ', '5ᵗʰ ').replace('6 ', '6ᵗʰ ')\
-                        .replace('7 ', '7ᵗʰ ').replace('8 ', '8ᵗʰ ')\
-                        .replace('9 ', '9ᵗʰ ').replace('0 ', '0ᵗʰ ')
-                await ctx.send(_msg)
+                _nudge = await ctx.send(m)
+                try:
+                    await _nudge.add_reaction('thankful:695101751707303998')
+                except discord.HTTPException:
+                    pass
             else:
-                await ctx.send(error_msg + help_msg, delete_after=23)
+                await ctx.send(error_msg + help_msg, delete_after=69)
         else:
-            pass
+            await ctx.send(error_msg + help_msg, delete_after=23)
 
 
 def setup(bot):
