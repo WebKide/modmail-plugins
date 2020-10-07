@@ -73,7 +73,7 @@ class Private(commands.Cog):
                                     .replace('3 ', '3ʳᵈ ').replace('4 ', '4ᵗʰ ')\
                                     .replace('5 ', '5ᵗʰ ').replace('6 ', '6ᵗʰ ')\
                                     .replace('7 ', '7ᵗʰ ').replace('8 ', '8ᵗʰ ')\
-                                    .replace('9 ', '9ᵗʰ ').replace('0 ', '0ᵗʰ '))
+                                    .replace('9 ', '9ᵗʰ ').replace('0 ', '0ᵗʰ ')
                 if unique_event is not None:
                     h = random.choice(['for the celebration of', 'to observe', 'to honour'])
                     v = f" and to gather together {h} **{unique_event}**."
