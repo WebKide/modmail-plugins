@@ -94,7 +94,7 @@ class Private(commands.Cog):
                         pass
             else:
                 await ctx.send(error_msg + help_msg, delete_after=23)
-        except discord.TypeError:
+        except TypeError:
             await ctx.send(error_msg + help_msg, delete_after=69)
 
 
