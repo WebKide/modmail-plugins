@@ -61,38 +61,37 @@ class Private(commands.Cog):
         h_m = "\n\n**Tip:** check other channel's Topics to get an idea of how to format their content."
 
         if isinstance(channel, discord.TextChannel):
-            while True:
-                if not channel.topic:
-                    return await ctx.send(e_m + h_m, delete_after=23)
+            if not channel.topic:
+                return await ctx.send(e_m + h_m, delete_after=23)
 
-                if '—' in channel.topic:
-                    c_topic = channel.topic.replace('\n', '— ').split('—')[-1:]
-                    day_fix = f"{str(t.now(z('Asia/Calcutta')).strftime(f'%A %B %d'))} (IST)"
-                    date_fixed = day_fix.replace('1 ', '1ˢᵗ ').replace('2 ', '2ⁿᵈ ')\
-                                        .replace('3 ', '3ʳᵈ ').replace('4 ', '4ᵗʰ ')\
-                                        .replace('5 ', '5ᵗʰ ').replace('6 ', '6ᵗʰ ')\
-                                        .replace('7 ', '7ᵗʰ ').replace('8 ', '8ᵗʰ ')\
-                                        .replace('9 ', '9ᵗʰ ').replace('0 ', '0ᵗʰ ')
-                    if _event_today is not None:
-                        h = random.choice(['for the celebration of', 'to observe', 'to honour'])
-                        v = f" and to gather together {h} **{_event_today}**."
-                    else:
-                        v = random.choice([
-                            " and to continue with yesterday's topic of discussion.",
-                            " where we shall pick up from yesterday's topic.",
-                            " where we'll continue from where we left off yesterday.",
-                            " and take part in the continuation of yesterday's discussion."
-                        ])
-                    m = f"\U0001f538 {date_fixed} is a perfect day to listen to the "\
-                        f"**{ctx.message.guild}** podcast{v}\n\n{''.join(c_topic)}"
-                    _nudge = await ctx.send(m)
-                    try:
-                        await _nudge.add_reaction('thankful:695101751707303998')
-                    except discord.HTTPException:
-                        continue
-
+            if '—' in channel.topic:
+                c_topic = channel.topic.replace('\n', '— ').split('—')[-1:]
+                day_fix = f"{str(t.now(z('Asia/Calcutta')).strftime(f'%A %B %d'))} (IST)"
+                date_fixed = day_fix.replace('1 ', '1ˢᵗ ').replace('2 ', '2ⁿᵈ ')\
+                                    .replace('3 ', '3ʳᵈ ').replace('4 ', '4ᵗʰ ')\
+                                    .replace('5 ', '5ᵗʰ ').replace('6 ', '6ᵗʰ ')\
+                                    .replace('7 ', '7ᵗʰ ').replace('8 ', '8ᵗʰ ')\
+                                    .replace('9 ', '9ᵗʰ ').replace('0 ', '0ᵗʰ ')
+                if _event_today is not None:
+                    h = random.choice(['for the celebration of', 'to observe', 'to honour'])
+                    v = f" and to gather together {h} **{_event_today}**."
                 else:
+                    v = random.choice([
+                        " and to continue with yesterday's topic of discussion.",
+                        " where we shall pick up from yesterday's topic.",
+                        " where we'll continue from where we left off yesterday.",
+                        " and take part in the continuation of yesterday's discussion."
+                    ])
+                m = f"\U0001f538 {date_fixed} is a perfect day to listen to the "\
+                    f"**{ctx.message.guild}** podcast{v}\n\n{''.join(c_topic)}"
+                _nudge = await ctx.send(m)
+                try:
+                    await _nudge.add_reaction('thankful:695101751707303998')
+                except discord.HTTPException:
                     continue
+
+            else:
+                continue
             
 
 def setup(bot):
