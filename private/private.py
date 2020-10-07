@@ -94,7 +94,7 @@ class Private(commands.Cog):
                         pass
             else:
                 await ctx.send(error_msg + help_msg, delete_after=23)
-        except AttributeError:
+        except discord.CommandInvokeError:  # AttributeError:
             await ctx.send(error_msg + help_msg, delete_after=69)
 
 
