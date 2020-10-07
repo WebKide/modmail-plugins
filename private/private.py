@@ -57,12 +57,12 @@ class Private(commands.Cog):
             return
 
         channel =  ctx.channel or ctx.message.channel
-        e_m = f"{ctx.message.author.mention}, update this channel's **Topic** for this `command` to work!"
-        h_m = "\n\n**Tip:** check other channel's Topics to get an idea of how to format their content."
+        err_m = f"{ctx.message.author.mention}, update this channel's **Topic**.\n\n"\
+                f"**Tip:** check other channel's Topics to get an idea of how to format it here."
 
         if isinstance(channel, discord.TextChannel):
             if not channel.topic:
-                return await ctx.send(e_m + h_m, delete_after=23)
+                return await ctx.send(err_m, delete_after=23)
 
             if '—' in channel.topic:
                 c_topic = channel.topic.replace('\n', '— ').split('—')[-1:]
@@ -91,7 +91,7 @@ class Private(commands.Cog):
                     pass
 
             else:
-                pass
+                await ctx.send(err_m, delete_after=23)
             
 
 def setup(bot):
