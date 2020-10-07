@@ -94,8 +94,8 @@ class Private(commands.Cog):
                         pass
             else:
                 await ctx.send(error_msg + help_msg, delete_after=23)
-        except TypeError:
-            await ctx.send(error_msg + help_msg, delete_after=69)
+        except Exception as e:
+            await ctx.send(error_msg + help_msg + e, delete_after=69)
 
 
 def setup(bot):
