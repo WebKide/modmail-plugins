@@ -68,14 +68,14 @@ class Private(commands.Cog):
                 x = t.now(z('Asia/Calcutta')).strftime(f'%A %B %d')
                 i =  '\U0001f538'
                 g = ctx.message.guild
-                day_fix = str(x).replace('1 ', '1ˢᵗ ').replace('2 ', '2ⁿᵈ ')\
+                day_fix = str(x.replace('1 ', '1ˢᵗ ').replace('2 ', '2ⁿᵈ ')\
                                 .replace('3 ', '3ʳᵈ ').replace('4 ', '4ᵗʰ ')\
                                 .replace('5 ', '5ᵗʰ ').replace('6 ', '6ᵗʰ ')\
                                 .replace('7 ', '7ᵗʰ ').replace('8 ', '8ᵗʰ ')\
-                                .replace('9 ', '9ᵗʰ ').replace('0 ', '0ᵗʰ ')
+                                .replace('9 ', '9ᵗʰ ').replace('0 ', '0ᵗʰ '))
                 if unique_event is not None:
-                    h = random.choice(['for the celebration', 'to observe', 'to honour'])
-                    v = f" and to gather together {h} of **{unique_event}**."
+                    h = random.choice(['for the celebration of', 'to observe', 'to honour'])
+                    v = f" and to gather together {h} **{unique_event}**."
                 else:
                     v = random.choice([
                         " and to continue with yesterday's topic of discussion.",
