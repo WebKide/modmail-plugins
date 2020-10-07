@@ -88,10 +88,10 @@ class Private(commands.Cog):
                 try:
                     await _nudge.add_reaction('thankful:695101751707303998')
                 except discord.HTTPException:
-                    continue
+                    pass
 
             else:
-                continue
+                pass
             
 
 def setup(bot):
