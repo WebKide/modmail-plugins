@@ -26,20 +26,18 @@ from discord.ext import commands
 
 
 class Private(commands.Cog):
-    """─=≡Σ(つಠ益ಠ)つ private cog for my personal discord guild, it won't work for yours! """
+    """─=≡Σ(つಠ益ಠ)つ private cog for my personal discord guild, it won't work on yours! """
     def __init__(self, bot):
         self.bot = bot
         self.mods = [
-            ('null', 323578534763298816),
-            ('DKD', 358420835108913153),
-            ('VDD', 723061140816527412),
-            ('alt', 324040201225633794)
+            ('null', 323578534763298816), ('DKD', 358420835108913153),
+            ('VDD', 723061140816527412), ('alt', 324040201225633794)
         ]
 
     # +------------------------------------------------------------+
     # |                 PUSH-NOTIFICATION                          |
     # +------------------------------------------------------------+
-    @commands.command(description='Personal Guild cmd', aliases=['poke', 'push', 'notification'], no_pm=True)  # @commands.has_any_role('Admin', 'Mod', 'DJ', 'Owner')
+    @commands.command(description='Personal Guild cmd', aliases=['poke', 'push', 'notification'], no_pm=True)
     async def nudge(self, ctx, *, _event_today: str = None):
         """
         ─=≡Σ(つಠ益ಠ)つ command to send a Push-notification in text-channel
@@ -72,19 +70,33 @@ class Private(commands.Cog):
                                     .replace('5 ', '5ᵗʰ ').replace('6 ', '6ᵗʰ ')\
                                     .replace('7 ', '7ᵗʰ ').replace('8 ', '8ᵗʰ ')\
                                     .replace('9 ', '9ᵗʰ ').replace('0 ', '0ᵗʰ ')
+
                 if _event_today is not None:
                     h = random.choice(['for the celebration of', 'to observe', 'to honour'])
-                    v = f" and to gather together {h} **{_event_today}**."
+                    v = f" and gather together {h} **{_event_today}**."
+
                 else:
                     v = random.choice([
-                        " and to continue with yesterday's topic of discussion.",
+                        " where we'll continue with yesterday's topic of discussion.",
                         " where we shall pick up from yesterday's topic.",
                         " where we'll continue from where we left off yesterday.",
-                        " and take part in the continuation of yesterday's discussion."
+                        " let's take part in the continuation of yesterday's discussion."
                     ])
-                m = f"\U0001f538 {date_fixed} is a perfect day to listen to the "\
-                    f"**{ctx.message.guild}** podcast{v}\n\n{''.join(c_topic)}"
+
+                _welcome = random.choice([
+                        f"{date_fixed}, welcome to the **{ctx.message.guild}** podcast",
+                        f"{date_fixed}, hello and welcome to the **{ctx.message.guild}** podcast",
+                        f"{date_fixed}, this is the **{ctx.message.guild}** podcast",
+                        f"{date_fixed}, you are currently listening to the **{ctx.message.guild}** podcast",
+                        f"{date_fixed} is a beautiful day to listen to the **{ctx.message.guild}** podcast",
+                        f"{date_fixed} you are listening to the **{ctx.message.guild}** podcast",
+                        f"{date_fixed} is a nice day to listen to the **{ctx.message.guild}** podcast",
+                        f"{date_fixed} is a perfect day to listen to the **{ctx.message.guild}** podcast"
+                    ])
+
+                m = f"\U0001f538 {_welcome} {v}\n\n{''.join(c_topic)}"
                 _nudge = await ctx.send(m)
+
                 try:
                     await _nudge.add_reaction('thankful:695101751707303998')
                 except discord.HTTPException:
@@ -97,3 +109,5 @@ class Private(commands.Cog):
 def setup(bot):
     bot.add_cog(Private(bot))
     
+
+# @commands.has_any_role('Admin', 'Mod', 'DJ', 'Owner')
