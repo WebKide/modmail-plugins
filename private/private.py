@@ -67,7 +67,7 @@ class Private(commands.Cog):
                 i = f":flag_in: | {str(t.now(z('Asia/Calcutta')).strftime(f'%A %b %d, **%H:**%M:%S'))} `(IST)`\n"\
                     f":flag_gb: | {str(t.now(z('Europe/London')).strftime(f'%A %b %d, **%H:**%M:%S'))} `(BST)`\n"\
                     f":flag_us: | {str(t.now(z('America/New_York')).strftime(f'%A %b %d, **%H:**%M:%S'))} `(EST)`\n"\
-                    f":flag_us: | {str(t.now(z('America/Los_Angeles')).strftime(f'%A %b %d, **%H:**%M:%S'))} `(PST)`\n"
+                    f":flag_us: | {str(t.now(z('America/Los_Angeles')).strftime(f'%A %b %d, **%H:**%M:%S'))} `(PST)`\n\n"
 
                 date_fix = i.replace('11,', '11ᵗʰ ,').replace('12,', '12ᵗʰ ,').replace('13,', '13ᵗʰ ,')\
                             .replace('1,', '1ˢᵗ ,').replace('2,', '2ⁿᵈ ,').replace('3,', '3ʳᵈ ,')\
@@ -98,7 +98,7 @@ class Private(commands.Cog):
                         f"{date_fix}It's a perfect day to listen to the **{ctx.message.guild}** podcast"
                     ])
 
-                m = f"\u200b{_welcome}\n{v}\n\n{''.join(c_topic)}"
+                m = f"\u200b{_welcome}{v}\n\n{''.join(c_topic)}"
                 _nudge = await ctx.send(m)
 
                 try:
