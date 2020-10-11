@@ -64,16 +64,16 @@ class Private(commands.Cog):
 
             if '—' in channel.topic:
                 c_topic = channel.topic.replace('\n', '— ').split('—')[-1:]
-                day_fix = f":flag_in: | {str(t.now(z('Asia/Calcutta')).strftime(f'%A %B %d, **%H:**%M:%S'))} (IST)\n"\
-                          f":flag_gb: | {str(t.now(z('Europe/London')).strftime(f'%A %B %d, **%H:**%M:%S'))} (BST)\n"\
-                          f":flag_us: | {str(t.now(z('America/New_York')).strftime(f'%A %B %d, **%H:**%M:%S'))} (EST)\n"\
-                          f":flag_us: | {str(t.now(z('America/Los_Angeles')).strftime(f'%A %B %d, **%H:**%M:%S'))} (PST)\n\n"
+                i = f":flag_in: | {str(t.now(z('Asia/Calcutta')).strftime(f'%A %b %d, **%H:**%M:%S'))} `(IST)`\n"\
+                    f":flag_gb: | {str(t.now(z('Europe/London')).strftime(f'%A %b %d, **%H:**%M:%S'))} `(BST)`\n"\
+                    f":flag_us: | {str(t.now(z('America/New_York')).strftime(f'%A %b %d, **%H:**%M:%S'))} `(EST)`\n"\
+                    f":flag_us: | {str(t.now(z('America/Los_Angeles')).strftime(f'%A %b %d, **%H:**%M:%S'))} `(PST)`\n"
 
-                date_fixed = day_fix.replace('11 ', '11ᵗʰ ').replace('12 ', '12ᵗʰ ').replace('13 ', '13ᵗʰ ')\
-                                    .replace('1 ', '1ˢᵗ ').replace('2 ', '2ⁿᵈ ').replace('3 ', '3ʳᵈ ')\
-                                    .replace('4 ', '4ᵗʰ ').replace('5 ', '5ᵗʰ ').replace('6 ', '6ᵗʰ ')\
-                                    .replace('7 ', '7ᵗʰ ').replace('8 ', '8ᵗʰ ').replace('9 ', '9ᵗʰ ')\
-                                    .replace('0 ', '0ᵗʰ ')
+                date_fix = i.replace('11,', '11ᵗʰ ,').replace('12,', '12ᵗʰ ,').replace('13,', '13ᵗʰ ,')\
+                            .replace('1,', '1ˢᵗ ,').replace('2,', '2ⁿᵈ ,').replace('3,', '3ʳᵈ ,')\
+                            .replace('4,', '4ᵗʰ ,').replace('5,', '5ᵗʰ ,').replace('6,', '6ᵗʰ ,')\
+                            .replace('7,', '7ᵗʰ ,').replace('8,', '8ᵗʰ ,').replace('9,', '9ᵗʰ ,')\
+                            .replace('0,', '0ᵗʰ ,')
 
                 if _event_today is not None:
                     h = random.choice(['for the celebration of', 'to observe', 'to honour'])
@@ -88,17 +88,17 @@ class Private(commands.Cog):
                     ])
 
                 _welcome = random.choice([
-                        f"{date_fixed}Welcome to the **{ctx.message.guild}** podcast",
-                        f"{date_fixed}Hello and welcome to the **{ctx.message.guild}** podcast",
-                        f"{date_fixed}This is the **{ctx.message.guild}** podcast",
-                        f"{date_fixed}You are currently listening to the **{ctx.message.guild}** podcast",
-                        f"{date_fixed}It is a beautiful day to listen to the **{ctx.message.guild}** podcast",
-                        f"{date_fixed}You are listening to the **{ctx.message.guild}** podcast",
-                        f"{date_fixed}It is a nice day to listen to the **{ctx.message.guild}** podcast",
-                        f"{date_fixed}It's a perfect day to listen to the **{ctx.message.guild}** podcast"
+                        f"{date_fix}Welcome to the **{ctx.message.guild}** podcast",
+                        f"{date_fix}Hello and welcome to the **{ctx.message.guild}** podcast",
+                        f"{date_fix}This is the **{ctx.message.guild}** podcast",
+                        f"{date_fix}You are currently listening to the **{ctx.message.guild}** podcast",
+                        f"{date_fix}It is a beautiful day to listen to the **{ctx.message.guild}** podcast",
+                        f"{date_fix}You are listening to the **{ctx.message.guild}** podcast",
+                        f"{date_fix}It is a nice day to listen to the **{ctx.message.guild}** podcast",
+                        f"{date_fix}It's a perfect day to listen to the **{ctx.message.guild}** podcast"
                     ])
 
-                m = f"\u200b{_welcome}{v}\n\n{''.join(c_topic)}"
+                m = f"\u200b{_welcome}\n{v}\n\n{''.join(c_topic)}"
                 _nudge = await ctx.send(m)
 
                 try:
