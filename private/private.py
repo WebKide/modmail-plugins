@@ -64,9 +64,10 @@ class Private(commands.Cog):
 
             if '—' in channel.topic:
                 c_topic = channel.topic.replace('\n', '— ').split('—')[-1:]
-                day_fix = f"{str(t.now(z('Asia/Calcutta')).strftime(f'%A %B %d'))} (:flag_in:), "\
-                          f"{str(t.now(z('Europe/London')).strftime(f'%A %B %d'))} (:flag_gb:), "\
-                          f"{str(t.now(z('America/New_York')).strftime(f'%A %B %d'))} (:flag_us:)\n"
+                day_fix = f":flag_in: | {str(t.now(z('Asia/Calcutta')).strftime(f'%A %B %d, **%H:**%M:%S'))} (IST)\n"\
+                          f":flag_gb: | {str(t.now(z('Europe/London')).strftime(f'%A %B %d, **%H:**%M:%S'))} (BST)\n"\
+                          f":flag_us: | {str(t.now(z('America/New_York')).strftime(f'%A %B %d, **%H:**%M:%S'))} (EST)\n"\
+                          f":flag_us: | {str(t.now(z('America/Los_Angeles')).strftime(f'%A %B %d, **%H:**%M:%S'))} (PST)\n\n"
 
                 date_fixed = day_fix.replace('11 ', '11ᵗʰ ').replace('12 ', '12ᵗʰ ').replace('13 ', '13ᵗʰ ')\
                                     .replace('1 ', '1ˢᵗ ').replace('2 ', '2ⁿᵈ ').replace('3 ', '3ʳᵈ ')\
@@ -97,7 +98,7 @@ class Private(commands.Cog):
                         f"{date_fixed}It's a perfect day to listen to the **{ctx.message.guild}** podcast"
                     ])
 
-                m = f"\U0001f538 {_welcome}{v}\n\n{''.join(c_topic)}"
+                m = f"\u200b{_welcome}{v}\n\n{''.join(c_topic)}"
                 _nudge = await ctx.send(m)
 
                 try:
