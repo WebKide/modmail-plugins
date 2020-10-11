@@ -64,12 +64,15 @@ class Private(commands.Cog):
 
             if '—' in channel.topic:
                 c_topic = channel.topic.replace('\n', '— ').split('—')[-1:]
-                day_fix = f"{str(t.now(z('Asia/Calcutta')).strftime(f'%A %B %d'))} (IST)"
-                date_fixed = day_fix.replace('1 ', '1ˢᵗ ').replace('2 ', '2ⁿᵈ ')\
-                                    .replace('3 ', '3ʳᵈ ').replace('4 ', '4ᵗʰ ')\
-                                    .replace('5 ', '5ᵗʰ ').replace('6 ', '6ᵗʰ ')\
-                                    .replace('7 ', '7ᵗʰ ').replace('8 ', '8ᵗʰ ')\
-                                    .replace('9 ', '9ᵗʰ ').replace('0 ', '0ᵗʰ ')
+                day_fix = f"{str(t.now(z('Asia/Calcutta')).strftime(f'%A %B %d'))} (:flag_in:), "\
+                          f"{str(t.now(z('Europe/London')).strftime(f'%A %B %d'))} (:flag_gb:), "\
+                          f"{str(t.now(z('America/New_York')).strftime(f'%A %B %d'))} (:flag_us:)\n"
+
+                date_fixed = day_fix.replace('11 ', '11ᵗʰ ').replace('12 ', '12ᵗʰ ').replace('13 ', '13ᵗʰ ')\
+                                    .replace('1 ', '1ˢᵗ ').replace('2 ', '2ⁿᵈ ').replace('3 ', '3ʳᵈ ')\
+                                    .replace('4 ', '4ᵗʰ ').replace('5 ', '5ᵗʰ ').replace('6 ', '6ᵗʰ ')\
+                                    .replace('7 ', '7ᵗʰ ').replace('8 ', '8ᵗʰ ').replace('9 ', '9ᵗʰ ')\
+                                    .replace('0 ', '0ᵗʰ ')
 
                 if _event_today is not None:
                     h = random.choice(['for the celebration of', 'to observe', 'to honour'])
@@ -84,14 +87,14 @@ class Private(commands.Cog):
                     ])
 
                 _welcome = random.choice([
-                        f"{date_fixed}, welcome to the **{ctx.message.guild}** podcast",
-                        f"{date_fixed}, hello and welcome to the **{ctx.message.guild}** podcast",
-                        f"{date_fixed}, this is the **{ctx.message.guild}** podcast",
-                        f"{date_fixed}, you are currently listening to the **{ctx.message.guild}** podcast",
-                        f"{date_fixed} is a beautiful day to listen to the **{ctx.message.guild}** podcast",
-                        f"{date_fixed} you are listening to the **{ctx.message.guild}** podcast",
-                        f"{date_fixed} is a nice day to listen to the **{ctx.message.guild}** podcast",
-                        f"{date_fixed} is a perfect day to listen to the **{ctx.message.guild}** podcast"
+                        f"{date_fixed}Welcome to the **{ctx.message.guild}** podcast",
+                        f"{date_fixed}Hello and welcome to the **{ctx.message.guild}** podcast",
+                        f"{date_fixed}This is the **{ctx.message.guild}** podcast",
+                        f"{date_fixed}You are currently listening to the **{ctx.message.guild}** podcast",
+                        f"{date_fixed}It is a beautiful day to listen to the **{ctx.message.guild}** podcast",
+                        f"{date_fixed}You are listening to the **{ctx.message.guild}** podcast",
+                        f"{date_fixed}It is a nice day to listen to the **{ctx.message.guild}** podcast",
+                        f"{date_fixed}It's a perfect day to listen to the **{ctx.message.guild}** podcast"
                     ])
 
                 m = f"\U0001f538 {_welcome}{v}\n\n{''.join(c_topic)}"
