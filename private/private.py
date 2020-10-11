@@ -73,14 +73,14 @@ class Private(commands.Cog):
 
                 if _event_today is not None:
                     h = random.choice(['for the celebration of', 'to observe', 'to honour'])
-                    v = f" and gather together {h} **{_event_today}**."
+                    v = f" where we gather together {h} **{_event_today}**."
 
                 else:
                     v = random.choice([
                         " where we'll continue with yesterday's topic of discussion.",
                         " where we shall pick up from yesterday's topic.",
                         " where we'll continue from where we left off yesterday.",
-                        " let's take part in the continuation of yesterday's discussion."
+                        ", let's take part in the continuation of yesterday's discussion."
                     ])
 
                 _welcome = random.choice([
@@ -94,7 +94,7 @@ class Private(commands.Cog):
                         f"{date_fixed} is a perfect day to listen to the **{ctx.message.guild}** podcast"
                     ])
 
-                m = f"\U0001f538 {_welcome} {v}\n\n{''.join(c_topic)}"
+                m = f"\U0001f538 {_welcome}{v}\n\n{''.join(c_topic)}"
                 _nudge = await ctx.send(m)
 
                 try:
