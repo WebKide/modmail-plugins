@@ -46,34 +46,30 @@ class Private(commands.Cog):
         {prefix}poke [event or celebration]
         {prefix}nudge [event or celebration]
         """
-        try:
-            await ctx.message.delete()
-        except discord.Forbidden:
-            pass
+        try:    await ctx.message.delete()
+        except discord.Forbidden:    pass
 
-        if ctx.author.id not in (mod[1] for mod in self.mods):
-            return
+        if ctx.author.id not in (mod[1] for mod in self.mods):    return
 
         channel =  ctx.channel or ctx.message.channel
-        err_m = f"{ctx.message.author.mention}, update this channel's **Topic**.\n\n"\
+        err_m = f"{ctx.message.author.mention}, update this channel's **Topic**.\n\n" \
                 f"**Tip:** check other channel's Topics to get an idea of how to format it here."
 
         if isinstance(channel, discord.TextChannel):
-            if not channel.topic:
-                return await ctx.send(err_m, delete_after=23)
+            if not channel.topic:    return await ctx.send(err_m, delete_after=23)
 
             if '—' in channel.topic:
                 c_topic = channel.topic.replace('\n', '— ').split('—')[-1:]
-                i = f":flag_in: | {str(t.now(z('Asia/Calcutta')).strftime(f'%A %b %d, **%H:**%M:%S'))} `(IST)`\n"\
-                    f":flag_gb: | {str(t.now(z('Europe/London')).strftime(f'%A %b %d, **%H:**%M:%S'))} `(BST)`\n"\
-                    f":flag_us: | {str(t.now(z('America/New_York')).strftime(f'%A %b %d, **%H:**%M:%S'))} `(EST)`\n"\
+
+                i = f":flag_in: | {str(t.now(z('Asia/Calcutta')).strftime(f'%A %b %d, **%H:**%M:%S'))} `(IST)`\n" \
+                    f":flag_gb: | {str(t.now(z('Europe/London')).strftime(f'%A %b %d, **%H:**%M:%S'))} `(BST)`\n" \
+                    f":flag_us: | {str(t.now(z('America/New_York')).strftime(f'%A %b %d, **%H:**%M:%S'))} `(EST)`\n" \
                     f":flag_us: | {str(t.now(z('America/Los_Angeles')).strftime(f'%A %b %d, **%H:**%M:%S'))} `(PST)`\n\n"
 
-                date_fix = i.replace('11,', '11ᵗʰ ,').replace('12,', '12ᵗʰ ,').replace('13,', '13ᵗʰ ,')\
-                            .replace('1,', '1ˢᵗ ,').replace('2,', '2ⁿᵈ ,').replace('3,', '3ʳᵈ ,')\
-                            .replace('4,', '4ᵗʰ ,').replace('5,', '5ᵗʰ ,').replace('6,', '6ᵗʰ ,')\
-                            .replace('7,', '7ᵗʰ ,').replace('8,', '8ᵗʰ ,').replace('9,', '9ᵗʰ ,')\
-                            .replace('0,', '0ᵗʰ ,')
+                date_fix = i.replace('11,', '11ᵗʰ,').replace('12,', '12ᵗʰ,').replace('13,', '13ᵗʰ,')\
+                            .replace('1,', '1ˢᵗ,').replace('2,', '2ⁿᵈ,').replace('3,', '3ʳᵈ,').replace('4,', '4ᵗʰ,')\
+                            .replace('5,', '5ᵗʰ,').replace('6,', '6ᵗʰ,').replace('7,', '7ᵗʰ,').replace('8,', '8ᵗʰ,')\
+                            .replace('9,', '9ᵗʰ,').replace('0,', '0ᵗʰ,')
 
                 if _event_today is not None:
                     h = random.choice(['for the celebration of', 'to observe', 'to honour'])
@@ -81,33 +77,31 @@ class Private(commands.Cog):
 
                 else:
                     v = random.choice([
-                        " where we'll continue with yesterday's topic of discussion.",
-                        " where we shall pick up from yesterday's topic.",
+                        " where we shall continue with yesterday's topic of discussion.",
+                        " where we'll pick up from yesterday's topic.",
                         " where we'll continue from where we left off yesterday.",
                         ", let's take part in the continuation of yesterday's discussion."
                     ])
 
                 _welcome = random.choice([
-                        f"{date_fix}Welcome to the **{ctx.message.guild}** podcast",
-                        f"{date_fix}Hello and welcome to the **{ctx.message.guild}** podcast",
-                        f"{date_fix}This is the **{ctx.message.guild}** podcast",
-                        f"{date_fix}You are currently listening to the **{ctx.message.guild}** podcast",
-                        f"{date_fix}It is a beautiful day to listen to the **{ctx.message.guild}** podcast",
-                        f"{date_fix}You are listening to the **{ctx.message.guild}** podcast",
-                        f"{date_fix}It is a nice day to listen to the **{ctx.message.guild}** podcast",
-                        f"{date_fix}It's a perfect day to listen to the **{ctx.message.guild}** podcast"
+                        f"{date_fix}\U0001f538 Welcome to the **{ctx.message.guild}** podcast",
+                        f"{date_fix}\U0001f538 Hello and welcome to the **{ctx.message.guild}** podcast",
+                        f"{date_fix}\U0001f538 This is the **{ctx.message.guild}** podcast",
+                        f"{date_fix}\U0001f538 You are currently listening to the **{ctx.message.guild}** podcast",
+                        f"{date_fix}\U0001f538 It is a beautiful day to listen to the **{ctx.message.guild}** podcast",
+                        f"{date_fix}\U0001f538 You are listening to the **{ctx.message.guild}** podcast",
+                        f"{date_fix}\U0001f538 It is a nice day to listen to the **{ctx.message.guild}** podcast",
+                        f"{date_fix}\U0001f538 It's a perfect day to listen to the **{ctx.message.guild}** podcast"
                     ])
 
                 m = f"\u200b{_welcome}{v}\n\n{''.join(c_topic)}"
+
                 _nudge = await ctx.send(m)
 
-                try:
-                    await _nudge.add_reaction('thankful:695101751707303998')
-                except discord.HTTPException:
-                    pass
+                try:    await _nudge.add_reaction('thankful:695101751707303998')
+                except discord.HTTPException:    pass
 
-            else:
-                await ctx.send(err_m, delete_after=23)
+            else:    await ctx.send(err_m, delete_after=23)
             
 
 def setup(bot):
