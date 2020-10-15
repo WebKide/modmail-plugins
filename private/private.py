@@ -43,8 +43,9 @@ class Private(commands.Cog):
         ─=≡Σ(つಠ益ಠ)つ command to send a Push-notification in text-channel
         
         Usage:
-        {prefix}poke [event or celebration]
+        {prefix}poke
         {prefix}nudge [event or celebration]
+        {prefix}nudge extra [recorded podcast]
         """
         try:    await ctx.message.delete()
         except discord.Forbidden:    pass
@@ -91,7 +92,7 @@ class Private(commands.Cog):
                     _what = _event_today.split(' ')[1:]
                     _together = f" where we come together for the purpose of listening to {' '.join(_what)}"
                     _p = channel.topic.split('—')[-1]
-                    _nudge_ping = _p.split()[1] # str(c_topic.split(' '))[0]
+                    _nudge_ping = _p.split()[0] # str(c_topic.split(' '))[0]
 
                     m = f"\u200b{_welcome}{_together}\n\n{_nudge_ping}"
 
