@@ -18,7 +18,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-import discord, traceback, random
+import discord, traceback, random, asyncio
 
 from datetime import datetime as t
 from pytz import timezone as z
@@ -30,7 +30,7 @@ class Private(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.mods = [
-            ('null', 323578534763298816), ('DKD', 358420835108913153),
+            ('null', 323578534763298816), ('DKD', 358420835108913153), ('herr', 439734567197474816),
             ('VDD', 723061140816527412), ('alt', 324040201225633794)
         ]
 
@@ -42,7 +42,7 @@ class Private(commands.Cog):
         """
         ─=≡Σ(つಠ益ಠ)つ command to send a Push-notification in text-channel
         
-        Usage:
+        **Usage:**
         {prefix}poke
         {prefix}nudge [event or celebration]
         {prefix}nudge extra [recorded podcast]
@@ -92,9 +92,9 @@ class Private(commands.Cog):
                     _what = _event_today.split(' ')[1:]
                     _together = f" where we come together for the purpose of listening to {' '.join(_what)}"
                     _p = channel.topic.split('—')[-1]
-                    _nudge_ping = _p.split()[0] # str(c_topic.split(' '))[0]
+                    _nudge_ping = _p.split()[0]
 
-                    m = f"\u200b{_welcome}{_together}\n\n{_nudge_ping}"
+                    m = f"\u200b{_welcome}{_together}\n\n{_nudge_ping} join the Voice Channel in this Room."
 
                 else:
                     # FOURTH | Alternate special event
@@ -117,6 +117,7 @@ class Private(commands.Cog):
                 _nudge = await ctx.send(m)
 
                 try:
+                    await asyncio.sleep(23)
                     await _nudge.add_reaction('thankful:695101751707303998')
                 except discord.HTTPException:
                     pass
