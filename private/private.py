@@ -49,18 +49,21 @@ class Private(commands.Cog):
         try:    await ctx.message.delete()
         except discord.Forbidden:    pass
 
-        if ctx.author.id not in (mod[1] for mod in self.mods):    return
+        if ctx.author.id not in (mod[1] for mod in self.mods):
+            return
 
         channel =  ctx.channel or ctx.message.channel
         err_m = f"{ctx.message.author.mention}, update this channel's **Topic**.\n\n" \
                 f"**Tip:** check other channel's Topics to get an idea of how to format it here."
 
         if isinstance(channel, discord.TextChannel):
-            if not channel.topic:    return await ctx.send(err_m, delete_after=23)
+            if not channel.topic:
+                return await ctx.send(err_m, delete_after=23)
 
             if '—' in channel.topic:
                 c_topic = channel.topic.replace('\n', '— ').split('—')[-1:]
 
+                # FIRST | Date and times
                 i = f":flag_in: | {str(t.now(z('Asia/Calcutta')).strftime(f'%A %b %d, **%H:**%M:%S'))} `(IST)`\n" \
                     f":flag_gb: | {str(t.now(z('Europe/London')).strftime(f'%A %b %d, **%H:**%M:%S'))} `(BST)`\n" \
                     f":flag_us: | {str(t.now(z('America/New_York')).strftime(f'%A %b %d, **%H:**%M:%S'))} `(EST)`\n" \
@@ -71,41 +74,55 @@ class Private(commands.Cog):
                             .replace('5,', '5ᵗʰ,').replace('6,', '6ᵗʰ,').replace('7,', '7ᵗʰ,').replace('8,', '8ᵗʰ,')\
                             .replace('9,', '9ᵗʰ,').replace('0,', '0ᵗʰ,')
 
-                if _event_today is not None:
-                    h = random.choice(['for the celebration of', 'to observe', 'to honour'])
-                    v = f" where we gather together {h} **{_event_today}**."
+                # SECOND | Currently listening
+                _welcome = random.choice([
+                            f"{date_fix}\U0001f538 Welcome to the **{ctx.message.guild}** podcast",
+                            f"{date_fix}\U0001f538 Hello and welcome to the **{ctx.message.guild}** podcast",
+                            f"{date_fix}\U0001f538 This is the **{ctx.message.guild}** podcast",
+                            f"{date_fix}\U0001f538 You are currently listening to the **{ctx.message.guild}** podcast",
+                            f"{date_fix}\U0001f538 It is a beautiful day to listen to the **{ctx.message.guild}** podcast",
+                            f"{date_fix}\U0001f538 You are listening to the **{ctx.message.guild}** podcast",
+                            f"{date_fix}\U0001f538 It is a nice day to listen to the **{ctx.message.guild}** podcast",
+                            f"{date_fix}\U0001f538 It's a perfect day to listen to the **{ctx.message.guild}** podcast"
+                    ])
+
+                # THIRD | if current Host cannot do the podcast
+                if _event_today.startswith('alternate') or _event_today.startswith('extra'):
+                    _what = _event_today.split()[1:]
+                    _together = f' where we come together for the purpose of listening to {' '.join(_what)}'
+                    _nudge_ping = c_topic.split()[0]
+
+                    m = f"\u200b{_welcome}{_together}\n\n{_nudge_ping}"
 
                 else:
-                    v = random.choice([
-                        " where we shall continue with yesterday's topic of discussion.",
-                        " where we'll pick up from yesterday's topic.",
-                        " where we'll continue from where we left off yesterday.",
-                        ", let's take part in the continuation of yesterday's discussion."
-                    ])
+                    # FOURTH | Alternate special event
+                    if _event_today is not None:
+                        h = random.choice(['for the celebration of', 'to observe', 'to honour'])
+                        v = f' where we gather together {h} **{_event_today}**.'
 
-                _welcome = random.choice([
-                        f"{date_fix}\U0001f538 Welcome to the **{ctx.message.guild}** podcast",
-                        f"{date_fix}\U0001f538 Hello and welcome to the **{ctx.message.guild}** podcast",
-                        f"{date_fix}\U0001f538 This is the **{ctx.message.guild}** podcast",
-                        f"{date_fix}\U0001f538 You are currently listening to the **{ctx.message.guild}** podcast",
-                        f"{date_fix}\U0001f538 It is a beautiful day to listen to the **{ctx.message.guild}** podcast",
-                        f"{date_fix}\U0001f538 You are listening to the **{ctx.message.guild}** podcast",
-                        f"{date_fix}\U0001f538 It is a nice day to listen to the **{ctx.message.guild}** podcast",
-                        f"{date_fix}\U0001f538 It's a perfect day to listen to the **{ctx.message.guild}** podcast"
-                    ])
+                    # FIFTH | continuation of previous podcast
+                    else:
+                        v = random.choice([
+                            " where we shall continue with yesterday's topic of discussion.",
+                            " where we'll pick up from yesterday's topic.",
+                            " where we'll continue from where we left off yesterday.",
+                            ", let's take part in the continuation of yesterday's discussion."
+                        ])
 
-                m = f"\u200b{_welcome}{v}\n\n{''.join(c_topic)}"
+                    m = f"\u200b{_welcome}{v}\n\n{''.join(c_topic)}"
 
+                # SIXTH | completed message
                 _nudge = await ctx.send(m)
 
-                try:    await _nudge.add_reaction('thankful:695101751707303998')
-                except discord.HTTPException:    pass
+                try:
+                    await _nudge.add_reaction('thankful:695101751707303998')
+                except discord.HTTPException:
+                    pass
 
-            else:    await ctx.send(err_m, delete_after=23)
+            else:
+                await ctx.send(err_m, delete_after=23)
             
 
 def setup(bot):
     bot.add_cog(Private(bot))
     
-
-# @commands.has_any_role('Admin', 'Mod', 'DJ', 'Owner')
