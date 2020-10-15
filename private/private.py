@@ -47,8 +47,10 @@ class Private(commands.Cog):
         {prefix}nudge [event or celebration]
         {prefix}nudge extra [recorded podcast]
         """
-        try:    await ctx.message.delete()
-        except discord.Forbidden:    pass
+        try:
+            await ctx.message.delete()
+        except discord.Forbidden:
+            pass
 
         if ctx.author.id not in (mod[1] for mod in self.mods):
             return
@@ -90,7 +92,7 @@ class Private(commands.Cog):
                 # THIRD | if current Host cannot do the podcast
                 if _event_today is not None and _event_today.startswith('extra'):
                     _what = _event_today.split(' ')[1:]
-                    _together = f" where we come together for the purpose of listening to {' '.join(_what)}"
+                    _together = f" where we come together for the purpose of listening to: **{' '.join(_what)}**"
                     _p = channel.topic.split('—')[-1]
                     _nudge_ping = _p.split()[0]
 
@@ -129,3 +131,5 @@ class Private(commands.Cog):
 def setup(bot):
     bot.add_cog(Private(bot))
     
+
+# @commands.has_any_role('Admin', 'Mod', 'DJ', 'Owner')
