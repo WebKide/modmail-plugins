@@ -88,9 +88,9 @@ class Private(commands.Cog):
 
                 # THIRD | if current Host cannot do the podcast
                 if _event_today is not None and _event_today.startswith('extra'):
-                    _what = _event_today.split()[1:]
+                    _what = _event_today.split(' ')[1:]
                     _together = f" where we come together for the purpose of listening to {' '.join(_what)}"
-                    _nudge_ping = c_topic.split()[0]
+                    _nudge_ping = str(c_topic).split()[0]
 
                     m = f"\u200b{_welcome}{_together}\n\n{_nudge_ping}"
 
