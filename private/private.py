@@ -18,10 +18,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-import discord, traceback, random, asyncio
+import discord, requests, traceback, aiohttp, random, asyncio
 
 from datetime import datetime as t
 from pytz import timezone as z
+from bs4 import BeautifulSoup, SoupStrainer
 from discord.ext import commands
 
 
@@ -126,7 +127,39 @@ class Private(commands.Cog):
 
             else:
                 await ctx.send(err_m, delete_after=23)
-            
+
+    # +------------------------------------------------------------+
+    # |              WEB ARTICLE TO HASTEBIN                       |
+    # +------------------------------------------------------------+
+    @commands.command(description='Personal Guild cmd', no_pm=True)
+    async def bb(self, ctx, *, _page: str = None):
+        """
+        ─=≡Σ(つಠ益ಠ)つ command to retrieve website and upload text
+        
+        **Usage:**
+        {prefix}bb [article-name]
+        """
+        if _page is None:
+            return await ctx.send('write article name as it appears in search result', delete_after=23)
+        
+        _HEADERS = {'User-Agent': 'Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 6.1; WOW64; Trident/4.0; SLCC2; .NET CLR '
+                               '2.0.50727; .NET CLR 3.5.30729; .NET CLR 3.0.30729; Media Center PC 6.0; MS-RTC LM 8; '
+                               'InfoPath.3; .NET4.0C; .NET4.0E) chromeframe/8.0.552.224',
+                               'Accept-Language': 'en-us'}  # define headers to emulate a web browser
+        query_url = 'https://bhaktabandhav.org/'
+        base = 'https://hasteb.in'
+        url = f"{query_url}{_page.replace(' ', '-')}"
+        _web_page = requests.get(url, headers=_HEADERS)
+        _section_content = SoupStrainer('div', class_ = 'entry-content')
+        x = BeautifulSoup(_web_page.content, 'html.parser', parse_only=_section_content, from_encoding='utf-8').prettify()
+        i = x.replace('</p>', '').replace('<p>', '').replace('<div class="entry-content">', url).replace('<br/>', '').replace('</div>', 'End of article.').replace('  ', '')
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.post(base + '/documents', data=i) as responce:
+                    key = (await responce.json())['key']
+            await ctx.send(f'<{base}/{key}>')
+        except Exception as e:
+            await ctx.send(f'```py\n{e}\n```', delete_after=23)
 
 def setup(bot):
     bot.add_cog(Private(bot))
