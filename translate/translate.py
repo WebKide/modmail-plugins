@@ -329,22 +329,20 @@ class Translate(commands.Cog):
             await ctx.message.delete()
             if lang in conv:
                 t = f'{translate(text, lang)}'
-                finally:
-                    if (len(t) > 2000):
-                        cropped = t[:2000]
-                        await ctx.send(cropped, delete_after=360)
-                    else:
-                        await ctx.send(t, delete_after=360)
+                if (len(t) > 2000):
+                    cropped = t[:2000]
+                    await ctx.send(cropped, delete_after=360)
+                else:
+                    await ctx.send(t, delete_after=360)
 
             lang = dict(zip(conv.values(), conv.keys())).get(lang.lower().title())
             if lang:
                 tn = f'{translate(text, lang)}'
-                finally:
-                    if (len(tn) > 2000):
-                        cropped = tn[:2000]
-                        await ctx.send(cropped, delete_after=360)
-                    else:
-                        await ctx.send(tn, delete_after=360)
+                if (len(tn) > 2000):
+                    cropped = tn[:2000]
+                    await ctx.send(cropped, delete_after=360)
+                else:
+                    await ctx.send(tn, delete_after=360)
             else:
                 return
 
