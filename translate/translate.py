@@ -326,6 +326,7 @@ class Translate(commands.Cog):
         lang = language.title()
         available = ', '.join(conv.values())
         try:
+            await ctx.message.delete()
             if lang in conv:
                 t = f'{translate(text, lang)}'
                 try:
@@ -335,9 +336,9 @@ class Translate(commands.Cog):
                 finally:
                     if (len(t) > 2000):
                         cropped = t[:2000]
-                        await ctx.send(cropped)
+                        await ctx.send(cropped, delete_after=360)
                     else:
-                        await ctx.send(t)
+                        await ctx.send(t, delete_after=360)
 
             lang = dict(zip(conv.values(), conv.keys())).get(lang.lower().title())
             if lang:
@@ -349,9 +350,9 @@ class Translate(commands.Cog):
                 finally:
                     if (len(tn) > 2000):
                         cropped = tn[:2000]
-                        await ctx.send(cropped)
+                        await ctx.send(cropped, delete_after=360)
                     else:
-                        await ctx.send(tn)
+                        await ctx.send(tn, delete_after=360)
             else:
                 return
 
@@ -360,18 +361,18 @@ class Translate(commands.Cog):
                 trans = translate(text, lang)
                 if (len(trans) > 2000):
                     cropped = trans[:2000]
-                    return await ctx.send(cropped)
+                    return await ctx.send(cropped, delete_after=360)
                 else:
-                    return await ctx.send(trans)
+                    return await ctx.send(trans, delete_after=360)
 
             lang = dict(zip(conv.values(), conv.keys())).get(lang.lower().title())
             if lang:
                 trans = f'{ctx.message.author.mention} | *{translate(text, lang)}*'
                 if (len(trans) > 2000):
                     cropped = trans[:2000]
-                    await ctx.send(cropped)
+                    await ctx.send(cropped, delete_after=360)
                 else:
-                    await ctx.send(trans)
+                    await ctx.send(trans, delete_after=360)
                         
                 try:
                     await ctx.message.add_reaction('\N{WHITE HEAVY CHECK MARK}')
