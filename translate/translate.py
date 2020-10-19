@@ -228,9 +228,12 @@ class Translate(commands.Cog):
         asyncio.create_task(self._set_config())
     
     async def _set_config(self):  # exception=AttributeError("'NoneType' object has no attribute 'get'")>
-        config = await self.db.find_one({'_id': 'config'})
-        self.enabled = config.get('enabled', True)
-        self.tt = set(config.get('auto-translate', []))  # AttributeError: 'NoneType' object has no attribute 'get'
+        try:
+            config = await self.db.find_one({'_id': 'config'})
+            self.enabled = config.get('enabled', True)
+            self.tt = set(config.get('auto-translate', []))  # AttributeError: 'NoneType' object has no attribute 'get'
+        except:
+            pass
 
 
     # +------------------------------------------------------------+
