@@ -329,10 +329,6 @@ class Translate(commands.Cog):
             await ctx.message.delete()
             if lang in conv:
                 t = f'{translate(text, lang)}'
-                try:
-                    await ctx.message.add_reaction('\N{WHITE HEAVY CHECK MARK}')
-                except discord.Forbidden:
-                    pass
                 finally:
                     if (len(t) > 2000):
                         cropped = t[:2000]
@@ -343,10 +339,6 @@ class Translate(commands.Cog):
             lang = dict(zip(conv.values(), conv.keys())).get(lang.lower().title())
             if lang:
                 tn = f'{translate(text, lang)}'
-                try:
-                    await ctx.message.add_reaction('\N{WHITE HEAVY CHECK MARK}')
-                except discord.Forbidden:
-                    pass
                 finally:
                     if (len(tn) > 2000):
                         cropped = tn[:2000]
@@ -373,17 +365,6 @@ class Translate(commands.Cog):
                     await ctx.send(cropped, delete_after=360)
                 else:
                     await ctx.send(trans, delete_after=360)
-                        
-                try:
-                    await ctx.message.add_reaction('\N{WHITE HEAVY CHECK MARK}')
-                except discord.Forbidden:
-                    return
-
-            else:
-                try:
-                    await ctx.message.add_reaction('\N{BLACK QUESTION MARK ORNAMENT}')
-                except discord.Forbidden:
-                    return
 
     # +------------------------------------------------------------+
     # |                   Available Langs                          |
