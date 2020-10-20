@@ -23,6 +23,56 @@ import discord, asyncio, random, textwrap, traceback
 from discord.ext import commands
 from enum import Enum
 
+_dict = {
+    'afraid': '((ﾟ□ﾟ;))',
+    'ahh': '“ヽ(´▽｀)ノ”',
+    'bday': 'ღゝ◡╹)ノ♡ ✯ℋᵃᵖᵖʸ ℬⁱʳᵗʰᵈᵃʸ✯',
+    'bunbun': '(ヽ/)\n(°⌄°)\n(___)ﾉ',
+    'coffee': '✧.◟(^ヮ^)◞.”旦~',
+    'doggo': 'ʷᵒᶠᶠ ▽･ｪ･▽ﾉ”',
+    'doki': '(⸝⸝°ᗣ°⸝⸝)ᒄᵒᵏⁱ',
+    'doncare': '┐( ˘˘)┌',
+    'excited': '(˵¯͒⌄¯͒˵)',
+    'fight': '(ง •̀•́)ง',
+    'fury': '!(ﾉ｀◎´)ﾉᶠᶠˢミ',
+    'go': '(ノ°ο°)ノ ᵍᵒ',
+    'gurl': '⌒°(ᴖ◡ᴖ)°⌒',
+    'handshake': '( ＾◡＾)っ',
+    'happy': '₍₍◝(°꒳°)◜₎₎',
+    'holyshit': '┏(｀ﾟдﾟ)┛ʰᵒˡʸ ˢʰⁱᵗ',
+    'hugglies': '(ɔˆ ³(ˆ⌣ˆc)',
+    'joy': 'o(〃’▽’〃)o',
+    'kickass': 'ヽ( ･∀･)ﾉ┌┛Σ(ノ `Д´)ノ',
+    'kisses': '✩•̩̩͙"˚(_/c”ˆ⊰⊱ˆɔ‿)*˚"•̩̩͙✩',
+    'lewd': '╰U╯ ԅ(≖‿≖ԅ)',
+    'lewdisgewd': '( .Y .)ԅ(≖‿≖ԅ)',
+    'linebreak': "·°'-.,¸¸.·°'-,..,.-'°-,_,.-'°·",
+    'love': '(ღˇ◡ˇ)~ Lᵒᵛᵉ ʸᵒᵘ♡',
+    'lurk': '__( ⚆  ⚆ )__',
+    'magik': '(∩｀-´)⊃━☆ﾟ.*･｡ﾟ',
+    'mate': 'ᵐᵃᵗᵉ“ヽ(´▽｀)ノ”',
+    'meh': '┐( ˘ㅅ˘)┌',
+    'music': '◖|⌣ ‿ ⌣|◗˳♪⁎˚♫˳',
+    'mwack': '(｀3´)ᵐʷᵃᶜᵏ(`ε ´ )',
+    'never': '( ᗒᗣᗕ)!ⁿᵉᵛᵉʳ',
+    'nosebleed': '⁽͑˙˚̀༎˚́˙⁾̉ ',
+    'outahere': 'ε=ε=ε=ε=┏(;￣▽￣)┛',
+    'panic': 'ヾ(ﾟ∀ﾟ○)ﾂ三ヾ(●ﾟ∀ﾟ)ﾉ',
+    'rain': '、ヽ｀、ヽ｀个o(･･｡)｀ヽ、｀ヽ、',
+    'runaway': '..･ヾ(。￣□￣)ﾂ',
+    'scared': '˛ ˛ (⊙﹏⊙ ) ̉ ̉',
+    'sleep': '(＿ ＿)Ｚᴢｚ',
+    'smooch': '(づ￣ 3￣)づˢᵐᵒᵒᶜʰ',
+    'sorry': '｡(^▽^)ゞˢᵒʳʳʸ',
+    'sparks': '(ﾉ^ヮ^)ﾉ:・ﾟ✧',
+    'stfu': 'sʜᴜᴛ ╭(°ㅂ°)╮ ╰(°ㅂ°)╯ ᵘᵖ',
+    'strong': 'ˢᵗʳᵒⁿᵍ ᕙ(⇀‸↼‶)ᕗ',
+    'waves': '~(‾▿‾)~',
+    'what': 'ʷʰᵃᵗ..(・ヘ・?)',
+    'whocares': 'ʅ(‾◡◝)ʃ',
+    'wyou': '(ｼ;ﾟДﾟ)ｼ!!'
+}
+
 dev_list = [323578534763298816]
 
 d = '“Scissors cut paper, paper covers rock, rock crushes lizard, ' \
@@ -298,6 +348,25 @@ class TextGames(commands.Cog):
                 except discord.HTTPException:    await ctx.send(right)
 
             else:    pass
+
+    # +------------------------------------------------------------+
+    # |                   KAOMOJI (∩｀-´)⊃━☆ﾟ.*･｡ﾟ                  |
+    # +------------------------------------------------------------+
+    @commands.command(description='Send cute kaomojis', no_pm=True)
+    async def kaomoji(self, ctx, _name: str = None):
+        '''Kawaii Kaomoji komandu desu! Sugoi!!'''
+        if _name in _dict.keys():
+            return await ctx.send(_dict[_name])
+
+        p = f'{ctx.prefix}kaomoji'
+        await ctx.send(f'`{p} afraid`, `{p} ahh`, `{p} bday`, `{p} bunbun`, `{p} coffee`, `{p} doggo`, '\
+                f'`{p} doki`, `{p} doncare`, `{p} excited`, `{p} fight`, `{p} fury`, `{p} go`, '\
+                f'`{p} gurl`, `{p} handshake`, `{p} happy`, `{p} holyshit`, `{p} hugglies`, `{p} joy`, '\
+                f'`{p} kickass`, `{p} kisses`, `{p} lewd`, `{p} lewdisgewd`, `{p} linebreak`, `{p} love`, '\
+                f'`{p} lurk`, `{p} magik`, `{p} mate`, `{p} meh`, `{p} music`, `{p} mwack`, `{p} never`, '\
+                f'`{p} nosebleed`, `{p} outahere`, `{p} panic`, `{p} rain`, `{p} runaway`, `{p} scared`, '\
+                f'`{p} sleep`, `{p} smooch`, `{p} sorry`, `{p} sparks`, `{p} stfu`, `{p} strong`, '\
+                f'`{p} waves`, `{p} what`, `{p} wyou`', delete_after=23)
 
 
 def setup(bot):
