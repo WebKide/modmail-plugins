@@ -356,17 +356,17 @@ class TextGames(commands.Cog):
     async def kaomoji(self, ctx, _name: str = None):
         '''Kawaii Kaomoji komandu desu! Sugoi!!'''
         if _name in _dict.keys():
-            return await ctx.send(_dict[_name])
+            return await ctx.send(f'{ctx.message.author.mention}\n{_dict[_name]}')
 
-        p = f'{ctx.prefix}kaomoji'
-        await ctx.send(f'`{p} afraid`, `{p} ahh`, `{p} bday`, `{p} bunbun`, `{p} coffee`, `{p} doggo`, '\
-                f'`{p} doki`, `{p} doncare`, `{p} excited`, `{p} fight`, `{p} fury`, `{p} go`, '\
-                f'`{p} gurl`, `{p} handshake`, `{p} happy`, `{p} holyshit`, `{p} hugglies`, `{p} joy`, '\
-                f'`{p} kickass`, `{p} kisses`, `{p} lewd`, `{p} lewdisgewd`, `{p} linebreak`, `{p} love`, '\
-                f'`{p} lurk`, `{p} magik`, `{p} mate`, `{p} meh`, `{p} music`, `{p} mwack`, `{p} never`, '\
-                f'`{p} nosebleed`, `{p} outahere`, `{p} panic`, `{p} rain`, `{p} runaway`, `{p} scared`, '\
-                f'`{p} sleep`, `{p} smooch`, `{p} sorry`, `{p} sparks`, `{p} stfu`, `{p} strong`, '\
-                f'`{p} waves`, `{p} what`, `{p} wyou`', delete_after=23)
+        p = f'`{ctx.prefix}kaomoji`'
+        await ctx.send(f'{p} **afraid**, {p} **ahh**, {p} **bday**, {p} **bunbun**, {p} **coffee**, {p} **doggo**, '\
+                    f'{p} **doki**, {p} **doncare**, {p} **excited**, {p} **fight**, {p} **fury**, {p} **go**, '\
+                    f'{p} **gurl**, {p} **handshake**, {p} **happy**, {p} **holyshit**, {p} **hugglies**, {p} **joy**, '\
+                    f'{p} **kickass**, {p} **kisses**, {p} **lewd**, {p} **lewdisgewd**, {p} **linebreak**, {p} **love**, '\
+                    f'{p} **lurk**, {p} **magik**, {p} **mate**, {p} **meh**, {p} **music**, {p} **mwack**, {p} **never**, '\
+                    f'{p} **nosebleed**, {p} **outahere**, {p} **panic**, {p} **rain**, {p} **runaway**, {p} **scared**, '\
+                    f'{p} **sleep**, {p} **smooch**, {p} **sorry**, {p} **sparks**, {p} **stfu**, {p} **strong**, '\
+                    f'{p} **waves**, {p} **what**, {p} **wyou**', delete_after=23)
 
 
 def setup(bot):
