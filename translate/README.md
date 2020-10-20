@@ -65,6 +65,13 @@ List of available commands and how to use them. If you need more help, use `{pre
     <td>{prefix}toggle_auto_translations</td>
     <td><em>To be used inside ticket threads.</em></td>
   </tr>
+  <tr>
+    <td>tat</td>
+    <td>t</td>
+    <td>{prefix}t <Language> [message]</td>
+    <td>{prefix}t German Hola Mundo</td>
+    <td><em>Quick translation command.</em></td>
+  </tr>
 </table>
 
 ## .:: Acknowledgements ::.
