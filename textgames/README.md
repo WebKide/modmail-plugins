@@ -20,6 +20,7 @@ Just some random mini games:
 - [x] **`flip`** - Flips a coin... or some text.
 - [x] **`guess`** - Write number between 1 and 11
 - [x] **`settle`** - Play: rock paper scissors lizard spock
+- [x] **`kaomoji`** - Kawaii Kaomoji komandu desu! Sugoi!!
 
 - - - -
 
