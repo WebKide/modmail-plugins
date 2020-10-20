@@ -166,6 +166,21 @@ class Transform(commands.Cog):
             return await ctx.send(i)
         else:    await ctx.send(f'**Usage:**\n`{ctx.prefix}{ctx.invoked_with} [text]`', delete_after=23)
 
+    # +------------------------------------------------------------+
+    # |                     ZALGO                                  |
+    # +------------------------------------------------------------+
+    @commands.command(no_pm=True)
+    async def zalgo(self,ctx,*, msg: str = None):
+        """ S̏p͜ȉt́ o̕u͢ṭ Z͒̕aͣ͟l̾͡g̳̍o̓̀ """
+        if msg is not None:
+            msg = msg[:108]
+            random_shit = map(chr, range(768, 879))
+            _marks = list(random_shit)
+            result = msg.split()
+            _zalgo = ' '.join(''.join(c + ''.join(random.choice(_marks) for _ in range(i // 2 + 1)) * c.isalnum() for c in word) for i, word in enumerate(result))
+            return await ctx.send(f'```py\n{_zalgo}```')
+        else:    await ctx.send(f'**Usage:**\n`{ctx.prefix}{ctx.invoked_with} [text]`', delete_after=23)
+
 
 def setup(bot):
     bot.add_cog(Transform(bot))
