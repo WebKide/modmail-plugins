@@ -50,17 +50,17 @@ class Util(commands.Cog):
         mv = x.available / 1024**2
         mc = x.cached / 1024**2
         
-        c = f'CPU Usage:  {cpu_u:.2f}% CPU processing'
-        r = f'RAM Usage:  {m_us:.2f} MiB of memory'
-        p = f'RAM Percentage:  {m_pe:.2f}% MiB'
-        q = f'Total Memory:  {mt:.2f} MiB'
-        w = f'Free Memory:  {mf:.2f} MiB'
-        e = f'Active Memory:  {ma:.2f} MiB'
-        t = f'Used Memory:  {mu:.2f} MiB'
-        y = f'Available Memory:  {mv:.2f} MiB'
-        u = f'Cached Memory:  {mc:.2f} MiB'
+        c = f'\U0001f5a5 CPU Usage:  {cpu_u:.2f}% CPU processing'
+        r = f'\U0001f6e0 RAM Usage:  {m_us:.2f} MiB of memory'
+        p = f'\U0001f4e6 RAM Percentage:  {m_pe:.2f}% MiB'
+        q = f'\U0001f9f0 Total Memory:  {mt:.2f} MiB'
+        w = f'\U0001f4cb Free Memory:  {mf:.2f} MiB'
+        e = f'\U0001f4bf Active Memory:  {ma:.2f} MiB'
+        t = f'\U0001f4be Used Memory:  {mu:.2f} MiB'
+        y = f'\U0001f4c0 Available Memory:  {mv:.2f} MiB'
+        u = f'\U0001f5dc Cached Memory:  {mc:.2f} MiB'
         
-        result = f'@_Geek(stats, bot):\n\n{c}\n{r}\n{p}\n\n{q}\n{w}\n{e}\n{t}\n{y}\n{u}'
+        result = f'@_Geek(self, bot, stats = True):\n\n{c}\n{r}\n{p}\n\n{q}\n{w}\n{e}\n{t}\n{y}\n{u}'
         
         THRESHOLD = 100 * 1024 * 1024  # 100MB
 
