@@ -125,7 +125,7 @@ class Transform(commands.Cog):
             try:    await ctx.send('👏')
             except discord.HTTPException as e:
                 if ctx.author.id == 323578534763298816:
-                    await ctx.send(f'​`​`​`{e}​`​`​`', delete_after=15)
+                    await ctx.send(f'```py\n{e}```', delete_after=15)
                 else:    pass
 
     # +------------------------------------------------------------+
@@ -173,7 +173,7 @@ class Transform(commands.Cog):
     async def zalgo(self,ctx,*, msg: str = None):
         """ S̏p͜ȉt́ o̕u͢ṭ Z͒̕aͣ͟l̾͡g̳̍o̓̀ """
         if msg is not None:
-            msg = msg[:108]
+            msg = msg.replace('@', '')[:108]
             random_shit = map(chr, range(768, 879))
             _marks = list(random_shit)
             result = msg.split()
