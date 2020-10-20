@@ -23,6 +23,7 @@ Modmail-plugins to find definitions of English words in Wikipedia, UrbanDictiona
 - [x] **`tiny`** - Convert any text into ᵗⁱⁿʸ text
 - [x] **`wordai`** - Generate words artificially
 - [x] **`smallcaps`** - ᴄᴏɴᴠᴇʀᴛ ᴀ ᴛᴇxᴛ ᴛᴏ ꜱᴍᴀʟʟ ᴄᴀᴘꜱ
+- [x] **`zalgo`** - S̏p͜ȉt́ o̕u͢ṭ Z͒̕aͣ͟l̾͡g̳̍o̓̀
 - [ ] **`cringe`** - mEsS Up ThE tExT
 
 # Installation
