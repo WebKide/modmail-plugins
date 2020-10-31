@@ -170,7 +170,7 @@ class WordMeaning(commands.Cog):
             soup = bs(page.content, "html.parser", parse_only=_section_content, from_encoding="utf-8")
 
             # ================= Send HTML5 code as a message into chat ====================
-            if ctx.message.content.endswith('sourcecode') and query is not 'sourcecode':
+            if ctx.message.content.endswith('sourcecode') and query != 'sourcecode':
                 # This is mostly for debugging purposes, if cmd doesn't give a result, check that the code works,
                 # if `code` returns empty, it is because the command couldn't find a valid page for {query}
                 defs = soup.find('section', attrs={"class": "gramb"})  # sends page parsed as HTML5
@@ -189,7 +189,7 @@ class WordMeaning(commands.Cog):
                 # Checks for a definition, if not found, it defaults to fail-safe description below
                 e.description = f"1. {definition.text[:500]}"  # await ctx.send(first.text[:500])  # BUG-HUNTER
             # ===================== if cmd *args == 'examples' ============================
-            if 'examples' in ctx.message.content and query is not 'examples':
+            if 'examples' in ctx.message.content and query != 'examples':
                 example_1 = soup.find('div', attrs={"class": "exg"})  # first example
                 if example_1 is not None:
                     ex_1 = f'*{example_1.text[1:]}*' or "\u200b"
@@ -212,7 +212,7 @@ class WordMeaning(commands.Cog):
                 if synonyms_1 is not None:
                     results = synonyms_1.text
                     syns = results.replace('Synonyms', '').replace('View synonyms', '') or "#z"
-                    if 'synonyms' in ctx.message.content and query is not 'synonyms':
+                    if 'synonyms' in ctx.message.content and query != 'synonyms':
                         e.add_field(name='Synonyms', value=f'```bf\n{syns[:460]}```', inline=False)  # BUG-HUNTER
                     else:
                         synonyms_2 = soup.find('div', attrs={"class": "exs"})
@@ -228,7 +228,7 @@ class WordMeaning(commands.Cog):
                 try:
                     proverb.find('div', attrs={"span": "sense-registers"})  # Proverb, {query} used in sentences
                     x = proverb.text.replace("’ ‘", "’\n‘").replace(". ‘", ".\n\n‘")
-                    if 'proverbs' in ctx.message.content and query is not 'proverbs':
+                    if 'proverbs' in ctx.message.content and query != 'proverbs':
                         z = '’'.join(x.split("’")[3:-4])  # split x and output after 'More example sentences...'
                         e.add_field(name='Proverb', value=f"*{z[1:][:960]}...*", inline=False)
                     else:
