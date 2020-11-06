@@ -82,12 +82,12 @@ class Transform(commands.Cog):
             pass
         finally:
             for int in results:
-                if results is None:
-                    return await ctx.send(name, delete_after=69)
                 if results is not None:
                     x = random.randint(3, 9)
                     name = word[:x]
                     await ctx.sen(name)
+                else:
+                    return await ctx.send(name, delete_after=69)
 
 
     # +------------------------------------------------------------+
