@@ -64,7 +64,7 @@ class Transform(commands.Cog):
     # |                     Word/Name-generator                    |
     # +------------------------------------------------------------+
     @commands.command(aliases=['word_ai'])
-    async def wordai(self, ctx, results: int = None):
+    async def wordai(self, ctx, results: int = 2):
         """ Generate words artificially """
         vow = ['a', 'i', 'u', 'e', 'o', 'y', '', 'a', 'i', 'u', 'e', 'o', '']
         con = [
@@ -88,7 +88,7 @@ class Transform(commands.Cog):
                         name = word[:x]
                         await ctx.sen(name)
                     else:
-                        return await ctx.send(name, delete_after=69)
+                        await ctx.send(name)
             except Exception as e:
                 await ctx.send(f'```py\n{e}```', delete_after=69)
 
