@@ -81,14 +81,16 @@ class Transform(commands.Cog):
         except discord.Forbidden:
             pass
         finally:
-            for int in results:
-                if results is not None:
-                    x = random.randint(3, 9)
-                    name = word[:x]
-                    await ctx.sen(name)
-                else:
-                    return await ctx.send(name, delete_after=69)
-
+            try:
+                for int in results:
+                    if results is not None:
+                        x = random.randint(3, 9)
+                        name = word[:x]
+                        await ctx.sen(name)
+                    else:
+                        return await ctx.send(name, delete_after=69)
+            except Exception as e:
+                await ctx.send(f'```py\n{e}```', delete_after=69)
 
     # +------------------------------------------------------------+
     # |              Shrink text and make it tiny                  |
