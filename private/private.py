@@ -108,10 +108,10 @@ class Private(commands.Cog):
                     # FIFTH | continuation of previous podcast
                     else:
                         v = random.choice([
-                            " where we shall continue with yesterday's topic of discussion.",
+                            " where we shall continue with our favourite topic of discussion.",
                             " where we'll pick up from yesterday's topic.",
-                            " where we'll continue from where we left off yesterday.",
-                            ", let's take part in the continuation of yesterday's discussion."
+                            " where we'll continue our immersion into our favourite topic.",
+                            ", let's take part in the continuation of our ongoing discussion."
                         ])
 
                     m = f"\u200b{_welcome}{v}\n\n{''.join(c_topic)}"
