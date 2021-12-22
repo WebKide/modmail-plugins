@@ -86,6 +86,7 @@ class Private(commands.Cog):
                             f"{date_fix}\U0001f538 You are currently listening to the **{ctx.message.guild}** podcast",
                             f"{date_fix}\U0001f538 It is a beautiful day to listen to the **{ctx.message.guild}** podcast",
                             f"{date_fix}\U0001f538 You are listening to the **{ctx.message.guild}** podcast",
+                            f"{date_fix}\U0001f538 Moving on you are listening to the **{ctx.message.guild}** podcast",
                             f"{date_fix}\U0001f538 It is a nice day to listen to the **{ctx.message.guild}** podcast",
                             f"{date_fix}\U0001f538 It's a perfect day to listen to the **{ctx.message.guild}** podcast"
                     ])
@@ -110,6 +111,7 @@ class Private(commands.Cog):
                         v = random.choice([
                             " where we shall continue with our favourite topic of discussion.",
                             " where we'll pick up from yesterday's topic.",
+                            " where we'll continue from where we left off on the last broadcast.",
                             " where we'll continue our immersion into our favourite topic.",
                             ", let's take part in the continuation of our ongoing discussion."
                         ])
