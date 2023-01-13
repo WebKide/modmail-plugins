@@ -18,7 +18,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-import discord, asyncio, random, textwrap, traceback, unicodedata2 as unicodedata, string
+import discord, asyncio, random, textwrap, traceback, unicodedata2 as ud2, string
 
 from discord.ext import commands
 
@@ -51,7 +51,7 @@ class Transform(commands.Cog):
 
             def to_string(c):
                 digit = format(ord(c), 'x')
-                name = unicodedata.name(c, 'Name not found.')
+                name = ud2.name(c, 'Name not found.')
                 return fmt.format(digit, name, c)
 
             e = discord.Embed(color=self.user_color)
@@ -171,6 +171,7 @@ class Transform(commands.Cog):
     # +------------------------------------------------------------+
     # |                     ZALGO                                  |
     # +------------------------------------------------------------+
+    '''
     @commands.command(no_pm=True)
     async def zalgo(self,ctx,*, msg: str = None):
         """ S̏p͜ȉt́ o̕u͢ṭ Z͒̕aͣ͟l̾͡g̳̍o̓̀ """
@@ -182,7 +183,8 @@ class Transform(commands.Cog):
             _zalgo = ' '.join(''.join(c + ''.join(random.choice(_marks) for _ in range(i // 2 + 1)) * c.isalnum() for c in word) for i, word in enumerate(result))
             return await ctx.send(f'```py\n{_zalgo}```')
         else:    await ctx.send(f'**Usage:**\n`{ctx.prefix}{ctx.invoked_with} [text]`', delete_after=23)
+    '''
 
 
-def setup(bot):
-    bot.add_cog(Transform(bot))
+async def setup(bot):
+    await bot.add_cog(Transform(bot))
