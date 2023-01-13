@@ -479,5 +479,5 @@ class Translate(commands.Cog):
         await channel.send(embed=em)
 
 
-def setup(bot):
-    bot.add_cog(Translate(bot))
+async def setup(bot):
+    await bot.add_cog(Translate(bot))
