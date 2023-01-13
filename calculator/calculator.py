@@ -199,5 +199,5 @@ class Calculator(commands.Cog):
             await ctx.send(f'```rust\n>Input: {formula}\nResult: {success}```')
 
 
-def setup(bot):
-    bot.add_cog(Calculator(bot))
+async def setup(bot):
+    await bot.add_cog(Calculator(bot))
