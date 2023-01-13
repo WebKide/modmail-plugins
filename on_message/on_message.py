@@ -28,10 +28,16 @@ class OnMessage(commands.Cog):
     """ (∩｀-´)⊃━☆ﾟ.*･｡ﾟ non-commands, bot responds to specific text in channel """
     def __init__(self, bot):
         self.bot = bot
+        self.ignored_members = [
+            ('BVVM', 358433182304960513), ('BVSM', 748552207737159701)
+        ]
 
     @commands.Cog.listener()
     async def on_message(self, message):
         if message.author.bot:
+            return
+        
+        if message.author.id not in (_host[1] for _host in self.ignored_members):
             return
 
         # => Only respond to 33.3% of messages
@@ -42,8 +48,8 @@ class OnMessage(commands.Cog):
             hello = random.choice(['Hello ', 'Hi there ', 'Howdy '])
             iam = f'I am {self.bot.user.mention}<:bot_tag:729987217396727868>, pleased to meet you.'  # upload the BOT emoji as :bot_tag: in your Discord guild
             msg = message.content[5:].replace('*', '')
-            m = ' '.join(msg.split(' ')[:7])
+            m = ' '.join(msg.split(' ')[:7]).title()
             await message.channel.send(f'{hello}' + f'**{m}**' + f', {iam}')
 
-def setup(bot):
-    bot.add_cog(OnMessage(bot))
+async def setup(bot):
+    await bot.add_cog(OnMessage(bot))
