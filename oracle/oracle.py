@@ -420,5 +420,5 @@ class Oracle(commands.Cog):
         else:    return await ctx.send(f"*{question}*/ndoesn't look like a yes/no question.", delete_after=69)
 
 
-def setup(bot):
-    bot.add_cog(Oracle(bot))
+async def setup(bot):
+    await bot.add_cog(Oracle(bot))
