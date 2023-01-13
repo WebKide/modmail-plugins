@@ -74,6 +74,6 @@ class Util(commands.Cog):
             await ctx.send(f'```py\n{e}```')
 
 
-def setup(bot):
-    bot.add_cog(Util(bot))
+async def setup(bot):
+    await bot.add_cog(Util(bot))
     
