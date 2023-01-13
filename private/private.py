@@ -71,7 +71,8 @@ class Private(commands.Cog):
                 i = f":flag_in: | {str(t.now(z('Asia/Calcutta')).strftime(f'%A %b %d, **%H:**%M:%S'))} `(IST)`\n" \
                     f":flag_gb: | {str(t.now(z('Europe/London')).strftime(f'%A %b %d, **%H:**%M:%S'))} `(BST)`\n" \
                     f":flag_us: | {str(t.now(z('America/New_York')).strftime(f'%A %b %d, **%H:**%M:%S'))} `(EST)`\n" \
-                    f":flag_us: | {str(t.now(z('America/Los_Angeles')).strftime(f'%A %b %d, **%H:**%M:%S'))} `(PST)`\n\n"
+                    f":flag_us: | {str(t.now(z('America/Los_Angeles')).strftime(f'%A %b %d, **%H:**%M:%S'))} `(PST)`\n" \
+                    f":flag_bo: | {str(t.now(z('America/La_Paz')).strftime(f'%A %b %d, **%H:**%M:%S'))} `(BOT)`\n\n"
 
                 date_fix = i.replace('11,', '11ᵗʰ,').replace('12,', '12ᵗʰ,').replace('13,', '13ᵗʰ,')\
                             .replace('1,', '1ˢᵗ,').replace('2,', '2ⁿᵈ,').replace('3,', '3ʳᵈ,').replace('4,', '4ᵗʰ,')\
@@ -122,7 +123,7 @@ class Private(commands.Cog):
                 _nudge = await ctx.send(m)
 
                 try:
-                    await asyncio.sleep(23)
+                    await asyncio.sleep(3)
                     await _nudge.add_reaction('thankful:695101751707303998')
                 except discord.HTTPException:
                     pass
@@ -133,6 +134,7 @@ class Private(commands.Cog):
     # +------------------------------------------------------------+
     # |              WEB ARTICLE TO HASTEBIN                       |
     # +------------------------------------------------------------+
+    '''
     @commands.command(description='Personal Guild cmd', no_pm=True)
     async def bb(self, ctx, *, _page: str = None):
         """
@@ -162,6 +164,7 @@ class Private(commands.Cog):
             await ctx.send(f'<{base}/{key}>')
         except Exception as e:
             await ctx.send(f'```py\n{e}\n```', delete_after=23)
+    '''
 
 async def setup(bot):
     await bot.add_cog(Private(bot))
