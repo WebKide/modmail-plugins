@@ -272,5 +272,5 @@ class WordMeaning(commands.Cog):
             return await ctx.send(f'```css\n[OOPS, I DID IT AGAIN]\n{e}```\n```py\nヾ(ﾟ∀ﾟ○)ﾂ三ヾ(●ﾟдﾟ)ﾉ\n\n{tb}```')
 
 
-def setup(bot):
-    bot.add_cog(WordMeaning(bot))
+async def setup(bot):
+    await bot.add_cog(WordMeaning(bot))
