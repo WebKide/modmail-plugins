@@ -163,8 +163,8 @@ class Private(commands.Cog):
         except Exception as e:
             await ctx.send(f'```py\n{e}\n```', delete_after=23)
 
-def setup(bot):
-    bot.add_cog(Private(bot))
+async def setup(bot):
+    await bot.add_cog(Private(bot))
     
 
 # @commands.has_any_role('Admin', 'Mod', 'DJ', 'Owner')
