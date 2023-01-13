@@ -42,19 +42,19 @@ class TimeZone(commands.Cog):
 
         Use <tz> [:flag_gb: / :flag_it:] or available name:
 
-        Argentina, Australia, Brazil, China,
-        India, Ireland, Israel, Italy,
+        Argentina, Australia, Brazil, Bolivia,
+        China, India, Ireland, Israel, Italy,
         Mexico, Nepal, New Zealand, Panama,
-        Peru, Philippines, Sri Lanka,
+        Peru, Philippines, Sri Lanka, BOT,
         GMT, PST, MST, CST, EST, HST, IST
         """
-        countries = ['argentina', 'australia', 'brazil', 'china', 'india', 'ireland', 'israel', 'italy',
+        countries = ['argentina', 'australia', 'bolivia', 'brazil', 'china', 'india', 'ireland', 'israel', 'italy',
                      'mexico', 'nepal', 'new zealand', 'panama', 'peru', 'philippines', 'sri lanka',
-                     'ist', 'gmt', 'england', 'london', 'est', 'hst', 'pst', 'mst', 'cst', 'germany']
+                     'bot', 'ist', 'gmt', 'england', 'london', 'est', 'hst', 'pst', 'mst', 'cst', 'germany']
         m = ctx.message
         msg = f'**Usage:** `{ctx.prefix}{ctx.invoked_with} [:flag_gb: / country]`\n\n' \
-              f'**Available countries:** Argentina, Australia, Brasil, China, India, Ireland, Israel, Italy, ' \
-              f'Mexico, Nepal, New Zealand, Panama, Peru, Philippines, Sri Lanka'
+              f'**Available countries:** Argentina, Australia, Brasil, Bolivia, China, India, Ireland, Israel, ' \
+              f'Italy, Mexico, Nepal, New Zealand, Panama, Peru, Philippines, Sri Lanka'
 
         if not flag_country:
             return await ctx.send(msg, delete_after=23)
@@ -85,7 +85,9 @@ class TimeZone(commands.Cog):
                                         .replace('cst', 'America/Chicago') \
                                         .replace('peru', 'America/Lima') \
                                         .replace('philippines', 'Asia/Manila') \
-                                        .replace('argentina', 'America/Argentina/Buenos_Aires')
+                                        .replace('argentina', 'America/Argentina/Buenos_Aires') \
+                                        .replace('bolivia', 'America/La_Paz') \
+                                        .replace('bot', 'America/La_Paz')
                     k = place.split()
                     zone_c = str(k).strip('[').strip(']').strip('\'').strip(' ')
                     title_c = zone_c.replace('/', ', ').replace('_', ' ')
@@ -158,7 +160,9 @@ class TimeZone(commands.Cog):
                                 .replace('🇿🇦', 'Africa/Johannesburg') \
                                 .replace('🇦🇷', 'America/Argentina/Buenos_Aires') \
                                 .replace('es', 'Europe/Madrid') \
-                                .replace('in', 'Asia/Calcutta')
+                                .replace('in', 'Asia/Calcutta') \
+                                .replace('bo', 'America/La_Paz') \
+                                .replace('🇧🇴', 'America/La_Paz')
                     k = place.split('tz ')
                     zone_c = str(k[1:]).strip('[').strip(']').strip('\'').strip(' ')
                     title_c = zone_c.replace('/', ', ').replace('_', ' ')
@@ -198,5 +202,5 @@ class TimeZone(commands.Cog):
                         return await ctx.send(msg, delete_after=23)
 
 
-def setup(bot):
-    bot.add_cog(TimeZone(bot))
+async def setup(bot):
+    await bot.add_cog(TimeZone(bot))
