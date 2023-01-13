@@ -402,5 +402,5 @@ class TextGames(commands.Cog):
                     f'{p} **waves**, {p} **what**, {p} **wyou**', delete_after=23)
 
 
-def setup(bot):
-    bot.add_cog(TextGames(bot))
+async def setup(bot):
+    await bot.add_cog(TextGames(bot))
