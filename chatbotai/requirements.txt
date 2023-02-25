@@ -1,2 +1,4 @@
-chatbotAI==0.2.2.1
-wikipedia
+datetime
+pytz
+bs4
+requests
