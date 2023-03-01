@@ -58,41 +58,32 @@ class Starboard(commands.Cog):
         if payload.user_id == self.bot.user.id:
             return
 
-        channel = self.bot.get_channel(payload.channel_id)
         if not isinstance(channel, discord.TextChannel):
             return
         
-        message = await channel.fetch_message(payload.message_id)
-        if not message:
+        if not message.reactions:
             return
         
         starboard_channel = self.bot.get_channel(self.starboard_channel_id)
         if not isinstance(starboard_channel, discord.TextChannel):
             return
-
-        try:
-            reactions = message.reactions
-            if not reactions:
-                return
-
-            star_reaction = None
-            for reaction in reactions:
-                if reaction.emoji == self.star_emoji:
-                    star_reaction = reaction
-                    break
-
-            if star_reaction is not None and star_reaction.count < self.star_count:
-                return
-        except AttributeError:
-            pass
-
+        
+        star_reaction = None
+        for reaction in message.reactions:
+            if reaction.emoji == self.star_emoji:
+                star_reaction = reaction
+                break
+        
+        if star_reaction is None or star_reaction.count < self.star_count:
+            return
+        
         embed = discord.Embed(description=message.content)
         embed.set_author(name=message.author.display_name, icon_url=message.author.avatar.url)
         embed.add_field(name='Jump', value=f'[to the original!]({message.jump_url})')
         embed.add_field(name='Stars', value=star_reaction.count)
         if message.attachments:
             embed.set_image(url=message.attachments[0].url)
-        
+
         await starboard_channel.send(embed=embed)
         
     # +------------------------------------------------------------+
