@@ -84,7 +84,7 @@ class Starboard(commands.Cog):
             return
         
         embed = discord.Embed(description=message.content)
-        embed.set_author(name=message.author.display_name, icon_url=message.author.avatar_url)
+        embed.set_author(name=message.author.display_name, icon_url=message.author.avatar.url)
         embed.add_field(name='Original', value=f'[Jump!]({message.jump_url})')
         embed.add_field(name='Stars', value=star_reaction.count)
         if message.attachments:
@@ -182,7 +182,7 @@ class Starboard(commands.Cog):
             timestamp=message.created_at,
             url=message.jump_url,
         )
-        embed.set_author(name=message.author.display_name, icon_url=message.author.avatar_url)
+        embed.set_author(name=message.author.display_name, icon_url=message.author.avatar.url)
         embed.set_footer(text=f"Starboard ID: {message.id}")
         embed.add_field(name="Channel", value=message.channel.mention)
         embed.add_field(name="Stars", value=f"{star_reaction.count}")
