@@ -69,8 +69,11 @@ class Starboard(commands.Cog):
         starboard_channel = self.bot.get_channel(self.starboard_channel_id)
         if not isinstance(starboard_channel, discord.TextChannel):
             return
-        
+
         reactions = message.reactions
+        if not reactions:
+            return
+
         star_reaction = None
         for reaction in reactions:
             if reaction.emoji == self.star_emoji:
