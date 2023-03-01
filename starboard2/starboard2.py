@@ -15,9 +15,14 @@ class Starboard(commands.Cog):
         if payload.guild_id is None:
             return
 
-        guild = client.get_guild(self.guild_id)
-        if guild is None:
-            return
+        try:
+            guild = bot.get_guild(self.guild_id)
+            if guild is None:
+                return
+        except:
+            guild = bot.get_guild(payload.guild_id)
+            if guild is not None:
+                member = guild.get_member(payload.user_id)
 
         channel = self.bot.get_channel(payload.channel_id)
         if channel is None:
