@@ -17,19 +17,6 @@ class Starboard(commands.Cog):
         if payload.channel_id == self.starboard_channel_id:
             return
 
-        if not payload.member:
-            # Fetch the member if it's not cached
-            guild = self.get_guild(payload.guild_id)
-            member = await guild.fetch_member(payload.user_id)
-        else:
-            member = payload.member
-
-        channel = self.get_channel(payload.channel_id)       
-        message = await channel.fetch_message(payload.message_id)
-
-        if message.author.id == member.id:
-            return
-        '''
         if payload.channel_id == self.starboard_channel_id and payload.emoji.name == self.star_emoji:
             guild = self.bot.get_guild(payload.guild_id)
             if guild is None:
@@ -39,8 +26,7 @@ class Starboard(commands.Cog):
                 return
             message = self.bot.get_channel(payload.channel_id).fetch_message(payload.message_id)
             if message.author == member:
-                return'''
-
+                return
             starboard_channel = guild.get_channel(self.starboard_channel_id)
             starboard_message_id = await self.check_starboard(message)
             if starboard_message_id is None:
