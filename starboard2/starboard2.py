@@ -36,7 +36,7 @@ class Starboard(commands.Cog):
             member = guild.get_member(payload.user_id)
             if member is None:
                 return
-            message = await self.bot.get_channel(payload.channel_id).get_message(payload.message_id)
+            message = await self.bot.get_channel(payload.channel_id).fetch_message(payload.message_id)
             if message.author == member:
                 return
             starboard_channel = guild.get_channel(self.starboard_channel_id)
@@ -47,14 +47,14 @@ class Starboard(commands.Cog):
                 await starboard_message.add_reaction(self.star_emoji)
                 await self.add_starboard_message(message, starboard_message.id)
             else:
-                starboard_message = await starboard_channel.get_message(starboard_message_id)
+                starboard_message = await starboard_channel.fetch_message(starboard_message_id)
                 self.update_embed(starboard_message, message)
 
         channel = self.bot.get_channel(payload.channel_id)
         if channel is None:
             return
 
-        message = await channel.get_message(payload.message_id)
+        message = await channel.fetch_message(payload.message_id)
         if message is None:
             return
 
@@ -65,7 +65,7 @@ class Starboard(commands.Cog):
         if not isinstance(channel, discord.TextChannel):
             return
         
-        message = await channel.get_message(payload.message_id)
+        message = await channel.fetch_message(payload.message_id)
         if not message:
             return
         
@@ -100,7 +100,7 @@ class Starboard(commands.Cog):
         if not isinstance(channel, discord.TextChannel):
             return
         
-        message = await channel.get_message(payload.message_id)
+        message = await channel.fetch_message(payload.message_id)
         if not message:
             return
         
@@ -119,7 +119,7 @@ class Starboard(commands.Cog):
             return
         
         if star_reaction.count < self.star_count:
-            starboard_message = await starboard_channel.get_message(star_reaction.message_id)
+            starboard_message = await starboard_channel.fetch_message(star_reaction.message_id)
             if starboard_message:
                 await starboard_message.delete()
                 
@@ -129,7 +129,7 @@ class Starboard(commands.Cog):
             return
         
         try:
-            starboard_message = await starboard_channel.get_message(payload.message_id)
+            starboard_message = await starboard_channel.fetch_message(payload.message_id)
         except discord.NotFound:
             return
         
@@ -138,7 +138,7 @@ class Starboard(commands.Cog):
         if not isinstance(channel, discord.TextChannel):
             return
         
-        message = await channel.get_message(original_message_id)
+        message = await channel.fetch_message(original_message_id)
         if not message:
             return
         
