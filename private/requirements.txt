@@ -2,5 +2,4 @@ datetime
 pytz
 bs4
 requests
-re
 asyncio
