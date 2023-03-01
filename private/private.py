@@ -72,7 +72,7 @@ class Starboard(commands.Cog):
 
         try:
             reactions = message.reactions
-            if not reactions:
+            if reactions is None or not reactions:
                 return
 
             star_reaction = None
@@ -84,9 +84,8 @@ class Starboard(commands.Cog):
             if star_reaction is None or star_reaction.count < self.star_count:
                 return
         except AttributeError:
-            return
+            pass
 
-        
         embed = discord.Embed(description=message.content)
         embed.set_author(name=message.author.display_name, icon_url=message.author.avatar.url)
         embed.add_field(name='Jump', value=f'[to the original!]({message.jump_url})')
