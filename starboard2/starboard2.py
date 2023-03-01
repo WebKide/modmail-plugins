@@ -36,18 +36,18 @@ class Starboard(commands.Cog):
             member = guild.get_member(payload.user_id)
             if member is None:
                 return
-            message = await self.bot.get_channel(payload.channel_id).fetch_message(payload.message_id)
+            message = self.bot.get_channel(payload.channel_id).fetch_message(payload.message_id)
             if message.author == member:
                 return
             starboard_channel = guild.get_channel(self.starboard_channel_id)
             starboard_message_id = await self.check_starboard(message)
             if starboard_message_id is None:
                 embed = self.create_embed(message, member)
-                starboard_message = await starboard_channel.send(embed=embed)
+                starboard_message = starboard_channel.send(embed=embed)
                 await starboard_message.add_reaction(self.star_emoji)
                 await self.add_starboard_message(message, starboard_message.id)
             else:
-                starboard_message = await starboard_channel.fetch_message(starboard_message_id)
+                starboard_message = starboard_channel.fetch_message(starboard_message_id)
                 self.update_embed(starboard_message, message)
 
         channel = self.bot.get_channel(payload.channel_id)
@@ -61,7 +61,7 @@ class Starboard(commands.Cog):
         if payload.user_id == self.bot.user.id:
             return
 
-        channel = await self.bot.get_channel(payload.channel_id)
+        channel = self.bot.get_channel(payload.channel_id)
         if not isinstance(channel, discord.TextChannel):
             return
         
@@ -69,7 +69,7 @@ class Starboard(commands.Cog):
         if not message:
             return
         
-        starboard_channel = await self.bot.get_channel(self.starboard_channel_id)
+        starboard_channel = self.bot.get_channel(self.starboard_channel_id)
         if not isinstance(starboard_channel, discord.TextChannel):
             return
         
@@ -96,7 +96,7 @@ class Starboard(commands.Cog):
         if payload.emoji.name != self.star_emoji:
             return
         
-        channel = await self.bot.get_channel(payload.channel_id)
+        channel = self.bot.get_channel(payload.channel_id)
         if not isinstance(channel, discord.TextChannel):
             return
         
@@ -104,7 +104,7 @@ class Starboard(commands.Cog):
         if not message:
             return
         
-        starboard_channel = await self.bot.get_channel(self.starboard_channel_id)
+        starboard_channel = self.bot.get_channel(self.starboard_channel_id)
         if not isinstance(starboard_channel, discord.TextChannel):
             return
         
@@ -124,17 +124,17 @@ class Starboard(commands.Cog):
                 await starboard_message.delete()
                 
     async def on_raw_message_edit(self, payload: discord.RawMessageUpdateEvent):
-        starboard_channel = await self.bot.get_channel(self.starboard_channel_id)
+        starboard_channel = self.bot.get_channel(self.starboard_channel_id)
         if not isinstance(starboard_channel, discord.TextChannel):
             return
         
         try:
-            starboard_message = await starboard_channel.fetch_message(payload.message_id)
+            starboard_message = starboard_channel.fetch_message(payload.message_id)
         except discord.NotFound:
             return
         
         original_message_id = starboard_message.embeds[0].fields[0].value.split('/')[-1]
-        channel = await self.bot.get_channel(payload.channel_id)
+        channel = self.bot.get_channel(payload.channel_id)
         if not isinstance(channel, discord.TextChannel):
             return
         
