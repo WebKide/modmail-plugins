@@ -80,9 +80,9 @@ class Private(commands.Cog):
         ]
 
         JOIN = [
-            'Delve deeper into',
-            'Explore and connect with',
-            'Learn, grow, and connect personally on'
+            ', to delve deeper into',
+            ', to explore and connect with',
+            ', so that you can learn, grow, and connect personally on'
         ]
 
         OUTRO = [
@@ -142,7 +142,7 @@ class Private(commands.Cog):
 
         else:
             def _intro():
-                return f'\u200b{random.choice(INTRO)}where we explore the teachings of {random.choice(TEACHINGS)}. Join our host {_host} for a thought-provoking discussion. {random.choice(JOIN)} your spiritual journey throught the path of Rūpānuga Ujjvala Mādhurya-prema.\n\n{random.choice(OUTRO)}.'
+                return f'\u200b{random.choice(INTRO)}where we explore the teachings of {random.choice(TEACHINGS)}. Join our host {_host} for a thought-provoking discussion{random.choice(JOIN)} your spiritual journey throught the path of Rūpānuga Ujjvala Mādhurya-prema.\n\n{random.choice(OUTRO)}.'
 
             try:
                 em = discord.Embed(colour=discord.Colour(0xff7722), description=get_t_str())
