@@ -18,11 +18,10 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-import discord, asyncio, re
+import discord, asyncio, re, random
 
 from datetime import datetime as t
 from pytz import timezone as z
-from random import choice
 from discord.ext import commands
 
 
