@@ -144,9 +144,10 @@ class Private(commands.Cog):
             _what = _event_today.split(' ')[1:]
             _notif = 'https://cdn.discordapp.com/attachments/375179500604096512/1079876674235154442/flyerdesign_27022023_172353.png'
             em = discord.Embed(colour=discord.Colour(0xff7722), description=get_t_str())
-                        .add_field(name='Attentive Listeners', value=_what, inline=False)\
-                        .set_thumbnail(url=_notif)\
-                        .set_footer(text='⇐ Join the Voice Channel NOW!!')
+            em.add_field(name='Attentive Listeners', value=_what, inline=False)
+            em.set_thumbnail(url=_notif)
+            em.set_footer(text='⇐ Join the Voice Channel NOW!!')
+
             return await ctx.send(content=self.poke, embed=em)
 
 
@@ -155,9 +156,10 @@ class Private(commands.Cog):
 
         try:
             em = discord.Embed(colour=discord.Colour(0xff7722), description=get_t())
-                        .add_field(name='Attentive Listeners', value=_intro, inline=False)\
-                        .set_thumbnail(url='https://i.imgur.com/93A0Kdk.png')\
-                        .set_footer(text='⇐ Join the Voice Channel NOW!!')
+            em = discord.Embed(colour=discord.Colour(0xff7722), description=get_t_str())
+            em.add_field(name='Attentive Listeners', value=_intro, inline=False)
+            em.set_thumbnail(url='https://i.imgur.com/93A0Kdk.png')
+            em.set_footer(text='⇐ Join the Voice Channel NOW!!')
             await ctx.send(content=self.poke, embed=em)
 
         except discord.Forbidden:
