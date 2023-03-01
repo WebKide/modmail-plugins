@@ -17,11 +17,15 @@ class Starboard(commands.Cog):
             guild = self.bot.get_guild(payload.guild_id)
             member = guild.get_member(payload.user_id)
 
-        guild = bot.get_guild(self.guild_id)
-        if guild is None:
-            # handle the error here, e.g. log a warning and return
-            return
-        member = guild.get_member(payload.user_id)
+        try:
+            guild = self.bot.get_guild(self.guild_id)
+            if guild is None:
+                return
+        except:
+            guild = self.bot.get_guild(payload.guild_id)
+            if guild is not None:
+                member = guild.get_member(payload.user_id)
+
         channel = self.bot.get_channel(payload.channel_id)
         if channel is None:
             return
