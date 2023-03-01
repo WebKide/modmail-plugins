@@ -1,6 +1,6 @@
 import discord
 
-class Starboard(commands.Cog):
+class Starboard():
     """─=≡Σ(つಠ益ಠ)つ private cog for my personal discord guild, it won't work on yours! """
     def __init__(self, bot):
         self.bot = bot
