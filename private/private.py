@@ -77,12 +77,6 @@ class Starboard(commands.Cog):
                 star_reaction = reaction
                 break
 
-        star_reaction = None
-        for reaction in reactions:
-            if reaction.emoji == self.star_emoji:
-                star_reaction = reaction
-                break
-
         if star_reaction is None or star_reaction.count < self.star_count:
             return
 
