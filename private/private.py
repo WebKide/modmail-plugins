@@ -45,18 +45,18 @@ OUTRO = [
     'You\'ve been eagerly waiting for this, and so have we. Sit back, relax and, listen attentively'
 ]
 
+_desc = 'Command for my personal Guild'
 
 class Private(commands.Cog):
     """─=≡Σ(つಠ益ಠ)つ private cog for my personal discord guild, it won't work on yours! """
     def __init__(self, bot):
         self.bot = bot
-        self.desc = 'Command for my personal Guild'
         self.poke = '<@&358429415417446411>'
 
     # +------------------------------------------------------------+
     # |                 PUSH-NOTIFICATION                          |
     # +------------------------------------------------------------+
-    @commands.command(description=self.desc, aliases=['poke', 'push', 'nudge'], no_pm=True)
+    @commands.command(description=_desc, aliases=['poke', 'push', 'nudge'], no_pm=True)
     async def radhe(self, ctx, *, _event_today: str = None):
         """
         ─=≡Σ(つಠ益ಠ)つ command to send a Push-notification in text-channel
