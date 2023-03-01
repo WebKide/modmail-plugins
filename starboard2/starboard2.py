@@ -11,19 +11,17 @@ class Starboard(commands.Cog):
         self.guild_id = 328341202103435264 # ID of my Guild
         self.starboard_channel_id = 729093473487028254 # ID of my Starboard channel
     
+    @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
-        if payload.guild_id is None:
+        if payload.channel_id == self.starboard_channel_id and payload.emoji.name == self.star_emoji:
+            guild = self.bot.get_guild(payload.guild_id)
+            member = guild.get_member(payload.user_id)
+
+        guild = bot.get_guild(self.guild_id)
+        if guild is None:
+            # handle the error here, e.g. log a warning and return
             return
-
-        try:
-            guild = bot.get_guild(self.guild_id)
-            if guild is None:
-                return
-        except:
-            guild = bot.get_guild(payload.guild_id)
-            if guild is not None:
-                member = guild.get_member(payload.user_id)
-
+        member = guild.get_member(payload.user_id)
         channel = self.bot.get_channel(payload.channel_id)
         if channel is None:
             return
