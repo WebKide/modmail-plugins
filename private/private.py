@@ -18,6 +18,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
+# import discord, requests, traceback, aiohttp, random, asyncio, re
+# from bs4 import BeautifulSoup, SoupStrainer
 import discord, asyncio, re
 
 from datetime import datetime as t
@@ -25,17 +27,26 @@ from pytz import timezone as z
 from random import choice
 from discord.ext import commands
 
-_TZ = {
+
+class Private(commands.Cog):
+    """─=≡Σ(つಠ益ಠ)つ private cog for my personal discord guild, it won't work on yours! """
+    def __init__(self, bot):
+        self.bot = bot
+        self.desc = 'Command for my personal Guild'
+        self.poke = '<@&358429415417446411>'
+
+
+    _TZ = {
     "IST": "Asia/Kolkata",
     "BST": "Europe/London",
     "EST": "America/New_York",
     "PST": "America/Los_Angeles",
     "BOT": "America/La_Paz"
-}
+    }
 
-p_c = f' the **{ctx.message.guild}** Podcast, '
+    p_c = f' the **{ctx.message.guild}** Podcast, '
 
-INTRO = [
+    INTRO = [
     f'*Turn off and tune into*{p_c}',
     f'Bring auspiciousness to your day with{p_c}',
     f'Hello and welcome to{p_c}',
@@ -45,35 +56,27 @@ INTRO = [
     f'This is{p_c}',
     f'Tune into{p_c}',
     f'Welcome to{p_c}'
-]
+    ]
 
-TEACHINGS = [
+    TEACHINGS = [
     'our Rūpānuga Guru-varga',
     'our Vaiṣṇavas Ācāryas',
     'the Śrī Gauḍīya Vaiṣṇavas'
-]
+    ]
 
-JOIN = [
+    JOIN = [
     'Delve deeper into',
     'Explore and connect with',
     'Learn, grow, and connect personally on'
-]
+    ]
 
-OUTRO = [
+    OUTRO = [
     'So, let\'s dive into this valuable study together and learn about this wanderful process',
     'So, sit back, relax, and listen attentively as we embark on this spiritual journey together',
     'Without further ado, sit back, relax and, listen attentively',
     'Without further ado, sit back, relax, and simply "lend us your ears"',
     'You\'ve been eagerly waiting for this, and so have we. Sit back, relax and, listen attentively'
-]
-
-class Private(commands.Cog):
-    """─=≡Σ(つಠ益ಠ)つ private cog for my personal discord guild, it won't work on yours! """
-    def __init__(self, bot):
-        self.bot = bot
-        self.desc = 'Command for my personal Guild'
-        self.poke = '<@&358429415417446411>'
-
+    ]
 
     # +------------------------------------------------------------+
     # |                 PUSH-NOTIFICATION                          |
