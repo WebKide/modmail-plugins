@@ -72,7 +72,7 @@ class Starboard(commands.Cog):
 
         try:
             reactions = message.reactions
-            if reactions is None or not reactions:
+            if not reactions:
                 return
 
             star_reaction = None
@@ -81,7 +81,7 @@ class Starboard(commands.Cog):
                     star_reaction = reaction
                     break
 
-            if star_reaction is None or star_reaction.count < self.star_count:
+            if star_reaction is not None and star_reaction.count < self.star_count:
                 return
         except AttributeError:
             pass
