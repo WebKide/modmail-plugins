@@ -11,11 +11,24 @@ class Starboard(commands.Cog):
         self.starboard_channel_id = 729093473487028254 # ID of my Starboard channel
     
     async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
+        if payload.guild_id is None:
+            return
+
         guild = self.bot.get_guild(payload.guild_id)
         if guild is None:
             return
 
-        member: discord.Member = await guild.fetch_member(payload.user_id)
+        channel = self.bot.get_channel(payload.channel_id)
+        if channel is None:
+            return
+
+        message = await channel.fetch_message(payload.message_id)
+        if message is None:
+            return
+
+        if payload.user_id == self.bot.user.id:
+            return
+
         channel = await self.bot.fetch_channel(payload.channel_id)
         if not isinstance(channel, discord.TextChannel):
             return
