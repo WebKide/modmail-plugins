@@ -12,6 +12,9 @@ class Starboard(commands.Cog):
         self.starboard_channel_id = 729093473487028254 # ID of my Starboard channel
     
 
+    # +------------------------------------------------------------+
+    # |              ADD A MESSAGE TO STARBOARD                    |
+    # +------------------------------------------------------------+
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
         if payload.channel_id == self.starboard_channel_id:
@@ -80,40 +83,29 @@ class Starboard(commands.Cog):
         
         await starboard_channel.send(embed=embed)
         
-    async def on_raw_reaction_remove(self, payload: discord.RawReactionActionEvent):
+    # +------------------------------------------------------------+
+    # |              DELETE STARBOARD MESSAGE                      |
+    # +------------------------------------------------------------+
+    async def on_raw_reaction_remove(payload):
         if payload.channel_id == self.starboard_channel_id:
-            return
+            message_id = payload.message_id
+            channel = client.get_channel(payload.channel_id)
+            message = await channel.fetch_message(message_id)
+            if message.embeds:
+                embed = message.embeds[0]
+                if embed.footer.text.startswith("⭐"):
+                    reactions = message.reactions
+                    count = 0
+                    for reaction in reactions:
+                        if reaction.emoji == "⭐":
+                            count = reaction.count
+                            break
+                    if count < self.star_count:
+                        await message.delete()
 
-        if payload.emoji.name != self.star_emoji:
-            return
-        
-        channel = self.bot.get_channel(payload.channel_id)
-        if not isinstance(channel, discord.TextChannel):
-            return
-        
-        message = await channel.fetch_message(payload.message_id)
-        if not message:
-            return
-        
-        starboard_channel = self.bot.get_channel(self.starboard_channel_id)
-        if not isinstance(starboard_channel, discord.TextChannel):
-            return
-        
-        reactions = message.reactions
-        star_reaction = None
-        for reaction in reactions:
-            if reaction.emoji == self.star_emoji:
-                star_reaction = reaction
-                break
-        
-        if not star_reaction:
-            return
-        
-        if star_reaction.count < self.star_count:
-            starboard_message = await starboard_channel.fetch_message(star_reaction.message_id)
-            if starboard_message:
-                await starboard_message.delete()
-                
+    # +------------------------------------------------------------+
+    # |                EDIT STARBOARD MESSAGE                      |
+    # +------------------------------------------------------------+                
     async def on_raw_message_edit(self, payload: discord.RawMessageUpdateEvent):
         starboard_channel = self.bot.get_channel(self.starboard_channel_id)
         # Ignore edits made by the bot itself
