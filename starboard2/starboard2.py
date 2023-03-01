@@ -36,7 +36,7 @@ class Starboard(commands.Cog):
             member = guild.get_member(payload.user_id)
             if member is None:
                 return
-            message = await self.bot.get_channel(payload.channel_id).fetch_message(payload.message_id)
+            message = await self.bot.get_channel(payload.channel_id).get_message(payload.message_id)
             if message.author == member:
                 return
             starboard_channel = guild.get_channel(self.starboard_channel_id)
@@ -47,29 +47,29 @@ class Starboard(commands.Cog):
                 await starboard_message.add_reaction(self.star_emoji)
                 await self.add_starboard_message(message, starboard_message.id)
             else:
-                starboard_message = await starboard_channel.fetch_message(starboard_message_id)
+                starboard_message = await starboard_channel.get_message(starboard_message_id)
                 self.update_embed(starboard_message, message)
 
         channel = self.bot.get_channel(payload.channel_id)
         if channel is None:
             return
 
-        message = await channel.fetch_message(payload.message_id)
+        message = await channel.get_message(payload.message_id)
         if message is None:
             return
 
         if payload.user_id == self.bot.user.id:
             return
 
-        channel = await self.bot.fetch_channel(payload.channel_id)
+        channel = await self.bot.get_channel(payload.channel_id)
         if not isinstance(channel, discord.TextChannel):
             return
         
-        message = await channel.fetch_message(payload.message_id)
+        message = await channel.get_message(payload.message_id)
         if not message:
             return
         
-        starboard_channel = await self.bot.fetch_channel(self.starboard_channel_id)
+        starboard_channel = await self.bot.get_channel(self.starboard_channel_id)
         if not isinstance(starboard_channel, discord.TextChannel):
             return
         
@@ -96,15 +96,15 @@ class Starboard(commands.Cog):
         if payload.emoji.name != self.star_emoji:
             return
         
-        channel = await self.bot.fetch_channel(payload.channel_id)
+        channel = await self.bot.get_channel(payload.channel_id)
         if not isinstance(channel, discord.TextChannel):
             return
         
-        message = await channel.fetch_message(payload.message_id)
+        message = await channel.get_message(payload.message_id)
         if not message:
             return
         
-        starboard_channel = await self.bot.fetch_channel(self.starboard_channel_id)
+        starboard_channel = await self.bot.get_channel(self.starboard_channel_id)
         if not isinstance(starboard_channel, discord.TextChannel):
             return
         
@@ -119,26 +119,26 @@ class Starboard(commands.Cog):
             return
         
         if star_reaction.count < self.star_count:
-            starboard_message = await starboard_channel.fetch_message(star_reaction.message_id)
+            starboard_message = await starboard_channel.get_message(star_reaction.message_id)
             if starboard_message:
                 await starboard_message.delete()
                 
     async def on_raw_message_edit(self, payload: discord.RawMessageUpdateEvent):
-        starboard_channel = await self.bot.fetch_channel(self.starboard_channel_id)
+        starboard_channel = await self.bot.get_channel(self.starboard_channel_id)
         if not isinstance(starboard_channel, discord.TextChannel):
             return
         
         try:
-            starboard_message = await starboard_channel.fetch_message(payload.message_id)
+            starboard_message = await starboard_channel.get_message(payload.message_id)
         except discord.NotFound:
             return
         
         original_message_id = starboard_message.embeds[0].fields[0].value.split('/')[-1]
-        channel = await self.bot.fetch_channel(payload.channel_id)
+        channel = await self.bot.get_channel(payload.channel_id)
         if not isinstance(channel, discord.TextChannel):
             return
         
-        message = await channel.fetch_message(original_message_id)
+        message = await channel.get_message(original_message_id)
         if not message:
             return
         
