@@ -8,7 +8,7 @@ class Starboard(commands.Cog):
         self.bot = bot
         self.star_emoji = '⭐'
         self.star_count = 3
-        self.starboard_channel_id = 123456789 # Replace with the ID of your Starboard channel
+        self.starboard_channel_id = 729093473487028254 # ID of my Starboard channel
     
     async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
         if payload.emoji.name != self.star_emoji:
