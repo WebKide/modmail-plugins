@@ -57,7 +57,6 @@ class Private(commands.Cog):
     # |                 PUSH-NOTIFICATION                          |
     # +------------------------------------------------------------+
     @commands.command(description=_desc, aliases=['poke', 'push', 'nudge'], no_pm=True)
-    @commands.has_any_role('Admin', 'Mod', 'Moderator')
     async def radhe(self, ctx, *, _event_today: str = None):
         """
         ─=≡Σ(つಠ益ಠ)つ command to send a Push-notification in text-channel
@@ -99,14 +98,13 @@ class Private(commands.Cog):
             if not channel.topic:
                 return await ctx.send(err_m, delete_after=23)
 
-            '''
             if 'MODS' in channel.topic:
                 c = channel.topic.split('MODS')[-1]
                 w = c.split('\n\n')[0]
                 _mods = "MODS{}".format(repr(w)).replace('"', '')
                 if ctx.author.id not in (mod[1] for mod in _mods):
                     _ask_for_help= 'You cannot use this command, contact a Mod for help.'
-                    return await ctx.send(_ask_for_help, delete_after=23)'''
+                    return await ctx.send(_ask_for_help, delete_after=23)
 
             if '—' in channel.topic:
                 _host = channel.topic.split('—')[-1]
@@ -154,7 +152,6 @@ class Private(commands.Cog):
             return f'\u200b{random.choice(INTRO)}where we explore the teachings of {random.choice(TEACHINGS)}. Join our host {_host} for a thought-provoking discussion. {random.choice(JOIN)} your spiritual journey throught the path of Rūpānuga Ujjvala Mādhurya-prema.\n\n{random.choice(OUTRO)}.'
 
         try:
-            em = discord.Embed(colour=discord.Colour(0xff7722), description=get_t())
             em = discord.Embed(colour=discord.Colour(0xff7722), description=get_t_str())
             em.add_field(name='Attentive Listeners', value=_intro, inline=False)
             em.set_thumbnail(url='https://i.imgur.com/93A0Kdk.png')
@@ -162,7 +159,7 @@ class Private(commands.Cog):
             await ctx.send(content=self.poke, embed=em)
 
         except discord.Forbidden:
-            _simple = f'{self.poke}\n{get_t()}\n\n{_intro}'
+            _simple = f'{self.poke}\n{get_t_str()}\n\n{_intro}'
             await ctx.send(_simple)
 
         try:
