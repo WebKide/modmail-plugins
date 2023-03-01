@@ -141,25 +141,26 @@ class Private(commands.Cog):
             return await ctx.send(content=self.poke, embed=em)
 
 
-        def _intro():
-            return f'\u200b{random.choice(INTRO)}where we explore the teachings of {random.choice(TEACHINGS)}. Join our host {_host} for a thought-provoking discussion. {random.choice(JOIN)} your spiritual journey throught the path of Rūpānuga Ujjvala Mādhurya-prema.\n\n{random.choice(OUTRO)}.'
+        else:
+            def _intro():
+                return f'\u200b{random.choice(INTRO)}where we explore the teachings of {random.choice(TEACHINGS)}. Join our host {_host} for a thought-provoking discussion. {random.choice(JOIN)} your spiritual journey throught the path of Rūpānuga Ujjvala Mādhurya-prema.\n\n{random.choice(OUTRO)}.'
 
-        try:
-            em = discord.Embed(colour=discord.Colour(0xff7722), description=get_t_str())
-            em.add_field(name='Attentive Listeners', value=_intro, inline=False)
-            em.set_thumbnail(url='https://i.imgur.com/93A0Kdk.png')
-            em.set_footer(text='⇐ Join the Voice Channel NOW!!')
-            _nudge = await ctx.send(content=self.poke, embed=em)
+            try:
+                em = discord.Embed(colour=discord.Colour(0xff7722), description=get_t_str())
+                em.add_field(name='Attentive Listeners', value=_intro, inline=False)
+                em.set_thumbnail(url='https://i.imgur.com/93A0Kdk.png')
+                em.set_footer(text='⇐ Join the Voice Channel NOW!!')
+                _nudge = await ctx.send(content=self.poke, embed=em)
 
-        except discord.Forbidden:
-            _simple = f'{self.poke}\n{get_t_str()}\n\n{_intro}'
-            _nudge = await ctx.send(_simple)
+            except discord.Forbidden:
+                _simple = f'{self.poke}\n{get_t_str()}\n\n{_intro}'
+                _nudge = await ctx.send(_simple)
 
-        try:
-            await asyncio.sleep(2)
-            await _nudge.add_reaction('thankful:695101751707303998')
-        except discord.HTTPException:
-            pass
+            try:
+                await asyncio.sleep(2)
+                await _nudge.add_reaction('thankful:695101751707303998')
+            except discord.HTTPException:
+                pass
 
 async def setup(bot):
     await bot.add_cog(Private(bot))
