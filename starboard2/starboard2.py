@@ -11,6 +11,7 @@ class Starboard(commands.Cog):
         self.guild_id = 328341202103435264 # ID of my Guild
         self.starboard_channel_id = 729093473487028254 # ID of my Starboard channel
     
+    '''
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
         if payload.channel_id == self.starboard_channel_id and payload.emoji.name == self.star_emoji:
@@ -25,6 +26,30 @@ class Starboard(commands.Cog):
             guild = self.bot.get_guild(payload.guild_id)
             if guild is not None:
                 member = guild.get_member(payload.user_id)
+    '''
+    @guild_only()
+    @commands.Cog.listener()
+    async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
+        if payload.channel_id == self.starboard_channel_id and payload.emoji.name == self.star_emoji:
+            guild = self.bot.get_guild(payload.guild_id)
+            if guild is None:
+                return
+            member = guild.get_member(payload.user_id)
+            if member is None:
+                return
+            message = await self.bot.get_channel(payload.channel_id).fetch_message(payload.message_id)
+            if message.author == member:
+                return
+            starboard_channel = guild.get_channel(self.starboard_channel_id)
+            starboard_message_id = await self.check_starboard(message)
+            if starboard_message_id is None:
+                embed = self.create_embed(message, member)
+                starboard_message = await starboard_channel.send(embed=embed)
+                await starboard_message.add_reaction(self.star_emoji)
+                await self.add_starboard_message(message, starboard_message.id)
+            else:
+                starboard_message = await starboard_channel.fetch_message(starboard_message_id)
+                self.update_embed(starboard_message, message)
 
         channel = self.bot.get_channel(payload.channel_id)
         if channel is None:
