@@ -149,11 +149,11 @@ class Private(commands.Cog):
             em.add_field(name='Attentive Listeners', value=_intro, inline=False)
             em.set_thumbnail(url='https://i.imgur.com/93A0Kdk.png')
             em.set_footer(text='⇐ Join the Voice Channel NOW!!')
-            await ctx.send(content=self.poke, embed=em)
+            _nudge = await ctx.send(content=self.poke, embed=em)
 
         except discord.Forbidden:
             _simple = f'{self.poke}\n{get_t_str()}\n\n{_intro}'
-            await ctx.send(_simple)
+            _nudge = await ctx.send(_simple)
 
         try:
             await asyncio.sleep(2)
