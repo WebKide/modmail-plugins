@@ -25,27 +25,6 @@ from pytz import timezone as z
 from random import choice
 from discord.ext import commands
 
-TEACHINGS = [
-    'our Rūpānuga Guru-varga',
-    'our Vaiṣṇavas Ācāryas',
-    'the Śrī Gauḍīya Vaiṣṇavas'
-]
-
-JOIN = [
-    'Delve deeper into',
-    'Explore and connect with',
-    'Learn, grow, and connect personally on'
-]
-
-OUTRO = [
-    'So, let\'s dive into this valuable study together and learn about this wanderful process',
-    'So, sit back, relax, and listen attentively as we embark on this spiritual journey together',
-    'Without further ado, sit back, relax and, listen attentively',
-    'Without further ado, sit back, relax, and simply "lend us your ears"',
-    'You\'ve been eagerly waiting for this, and so have we. Sit back, relax and, listen attentively'
-]
-
-_desc = 'Command for my personal Guild'
 
 class Private(commands.Cog):
     """─=≡Σ(つಠ益ಠ)つ private cog for my personal discord guild, it won't work on yours! """
@@ -56,7 +35,7 @@ class Private(commands.Cog):
     # +------------------------------------------------------------+
     # |                 PUSH-NOTIFICATION                          |
     # +------------------------------------------------------------+
-    @commands.command(description=_desc, aliases=['poke', 'push', 'nudge'], no_pm=True)
+    @commands.command(description='For my personal Guild', aliases=['poke', 'nudge'], no_pm=True)
     @commands.has_any_role('Admin', 'Mod', 'Moderator')
     async def radhe(self, ctx, *, _event_today: str = None):
         """
@@ -95,6 +74,26 @@ class Private(commands.Cog):
             f'Welcome to the **{ctx.message.guild}** Podcast, '
         ]
 
+        TEACHINGS = [
+            'our Rūpānuga Guru-varga',
+            'our Vaiṣṇavas Ācāryas',
+            'the Śrī Gauḍīya Vaiṣṇavas'
+        ]
+
+        JOIN = [
+            'Delve deeper into',
+            'Explore and connect with',
+            'Learn, grow, and connect personally on'
+        ]
+
+        OUTRO = [
+            'So, let\'s dive into this valuable study together and learn about this wanderful process',
+            'So, sit back, relax, and listen attentively as we embark on this spiritual journey together',
+            'Without further ado, sit back, relax and, listen attentively',
+            'Without further ado, sit back, relax, and simply "lend us your ears"',
+            'You\'ve been eagerly waiting for this, and so have we. Sit back, relax and, listen attentively'
+        ]
+
         if isinstance(channel, discord.TextChannel):
             if not channel.topic:
                 return await ctx.send(err_m, delete_after=23)
@@ -102,8 +101,9 @@ class Private(commands.Cog):
             if '—' in channel.topic:
                 _host = channel.topic.split('—')[-1]
             else:
-                _check = 'You cannot use this command, contact a Mod for help.'
-                return await ctx.send(_check, delete_after=23)
+                _host = 'and speaker'
+                # _check = 'You cannot use this command, contact a Mod for help.'
+                # return await ctx.send(_check, delete_after=23)
 
 
         def get_ordinal_suffix(num):
