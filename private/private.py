@@ -130,7 +130,7 @@ class Private(commands.Cog):
 
         # This is still here in case there is the need for a personalised Notification
         if _event_today is not None and _event_today.startswith('extra'):
-            _what = _event_today.split(' ')[1:]
+            _what = ' '.join(_event_today.split(' ')[1:])
             _notif = 'https://cdn.discordapp.com/attachments/375179500604096512/1079876674235154442/flyerdesign_27022023_172353.png'
             em = discord.Embed(colour=discord.Colour(0xff7722), description=get_t_str())
             em.add_field(name='Attentive Listeners', value=_what, inline=False)
