@@ -7,14 +7,15 @@ class Starboard(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.star_emoji = '⭐'
-        self.star_count = 3
+        self.star_count = 1
+        self.guild_id = 328341202103435264 # ID of my Guild
         self.starboard_channel_id = 729093473487028254 # ID of my Starboard channel
     
     async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
         if payload.guild_id is None:
             return
 
-        guild = self.bot.get_guild(payload.guild_id)
+        guild = client.get_guild(self.guild_id)
         if guild is None:
             return
 
