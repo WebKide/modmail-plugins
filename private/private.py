@@ -76,9 +76,16 @@ class Starboard(commands.Cog):
             if reaction.emoji == self.star_emoji:
                 star_reaction = reaction
                 break
-        
-        if star_reaction.count < self.star_count:
+
+        star_reaction = None
+        for reaction in reactions:
+            if reaction.emoji == self.star_emoji:
+                star_reaction = reaction
+                break
+
+        if star_reaction is None or star_reaction.count < self.star_count:
             return
+
         
         embed = discord.Embed(description=message.content)
         embed.set_author(name=message.author.display_name, icon_url=message.author.avatar.url)
