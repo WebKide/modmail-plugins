@@ -169,7 +169,7 @@ class StarboardCog(commands.Cog, name="Starboard"):
         if await self.starboard_sent_collection.find_one({"_id": payload.message_id}) is not None:
             return
 
-        reaction_emoji = payload.emoji
+        reaction_emoji = payload.emoji.name
         reaction_guild = self.bot.get_guild(payload.guild_id)
         reaction_channel = reaction_guild.get_channel(payload.channel_id)
         reaction_message = await reaction_channel.fetch_message(payload.message_id)
