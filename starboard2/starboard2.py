@@ -11,24 +11,25 @@ class Starboard(commands.Cog):
         self.guild_id = 328341202103435264 # ID of my Guild
         self.starboard_channel_id = 729093473487028254 # ID of my Starboard channel
     
-    '''
-    @commands.Cog.listener()
-    async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
-        if payload.channel_id == self.starboard_channel_id and payload.emoji.name == self.star_emoji:
-            guild = self.bot.get_guild(payload.guild_id)
-            member = guild.get_member(payload.user_id)
 
-        try:
-            guild = self.bot.get_guild(self.guild_id)
-            if guild is None:
-                return
-        except:
-            guild = self.bot.get_guild(payload.guild_id)
-            if guild is not None:
-                member = guild.get_member(payload.user_id)
-    '''
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
+        if payload.channel_id == self.starboard_channel_id:
+            return
+
+        if not payload.member:
+            # Fetch the member if it's not cached
+            guild = self.get_guild(payload.guild_id)
+            member = await guild.fetch_member(payload.user_id)
+        else:
+            member = payload.member
+
+        channel = self.get_channel(payload.channel_id)       
+        message = await channel.fetch_message(payload.message_id)
+
+        if message.author.id == member.id:
+            return
+        '''
         if payload.channel_id == self.starboard_channel_id and payload.emoji.name == self.star_emoji:
             guild = self.bot.get_guild(payload.guild_id)
             if guild is None:
@@ -38,7 +39,8 @@ class Starboard(commands.Cog):
                 return
             message = self.bot.get_channel(payload.channel_id).fetch_message(payload.message_id)
             if message.author == member:
-                return
+                return'''
+
             starboard_channel = guild.get_channel(self.starboard_channel_id)
             starboard_message_id = await self.check_starboard(message)
             if starboard_message_id is None:
@@ -85,7 +87,7 @@ class Starboard(commands.Cog):
         
         embed = discord.Embed(description=message.content)
         embed.set_author(name=message.author.display_name, icon_url=message.author.avatar.url)
-        embed.add_field(name='Original', value=f'[Jump!]({message.jump_url})')
+        embed.add_field(name='Jump', value=f'[to the original!]({message.jump_url})')
         embed.add_field(name='Stars', value=star_reaction.count)
         if message.attachments:
             embed.set_image(url=message.attachments[0].url)
@@ -93,6 +95,9 @@ class Starboard(commands.Cog):
         await starboard_channel.send(embed=embed)
         
     async def on_raw_reaction_remove(self, payload: discord.RawReactionActionEvent):
+        if payload.channel_id == self.starboard_channel_id:
+            return
+
         if payload.emoji.name != self.star_emoji:
             return
         
@@ -125,6 +130,10 @@ class Starboard(commands.Cog):
                 
     async def on_raw_message_edit(self, payload: discord.RawMessageUpdateEvent):
         starboard_channel = self.bot.get_channel(self.starboard_channel_id)
+        # Ignore edits made by the bot itself
+        if message.author == bot.user:
+            return
+
         if not isinstance(starboard_channel, discord.TextChannel):
             return
         
@@ -156,10 +165,6 @@ class Starboard(commands.Cog):
         if star_reaction.count < self.star_count:
             await starboard_message.delete()
             return
-        
-        if star_reaction.count < self.star_count:
-            await starboard_message.delete()
-            return
 
         # Check if there is already a message on the starboard for this message
         existing_message = None
@@ -171,7 +176,7 @@ class Starboard(commands.Cog):
         # If there's an existing message, update its star count and return
         if existing_message:
             embed = existing_message.embeds[0]
-            embed.set_field_at(0, name="Stars", value=f"{star_reaction.count}")
+            embed.set_field_at(0, name="Stars", value=f"{star_reaction.count} ⭐")
             await existing_message.edit(embed=embed)
             return
 
@@ -185,7 +190,7 @@ class Starboard(commands.Cog):
         embed.set_author(name=message.author.display_name, icon_url=message.author.avatar.url)
         embed.set_footer(text=f"Starboard ID: {message.id}")
         embed.add_field(name="Channel", value=message.channel.mention)
-        embed.add_field(name="Stars", value=f"{star_reaction.count}")
+        embed.add_field(name="Stars", value=f"{star_reaction.count} ⭐")
         if message.attachments:
             embed.set_image(url=message.attachments[0].url)
 
