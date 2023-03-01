@@ -70,17 +70,20 @@ class Starboard(commands.Cog):
         if not isinstance(starboard_channel, discord.TextChannel):
             return
 
-        reactions = message.reactions
-        if not reactions:
-            return
+        try:
+            reactions = message.reactions
+            if not reactions:
+                return
 
-        star_reaction = None
-        for reaction in reactions:
-            if reaction.emoji == self.star_emoji:
-                star_reaction = reaction
-                break
+            star_reaction = None
+            for reaction in reactions:
+                if reaction.emoji == self.star_emoji:
+                    star_reaction = reaction
+                    break
 
-        if star_reaction is None or star_reaction.count < self.star_count:
+            if star_reaction is None or star_reaction.count < self.star_count:
+                return
+        except AttributeError:
             return
 
         
