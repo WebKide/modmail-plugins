@@ -25,6 +25,26 @@ from pytz import timezone as z
 from random import choice
 from discord.ext import commands
 
+TEACHINGS = [
+    'our Rūpānuga Guru-varga',
+    'our Vaiṣṇavas Ācāryas',
+    'the Śrī Gauḍīya Vaiṣṇavas'
+]
+
+JOIN = [
+    'Delve deeper into',
+    'Explore and connect with',
+    'Learn, grow, and connect personally on'
+]
+
+OUTRO = [
+    'So, let\'s dive into this valuable study together and learn about this wanderful process',
+    'So, sit back, relax, and listen attentively as we embark on this spiritual journey together',
+    'Without further ado, sit back, relax and, listen attentively',
+    'Without further ado, sit back, relax, and simply "lend us your ears"',
+    'You\'ve been eagerly waiting for this, and so have we. Sit back, relax and, listen attentively'
+]
+
 
 class Private(commands.Cog):
     """─=≡Σ(つಠ益ಠ)つ private cog for my personal discord guild, it won't work on yours! """
@@ -32,49 +52,6 @@ class Private(commands.Cog):
         self.bot = bot
         self.desc = 'Command for my personal Guild'
         self.poke = '<@&358429415417446411>'
-
-
-    _TZ = {
-    "IST": "Asia/Kolkata",
-    "BST": "Europe/London",
-    "EST": "America/New_York",
-    "PST": "America/Los_Angeles",
-    "BOT": "America/La_Paz"
-    }
-
-    p_c = f' the **{ctx.message.guild}** Podcast, '
-
-    INTRO = [
-    f'*Turn off and tune into*{p_c}',
-    f'Bring auspiciousness to your day with{p_c}',
-    f'Hello and welcome to{p_c}',
-    f'It is a beautiful day to listen to{p_c}',
-    f'It is a nice day to listen to{p_c}',
-    f'Make your day succesfull by listening to{p_c}',
-    f'This is{p_c}',
-    f'Tune into{p_c}',
-    f'Welcome to{p_c}'
-    ]
-
-    TEACHINGS = [
-    'our Rūpānuga Guru-varga',
-    'our Vaiṣṇavas Ācāryas',
-    'the Śrī Gauḍīya Vaiṣṇavas'
-    ]
-
-    JOIN = [
-    'Delve deeper into',
-    'Explore and connect with',
-    'Learn, grow, and connect personally on'
-    ]
-
-    OUTRO = [
-    'So, let\'s dive into this valuable study together and learn about this wanderful process',
-    'So, sit back, relax, and listen attentively as we embark on this spiritual journey together',
-    'Without further ado, sit back, relax and, listen attentively',
-    'Without further ado, sit back, relax, and simply "lend us your ears"',
-    'You\'ve been eagerly waiting for this, and so have we. Sit back, relax and, listen attentively'
-    ]
 
     # +------------------------------------------------------------+
     # |                 PUSH-NOTIFICATION                          |
@@ -96,6 +73,26 @@ class Private(commands.Cog):
         channel =  ctx.channel or ctx.message.channel
         err_m = f"{ctx.message.author.mention}, update this channel's **Topic**.\n\n" \
                 f"**Tip:** ask a Mod for help setting up this channel for the command to work."
+
+        _TZ = {
+            "IST": "Asia/Kolkata",
+            "BST": "Europe/London",
+            "EST": "America/New_York",
+            "PST": "America/Los_Angeles",
+            "BOT": "America/La_Paz"
+        }
+
+        INTRO = [
+            f'*Turn off and tune into* the **{ctx.message.guild}** Podcast, ',
+            f'Bring auspiciousness to your day with the **{ctx.message.guild}** Podcast, ',
+            f'Hello and welcome to the **{ctx.message.guild}** Podcast, ',
+            f'It is a beautiful day to listen to the **{ctx.message.guild}** Podcast, ',
+            f'It is a nice day to listen to the **{ctx.message.guild}** Podcast, ',
+            f'Make your day succesfull by listening to the **{ctx.message.guild}** Podcast, ',
+            f'This is the **{ctx.message.guild}** Podcast, ',
+            f'Tune into the **{ctx.message.guild}** Podcast, ',
+            f'Welcome to the **{ctx.message.guild}** Podcast, '
+        ]
 
         if isinstance(channel, discord.TextChannel):
             if not channel.topic:
