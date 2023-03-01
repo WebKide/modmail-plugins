@@ -89,7 +89,7 @@ class Starboard(commands.Cog):
     async def on_raw_reaction_remove(payload):
         if payload.channel_id == self.starboard_channel_id:
             message_id = payload.message_id
-            channel = client.get_channel(payload.channel_id)
+            channel = self.bot.get_channel(payload.channel_id)
             message = await channel.fetch_message(message_id)
             if message.embeds:
                 embed = message.embeds[0]
