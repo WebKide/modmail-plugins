@@ -27,7 +27,6 @@ class Starboard(commands.Cog):
             if guild is not None:
                 member = guild.get_member(payload.user_id)
     '''
-    @guild_only()
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
         if payload.channel_id == self.starboard_channel_id and payload.emoji.name == self.star_emoji:
