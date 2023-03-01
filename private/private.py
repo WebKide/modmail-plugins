@@ -1,165 +1,184 @@
-"""
-MIT License
-Copyright (c) 2020-2023 WebKide [d.id @323578534763298816]
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-"""
+import discord
 
-import discord, asyncio, re, random
-
-from datetime import datetime as t
-from pytz import timezone as z
 from discord.ext import commands
 
-
-class Private(commands.Cog):
+class Starboard(commands.Cog):
     """─=≡Σ(つಠ益ಠ)つ private cog for my personal discord guild, it won't work on yours! """
     def __init__(self, bot):
         self.bot = bot
-        self.poke = '<@&358429415417446411>'
+        self.star_emoji = '⭐'
+        self.star_count = 1
+        self.guild_id = 328341202103435264 # ID of my Guild
+        self.starboard_channel_id = 729093473487028254 # ID of my Starboard channel
+    
 
     # +------------------------------------------------------------+
-    # |                 PUSH-NOTIFICATION                          |
+    # |              ADD A MESSAGE TO STARBOARD                    |
     # +------------------------------------------------------------+
-    @commands.command(description='For my personal Guild', aliases=['poke', 'nudge'], no_pm=True)
-    @commands.has_any_role('Admin', 'Mod', 'Moderator')
-    async def radhe(self, ctx, *, _event_today: str = None):
-        """
-        ─=≡Σ(つಠ益ಠ)つ command to send a Push-notification in text-channel
+    @commands.Cog.listener()
+    async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
+        if payload.emoji.name != '⭐': # replace "⭐" with your star emoji name
+            return
+
+        if payload.channel_id == self.starboard_channel_id:
+            return
+
+        if self.starboard_channel_id is None:
+            return
+
+        if payload.channel_id == self.starboard_channel_id and payload.emoji.name == self.star_emoji:
+            guild = self.bot.get_guild(payload.guild_id)
+            if guild is None:
+                return
+            member = guild.get_member(payload.user_id)
+            if member is None:
+                return
+            message = self.bot.get_channel(payload.channel_id).fetch_message(payload.message_id)
+            if message.author == member:
+                return
+            starboard_channel = guild.get_channel(self.starboard_channel_id)
+            starboard_message_id = await self.check_starboard(message)
+            if starboard_message_id is None:
+                embed = self.create_embed(message, member)
+                starboard_message = starboard_channel.send(embed=embed)
+                await starboard_message.add_reaction(self.star_emoji)
+                await self.add_starboard_message(message, starboard_message.id)
+            else:
+                starboard_message = starboard_channel.fetch_message(starboard_message_id)
+                self.update_embed(starboard_message, message)
+
+        channel = self.bot.get_channel(payload.channel_id)
+        if channel is None:
+            return
+
+        message = await channel.fetch_message(payload.message_id)
+        if message is None:
+            return
+
+        if payload.user_id == self.bot.user.id:
+            return
+
+        channel = self.bot.get_channel(payload.channel_id)
+        if not isinstance(channel, discord.TextChannel):
+            return
         
-        **Usage:**
-        {prefix}radhe
-        {prefix}poke extra [write the event do you want to announce here]
-        """
+        message = await channel.fetch_message(payload.message_id)
+        if not message:
+            return
+        
+        starboard_channel = self.bot.get_channel(self.starboard_channel_id)
+        if not isinstance(starboard_channel, discord.TextChannel):
+            return
+        
+        reactions = message.reactions
+        star_reaction = None
+        for reaction in reactions:
+            if reaction.emoji == self.star_emoji:
+                star_reaction = reaction
+                break
+        
+        if star_reaction.count < self.star_count:
+            return
+        
+        embed = discord.Embed(description=message.content)
+        embed.set_author(name=message.author.display_name, icon_url=message.author.avatar.url)
+        embed.add_field(name='Jump', value=f'[to the original!]({message.jump_url})')
+        embed.add_field(name='Stars', value=star_reaction.count)
+        if message.attachments:
+            embed.set_image(url=message.attachments[0].url)
+        
+        await starboard_channel.send(embed=embed)
+        
+    # +------------------------------------------------------------+
+    # |              DELETE STARBOARD MESSAGE                      |
+    # +------------------------------------------------------------+
+    async def on_raw_reaction_remove(payload):
+        if payload.channel_id == self.starboard_channel_id:
+            message_id = payload.message_id
+            channel = self.bot.get_channel(payload.channel_id)
+            message = await channel.fetch_message(message_id)
+            if message.embeds:
+                embed = message.embeds[0]
+                if embed.footer.text.startswith("⭐"):
+                    reactions = message.reactions
+                    count = 0
+                    for reaction in reactions:
+                        if reaction.emoji == "⭐":
+                            count = reaction.count
+                            break
+                    if count < self.star_count:
+                        await message.delete()
+
+    # +------------------------------------------------------------+
+    # |                EDIT STARBOARD MESSAGE                      |
+    # +------------------------------------------------------------+                
+    async def on_raw_message_edit(self, payload: discord.RawMessageUpdateEvent):
+        starboard_channel = self.bot.get_channel(self.starboard_channel_id)
+        # Ignore edits made by the bot itself
+        if message.author == bot.user:
+            return
+
+        if not isinstance(starboard_channel, discord.TextChannel):
+            return
+        
         try:
-            await ctx.message.delete()
-        except discord.Forbidden:
-            pass
+            starboard_message = starboard_channel.fetch_message(payload.message_id)
+        except discord.NotFound:
+            return
+        
+        original_message_id = starboard_message.embeds[0].fields[0].value.split('/')[-1]
+        channel = self.bot.get_channel(payload.channel_id)
+        if not isinstance(channel, discord.TextChannel):
+            return
+        
+        message = await channel.fetch_message(original_message_id)
+        if not message:
+            return
+        
+        reactions = message.reactions
+        star_reaction = None
+        for reaction in reactions:
+            if reaction.emoji == self.star_emoji:
+                star_reaction = reaction
+                break
+        
+        if not star_reaction:
+            await starboard_message.delete()
+            return
+        
+        if star_reaction.count < self.star_count:
+            await starboard_message.delete()
+            return
 
-        channel =  ctx.channel or ctx.message.channel
-        err_m = f"{ctx.message.author.mention}, update this channel's **Topic**.\n\n" \
-                f"**Tip:** ask a Mod for help setting up this channel for the command to work."
+        # Check if there is already a message on the starboard for this message
+        existing_message = None
+        for m in await starboard_channel.history(limit=100).flatten():
+            if m.embeds and m.embeds[0].footer.text == f"Starboard ID: {message.id}":
+                existing_message = m
+                break
 
-        _TZ = {
-            "IST": "Asia/Kolkata",
-            "BST": "Europe/London",
-            "EST": "America/New_York",
-            "PST": "America/Los_Angeles",
-            "BOT": "America/La_Paz"
-        }
+        # If there's an existing message, update its star count and return
+        if existing_message:
+            embed = existing_message.embeds[0]
+            embed.set_field_at(0, name="Stars", value=f"{star_reaction.count} ⭐")
+            await existing_message.edit(embed=embed)
+            return
 
-        INTRO = [
-            f'*Turn off and tune into* the **{ctx.message.guild}** Podcast, ',
-            f'Bring auspiciousness to your day with the **{ctx.message.guild}** Podcast, ',
-            f'Hello and welcome to the **{ctx.message.guild}** Podcast, ',
-            f'It is a beautiful day to listen to the **{ctx.message.guild}** Podcast, ',
-            f'It is a nice day to listen to the **{ctx.message.guild}** Podcast, ',
-            f'Make your day succesfull by listening to the **{ctx.message.guild}** Podcast, ',
-            f'This is the **{ctx.message.guild}** Podcast, ',
-            f'Tune into the **{ctx.message.guild}** Podcast, ',
-            f'Welcome to the **{ctx.message.guild}** Podcast, '
-        ]
+        # Otherwise, create a new starboard message
+        embed = discord.Embed(
+            title=message.content,
+            color=discord.Color.gold(),
+            timestamp=message.created_at,
+            url=message.jump_url,
+        )
+        embed.set_author(name=message.author.display_name, icon_url=message.author.avatar.url)
+        embed.set_footer(text=f"Starboard ID: {message.id}")
+        embed.add_field(name="Channel", value=message.channel.mention)
+        embed.add_field(name="Stars", value=f"{star_reaction.count} ⭐")
+        if message.attachments:
+            embed.set_image(url=message.attachments[0].url)
 
-        TEACHINGS = [
-            'our Rūpānuga Guru-varga',
-            'our Vaiṣṇavas Ācāryas',
-            'the Śrī Gauḍīya Vaiṣṇavas'
-        ]
-
-        JOIN = [
-            ', to delve deeper into',
-            ', to explore and connect with',
-            ', so that you can learn, grow, and connect personally on'
-        ]
-
-        OUTRO = [
-            'So, let\'s dive into this valuable study together and learn about this wanderful process',
-            'So, sit back, relax, and listen attentively as we embark on this spiritual journey together',
-            'Without further ado, sit back, relax and, listen attentively',
-            'Without further ado, sit back, relax, and simply "lend us your ears"',
-            'You\'ve been eagerly waiting for this, and so have we. Sit back, relax and, listen attentively'
-        ]
-
-        if isinstance(channel, discord.TextChannel):
-            if not channel.topic:
-                return await ctx.send(err_m, delete_after=23)
-
-            if '—' in channel.topic:
-                _host = channel.topic.split('—')[-1]
-            else:
-                _host = 'and speaker'
-                # _check = 'You cannot use this command, contact a Mod for help.'
-                # return await ctx.send(_check, delete_after=23)
-
-
-        def get_ordinal_suffix(num):
-            if 11 <= num % 32 <= 13:
-                suffix = 'ᵗʰ'
-            else:
-                suffix = {1: 'ˢᵗ', 2: 'ⁿᵈ', 3: 'ʳᵈ'}.get(num % 10, 'ᵗʰ')
-            return suffix
-
-        def format_date(date_str):
-            pattern = r'(\d{1,2}),'
-            day = int(re.search(pattern, date_str).group(1))
-            suffix = get_ordinal_suffix(day)
-            return date_str.replace(f"{day},", f"{day}{suffix},")
-
-        def get_t_str():
-            t_str = []
-            for code, tz_name in _TZ.items():
-                tz = z(tz_name)
-                t_now = t.now(tz)
-                suffix = get_ordinal_suffix(t_now.day)
-                flag_moji = f":flag_{code.lower().replace('ist', 'in').replace('bst', 'gb').replace('est', 'us').replace('pst', 'us').replace('bot', 'bo')}:"
-                t_str.append(f"{flag_moji}「{code}」{t_now.strftime('**%H**:%M:%S, %A %b %d' + suffix + ', %Y')}")
-            return "\n".join(t_str)
-
-        # This is still here in case there is the need for a personalised Notification
-        if _event_today is not None and _event_today.startswith('extra'):
-            _what = ' '.join(_event_today.split(' ')[1:])
-            _notif = 'https://cdn.discordapp.com/attachments/375179500604096512/1079876674235154442/flyerdesign_27022023_172353.png'
-            em = discord.Embed(colour=discord.Colour(0xff7722), description=get_t_str())
-            em.add_field(name='Attentive Listeners', value=_what, inline=False)
-            em.set_thumbnail(url=_notif)
-            em.set_footer(text='⇐ Join the Voice Channel NOW!!')
-
-            return await ctx.send(content=self.poke, embed=em)
-
-
-        else:
-            def _intro():
-                return f'\u200b{random.choice(INTRO)}where we explore the teachings of {random.choice(TEACHINGS)}. Join our host {_host} for a thought-provoking discussion{random.choice(JOIN)} your spiritual journey throught the path of Rūpānuga Ujjvala Mādhurya-prema.\n\n{random.choice(OUTRO)}.'
-
-            try:
-                em = discord.Embed(colour=discord.Colour(0xff7722), description=get_t_str())
-                em.add_field(name='Attentive Listeners', value=_intro(), inline=False)
-                em.set_thumbnail(url='https://i.imgur.com/93A0Kdk.png')
-                em.set_footer(text='⇐ Join the Voice Channel NOW!!')
-                _nudge = await ctx.send(content=self.poke, embed=em)
-
-            except discord.Forbidden:
-                _simple = f'{self.poke}\n{get_t_str()}\n\n{_intro()}'
-                _nudge = await ctx.send(_simple)
-
-            try:
-                await asyncio.sleep(2)
-                await _nudge.add_reaction('thankful:695101751707303998')
-            except discord.HTTPException:
-                pass
+        await starboard_channel.send(embed=embed)
 
 async def setup(bot):
-    await bot.add_cog(Private(bot))
+    await bot.add_cog(Starboard(bot))
