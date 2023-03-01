@@ -18,8 +18,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-# import discord, requests, traceback, aiohttp, random, asyncio, re
-# from bs4 import BeautifulSoup, SoupStrainer
 import discord, asyncio, re
 
 from datetime import datetime as t
@@ -115,7 +113,7 @@ class Private(commands.Cog):
                 _host = channel.topic.split('—')[-1]
             else:
                 _check = 'You cannot use this command, contact a Mod for help.'
-                    return await ctx.send(_check, delete_after=23)
+                return await ctx.send(_check, delete_after=23)
 
 
         def get_ordinal_suffix(num):
