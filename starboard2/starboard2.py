@@ -59,8 +59,8 @@ class Starboard(commands.Cog):
             starboard_channel = guild.get_channel(self.starboard_channel_id)
             starboard_message_id = await self.check_starboard(message)
             if starboard_message_id is None:
-                embed = self.create_embed(message, member)
-                starboard_message = starboard_channel.send(embed=embed)
+                em = self.create_embed(message, member)
+                starboard_message = starboard_channel.send(embed=em)
                 await starboard_message.add_reaction(self.star_emoji)
                 await self.add_starboard_message(message, starboard_message.id)
             else:
@@ -97,15 +97,15 @@ class Starboard(commands.Cog):
         if star_reaction is None or star_reaction.count < self.star_count:
             return
 
-        embed = discord.Embed(description=message.content)
-        embed.set_author(name=message.author.display_name, icon_url=message.author.avatar.url)
-        embed.add_field(name='Jump', value=f'[to the original!]({message.jump_url})')
-        embed.add_field(name='Stars', value=star_reaction.count)
-        embed.set_footer(text=f"Starboard ID: {message.id}")
+        em = discord.Embed(description=message.content)
+        em.set_author(name=message.author.display_name, icon_url=message.author.avatar.url)
+        em.add_field(name='Jump', value=f'[to the original!]({message.jump_url})')
+        em.add_field(name='Stars', value=star_reaction.count)
+        em.set_footer(text=f"Starboard ID: {message.id}")
         if message.attachments:
-            embed.set_image(url=message.attachments[0].url)
+            em.set_image(url=message.attachments[0].url)
 
-        await starboard_channel.send(embed=embed)
+        await starboard_channel.send(embed=em)
 
     # +------------------------------------------------------------+
     # |              DELETE STARBOARD MESSAGE                      |
@@ -116,8 +116,8 @@ class Starboard(commands.Cog):
             channel = self.bot.get_channel(payload.channel_id)
             message = await channel.fetch_message(message_id)
             if message.embeds:
-                embed = message.embeds[0]
-                if embed.footer.text.startswith("⭐"):
+                em = message.embeds[0]
+                if em.footer.text.startswith("⭐"):
                     reactions = message.reactions
                     count = 0
                     for reaction in reactions:
@@ -177,26 +177,26 @@ class Starboard(commands.Cog):
 
         # If there's an existing message, update its star count and return
         if existing_message:
-            embed = existing_message.embeds[0]
-            embed.set_field_at(0, name="Stars", value=f"{star_reaction.count} ⭐")
-            await existing_message.edit(embed=embed)
+            em = existing_message.embeds[0]
+            em.set_field_at(0, name="Stars", value=f"{star_reaction.count} ⭐")
+            await existing_message.edit(embed=em)
             return
 
         # Otherwise, create a new starboard message
-        embed = discord.Embed(
+        em = discord.Embed(
             title=message.content,
             color=discord.Color.gold(),
             timestamp=message.created_at,
             url=message.jump_url,
         )
-        embed.set_author(name=message.author.display_name, icon_url=message.author.avatar.url)
-        embed.set_footer(text=f"Starboard ID: {message.id}")
-        embed.add_field(name="Channel", value=message.channel.mention)
-        embed.add_field(name="Stars", value=f"{star_reaction.count} ⭐")
+        em.set_author(name=message.author.display_name, icon_url=message.author.avatar.url)
+        em.set_footer(text=f"Starboard ID: {message.id}")
+        em.add_field(name="Channel", value=message.channel.mention)
+        em.add_field(name="Stars", value=f"{star_reaction.count} ⭐")
         if message.attachments:
-            embed.set_image(url=message.attachments[0].url)
+            em.set_image(url=message.attachments[0].url)
 
-        await starboard_channel.send(embed=embed)
+        await starboard_channel.send(embed=em)
 
 async def setup(bot):
     await bot.add_cog(Starboard(bot))
