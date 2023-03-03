@@ -89,7 +89,7 @@ class Private(commands.Cog):
             'So, let\'s dive into this valuable study together and learn about this wanderful process',
             'So, sit back, relax, and listen attentively as we embark on this spiritual journey together',
             'Without further ado, sit back, relax and, listen attentively',
-            'Without further ado, sit back, relax, and simply "lend us your ears"',
+            'Hold on to your chairs, and simply "lend us your ears"',
             'You\'ve been eagerly waiting for this, and so have we. Sit back, relax and, listen attentively'
         ]
 
