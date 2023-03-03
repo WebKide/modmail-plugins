@@ -17,11 +17,22 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-from __future__ import division
 import discord, math, operator
 
 from discord.ext import commands
-from pyparsing import (Literal,CaselessLiteral,Word,Combine,Group,Optional,ZeroOrMore,Forward,nums,alphas,oneOf)
+from pyparsing import (
+    Literal,
+    CaselessLiteral,
+    Word,
+    Combine,
+    Group,
+    Optional,
+    ZeroOrMore,
+    Forward,
+    nums,
+    alphas,
+    oneOf,
+)
 
 __author__='Paul McGuire'
 __version__ = '$Revision: 0.0 $'
