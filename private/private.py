@@ -151,7 +151,7 @@ class Private(commands.Cog):
                 em.set_thumbnail(url='https://i.imgur.com/93A0Kdk.png')
                 em.set_footer(text='⇐ Join the Voice Channel NOW!!')
                 _poke = f'<@&358429415417446411> || Notification sent by: {ctx.message.author.display_name}||'
-                _nudge = await ctx.send(content=self.poke, embed=em)
+                _nudge = await ctx.send(content=_poke, embed=em)
 
             except discord.Forbidden:
                 _simple = f'{_poke}\n{get_t_str()}\n\n{_intro()}'
