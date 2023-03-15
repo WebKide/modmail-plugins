@@ -29,7 +29,7 @@ class Private(commands.Cog):
     """─=≡Σ(つಠ益ಠ)つ private cog for my personal discord guild, it won't work on yours! """
     def __init__(self, bot):
         self.bot = bot
-        self.poke = '<@&358429415417446411>'
+        self.poke = f'<@&358429415417446411> || Notification sent by: {ctx.message.author.display_name}||'
 
     # +------------------------------------------------------------+
     # |                 PUSH-NOTIFICATION                          |
@@ -163,3 +163,4 @@ class Private(commands.Cog):
 
 async def setup(bot):
     await bot.add_cog(Private(bot))
+    
