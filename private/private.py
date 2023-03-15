@@ -29,7 +29,7 @@ class Private(commands.Cog):
     """─=≡Σ(つಠ益ಠ)つ private cog for my personal discord guild, it won't work on yours! """
     def __init__(self, bot):
         self.bot = bot
-        self.poke = f'<@&358429415417446411> || Notification sent by: {ctx.message.author.display_name}||'
+
 
     # +------------------------------------------------------------+
     # |                 PUSH-NOTIFICATION                          |
@@ -131,13 +131,14 @@ class Private(commands.Cog):
         # This is still here in case there is the need for a personalised Notification
         if _event_today is not None and _event_today.startswith('extra'):
             _what = ' '.join(_event_today.split(' ')[1:])
+            _poke = f'<@&358429415417446411> || Notification sent by: {ctx.message.author.display_name}||'
             _notif = 'https://cdn.discordapp.com/attachments/375179500604096512/1079876674235154442/flyerdesign_27022023_172353.png'
             em = discord.Embed(colour=discord.Colour(0xff7722), description=get_t_str())
             em.add_field(name='Attentive Listeners', value=_what, inline=False)
             em.set_thumbnail(url=_notif)
             em.set_footer(text='⇐ Join the Voice Channel NOW!!')
 
-            return await ctx.send(content=self.poke, embed=em)
+            return await ctx.send(content=_poke, embed=em)
 
 
         else:
@@ -149,10 +150,11 @@ class Private(commands.Cog):
                 em.add_field(name='Attentive Listeners', value=_intro(), inline=False)
                 em.set_thumbnail(url='https://i.imgur.com/93A0Kdk.png')
                 em.set_footer(text='⇐ Join the Voice Channel NOW!!')
+                _poke = f'<@&358429415417446411> || Notification sent by: {ctx.message.author.display_name}||'
                 _nudge = await ctx.send(content=self.poke, embed=em)
 
             except discord.Forbidden:
-                _simple = f'{self.poke}\n{get_t_str()}\n\n{_intro()}'
+                _simple = f'{_poke}\n{get_t_str()}\n\n{_intro()}'
                 _nudge = await ctx.send(_simple)
 
             try:
