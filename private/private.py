@@ -75,7 +75,7 @@ class Private(commands.Cog):
 
         TEACHINGS = [
             'our Rūpānuga Guru-varga',
-            'our Vaiṣṇavas Ācāryas',
+            'our Vaiṣṇava Ācāryas',
             'the Śrī Gauḍīya Vaiṣṇavas'
         ]
 
