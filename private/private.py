@@ -30,7 +30,6 @@ class Private(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-
     # +------------------------------------------------------------+
     # |                 PUSH-NOTIFICATION                          |
     # +------------------------------------------------------------+
@@ -49,6 +48,7 @@ class Private(commands.Cog):
         except discord.Forbidden:
             pass
 
+        _poke = f'<@&358429415417446411> || Invoked by: {ctx.message.author.display_name} ||'
         channel =  ctx.channel or ctx.message.channel
         err_m = f"{ctx.message.author.mention}, update this channel's **Topic**.\n\n" \
                 f"**Tip:** ask a Mod for help setting up this channel for the command to work."
@@ -101,9 +101,6 @@ class Private(commands.Cog):
                 _host = channel.topic.split('—')[-1]
             else:
                 _host = 'and speaker'
-                # _check = 'You cannot use this command, contact a Mod for help.'
-                # return await ctx.send(_check, delete_after=23)
-
 
         def get_ordinal_suffix(num):
             if 11 <= num % 32 <= 13:
@@ -131,15 +128,12 @@ class Private(commands.Cog):
         # This is still here in case there is the need for a personalised Notification
         if _event_today is not None and _event_today.startswith('extra'):
             _what = ' '.join(_event_today.split(' ')[1:])
-            _poke = f'<@&358429415417446411> || Notification sent by: {ctx.message.author.display_name}||'
             _notif = 'https://cdn.discordapp.com/attachments/375179500604096512/1079876674235154442/flyerdesign_27022023_172353.png'
             em = discord.Embed(colour=discord.Colour(0xff7722), description=get_t_str())
             em.add_field(name='Attentive Listeners', value=_what, inline=False)
             em.set_thumbnail(url=_notif)
             em.set_footer(text='⇐ Join the Voice Channel NOW!!')
-
             return await ctx.send(content=_poke, embed=em)
-
 
         else:
             def _intro():
@@ -150,7 +144,6 @@ class Private(commands.Cog):
                 em.add_field(name='Attentive Listeners', value=_intro(), inline=False)
                 em.set_thumbnail(url='https://i.imgur.com/93A0Kdk.png')
                 em.set_footer(text='⇐ Join the Voice Channel NOW!!')
-                _poke = f'<@&358429415417446411> || Notification sent by: {ctx.message.author.display_name}||'
                 _nudge = await ctx.send(content=_poke, embed=em)
 
             except discord.Forbidden:
