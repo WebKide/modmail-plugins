@@ -69,7 +69,7 @@ class Transform(commands.Cog):
                 pair = pair[1] + next_letter
             word = word.title()
             words.append(word)
-        await ctx.send(', '.join(f'```py\n{words}```'))
+        await ctx.send(', '.join(words))
     
     @commands.command(no_pm=True)
     async def wordaig(self, ctx, results: int = 2):
@@ -85,7 +85,7 @@ class Transform(commands.Cog):
             word = ''.join(random.choice(con if j%2 else vow) for j in range(word_length))
             artificially_generated_names.append(word.title())
         
-        await ctx.send(', '.join(f'```bf\n{artificially_generated_names}```'))
+        await ctx.send(', '.join(artificially_generated_names))
 
     # +------------------------------------------------------------+
     # |                     CHARINFO                               |
