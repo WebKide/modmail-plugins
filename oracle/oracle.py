@@ -339,17 +339,21 @@ class Oracle(commands.Cog):
         Usage:
         {prefix}tarot reading
         """
-        i = await ctx.send("Please relax and focus on your question...", delete_after=5)
-        await asyncio.sleep(3)
-
-        await i.edit(content="Inhale deeply through your nose...")
-        await asyncio.sleep(5)
-
-        await i.edit(content="Exhale fully through your mouth...")
-        await asyncio.sleep(5)
-
-        last = f"You are ready, type:\n**`{ctx.prefix}tarot reading`**\nI will shuffle the cards and pick three for you."
-        return await i.edit(content=last, delete_after=17)
+        try:
+            i = await ctx.send("Please relax and focus on your question...")
+            await asyncio.sleep(3)
+            
+            await i.edit(content="Inhale deeply through your nose...")
+            await asyncio.sleep(6)
+            
+            await i.edit(content="Exhale fully through your mouth...")
+            await asyncio.sleep(6)
+            
+            last = f"You are ready, type:\n**`{ctx.prefix}tarot reading`**\nI will shuffle the cards and pick three for you."
+            return await i.edit(content=last, delete_after=17)
+        
+        except Exception as e:
+            return await ctx.send(f'```py\n{e}```', delete_after=69)
 
     @tarot.command(no_pm=True)
     async def reading(self, ctx, *, question: str = None):
@@ -360,7 +364,7 @@ class Oracle(commands.Cog):
         try:
             s = await ctx.send(f"Allow me to shuffle my Tarot deck... {u.display_name}")
             await ctx.channel.typing()
-            await asyncio.sleep(5)
+            await asyncio.sleep(7)
 
             first = "1\N{COMBINING ENCLOSING KEYCAP} ***The Past:***\nThis card represents your situation*—why " \
                     "you’re currently in the spot you’re in*. It often symbolizes a person or relationship " \
@@ -414,7 +418,7 @@ class Oracle(commands.Cog):
                 _wait = f'Allow me to shuffle 3 ancient Chinese coins to answer your question... **{u.display_name}**'
                 _result = await ctx.send(_wait)
                 await ctx.channel.typing()
-                await asyncio.sleep(5)
+                await asyncio.sleep(7)
                 
                 e = discord.Embed(colour=discord.Colour(0xc5b358))
                 e.set_thumbnail(url=iching)
