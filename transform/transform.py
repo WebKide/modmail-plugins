@@ -63,34 +63,27 @@ class Transform(commands.Cog):
     # +------------------------------------------------------------+
     # |                     Word/Name-generator                    |
     # +------------------------------------------------------------+
-    @commands.command(aliases=['word_ai'])
+    @commands.command(aliases=['genword', 'nameai'])
     async def wordai(self, ctx, results: int = 2):
-        """ Generate words artificially """
+        """ Generate names using AI Generator """
         vow = ['a', 'i', 'u', 'e', 'o', 'y', '', 'a', 'i', 'u', 'e', 'o', '']
         con = [
             'qu', 'w', 'wh', 'r', 't', 'th', 'y', 'p', 'mp', 's', 'ss', 'd', 'f', 'g', 'gü',
             'ß', 'h', 'j', 'ji', 'k', '', 'l', 'z', 'x', 'c', 'v', 'b', 'n', 'm', ''
         ]
-        word = f'{random.choice(vow)}{random.choice(con)}{random.choice(vow)}' \
-               f'{random.choice(vow)}{random.choice(con)}{random.choice(vow)}' \
-               f'{random.choice(con)}{random.choice(vow)}{random.choice(con)}'
-        word = word.title()
+        word_length = 23  # max length of artificially generated name
+        artificially_generated_names = []
+        for i in range(results):
+            word = ''.join(random.choice(con if j%2 else vow) for j in range(word_length))
+            artificially_generated_names.append(word.title())
         
         try:
             await ctx.message.delete()
         except discord.Forbidden:
             pass
         finally:
-            try:
-                for int in results:
-                    if results is not None:
-                        x = random.randint(3, 9)
-                        name = word[:x]
-                        await ctx.sen(name)
-                    else:
-                        await ctx.send(name)
-            except Exception as e:
-                await ctx.send(f'```py\n{e}```', delete_after=69)
+            await ctx.send(', '.join(artificially_generated_names))
+
 
     # +------------------------------------------------------------+
     # |              Shrink text and make it tiny                  |
