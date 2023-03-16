@@ -342,14 +342,14 @@ class Oracle(commands.Cog):
         i = await ctx.send("Please relax and focus on your question...", delete_after=5)
         await asyncio.sleep(3)
 
-        await i.edit("Inhale deeply through your nose...")
+        await i.edit(content="Inhale deeply through your nose...")
         await asyncio.sleep(5)
 
-        await i.edit("Exhale fully through your mouth...")
+        await i.edit(content="Exhale fully through your mouth...")
         await asyncio.sleep(5)
 
         last = f"You are ready, type:\n**`{ctx.prefix}tarot reading`**\nI will shuffle the cards and pick three for you."
-        return await i.edit(last, delete_after=17)
+        return await i.edit(content=last, delete_after=17)
 
     @tarot.command(no_pm=True)
     async def reading(self, ctx, *, question: str = None):
