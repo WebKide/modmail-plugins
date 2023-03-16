@@ -45,7 +45,7 @@ class Transform(commands.Cog):
             'qu', 'w', 'wh', 'r', 't', 'th', 'y', 'p', 'mp', 's', 'ss', 'd', 'f', 'g', 'gü',
             'ß', 'h', 'j', 'ji', 'k', '', 'l', 'z', 'x', 'c', 'v', 'b', 'n', 'm', ''
         ]
-        for _ in range(10000):
+        for _ in range(999):
             word = f'{random.choice(vow)}{random.choice(con)}{random.choice(vow)}' \
                    f'{random.choice(vow)}{random.choice(con)}{random.choice(vow)}' \
                    f'{random.choice(con)}{random.choice(vow)}{random.choice(con)}'
@@ -72,12 +72,11 @@ class Transform(commands.Cog):
                 word += next_letter
                 pair = pair[1] + next_letter
             word = word.title()
-            await ctx.send(word)
+            await ctx.send(', '.join(word))
     
     
-    '''
-    @commands.command(aliases=['genword', 'nameai'])
-    async def wordai(self, ctx, results: int = 2):
+    @commands.command(no_pm=True)
+    async def wordaig(self, ctx, results: int = 2):
         """ Generate names using AI Generator """
         vow = ['a', 'i', 'u', 'e', 'o', 'y', '', 'a', 'i', 'u', 'e', 'o', '']
         con = [
@@ -96,7 +95,6 @@ class Transform(commands.Cog):
             pass
         finally:
             await ctx.send(', '.join(artificially_generated_names))
-        '''
 
     # +------------------------------------------------------------+
     # |                     CHARINFO                               |
@@ -141,7 +139,6 @@ class Transform(commands.Cog):
             tinify = text.translate(table)
             result = f'{msg}{tinify[::1]}'
             await ctx.send(result)
-
 
     # +------------------------------------------------------------+
     # |                       Clap                                 |
