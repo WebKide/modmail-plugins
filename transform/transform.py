@@ -23,6 +23,17 @@ import discord, asyncio, random, textwrap, traceback, unicodedata2 as ud2, strin
 from discord.ext import commands
 
 dev_list = [323578534763298816]
+vowels = ['a', 'e', 'i', 'o', 'u']
+consonants = ['b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm', 'n', 'p', 'q', 'r', 's', 't', 'v', 'w', 'x', 'y', 'z']
+
+def generate_word():
+    syllables = []
+    for i in range(random.randint(2, 4)):
+        if i % 2 == 0:  # even number, add a consonant
+            syllables.append(random.choice(consonants))
+        else:  # odd number, add a vowel
+            syllables.append(random.choice(vowels))
+    return ''.join(syllables)
 
 
 class Transform(commands.Cog):
@@ -63,18 +74,6 @@ class Transform(commands.Cog):
     # +------------------------------------------------------------+
     # |                     Word/Name-generator                    |
     # +------------------------------------------------------------+
-    vowels = ['a', 'e', 'i', 'o', 'u']
-    consonants = ['b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm', 'n', 'p', 'q', 'r', 's', 't', 'v', 'w', 'x', 'y', 'z']
-
-    def generate_word():
-        syllables = []
-        for i in range(random.randint(2, 4)):
-            if i % 2 == 0:  # even number, add a consonant
-                syllables.append(random.choice(consonants))
-            else:  # odd number, add a vowel
-                syllables.append(random.choice(vowels))
-        return ''.join(syllables)
-
     @commands.command(aliases=['genword', 'nameai'])
     async def wordai(self, ctx, results: int = 2):
         """ Generate words artificially """
