@@ -63,6 +63,37 @@ class Transform(commands.Cog):
     # +------------------------------------------------------------+
     # |                     Word/Name-generator                    |
     # +------------------------------------------------------------+
+    vowels = ['a', 'e', 'i', 'o', 'u']
+    consonants = ['b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm', 'n', 'p', 'q', 'r', 's', 't', 'v', 'w', 'x', 'y', 'z']
+
+    def generate_word():
+        syllables = []
+        for i in range(random.randint(2, 4)):
+            if i % 2 == 0:  # even number, add a consonant
+                syllables.append(random.choice(consonants))
+            else:  # odd number, add a vowel
+                syllables.append(random.choice(vowels))
+        return ''.join(syllables)
+
+    @commands.command(aliases=['genword', 'nameai'])
+    async def wordai(self, ctx, results: int = 2):
+        """ Generate words artificially """
+        try:
+            await ctx.message.delete()
+        except discord.Forbidden:
+            pass
+        finally:
+            try:
+                if results is None:
+                    results = 2
+                for i in range(results):
+                    word = generate_word()
+                    word = word.capitalize()
+                    await ctx.send(f'```py\n{word}```')
+            except Exception as e:
+                await ctx.send(f'```py\n{e}```', delete_after=69)
+    
+    '''
     @commands.command(aliases=['genword', 'nameai'])
     async def wordai(self, ctx, results: int = 2):
         """ Generate names using AI Generator """
@@ -83,6 +114,7 @@ class Transform(commands.Cog):
             pass
         finally:
             await ctx.send(', '.join(artificially_generated_names))
+        '''
 
 
     # +------------------------------------------------------------+
