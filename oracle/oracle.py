@@ -311,7 +311,7 @@ class Oracle(commands.Cog):
         author = ctx.message.author
 
         if not question:
-            return await ctx.send(f'What is your question {author.mention}?')  # 
+            return await ctx.send(f'What is your question {author.mention}?', delete_after=6)  # 
 
         if question.endswith("?") and question != "?":
             response = random.choice(ball_answers)
@@ -328,7 +328,7 @@ class Oracle(commands.Cog):
                 await ctx.send(f'\N{BILLIARDS} answer: ```css\n{response}```')
 
         else:
-            await ctx.send(f"*{question}* doesn't look like a yes/no question.")
+            await ctx.send(f"*{question}* doesn't look like a yes/no question.", delete_after=6)
 
     # +------------------------------------------------------------+
     # |            Prediction command: TAROT                       |
@@ -342,7 +342,7 @@ class Oracle(commands.Cog):
         i = await ctx.send("Please relax and focus on your question...", delete_after=5)
         await asyncio.sleep(3)
 
-        await i.edit(None)  # "Inhale deeply through your nose..."
+        await i.edit("Inhale deeply through your nose...")
         await asyncio.sleep(5)
 
         await i.edit("Exhale fully through your mouth...")
@@ -388,7 +388,7 @@ class Oracle(commands.Cog):
             await s.edit(content=None, embed=e)
 
         except discord.Forbidden:
-            await ctx.send('I need embed perms in this channel to send the full result.')
+            await ctx.send('I need embed perms in this channel to send the full result.', delete_after=5)
 
     # +------------------------------------------------------------+
     # |            Prediction command: iCHING                      |
@@ -406,23 +406,27 @@ class Oracle(commands.Cog):
         u = ctx.message.author
         p = ctx.invoked_with
 
-        if question is None:    return await ctx.send('You have to ask a yes/no question to use this command.', delete_after=23)
+        if question is None:
+            return await ctx.send('You have to ask a yes/no question to use this command.', delete_after=23)
 
         if question.endswith('?') and question != '?':
             try:
-                await ctx.send(f'Allow me to shuffle 3 ancient Chinese coins to answer your question... {u.display_name}')
+                _wait = f'Allow me to shuffle 3 ancient Chinese coins to answer your question... **{u.display_name}**'
+                _result = await ctx.send(_wait)
                 await ctx.channel.typing()
                 await asyncio.sleep(5)
-            except discord.Forbidden:    pass
+                
+                e = discord.Embed(colour=discord.Colour(0xc5b358))
+                e.set_thumbnail(url=iching)
+                e.set_footer(text=f"Ancient Oracle's inspiration | {date.today()}", icon_url=iching)
+                e.set_author(name=f'{p} interpretation for {u.display_name}', icon_url=u.avatar.url)
+                e.description = f'Meditation:\n{random.choice(oracle_answer)}'
+                return await _result.edit(content=None, embed=e)
+            except discord.Forbidden:
+                pass
 
-            e = discord.Embed(colour=discord.Colour(0xc5b358))
-            e.set_thumbnail(url=iching)
-            e.set_footer(text=f"Ancient Oracle's inspiration | {date.today()}", icon_url=iching)
-            e.set_author(name=f'{p} interpretation for {u.display_name}', icon_url=u.avatar.url)
-            e.description = f'Meditation:\n{random.choice(oracle_answer)}'
-            return await ctx.send(embed=e)
-
-        else:    return await ctx.send(f"*{question}*/ndoesn't look like a yes/no question.", delete_after=69)
+        else:
+            return await ctx.send(f"*{question}*/ndoesn't look like a yes/no question.", delete_after=8)
 
 
 async def setup(bot):
