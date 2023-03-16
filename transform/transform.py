@@ -21,6 +21,7 @@ SOFTWARE.
 import discord, asyncio, random, textwrap, traceback, unicodedata2 as ud2, string
 
 from discord.ext import commands
+from collections import defaultdict  # wordai
 
 dev_list = [323578534763298816]
 
@@ -31,7 +32,71 @@ class Transform(commands.Cog):
         self.bot = bot
         self.mod_color = discord.Colour(0x7289da)  # Blurple
         self.user_color = discord.Colour(0xed791d)  # Orange
+        self.transitions = defaultdict(lambda: defaultdict(int))  # wordai
+        self.build_transitions()  # wordai
 
+
+    # +------------------------------------------------------------+
+    # |                     Word/Name-generator                    |
+    # +------------------------------------------------------------+
+    def build_transitions(self):
+        vow = ['a', 'i', 'u', 'e', 'o', 'y', '', 'a', 'i', 'u', 'e', 'o', '']
+        con = [
+            'qu', 'w', 'wh', 'r', 't', 'th', 'y', 'p', 'mp', 's', 'ss', 'd', 'f', 'g', 'gü',
+            'ß', 'h', 'j', 'ji', 'k', '', 'l', 'z', 'x', 'c', 'v', 'b', 'n', 'm', ''
+        ]
+        for _ in range(10000):
+            word = f'{random.choice(vow)}{random.choice(con)}{random.choice(vow)}' \
+                   f'{random.choice(vow)}{random.choice(con)}{random.choice(vow)}' \
+                   f'{random.choice(con)}{random.choice(vow)}{random.choice(con)}'
+            for i in range(len(word) - 2):
+                pair = word[i:i+2]
+                next_letter = word[i+2]
+                self.transitions[pair][next_letter] += 1
+
+    @commands.command(aliases=['word_ai'])
+    async def wordai(self, ctx, results: int = 2):
+        """ Generate words artificially """
+        try:
+            await ctx.message.delete()
+        except discord.Forbidden:
+            pass
+
+        for _ in range(results):
+            word = ''
+            pair = random.choice(list(self.transitions.keys()))
+            while len(word) < 9:
+                next_letters = list(self.transitions[pair].keys())
+                weights = list(self.transitions[pair].values())
+                next_letter = random.choices(next_letters, weights=weights)[0]
+                word += next_letter
+                pair = pair[1] + next_letter
+            word = word.title()
+            await ctx.send(word)
+    
+    
+    '''
+    @commands.command(aliases=['genword', 'nameai'])
+    async def wordai(self, ctx, results: int = 2):
+        """ Generate names using AI Generator """
+        vow = ['a', 'i', 'u', 'e', 'o', 'y', '', 'a', 'i', 'u', 'e', 'o', '']
+        con = [
+            'qu', 'w', 'wh', 'r', 't', 'th', 'y', 'p', 'mp', 's', 'ss', 'd', 'f', 'g', 'gü',
+            'ß', 'h', 'j', 'ji', 'k', '', 'l', 'z', 'x', 'c', 'v', 'b', 'n', 'm', ''
+        ]
+        word_length = random.randint(3, 9)  # max length of artificially generated name
+        artificially_generated_names = []
+        for i in range(results):
+            word = ''.join(random.choice(con if j%2 else vow) for j in range(word_length))
+            artificially_generated_names.append(word.title())
+        
+        try:
+            await ctx.message.delete()
+        except discord.Forbidden:
+            pass
+        finally:
+            await ctx.send(', '.join(artificially_generated_names))
+        '''
 
     # +------------------------------------------------------------+
     # |                     CHARINFO                               |
@@ -58,32 +123,6 @@ class Transform(commands.Cog):
             e.description = '\n'.join(map(to_string, characters))
             # e.add_field(name='', value=f"```tex\n\\N{{{1}}}​```")
             await ctx.send(embed=e)
-
-
-    # +------------------------------------------------------------+
-    # |                     Word/Name-generator                    |
-    # +------------------------------------------------------------+
-    @commands.command(aliases=['genword', 'nameai'])
-    async def wordai(self, ctx, results: int = 2):
-        """ Generate names using AI Generator """
-        vow = ['a', 'i', 'u', 'e', 'o', 'y', '', 'a', 'i', 'u', 'e', 'o', '']
-        con = [
-            'qu', 'w', 'wh', 'r', 't', 'th', 'y', 'p', 'mp', 's', 'ss', 'd', 'f', 'g', 'gü',
-            'ß', 'h', 'j', 'ji', 'k', '', 'l', 'z', 'x', 'c', 'v', 'b', 'n', 'm', ''
-        ]
-        word_length = random.randint(3, 9)  # max length of artificially generated name
-        artificially_generated_names = []
-        for i in range(results):
-            word = ''.join(random.choice(con if j%2 else vow) for j in range(word_length))
-            artificially_generated_names.append(word.title())
-        
-        try:
-            await ctx.message.delete()
-        except discord.Forbidden:
-            pass
-        finally:
-            await ctx.send(', '.join(artificially_generated_names))
-
 
     # +------------------------------------------------------------+
     # |              Shrink text and make it tiny                  |
