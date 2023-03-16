@@ -55,7 +55,7 @@ class Transform(commands.Cog):
                 self.transitions[pair][next_letter] += 1
 
     @commands.command(aliases=['word_ai'])
-    async def wordai(self, ctx, results: int = 2):
+    async def wordai(self, ctx, results: int = 15):
         """ Generate words artificially """
         words = []
         for _ in range(results):
@@ -72,7 +72,7 @@ class Transform(commands.Cog):
         await ctx.send(', '.join(words))
     
     @commands.command(no_pm=True)
-    async def wordaig(self, ctx, results: int = 2):
+    async def wordaig(self, ctx, results: int = 23):
         """ Generate names using AI Generator """
         vow = ['a', 'i', 'u', 'e', 'o', 'y', '', 'a', 'i', 'u', 'e', 'o', '']
         con = [
@@ -129,7 +129,52 @@ class Transform(commands.Cog):
             table = str.maketrans(char, tran)
             tinify = text.translate(table)
             result = f'{msg}{tinify[::1]}'
-            await ctx.send(result)
+            e = discord.Embed(color=self.user_color)
+            e.add_field(name='Input:', value=f'```py\n{text}```', inline=False)
+            e.add_field(name='Result:', value=f'**```css\n{result}```**', inline=False)
+            await ctx.send(embed=e)
+
+    # +------------------------------------------------------------+
+    # |              Change any text into cursive                  |
+    # +------------------------------------------------------------+
+    @commands.command(no_pm=True)
+    async def cursive(self, ctx, *, text: str = None):
+        """ Convert any text into 𝒸𝓊𝓇𝓈𝑒𝒾𝓋𝑒 text """
+        if text is None:
+            return await ctx.send("You have to input some text first.", delete_after=23)
+
+        if text.lower() is not None:
+            msg = ""
+            char = "abcdefghijklmnopqrstuvwxyz0123456789+-+()."
+            tran = "𝒶𝒷𝒸𝒹𝑒𝒻𝑔𝒽𝒾𝒿𝓀𝓁𝓂𝓃𝑜𝓅𝓆𝓇𝓈𝓉𝓊𝓋𝓌𝓍𝓎𝓏𝟢𝟣𝟤𝟥𝟦𝟧𝟨𝟩𝟪𝟫+-+()."
+            table = str.maketrans(char, tran)
+            tinify = text.translate(table)
+            result = f'{msg}{tinify[::1]}'
+            e = discord.Embed(color=self.user_color)
+            e.add_field(name='Input:', value=f'```py\n{text}```', inline=False)
+            e.add_field(name='Result:', value=f'**```css\n{result}```**', inline=False)
+            await ctx.send(embed=e)
+
+    # +------------------------------------------------------------+
+    # |              Change any text into cursive                  |
+    # +------------------------------------------------------------+
+    @commands.command(no_pm=True)
+    async def bold(self, ctx, *, text: str = None):
+        """ Convert any text into 𝕓𝕠𝕝𝕕 text """
+        if text is None:
+            return await ctx.send("You have to input some text first.", delete_after=23)
+
+        if text is not None:
+            msg = ""
+            char = "aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrRsStTuUvVwWxXyYzZ0123456789+-+()."
+            tran = "𝕒𝔸𝕓𝔹𝕔ℂ𝕕𝔻𝕖𝔼𝕗𝔽𝕘𝔾𝕙ℍ𝕚𝕀𝕛𝕁𝕜𝕂𝕝𝕃𝕞𝕄𝕟ℕ𝕠𝕆𝕡ℙ𝕢ℚ𝕣ℝ𝕤𝕊𝕥𝕋𝕦𝕌𝕧𝕍𝕨𝕎𝕩𝕏𝕪𝕐𝕫ℤ𝟘𝟙𝟚𝟛𝟜𝟝𝟞𝟟𝟠𝟡+-+()."
+            table = str.maketrans(char, tran)
+            tinify = text.translate(table)
+            result = f'{msg}{tinify[::1]}'
+            e = discord.Embed(color=self.user_color)
+            e.add_field(name='Input:', value=f'```py\n{text}```', inline=False)
+            e.add_field(name='Result:', value=f'**```css\n{result}```**', inline=False)
+            await ctx.send(embed=e)
 
     # +------------------------------------------------------------+
     # |                       Clap                                 |
@@ -184,9 +229,11 @@ class Transform(commands.Cog):
                 if letter in alpha:
                     index = alpha.index(letter)
                     i += converter[index]
-                else:    i += letter
+                else:
+                    i += letter
             return await ctx.send(i)
-        else:    await ctx.send(f'**Usage:**\n`{ctx.prefix}{ctx.invoked_with} [text]`', delete_after=23)
+        else:
+            await ctx.send(f'**Usage:**\n`{ctx.prefix}{ctx.invoked_with} [text]`', delete_after=23)
 
     # +------------------------------------------------------------+
     # |                     ZALGO                                  |
@@ -206,7 +253,8 @@ class Transform(commands.Cog):
             zalgo_msg = self.zalgoify(msg)
             await ctx.send(f'```py\n{zalgo_msg}```')
         else:
-            await ctx.send(f'**Usage:**\n`{ctx.prefix}{ctx.invoked_with} [text]`', delete_after=23)
+            _error = f'**Usage:**\n`{ctx.prefix}{ctx.invoked_with} [text here]`'
+            await ctx.send(_error, delete_after=23)
 
 
 async def setup(bot):
