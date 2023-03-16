@@ -171,19 +171,22 @@ class Transform(commands.Cog):
     # +------------------------------------------------------------+
     # |                     ZALGO                                  |
     # +------------------------------------------------------------+
-    '''
+    def zalgoify(self, text):
+        text = text.replace('@', '')[:108]
+        random_shit = map(chr, range(768, 879))
+        marks = list(random_shit)
+        result = text.split()
+        zalgo = ' '.join(''.join(c + ''.join(random.choice(marks) for _ in range(i // 2 + 1)) * c.isalnum() for c in word) for i, word in enumerate(result))
+        return zalgo
+
     @commands.command(no_pm=True)
-    async def zalgo(self,ctx,*, msg: str = None):
-        """ S̏p͜ȉt́ o̕u͢ṭ Z͒̕aͣ͟l̾͡g̳̍o̓̀ """
+    async def zalgo(self, ctx, *, msg: str = None):
+        """S̏p͜ȉt́ o̕u͢ṭ Z͒̕aͣ͟l̾͡g̳̍o̓̀"""
         if msg is not None:
-            msg = msg.replace('@', '')[:108]
-            random_shit = map(chr, range(768, 879))
-            _marks = list(random_shit)
-            result = msg.split()
-            _zalgo = ' '.join(''.join(c + ''.join(random.choice(_marks) for _ in range(i // 2 + 1)) * c.isalnum() for c in word) for i, word in enumerate(result))
-            return await ctx.send(f'```py\n{_zalgo}```')
-        else:    await ctx.send(f'**Usage:**\n`{ctx.prefix}{ctx.invoked_with} [text]`', delete_after=23)
-    '''
+            zalgo_msg = self.zalgoify(msg)
+            await ctx.send(f'```py\n{zalgo_msg}```')
+        else:
+            await ctx.send(f'**Usage:**\n`{ctx.prefix}{ctx.invoked_with} [text]`', delete_after=23)
 
 
 async def setup(bot):
