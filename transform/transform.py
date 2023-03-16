@@ -57,11 +57,7 @@ class Transform(commands.Cog):
     @commands.command(aliases=['word_ai'])
     async def wordai(self, ctx, results: int = 2):
         """ Generate words artificially """
-        try:
-            await ctx.message.delete()
-        except discord.Forbidden:
-            pass
-
+        words = []
         for _ in range(results):
             word = ''
             pair = random.choice(list(self.transitions.keys()))
@@ -72,8 +68,8 @@ class Transform(commands.Cog):
                 word += next_letter
                 pair = pair[1] + next_letter
             word = word.title()
-            await ctx.send(', '.join(word))
-    
+            words.append(word)
+        await ctx.send(', '.join(f'```py\n{words}```'))
     
     @commands.command(no_pm=True)
     async def wordaig(self, ctx, results: int = 2):
@@ -89,12 +85,7 @@ class Transform(commands.Cog):
             word = ''.join(random.choice(con if j%2 else vow) for j in range(word_length))
             artificially_generated_names.append(word.title())
         
-        try:
-            await ctx.message.delete()
-        except discord.Forbidden:
-            pass
-        finally:
-            await ctx.send(', '.join(artificially_generated_names))
+        await ctx.send(', '.join(f'```bf\n{artificially_generated_names}```'))
 
     # +------------------------------------------------------------+
     # |                     CHARINFO                               |
