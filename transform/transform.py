@@ -23,17 +23,6 @@ import discord, asyncio, random, textwrap, traceback, unicodedata2 as ud2, strin
 from discord.ext import commands
 
 dev_list = [323578534763298816]
-vowels = ['a', 'e', 'i', 'o', 'u']
-consonants = ['b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm', 'n', 'p', 'q', 'r', 's', 't', 'v', 'w', 'x', 'y', 'z']
-
-def generate_word():
-    syllables = []
-    for i in range(random.randint(2, 4)):
-        if i % 2 == 0:  # even number, add a consonant
-            syllables.append(random.choice(consonants))
-        else:  # odd number, add a vowel
-            syllables.append(random.choice(vowels))
-    return ''.join(syllables)
 
 
 class Transform(commands.Cog):
@@ -76,32 +65,13 @@ class Transform(commands.Cog):
     # +------------------------------------------------------------+
     @commands.command(aliases=['genword', 'nameai'])
     async def wordai(self, ctx, results: int = 2):
-        """ Generate words artificially """
-        try:
-            await ctx.message.delete()
-        except discord.Forbidden:
-            pass
-        finally:
-            try:
-                if results is None:
-                    results = 2
-                for i in range(results):
-                    word = generate_word()
-                    word = word.capitalize()
-                    await ctx.send(f'```py\n{word}```')
-            except Exception as e:
-                await ctx.send(f'```py\n{e}```', delete_after=69)
-    
-    '''
-    @commands.command(aliases=['genword', 'nameai'])
-    async def wordai(self, ctx, results: int = 2):
         """ Generate names using AI Generator """
         vow = ['a', 'i', 'u', 'e', 'o', 'y', '', 'a', 'i', 'u', 'e', 'o', '']
         con = [
             'qu', 'w', 'wh', 'r', 't', 'th', 'y', 'p', 'mp', 's', 'ss', 'd', 'f', 'g', 'gü',
             'ß', 'h', 'j', 'ji', 'k', '', 'l', 'z', 'x', 'c', 'v', 'b', 'n', 'm', ''
         ]
-        word_length = 23  # max length of artificially generated name
+        word_length = random.randint(3, 9)  # max length of artificially generated name
         artificially_generated_names = []
         for i in range(results):
             word = ''.join(random.choice(con if j%2 else vow) for j in range(word_length))
@@ -113,7 +83,6 @@ class Transform(commands.Cog):
             pass
         finally:
             await ctx.send(', '.join(artificially_generated_names))
-        '''
 
 
     # +------------------------------------------------------------+
