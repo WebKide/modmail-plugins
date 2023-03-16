@@ -310,21 +310,25 @@ class Oracle(commands.Cog):
         """ Ask questions to the 8ball """
         author = ctx.message.author
 
-        if not question:    return await ctx.send(f'What is your question {author.mention}?')  # 
+        if not question:
+            return await ctx.send(f'What is your question {author.mention}?')  # 
 
         if question.endswith("?") and question != "?":
             response = random.choice(ball_answers)
 
             e = discord.Embed(color=self.user_color)
-            e.set_author(name=f"{author.display_name}'s question:", icon_url=author.avatar_url)
+            e.set_author(name=f"{author.display_name}'s question:", icon_url=author.avatar.url)
             e.description = f'```{question}```'
             e.add_field(name='\N{BILLIARDS} answer:', value=f'```css\n{response}```')
             e.set_footer(text=f"ADVICE: Don't take this too seriously | {date.today()}")
 
-            try:    return await ctx.send(embed=e)
-            except discord.HTTPException:    await ctx.send(f'\N{BILLIARDS} answer: ```css\n{response}```')
+            try:
+                return await ctx.send(embed=e)
+            except discord.HTTPException:
+                await ctx.send(f'\N{BILLIARDS} answer: ```css\n{response}```')
 
-        else:    await ctx.send(f"*{question}* doesn't look like a yes/no question.")
+        else:
+            await ctx.send(f"*{question}* doesn't look like a yes/no question.")
 
     # +------------------------------------------------------------+
     # |            Prediction command: TAROT                       |
@@ -369,7 +373,7 @@ class Oracle(commands.Cog):
                     "considered or resources and people you’d overlooked."
 
             e = discord.Embed(color=self.user_color)
-            e.set_author(name=f'Interpretation for {u.display_name}', icon_url=u.avatar_url)
+            e.set_author(name=f'Interpretation for {u.display_name}', icon_url=u.avatar.url)
             e.set_thumbnail(url=deck)
             e.set_author(name=f'{u.name} | {u.display_name} | {u.id}')
 
@@ -413,7 +417,7 @@ class Oracle(commands.Cog):
             e = discord.Embed(colour=discord.Colour(0xc5b358))
             e.set_thumbnail(url=iching)
             e.set_footer(text=f"Ancient Oracle's inspiration | {date.today()}", icon_url=iching)
-            e.set_author(name=f'{p} interpretation for {u.display_name}', icon_url=u.avatar_url)
+            e.set_author(name=f'{p} interpretation for {u.display_name}', icon_url=u.avatar.url)
             e.description = f'Meditation:\n{random.choice(oracle_answer)}'
             return await ctx.send(embed=e)
 
