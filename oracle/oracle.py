@@ -359,7 +359,7 @@ class Oracle(commands.Cog):
 
         try:
             s = await ctx.send(f"Allow me to shuffle my Tarot deck... {u.display_name}")
-            #  await ctx.channel.trigger_typing()
+            await ctx.channel.typing()
             await asyncio.sleep(5)
 
             first = "1\N{COMBINING ENCLOSING KEYCAP} ***The Past:***\nThis card represents your situation*—why " \
@@ -411,7 +411,7 @@ class Oracle(commands.Cog):
         if question.endswith('?') and question != '?':
             try:
                 await ctx.send(f'Allow me to shuffle 3 ancient Chinese coins to answer your question... {u.display_name}')
-                #  await ctx.channel.trigger_typing()
+                await ctx.channel.typing()
                 await asyncio.sleep(5)
             except discord.Forbidden:    pass
 
