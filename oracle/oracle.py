@@ -104,7 +104,7 @@ class Oracle(commands.Cog):
         try:
             s = await ctx.send(f"Allow me to shuffle my Tarot deck... {u.display_name}")
             await ctx.channel.typing()
-            await asyncio.sleep(7)
+            await asyncio.sleep(random.randint(5, 9))
 
             first = "1\N{COMBINING ENCLOSING KEYCAP} ***The Past:***\nThis card represents your situation*—why " \
                     "you’re currently in the spot you’re in*. It often symbolizes a person or relationship " \
@@ -158,7 +158,7 @@ class Oracle(commands.Cog):
                 _wait = f'Allow me to shuffle 3 ancient Chinese coins to answer your question... **{u.display_name}**'
                 _result = await ctx.send(_wait)
                 await ctx.channel.typing()
-                await asyncio.sleep(7)
+                await asyncio.sleep(random.randint(3, 11))
                 
                 e = discord.Embed(colour=discord.Colour(0xc5b358))
                 e.set_thumbnail(url=iching)
@@ -190,7 +190,7 @@ class Oracle(commands.Cog):
         
         try:
             await ctx.channel.typing()
-            await asyncio.sleep(11)
+            await asyncio.sleep(random.randint(5, 11))
         except discord.Forbidden:
             pass
 
@@ -208,7 +208,7 @@ class Oracle(commands.Cog):
         rune_title = rune['rune_title']
 
         e = discord.Embed(
-            title=f'🧿 {rune_name} meaning for {rune_draw}',
+            title=f'🧿 {rune_name} {rune_draw} means:',
             description=truncated_rune,
             color=int(rune['colour'], 16),  # base of 16 to convert the hexadecimal str to an int
             timestamp=datetime.utcnow()
@@ -220,8 +220,8 @@ class Oracle(commands.Cog):
         if query is not None:
             e.add_field(name=f'**{u.display_name}** asked:', value=f'{query}', inline=False)
 
-        e.add_field(name='Interpretation:', value=f'>>> {_runes_desc}', inline=False)
-        e.add_field(name='Keywords:', value=f'{rune_title}', inline=False)
+        e.add_field(name='🔸 Important:', value=f'>>> ```bf\n{_runes_desc}```', inline=False)
+        e.add_field(name='🔸 Keywords:', value=f'```js\n{rune_title}```', inline=False)
 
         try:
             await ctx.send(embed=e)
