@@ -208,7 +208,7 @@ class Oracle(commands.Cog):
         rune_title = rune['rune_title']
 
         e = discord.Embed(
-            title=f'🧿 {rune_name} {rune_draw} means:',
+            title=f'🧿 | {rune_name} {rune_draw} draw means:',
             description=truncated_rune,
             color=int(rune['colour'], 16),  # base of 16 to convert the hexadecimal str to an int
             timestamp=datetime.utcnow()
@@ -220,7 +220,7 @@ class Oracle(commands.Cog):
         if query is not None:
             e.add_field(name=f'**{u.display_name}** asked:', value=f'{query}', inline=False)
 
-        e.add_field(name='🔸 Important:', value=f'>>> ```bf\n{_runes_desc}```', inline=False)
+        e.add_field(name='🔸 Important:', value=f'```bf\n{_runes_desc}```', inline=False)
         e.add_field(name='🔸 Keywords:', value=f'```js\n{rune_title}```', inline=False)
 
         try:
