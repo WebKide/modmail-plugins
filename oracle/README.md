@@ -17,11 +17,15 @@
 
 This modmail-plugin contains 3 main commands for prediction: 
 
-> **`8ball`** [extended version], 
-> **`Tarot`** [with major arcana], 
-> **`iChing`** [ancient Chinese coins], 
-> **`runes`** [elder futhark viking runes], 
-> more soon...
+**`8ball`** [extended version], 
+
+**`Tarot`** [with major arcana], 
+
+**`iChing`** [ancient Chinese coins], 
+
+**`Runes`** [elder futhark viking runes], 
+
+more soon...
 
 - - - -
 
