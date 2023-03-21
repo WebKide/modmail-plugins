@@ -1,4 +1,4 @@
-runes = [
+runes_list = [
     # 01 Rune FEHU
     {
         'rune_name': '1/24 Fehu [ᚠ]', 
