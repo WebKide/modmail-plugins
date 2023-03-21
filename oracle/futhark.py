@@ -1,7 +1,7 @@
 runes_list = [
     # 01 Rune FEHU
     {
-        'rune_name': '1/24 Fehu [ᚠ]', 
+        'rune_name': '1/24 [ᚠ] Fehu', 
         'rune_title': 'Wealth, Prosperity, Abundance.', 
         'rune_draw': {
             'Upright': 'Fehu is the first rune in the Elder Futhark alphabet and represents the sound "F". It is associated with the Norse god Freyr, who was associated with fertility, prosperity, and abundance.\nInterpreting Fehu can mean wealth, abundance, or prosperity. It suggests that you will experience a period of growth and increase in your life. It is a rune of potential, indicating that you have the resources and abilities to achieve success and material gain. It is also associated with new beginnings, suggesting that you may be starting a new venture or embarking on a new chapter in your life.\nHowever, Fehu also reminds you to be mindful of your relationship with material possessions. Too much focus on wealth can lead to greed and imbalance. It is important to appreciate the abundance in your life while maintaining balance and avoiding excess.', 
@@ -12,7 +12,7 @@ runes_list = [
     },
     # 02 Rune Ūruz
     {
-        'rune_name': '2/24 Ūruz [ᚢ]', 
+        'rune_name': '2/24 [ᚢ] Ūruz', 
         'rune_title': 'Strength, Vitality, Perseverance', 
         'rune_draw': {
             'Upright': 'Ūruz is the second rune of the Elder Futhark alphabet and represents strength, vitality, and primal energy. It symbolizes the raw power of nature, and the untamed forces that underlie all of existence. When upright, Ūruz indicates a surge of energy, vitality, and strength that can help one overcome obstacles and achieve their goals. It can also represent a time of great personal growth and transformation, as one taps into their inner power and potential.\nThis rune can also be associated with health, physical strength, and well-being. It encourages us to take care of our bodies, to stay active and engaged with the world around us, and to tap into the deep reservoirs of strength and resilience within us.\nOverall, Ūruz serves as a reminder of the untamed power that lies within us, and the potential for growth, transformation, and success when we tap into that power.', 
@@ -34,7 +34,7 @@ runes_list = [
     },
     # 04 Rune Ansuz
     {
-        'rune_name': '4/24 Ansuz [ᚨ]', 
+        'rune_name': '4/24 [ᚨ] Ansuz', 
         'rune_title': 'Communication, Inspiration, Guidance', 
         'rune_draw': {
             'Upright': 'Ansuz is the fourth rune of the Elder Futhark alphabet and represents communication, inspiration, and divine guidance. It symbolizes the power of speech and the ability to express oneself with clarity and authenticity. When upright, Ansuz indicates a time of clear communication and inspiration, as well as an openness to receiving divine guidance and insight.\nThis rune can also represent a sense of spiritual awakening, as one begins to tap into their own intuition and connect with higher realms of consciousness. It encourages us to trust in our own inner wisdom, and to be receptive to messages from the divine.\nOverall, Ansuz serves as a reminder of the power of communication and the importance of authenticity and clarity in our interactions with others. It encourages us to listen carefully to the messages of the universe, and to trust in our own ability to connect with higher realms of consciousness.', 
@@ -45,7 +45,7 @@ runes_list = [
     },
     # 05 Rune Raidō
     {
-        'rune_name': '5/24 Raidō [ᚱ]', 
+        'rune_name': '5/24 [ᚱ] Raidō', 
         'rune_title': 'Journey, Travel, Growth', 
         'rune_draw': {
             'Upright': 'Raidō is the fifth rune of the Elder Futhark alphabet and represents journey, travel, and movement. It symbolizes both physical and spiritual journeys, as well as the idea of progress and growth. When upright, Raidō indicates a time of movement and change, and suggests that we are on a journey towards a new destination or phase in our lives.\nThis rune can also represent the idea of personal growth and development, as we learn and evolve through our experiences and interactions with the world around us. It encourages us to embrace change and to trust in the journey, even when it is difficult or uncertain.\nIn some cases, Raidō can also indicate the need to be open to new experiences and to embrace opportunities for growth and expansion. It may suggest that we are being called to step outside of our comfort zones and to explore new territories in our personal or professional lives.\nOverall, Raidō serves as a reminder of the importance of movement and growth, as well as the need to embrace change and to trust in the journey. It encourages us to be open to new experiences and to have faith in our own ability to navigate the challenges and opportunities that arise on our path.', 
@@ -56,7 +56,7 @@ runes_list = [
     },
     # 06 Rune Kenaz
     {
-        'rune_name': '6/26 Kenaz [ᚲ]', 
+        'rune_name': '6/26 [ᚲ] Kenaz', 
         'rune_title': 'Creativity, Knowledge, Insight', 
         'rune_draw': {
             'Upright': 'Kenaz is the sixth rune of the Elder Futhark alphabet and represents creativity, inspiration, and illumination. It symbolizes the transformative power of fire, and the ability to harness this energy in order to bring about change and growth. When upright, Kenaz indicates a time of creativity and innovation, and suggests that we are being called to tap into our own creative potential in order to bring something new and transformative into the world.\nThis rune can also represent the idea of illumination and enlightenment, as we gain new insights and understanding through the power of intuition and inspiration. It encourages us to trust our own inner wisdom and to seek out new sources of knowledge and insight.\nIn some cases, Kenaz can also indicate the need to take a proactive approach to our lives and to be willing to take risks in order to achieve our goals. It may suggest that we are being called to step into our own power and to embrace the full range of our own creative potential.\nOverall, Kenaz serves as a reminder of the transformative power of creativity and inspiration, as well as the importance of seeking out new knowledge and understanding. It encourages us to trust in our own abilities and to take action towards our goals, even when it is uncomfortable or uncertain.', 
@@ -67,7 +67,7 @@ runes_list = [
     },
     # 07 Rune Gyfu
     {
-        'rune_name': '7/24 Gyfu [ᚷ]', 
+        'rune_name': '7/24 [ᚷ] Gyfu', 
         'rune_title': 'Giving, Receiving, Balance', 
         'rune_draw': {
             'Upright': 'Gyfu (also known as Gebō) is the seventh rune of the Elder Futhark alphabet and represents the concept of giving and receiving. It symbolizes the exchange of gifts, resources, and energy between individuals or entities, and the interconnectedness of all things. When upright, Gyfu suggests a time of balance, harmony, and reciprocity, and encourages us to seek out opportunities for giving and receiving in our relationships and interactions.\nThis rune can also represent the idea of partnerships and alliances, as we work together with others towards a common goal. It encourages us to approach our relationships with openness and generosity, and to seek out opportunities to support and be supported by others.\nIn some cases, Gyfu can also indicate the importance of gratitude and appreciation, as we recognize the value and significance of the gifts and resources that we receive from others. It reminds us to be mindful of the interconnectedness of all things, and to approach our interactions with a spirit of generosity and goodwill.', 
@@ -78,7 +78,7 @@ runes_list = [
     },
     # 08 Rune Wunjō
     {
-        'rune_name': '8/24 Wunjō [ᚹ]', 
+        'rune_name': '8/24 [ᚹ] Wunjō', 
         'rune_title': 'Joy, Fulfillment, Harmony', 
         'rune_draw': {
             'Upright': 'Wunjō (also known as Wynn) is the eighth rune of the Elder Futhark alphabet and represents the concept of joy, happiness, and contentment. It symbolizes the culmination of a successful journey or endeavor, and the sense of fulfillment and satisfaction that comes with achieving our goals. When upright, Wunjō suggests a time of harmony, positivity, and celebration, and encourages us to embrace the joy and abundance in our lives.\nThis rune can also represent the importance of positive relationships and social connections, as we find happiness and fulfillment in our interactions with others. It encourages us to cultivate a sense of community and belonging, and to surround ourselves with people who support and uplift us.\nIn some cases, Wunjō may also indicate the importance of self-care and self-nurturing, as we take the time to appreciate and enjoy the blessings in our lives. It reminds us to celebrate our successes and accomplishments, and to take pleasure in the simple pleasures of life.', 
@@ -89,7 +89,7 @@ runes_list = [
     },
     # 09 Rune Hagalaz
     {
-        'rune_name': '9/24 Hagalaz [ᚺ]', 
+        'rune_name': '9/24 [ᚺ] Hagalaz', 
         'rune_title': 'Upheaval, Disruption, Chaos', 
         'rune_draw': {
             'Upright': 'Hagalaz is the ninth rune of the Elder Futhark alphabet and represents the destructive forces of nature, particularly hail or other forms of extreme weather. When upright, Hagalaz suggests a time of upheaval and sudden change, often brought on by external circumstances beyond our control. It may indicate a period of chaos, destruction, and transformation, as old patterns and structures are torn down to make way for new growth.\nHowever, despite the upheaval and destruction that Hagalaz can bring, it also represents the potential for renewal and rebirth. It can signify a time of intense personal growth and transformation, as we are forced to confront our deepest fears and insecurities in the face of adversity.\nIn some cases, Hagalaz may also indicate a need to release old patterns or beliefs that are no longer serving us, in order to create space for new possibilities and growth. It encourages us to embrace change and to trust in the transformative power of the universe.', 
@@ -100,7 +100,7 @@ runes_list = [
     },
     # 10 Rune Nauthiz
     {
-        'rune_name': '10/24 Nauthiz [ᚾ]', 
+        'rune_name': '10/24 [ᚾ] Nauthiz', 
         'rune_title': 'Struggle, Resilience, Necessity', 
         'rune_draw': {
             'Upright': 'Nauthiz is the tenth rune of the Elder Futhark alphabet and represents the concept of need, particularly the recognition of our own limitations and the necessity of facing challenges in order to grow and thrive. When upright, Nauthiz suggests a period of struggle and hardship, in which we must confront our own limitations and overcome obstacles in order to achieve our goals.\nHowever, Nauthiz also represents the power of endurance and resilience, reminding us that the challenges we face can ultimately make us stronger and more resilient in the long run. It encourages us to face our fears and limitations with courage and determination, and to use our struggles as an opportunity for growth and self-discovery.\nAt its core, Nauthiz represents the recognition that our greatest challenges often lead to our greatest opportunities for growth and transformation. It encourages us to stay focused on our goals, even in the face of adversity, and to trust in our own strength and resilience.', 
@@ -111,7 +111,7 @@ runes_list = [
     },
     # 11 Rune Isaz
     {
-        'rune_name': '11/24 Isaz [ᛁ]', 
+        'rune_name': '11/24 [ᛁ] Isaz', 
         'rune_title': 'Stillness, Potential, Patience', 
         'rune_draw': {
             'Upright': 'Isaz is the eleventh rune of the Elder Futhark alphabet and represents the concept of ice, stillness, and potential. When upright, Isaz suggests a period of stillness and reflection, in which we must be patient and allow the energies of life to settle and coalesce in preparation for a new phase of growth and transformation.\nIsaz encourages us to embrace the power of stillness and surrender, reminding us that sometimes the greatest progress is made not through action, but through allowing ourselves to be still and receptive to the wisdom and guidance of our inner selves.\nAt the same time, Isaz also represents the power of potential and possibility, reminding us that even in the midst of stillness and dormancy, the seeds of new growth and transformation are being planted. It encourages us to trust in the wisdom and guidance of the universe, and to be patient and open to the unfolding of our own journey.', 
@@ -122,7 +122,7 @@ runes_list = [
     },
     # 12 Rune Jēra
     {
-        'rune_name': '12/24 Jēra [ᛃ]', 
+        'rune_name': '12/24 [ᛃ] Jēra', 
         'rune_title': 'Harvest, Reward, Fruition', 
         'rune_draw': {
             'Upright': 'Jēra is the twelfth rune of the Elder Futhark alphabet and represents the concept of harvest, cycles, and fruition. When upright, Jēra suggests a time of completion and reaping the rewards of our hard work, where we can enjoy the fruits of our labor and celebrate our achievements.\nJēra reminds us of the cyclical nature of life, and that everything has its own time and place in the grand scheme of things. It encourages us to embrace the natural ebb and flow of life and to trust in the timing of the universe, knowing that everything will come to us in its own perfect time.\nAt the same time, Jēra also represents the importance of preparation and planting the seeds of future growth and success. It reminds us that our current circumstances are the result of our past actions, and that we must take responsibility for our own lives and choices in order to create the future we desire.', 
@@ -133,7 +133,7 @@ runes_list = [
     },
     # 13 Rune Eihwaz
     {
-        'rune_name': '13/24 Eihwaz [ᛇ]', 
+        'rune_name': '13/24 [ᛇ] Eihwaz', 
         'rune_title': 'Transformation, Endurance, Spirituality', 
         'rune_draw': {
             'Upright': 'Eihwaz represents the concept of transformation, death and rebirth. It signifies the need to release old patterns, ideas, and beliefs in order to create space for new growth and transformation. It suggests that by letting go of the old and embracing the new, we can experience profound changes and personal growth.\nEihwaz is also associated with the concept of spiritual development, suggesting that by delving deeper into our inner selves and exploring our spiritual nature, we can gain greater insight and understanding of ourselves and the world around us. It encourages us to seek out new experiences and perspectives, and to be open to the wisdom of others.\nAt the same time, Eihwaz reminds us of the importance of stability and balance in our lives. It suggests that while change and transformation are necessary for growth and progress, we must also remain grounded and centered, and not become overwhelmed by the challenges and uncertainties that may arise.', 
@@ -144,7 +144,7 @@ runes_list = [
     },
     # 14 Rune Peorð
     {
-        'rune_name': '14/24 Peorð [ᛈ]', 
+        'rune_name': '14/24 [ᛈ] Peorð', 
         'rune_title': 'Initiation, Transformation, Change', 
         'rune_draw': {
             'Upright': 'Peorð represents the mysteries and hidden knowledge of the universe, as well as the spiritual journey of self-discovery. It is a rune of initiation and transformation, and it suggests that a period of growth and change is on the horizon. Peorð also symbolizes the interconnectedness of all things, and the cyclical nature of life and death.\nPeorð encourages us to embrace the unknown and to trust in the journey ahead. It suggests that we are on the brink of a major breakthrough or transformation, and that we must be open to new experiences and opportunities. This may involve stepping outside of our comfort zone, taking risks, or exploring new spiritual practices or beliefs.', 
@@ -155,7 +155,7 @@ runes_list = [
     },
     # 15 Rune Algiz
     {
-        'rune_name': '15/24 Algiz [ᛉ]', 
+        'rune_name': '15/24 [ᛉ] Algiz', 
         'rune_title': 'Protection, Defense, Boundaries', 
         'rune_draw': {
             'Upright': 'Algiz represents protection, safety, and the higher self. It suggests that we have the strength and courage to face challenges and overcome obstacles. This rune can indicate a sense of divine guidance or a connection to our intuition, reminding us to trust our instincts and follow our inner wisdom.\nIn its Upright position, Algiz is also associated with defense and self-preservation. It encourages us to establish clear boundaries and protect ourselves from harm, whether physical or emotional. This can involve developing healthy coping mechanisms, seeking support from loved ones, or simply learning to say "no" when necessary.', 
@@ -166,7 +166,7 @@ runes_list = [
     },
     # 16 Rune Sōwilō
     {
-        'rune_name': '16/24 Sōwilō [ᛊ]', 
+        'rune_name': '16/24 [ᛊ] Sōwilō', 
         'rune_title': 'Wholeness, Balance, Healing', 
         'rune_draw': {
             'Upright': 'Sōwilō represents wholeness, balance, and inner harmony. It is a symbol of spiritual enlightenment and personal growth, reminding us of the interconnectedness of all things and the importance of finding balance and harmony in our lives. This rune suggests that we are on the right path towards achieving our goals, and encourages us to stay true to ourselves and our values.\nIn its Upright position, Sōwilō is also associated with healing and renewal. It suggests that we have the power to heal ourselves and others, and may indicate a need to focus on self-care and nurturing our emotional, physical, and spiritual well-being.', 
@@ -177,7 +177,7 @@ runes_list = [
     },
     # 17 Rune Tīwaz
     {
-        'rune_name': '17/24 Tīwaz [ᛏ]', 
+        'rune_name': '17/24 [ᛏ] Tīwaz', 
         'rune_title': 'Courage, Honor, Justice', 
         'rune_draw': {
             'Upright': 'Tīwaz represents victory, honor, and justice. It symbolizes the warrior\'s spirit and the determination to fight for what is right. When this rune appears in its Upright position, it may suggest a time of challenge and conflict, but also the courage and strength to overcome obstacles and achieve victory.\nTīwaz is a reminder that we have the power to stand up for our beliefs and values, even in the face of opposition or adversity. It encourages us to be true to ourselves and to act with integrity and honor.', 
@@ -188,7 +188,7 @@ runes_list = [
     },
     # 18 Rune Berkanan
     {
-        'rune_name': '18/24 Berkanan [ᛒ]', 
+        'rune_name': '18/24 [ᛒ] Berkanan', 
         'rune_title': 'Birth, Fertility, Community', 
         'rune_draw': {
             'Upright': 'Berkanan represents birth, fertility, and new beginnings. It symbolizes growth, nurturing, and the potential for personal development. It could also indicate the importance of family, relationships, and community.', 
@@ -199,7 +199,7 @@ runes_list = [
     },
     # 19 Rune Ehwaz
     {
-        'rune_name': '19/24 Ehwaz [ᛖ]', 
+        'rune_name': '19/24 [ᛖ] Ehwaz', 
         'rune_title': 'Movement, Teamwork, Trust', 
         'rune_draw': {
             'Upright': 'Ehwaz represents movement, progress, and teamwork. It symbolizes the importance of cooperation, trust, and communication in achieving goals. It may also indicate travel, new experiences, and a sense of freedom.', 
@@ -210,7 +210,7 @@ runes_list = [
     },
     # 20 Rune Mannaz
     {
-        'rune_name': '20/24 Mannaz [ᛗ]', 
+        'rune_name': '20/24 [ᛗ] Mannaz', 
         'rune_title': 'Humanity, Community, Interdependence', 
         'rune_draw': {
             'Upright': 'Mannaz represents humanity, community, and social connections. It symbolizes the importance of cooperation, communication, and interdependence in achieving common goals. It also suggests personal growth, self-realization, and the need for balance between individual and collective needs.', 
@@ -221,7 +221,7 @@ runes_list = [
     },
     # 21 Rune Laguz
     {
-        'rune_name': '21/24 Laguz [ᛚ]', 
+        'rune_name': '21/24 [ᛚ] Laguz', 
         'rune_title': 'Intuition, Flow, Reflection', 
         'rune_draw': {
             'Upright': 'Laguz represents intuition, psychic abilities, and the flow of emotions. It is also associated with water, the unconscious mind, and the ebb and flow of life. This rune often indicates a time for reflection and introspection, as well as trusting your instincts and following your intuition.', 
@@ -232,7 +232,7 @@ runes_list = [
     },
     # 22 Rune Ingwaz
     {
-        'rune_name': '22/24 Ingwaz [ᛜ]', 
+        'rune_name': '22/24 [ᛜ] Ingwaz', 
         'rune_title': 'Fertility, Creativity, Transformation', 
         'rune_draw': {
             'Upright': 'Ingwaz represents the god Ing and embodies the idea of fertility, creative energy, and internal growth. It often indicates a time of new beginnings and personal transformation, where one\'s inner world is ripe for manifestation in the external world. The rune can also suggest the need for patience and nurturing to cultivate and grow these new ideas.', 
@@ -243,7 +243,7 @@ runes_list = [
     },
     # 23 Rune Dagaz
     {
-        'rune_name': '23/24 Dagaz [ᛟ]', 
+        'rune_name': '23/24 [ᛟ] Dagaz', 
         'rune_title': 'Transformation, Enlightenment, Awakening', 
         'rune_draw': {
             'Upright': 'The Upright meaning of Dagaz represents transformation, breakthrough, and enlightenment. It signifies the beginning of a new chapter in life, filled with hope and positive energy. The rune reminds you to stay focused on your goals and trust the journey. It brings clarity, insight, and a renewed sense of purpose.', 
@@ -254,7 +254,7 @@ runes_list = [
     },
     # 24 Rune Othila
     {
-        'rune_name': '24/24 Othila [ᛞ]', 
+        'rune_name': '24/24 [ᛞ] Othila', 
         'rune_title': 'Inheritance, Ancestry, Legacy', 
         'rune_draw': {
             'Upright': 'Othila represents ancestral property, inheritance, and a sense of belonging. It can indicate a time of stability, security, and comfort, both physically and emotionally. Othila is often associated with family, traditions, and the passing down of knowledge from one generation to the next. It can also represent the idea of leaving a legacy for future generations.', 
@@ -265,7 +265,7 @@ runes_list = [
     },
     # 25 Rune Odin
     {
-        'rune_name': '0/24 Odin [ ]', 
+        'rune_name': '0/24 [ ] Odin', 
         'rune_title': 'Mystery, Change, Opportunity', 
         'rune_draw': {
             'Upright': 'The Wyrd or Odin rune is associated with the god Odin, who is often seen as a wise and powerful figure in Norse mythology. This rune is a symbol of Odin\'s wisdom and power, and it can help to bring about a greater sense of understanding and connection with the divine.\nOverall, the Wyrd or Odin rune is often a powerful symbol of connection, change, and the cyclical nature of life. It can be used as a reminder of the interconnectivity of all things, and as a tool for gaining greater insight into the mysteries of existence.', 
