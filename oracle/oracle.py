@@ -21,7 +21,7 @@ SOFTWARE.
 import discord, asyncio, random, textwrap, traceback
 
 from datetime import datetime, date
-from discord.ext import commandsimport discord, random
+from discord.ext import commands
 
 from .eightball import ball_answers
 from .iching import oracle_answer
