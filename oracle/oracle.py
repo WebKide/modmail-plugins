@@ -206,20 +206,21 @@ class Oracle(commands.Cog):
         truncated_rune = r_meaning[:1000] + '...' if len(r_meaning) > 1000 else r_meaning
 
         e = discord.Embed(
-            description=f'>>> {_runes_desc}',
+            title=f'🧿 {rune_draw} draw meaning:',
+            description=truncated_rune,
             color=int(rune['colour'], 16),  # base of 16 to convert the hexadecimal str to an int
             timestamp=datetime.utcnow()
         )
         e.set_author(name='𝔼𝕝𝕕𝕖𝕣 𝔽𝕦𝕥𝕙𝕒𝕣𝕜 𝕍𝕚𝕜𝕚𝕟𝕘 ℝ𝕦𝕟𝕖𝕤', icon_url=rune['rune_img'])
-        e.set_footer(text='Use for guidance only!!')
         #  e.set_thumbnail(url=rune['rune_img'])
         #  e.set_image(url='img_url.png')
         if query is None:
-            e.set_author(name=u.display_name, icon_url=u.avatar.url)
+            e.set_footer(text='Use for guidance only!!')
         if query is not None:
             e.add_field(name=f'**{u.display_name}** asked:', value=f'{query}', inline=False)
+            e.set_footer(text='Use for guidance only!!', icon_url=u.avatar.url)
 
-        e.add_field(name=f'🧿 {rune_draw} draw meaning:', value=truncated_rune, inline=False)
+        e.add_field(name='Interpretation:', value=f'>>> {_runes_desc}', inline=False)
 
         try:
             await ctx.send(embed=e)
