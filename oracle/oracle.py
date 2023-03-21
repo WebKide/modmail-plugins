@@ -204,6 +204,8 @@ class Oracle(commands.Cog):
         r_meaning = rune['rune_draw'][rune_draw]
         #  in case the meaning of the Rune is larger than 1000 characters, we drop the excess...
         truncated_rune = r_meaning[:1000] + '...' if len(r_meaning) > 1000 else r_meaning
+        rune_name = rune['rune_name']
+        rune_title = rune['rune_title']
 
         e = discord.Embed(
             title=f'🧿 {rune_name} meaning for {rune_draw}',
