@@ -23,10 +23,10 @@ import discord, asyncio, random, textwrap, traceback
 from datetime import datetime, date
 from discord.ext import commands
 
-from .eightball import ball_answers
-from .iching import oracle_answer
-from .tarot import card_deck
-from .futhark import runes_list
+from .core.eightball import ball_answers
+from .core.iching import oracle_answer
+from .core.tarot import card_deck
+from .core.futhark import runes_list
 
 dev_list = [323578534763298816]
 #  I removed the lists from here to make the code easier to read, the lists are now 
