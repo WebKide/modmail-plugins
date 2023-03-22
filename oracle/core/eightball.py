@@ -6,7 +6,7 @@ ball_answers = [
     "👍 Yes definitely, no need to ask anymore for today.",
     "🌈 You're so lucky, yet the answer is no.",
     "👌 You may rely on it.",
-    "🚧 404\n\nAnswer not found.,
+    "🚧 404\n\nAnswer not found.",
     "👀 If it exists, there is porn of it — no exceptions.",
     "👍 As I see it... yes, don't worry about it anymore.",
     "🤷‍♀️ I cannot find a satisfactory answer on the internet either.",
