@@ -59,7 +59,7 @@ class Oracle(commands.Cog):
             e = discord.Embed(color=self.user_color)
             e.set_author(name=f"{author.display_name}'s question:", icon_url=author.avatar.url)
             e.description = f'```{question}```'
-            e.add_field(name='\N{BILLIARDS} answer:', value=f'```css\n{response}```')
+            e.add_field(name='\N{BILLIARDS} answer:', value=f'**```css\n{response}```**')
             e.set_footer(text=f"ADVICE: Don't take this too seriously | {date.today()}")
 
             try:
