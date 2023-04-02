@@ -17,9 +17,10 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-import discord, operator, re, ast
+import discord, re, opp
+
 from discord.ext import commands
-from sympy import pi, E, sin, cos, tan, Abs, Integer, sympify
+from sympy import pi, E, sin, cos, tan, Abs, Integer, Float, sympify
 
 class Calculator(commands.Cog):
     """(∩｀-´)⊃━☆ﾟ.*･｡ﾟ powerful calculator command """
@@ -37,10 +38,10 @@ class Calculator(commands.Cog):
 
         # replace some specific strings
         formula = formulas.replace(',', '').replace('x', '*').replace('minus', '-').replace('plus', '+') \
-            .replace('into', '*').replace('sub', '-').replace('pi', '3.141592653589793').replace('π', '3.141592653589793') \
-            .replace('divide', '/').replace('multiply', '*').replace('add', '+').replace('div', '/') \
-            .replace('mult', '*').replace('mul', '*').replace('÷', '/').replace('  ', '').replace(' ', '') \
-            .replace('\n', '')
+            .replace('into', '*').replace('sub', '-').replace('pi', '3.141592653589793') \
+            .replace('π', '3.141592653589793').replace('divide', '/').replace('multiply', '*') \
+            .replace('add', '+').replace('div', '/').replace('mult', '*').replace('mul', '*') \
+            .replace('÷', '/').replace('  ', '').replace(' ', '').replace('\n', '')
 
         # define a regular expression to match only mathematical characters
         regex = re.compile('[^0-9+\-*/().]')
@@ -48,21 +49,21 @@ class Calculator(commands.Cog):
         formula = regex.sub('', formula)
 
         try:
-            node = ast.parse(formula, mode='eval')
-            fixed = ast.fix_missing_locations(node)
-            compiled = compile(fixed, '<string>', 'eval')
-            expr = sympify(formula)
-            result = float(expr.evalf())
+            # parse the formula using OPP
+            expr = opp.parse(formula)
+
+            # evaluate the parsed expression with the Float class for decimal numbers
+            result = float(expr.evaluate({'pi':pi, 'E':E, 'sin':sin, 'cos':cos, 'tan':tan, 'Abs':Abs, 'Integer':Integer, 'Float':Float}))
 
             formatted_result = '{:.2f}'.format(result)
 
         except Exception as e:
             return await ctx.send(f'```Error: {str(e)}```', delete_after=9)
 
-        em = discord.Embed(title=f"Calculation for {person.display_name}'s", colour=self.user_color)
-        em.description = description=f'```bf\n[{formula}]```'
-        em.add_field(name="\N{ABACUS} Answer:", value=f'**```js\n​{formatted_result}\n```**', inline=False)
-        await ctx.send(embed=em)
+        e = discord.Embed(title=f"Calculation for {person.display_name}'s", colour=self.user_color)
+        e.description = description=f'```bf\n[{formula}]```'
+        e.add_field(name="\N{ABACUS} Answer:", value=f'**```js\n​{formatted_result}\n```**', inline=False)
+        await ctx.send(embed=e)
 
 
 async def setup(bot):
