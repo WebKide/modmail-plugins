@@ -38,19 +38,21 @@ class Calculator(commands.Cog):
             return await ctx.send(msg, delete_after=9)
 
         # replace some specific strings
-        formula = formula.replace(',', '').replace('x', '*').replace('minus', '-').replace('plus', '+') \
-            .replace('into', '*').replace('sub', '-').replace('pi', '3.141592653589793').replace('π', '3.141592653589793').replace('Pi', '3.141592653589793') \
-            .replace('divide', '/').replace('multiply', '*').replace('add', '+').replace('div', '/') \
-            .replace('mult', '*').replace('mul', '*').replace('÷', '/').replace('  ', '').replace(' ', '') \
-            .replace('\n', '')
+        formulas = formulas.replace(',', '').replace('x', '*') \
+            .replace('minus', '-').replace('plus', '+').replace('into', '*') \
+            .replace('sub', '-').replace('pi', '3.141592653589793') \
+            .replace('π', '3.141592653589793').replace('divide', '/') \
+            .replace('multiply', '*').replace('add', '+').replace('div', '/') \
+            .replace('mult', '*').replace('mul', '*').replace('÷', '/')
+            .replace('  ', '').replace(' ', '').replace('\n', '')
 
         # define a regular expression to match only mathematical characters
         regex = re.compile('[^0-9+\-*/().]')
         # sanitize the input
-        formula = regex.sub('', formulas)
+        formulas = regex.sub('', formulas)
 
         try:
-            node = ast.parse(formula, mode='eval')
+            node = ast.parse(formulas, mode='eval')
             fixed = ast.fix_missing_locations(node)
             compiled = compile(fixed, '<string>', 'eval')
             result = eval(compiled)
@@ -60,10 +62,12 @@ class Calculator(commands.Cog):
         except Exception as e:
             return await ctx.send(f'```Error: {str(e)}```', delete_after=9)
 
-        em = discord.Embed(title=f"Calculation for {person.display_name}'s", colour=self.user_color)
-        em.description = description=f'```bf\n[{formula}]```'
-        em.add_field(name="\N{ABACUS} Answer:", value=f'**```js\n​{formatted_result}\n```**', inline=False)
-        await ctx.send(embed=em)
+        _answer = f'**```js\n​{formatted_result}\n```**'
+        _name = f"Calculation for {person.display_name}'s"
+        e = discord.Embed(title=_name, colour=self.user_color)
+        e.description = description=f'```bf\n[{formulas}]```'
+        e.add_field(name="\N{ABACUS} Answer:", value=_answer, inline=False)
+        await ctx.send(embed=e)
 
 
 async def setup(bot):
