@@ -50,13 +50,13 @@ class Calculator(commands.Cog):
         try:
             result = sympify(formula).evalf()
             rounded_result = round(result, 2)
-            formatted_result = "{:.2f}".format(rounded_result)
+            formatted_result = "​{:.2f}".format(rounded_result)
         except Exception as e:
             return await ctx.send(f'```Error: {str(e)}```', delete_after=9)
 
-        em = discord.Embed(title=f"I calculated for {person.display_name}", colour=self.user_color)
+        em = discord.Embed(title=f"Calculation for {person.display_name}'s", colour=self.user_color)
         em.description = description=f'```bf\n[{formula}]```'
-        em.add_field(name="Answer:", value=f'**```js\n{formatted_result}```**', inline=False)
+        em.add_field(name="\N{ABACUS} Answer:", value=f'**```js\n{formatted_result}```**', inline=False)
         await ctx.send(embed=em)
 
 
