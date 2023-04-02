@@ -21,6 +21,7 @@ SOFTWARE.
 import discord, asyncio, random, textwrap, traceback, inspect2
 
 from discord.ext import commands
+from discord import File
 
 dev_list = [323578534763298816]
 
@@ -238,28 +239,25 @@ class Misc(commands.Cog):
     # |                      GEN                                   |
     # +------------------------------------------------------------+
     @commands.command(aliases=['general'], no_pm=True)
-    async def g(self, ctx, channel: discord.TextChannel, *, message: str = None):
+    async def g(self, ctx, channel: discord.TextChannel, *, message: str = None, file: discord.File = None):
         """ Send a msg to another channel """
         ma = ctx.message.author.display_name
         if not channel:
             return await ctx.send(f'To what channel should I send a message {ma}?')
 
-        if message is None:
+        if message is None and file is None:
             return await ctx.send('To send a message to a channel, tell me which channel first')
 
-        if message is not None:
+        try:
+            await channel.send(content=message, file=file)
             try:
-                await channel.send(message)
-                try:
-                    await ctx.message.add_reaction('\N{WHITE HEAVY CHECK MARK}')
-                except discord.Forbidden:
-                    pass
-                return await ctx.channel.send(f'Success {ma}!')
-
+                await ctx.message.add_reaction('\N{WHITE HEAVY CHECK MARK}')
             except discord.Forbidden:
-                await ctx.send(f"{ma}, I don't have permissions to message in {channel}", delete_after=23)
+                pass
+            return await ctx.channel.send(f'Success {ma}!')
 
-        else:    pass
+        except discord.Forbidden:
+            await ctx.send(f"{ma}, I don't have permissions to message in {channel}", delete_after=23)
 
     # +------------------------------------------------------------+
     # |                       PURGE                                |
