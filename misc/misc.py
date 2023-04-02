@@ -18,7 +18,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-import discord, asyncio, random, textwrap, traceback, inspect2
+import discord, aiohttp, io, asyncio, random, textwrap, traceback, inspect2
 
 from discord.ext import commands
 from discord import File
@@ -32,6 +32,7 @@ class Misc(commands.Cog):
         self.bot = bot
         self.mod_color = discord.Colour(0x7289da)  # Blurple
         self.user_color = discord.Colour(0xed791d)  # Orange
+        self.allowed_file_types = ['.png', '.jpg', '.jpeg', '.pdf', '.doc', '.docx', '.txt', '.gif', '.mp3']
 
     async def format_mod_embed(self, ctx, user, success, method):
         """ Helper func to format an embed to prevent extra code """
@@ -239,25 +240,36 @@ class Misc(commands.Cog):
     # |                      GEN                                   |
     # +------------------------------------------------------------+
     @commands.command(aliases=['general'], no_pm=True)
-    async def g(self, ctx, channel: discord.TextChannel, *, message: str = None, file: discord.File = None):
+    async def g(self, ctx, channel: discord.TextChannel, *, message: str = None):
         """ Send a msg to another channel """
         ma = ctx.message.author.display_name
         if not channel:
             return await ctx.send(f'To what channel should I send a message {ma}?')
 
-        if message is None and file is None:
+        if message is None:
             return await ctx.send('To send a message to a channel, tell me which channel first')
 
-        try:
-            await channel.send(content=message, file=file)
-            try:
-                await ctx.message.add_reaction('\N{WHITE HEAVY CHECK MARK}')
-            except discord.Forbidden:
-                pass
+        attachments = ctx.message.attachments
+        if not attachments:
+            await channel.send(content=message)
+            await ctx.message.add_reaction('\N{WHITE HEAVY CHECK MARK}')
             return await ctx.channel.send(f'Success {ma}!')
 
-        except discord.Forbidden:
-            await ctx.send(f"{ma}, I don't have permissions to message in {channel}", delete_after=23)
+        for attachment in attachments:
+            if not any(attachment.filename.lower().endswith(ext) for ext in self.allowed_file_types):
+                return await ctx.send(f"Sorry {ma}, I cannot upload files of this type. Allowed file types are: {', '.join(self.allowed_file_types)}")
+
+            async with aiohttp.ClientSession() as session:
+                async with session.get(attachment.url) as resp:
+                    if resp.status != 200:
+                        return await ctx.send(f"Sorry {ma}, I could not download the attachment {attachment.filename}")
+
+                    file_content = await resp.read()
+
+            file = discord.File(io.BytesIO(file_content), filename=attachment.filename)
+            await channel.send(content=message, file=file)
+            await ctx.message.add_reaction('\N{WHITE HEAVY CHECK MARK}')
+            return await ctx.channel.send(f'Success {ma}!')
 
     # +------------------------------------------------------------+
     # |                       PURGE                                |
