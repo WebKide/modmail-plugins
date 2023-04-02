@@ -18,8 +18,9 @@ SOFTWARE.
 """
 
 import discord
-import sympy
-import re
+import math
+import operator
+from sympy import pi, E, sin, cos, tan, Abs, Integer, sympify
 from discord.ext import commands
 
 class Calculator(commands.Cog):
@@ -37,21 +38,18 @@ class Calculator(commands.Cog):
             return await ctx.send(msg, delete_after=23)
 
         formula = formulas.replace(',', '').replace('x', '*').replace('minus', '-').replace('plus', '+') \
-                    .replace('into', '/').replace('sub', '-').replace('pi', 'pi').replace('π', 'pi').replace('Pi', 'pi') \
-                    .replace('divide', '/').replace('multiply', '*').replace('add', '+').replace('div', '/') \
-                    .replace('mult', '*').replace('mul', '*').replace('÷', '/').replace('  ', ' ').replace(' ', '*')
+            .replace('into', '/').replace('sub', '-').replace('pi', 'pi').replace('π', 'pi').replace('Pi', 'pi') \
+            .replace('divide', '/').replace('multiply', '*').replace('add', '+').replace('div', '/') \
+            .replace('mult', '*').replace('mul', '*').replace('÷', '/').replace('  ', ' ').replace(' ', '*')
 
         try:
-            # Allow only digits, operators and brackets, and pi (case-insensitive)
-            if not re.match(r'^[\d\+\-\*\/\(\)\s]*pi[\d\+\-\*\/\(\)\s]*$', formula, flags=re.IGNORECASE):
-                raise ValueError
-            result = sympy.sympify(formula)
-            await ctx.send(f"{person.mention} The result is: `{result}`")
-        except ValueError:
-            msg = f'\u200BInvalid input. Only numbers, operators, brackets, and `pi` are allowed'
-            await ctx.send(msg, delete_after=23)
+            result = sympify(formula).evalf()
         except Exception as e:
-            await ctx.send(f"{person.mention} Error: {e}", delete_after=23)
+            return await ctx.send(f'```Error: {str(e)}```')
+
+        embed = discord.Embed(title=f"Calculator for {person.name}", colour=self.user_color, description=formulas)
+        embed.add_field(name="Answer", value=result, inline=False)
+        await ctx.send(embed=embed)
 
 
 async def setup(bot):
