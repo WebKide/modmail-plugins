@@ -40,16 +40,18 @@ class Calculator(commands.Cog):
         formula = formulas.replace(',', '').replace('x', '*').replace('minus', '-').replace('plus', '+') \
             .replace('into', '/').replace('sub', '-').replace('pi', 'pi').replace('π', 'pi').replace('Pi', 'pi') \
             .replace('divide', '/').replace('multiply', '*').replace('add', '+').replace('div', '/') \
-            .replace('mult', '*').replace('mul', '*').replace('÷', '/').replace('  ', ' ').replace(' ', '*')
+            .replace('mult', '*').replace('mul', '*').replace('÷', '/').replace('  ', '').replace(' ', '')
 
         try:
             result = sympify(formula).evalf()
+            rounded_result = round(result, 2)
+            formatted_result = "{:.2f}".format(rounded_result)
         except Exception as e:
-            return await ctx.send(f'```Error: {str(e)}```')
+            return await ctx.send(f'```Error: {str(e)}```', delete_after=9)
 
-        embed = discord.Embed(title=f"Calculator for {person.name}", colour=self.user_color, description=formulas)
-        embed.add_field(name="Answer", value=result, inline=False)
-        await ctx.send(embed=embed)
+        em = discord.Embed(title=f"Calculator for {person.display_name}", colour=self.user_color, description=formulas)
+        em.add_field(name="Answer", value=formatted_result, inline=False)
+        await ctx.send(embed=em)
 
 
 async def setup(bot):
