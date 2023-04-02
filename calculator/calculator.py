@@ -66,7 +66,8 @@ class Calculator(commands.Cog):
         _name = f"Calculation for {person.display_name}'s"
         e = discord.Embed(title=_name, colour=self.user_color)
         e.description = description=f'```bf\n[{formulas}]```'
-        e.add_field(name="\N{ABACUS} Answer:", value=_answer, inline=False)
+        e.add_field(name="\N{ABACUS} Round Answer:", value=_answer, inline=False)
+        e.add_field(name="\N{ABACUS} Answer:", value=f'**```js\n​{result}\n```**', inline=False)
         await ctx.send(embed=e)
 
 
