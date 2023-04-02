@@ -43,7 +43,7 @@ class Calculator(commands.Cog):
             .replace('sub', '-').replace('pi', '3.141592653589793') \
             .replace('π', '3.141592653589793').replace('divide', '/') \
             .replace('multiply', '*').replace('add', '+').replace('div', '/') \
-            .replace('mult', '*').replace('mul', '*').replace('÷', '/')
+            .replace('mult', '*').replace('mul', '*').replace('÷', '/') \
             .replace('  ', '').replace(' ', '').replace('\n', '')
 
         # define a regular expression to match only mathematical characters
