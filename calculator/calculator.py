@@ -49,8 +49,8 @@ class Calculator(commands.Cog):
 
         try:
             result = sympify(formula).evalf()
-            rounded_result = round(result, 2)
-            formatted_result = "​{:.2f}".format(rounded_result)
+            # rounded_result = round(result, 2)
+            formatted_result = '​{:.2f}'.format(result)
         except Exception as e:
             return await ctx.send(f'```Error: {str(e)}```', delete_after=9)
 
