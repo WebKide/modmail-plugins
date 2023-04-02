@@ -17,9 +17,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-import discord
-import math
-import operator
+import discord, math, operator,re
+
 from sympy import pi, E, sin, cos, tan, Abs, Integer, sympify
 from discord.ext import commands
 
@@ -35,12 +34,18 @@ class Calculator(commands.Cog):
         person = ctx.message.author
         if formulas is None:
             msg = f'\u200BUsage: `{ctx.prefix}{ctx.invoked_with} [any Maths formula]`'
-            return await ctx.send(msg, delete_after=23)
+            return await ctx.send(msg, delete_after=9)
 
+        # define a regular expression to match only mathematical characters
+        regex = re.compile('[^0-9+\-*/().]')
+        # sanitize the input
+        formula = regex.sub('', formulas)
+        # replace some specific strings
         formula = formulas.replace(',', '').replace('x', '*').replace('minus', '-').replace('plus', '+') \
             .replace('into', '/').replace('sub', '-').replace('pi', 'pi').replace('π', 'pi').replace('Pi', 'pi') \
             .replace('divide', '/').replace('multiply', '*').replace('add', '+').replace('div', '/') \
-            .replace('mult', '*').replace('mul', '*').replace('÷', '/').replace('  ', '').replace(' ', '')
+            .replace('mult', '*').replace('mul', '*').replace('÷', '/').replace('  ', '').replace(' ', '') \
+            .replace('\n', '')
 
         try:
             result = sympify(formula).evalf()
@@ -50,7 +55,7 @@ class Calculator(commands.Cog):
             return await ctx.send(f'```Error: {str(e)}```', delete_after=9)
 
         em = discord.Embed(title=f"I calculated for {person.display_name}", colour=self.user_color)
-        em.description = description=f'```py\n{formula}```'
+        em.description = description=f'```bf\n[{formula}]```'
         em.add_field(name="Answer:", value=f'**```js\n{formatted_result}```**', inline=False)
         await ctx.send(embed=em)
 
