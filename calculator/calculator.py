@@ -17,7 +17,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-import discord, math, operator,re
+import discord, math, operator,re, ast
 
 from sympy import pi, E, sin, cos, tan, Abs, Integer, sympify
 from discord.ext import commands
@@ -40,6 +40,7 @@ class Calculator(commands.Cog):
         regex = re.compile('[^0-9+\-*/().]')
         # sanitize the input
         formula = regex.sub('', formulas)
+    
         # replace some specific strings
         formula = formula.replace(',', '').replace('x', '*').replace('minus', '-').replace('plus', '+') \
             .replace('into', '*').replace('sub', '-').replace('pi', 'pi').replace('π', 'pi').replace('Pi', 'pi') \
@@ -47,9 +48,11 @@ class Calculator(commands.Cog):
             .replace('mult', '*').replace('mul', '*').replace('÷', '/').replace('  ', '').replace(' ', '') \
             .replace('\n', '')
 
+        # use the ast module to parse the formula and evaluate it safely
         try:
-            result = sympify(formula).evalf()
-            formatted_result = '​{:.2f}'.format(result)
+            formula_ast = ast.parse(formula, mode='eval')
+            result = eval(compile(formula_ast, '<string>', mode='eval'))
+            formatted_result = '{:.2f}'.format(result)
         except Exception as e:
             return await ctx.send(f'```Error: {str(e)}```', delete_after=9)
 
@@ -57,7 +60,6 @@ class Calculator(commands.Cog):
         em.description = description=f'```bf\n[{formula}]```'
         em.add_field(name="\N{ABACUS} Answer:", value=f'```\n{formatted_result}\n```', inline=False)
         await ctx.send(embed=em)
-
 
 async def setup(bot):
     await bot.add_cog(Calculator(bot))
