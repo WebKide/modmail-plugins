@@ -49,8 +49,9 @@ class Calculator(commands.Cog):
         except Exception as e:
             return await ctx.send(f'```Error: {str(e)}```', delete_after=9)
 
-        em = discord.Embed(title=f"Calculator for {person.display_name}", colour=self.user_color, description=formulas)
-        em.add_field(name="Answer", value=formatted_result, inline=False)
+        em = discord.Embed(title=f"I calculated for {person.display_name}", colour=self.user_color)
+        em.description = description=f'```py\n{formula}```'
+        em.add_field(name="Answer:", value=f'**```js\n{formatted_result}```**', inline=False)
         await ctx.send(embed=em)
 
 
