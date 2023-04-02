@@ -73,6 +73,7 @@ class Misc(commands.Cog):
             if ctx.author.id == 323578534763298816:    return await ctx.error(f'​`​`​`py\n{e}​`​`​`')
             else:    pass
 
+    '''
     # +------------------------------------------------------------+
     # |                ADD/REMOVE ROLE GROUP                       |
     # +------------------------------------------------------------+
@@ -133,6 +134,7 @@ class Misc(commands.Cog):
         except:
             await ctx.send("I don't have the perms to remove that role. ╰(⇀ᗣ↼‶)╯", delete_after=23)
 
+    '''
     # +------------------------------------------------------------+
     # |                     NAME                                   |
     # +------------------------------------------------------------+
