@@ -42,7 +42,7 @@ class Calculator(commands.Cog):
         formula = regex.sub('', formulas)
         # replace some specific strings
         formula = formula.replace(',', '').replace('x', '*').replace('minus', '-').replace('plus', '+') \
-            .replace('into', '/').replace('sub', '-').replace('pi', 'pi').replace('π', 'pi').replace('Pi', 'pi') \
+            .replace('into', '*').replace('sub', '-').replace('pi', 'pi').replace('π', 'pi').replace('Pi', 'pi') \
             .replace('divide', '/').replace('multiply', '*').replace('add', '+').replace('div', '/') \
             .replace('mult', '*').replace('mul', '*').replace('÷', '/').replace('  ', '').replace(' ', '') \
             .replace('\n', '')
