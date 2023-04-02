@@ -23,7 +23,7 @@ from sympy import pi, E, sin, cos, tan, Abs, Integer, sympify
 from discord.ext import commands
 
 class Calculator(commands.Cog):
-    """(∩｀-´)⊃━☆ﾟ.*･｡ﾟ powerful calculator commands """
+    """(∩｀-´)⊃━☆ﾟ.*･｡ﾟ powerful calculator command """
     def __init__(self, bot):
         self.bot = bot
         self.user_color = discord.Colour(0xed791d) ## orange
@@ -41,7 +41,7 @@ class Calculator(commands.Cog):
         # sanitize the input
         formula = regex.sub('', formulas)
         # replace some specific strings
-        formula = formulas.replace(',', '').replace('x', '*').replace('minus', '-').replace('plus', '+') \
+        formula = formula.replace(',', '').replace('x', '*').replace('minus', '-').replace('plus', '+') \
             .replace('into', '/').replace('sub', '-').replace('pi', 'pi').replace('π', 'pi').replace('Pi', 'pi') \
             .replace('divide', '/').replace('multiply', '*').replace('add', '+').replace('div', '/') \
             .replace('mult', '*').replace('mul', '*').replace('÷', '/').replace('  ', '').replace(' ', '') \
@@ -49,14 +49,13 @@ class Calculator(commands.Cog):
 
         try:
             result = sympify(formula).evalf()
-            # rounded_result = round(result, 2)
             formatted_result = '​{:.2f}'.format(result)
         except Exception as e:
             return await ctx.send(f'```Error: {str(e)}```', delete_after=9)
 
         em = discord.Embed(title=f"Calculation for {person.display_name}'s", colour=self.user_color)
         em.description = description=f'```bf\n[{formula}]```'
-        em.add_field(name="\N{ABACUS} Answer:", value=f'**```js\n{formatted_result}```**', inline=False)
+        em.add_field(name="\N{ABACUS} Answer:", value=f'```\n{formatted_result}\n```', inline=False)
         await ctx.send(embed=em)
 
 
