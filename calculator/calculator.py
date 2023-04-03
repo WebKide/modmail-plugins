@@ -95,8 +95,8 @@ class Calculator(commands.Cog):
             msg = f'\u200BUsage: `{ctx.prefix}{ctx.invoked_with} [any Maths formula]`'
             return await ctx.send(msg, delete_after=9)
 
-        # convert formulas to string
-        formula_str = str(formulas)
+        # convert formulas tuple to string
+        formula_str = " ".join(formulas)
         
         # replace some specific strings
         formula = formula_str.replace(',', '').replace('x', '*').replace('minus', '-').replace('plus', '+') \
@@ -107,7 +107,6 @@ class Calculator(commands.Cog):
         
         try:
             # parse the formula
-            # pemdas_result = '{:.2f}'.format(calculate(formulas))
             pemdas_result = calculate(formula)
 
         except Exception as e:
