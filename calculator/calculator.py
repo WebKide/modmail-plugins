@@ -104,15 +104,15 @@ class Calculator(commands.Cog):
 
         try:
             # parse the formula
-            # pemdas_result = '{:.2f}'.format(calculate(formula))
-            pemdas_result = calculate(formula)
+            pemdas_result = '{:.2f}'.format(calculate(formula))
+            # pemdas_result = calculate(formula)
 
         except Exception as e:
             return await ctx.send(f'```Error: {str(e)}```', delete_after=9)
 
         e = discord.Embed(title=f"Calculation for {person.display_name}'s", colour=self.user_color)
-        e.description = description=f'```bf\n[{formula}]```'
-        e.add_field(name="\N{ABACUS} Answer:", value=f'**```js\n​{formula}\n```**', inline=False)
+        e.description = description=f'```bf\n[{formulas}]```'
+        e.add_field(name="\N{ABACUS} Answer:", value=f'**```js\n​{pemdas_result}\n```**', inline=False)
         await ctx.send(embed=e)
 
 
