@@ -95,23 +95,22 @@ class Calculator(commands.Cog):
             return await ctx.send(msg, delete_after=9)
 
         # replace some specific strings
-        '''formula = formulas.replace(',', '').replace('x', '*').replace('minus', '-').replace('plus', '+') \
+        formula = formulas.replace(',', '').replace('x', '*').replace('minus', '-').replace('plus', '+') \
             .replace('into', '*').replace('sub', '-').replace('pi', '3.141592653589793') \
             .replace('π', '3.141592653589793').replace('divide', '/').replace('multiply', '*') \
             .replace('add', '+').replace('div', '/').replace('mult', '*').replace('mul', '*') \
             .replace('÷', '/').replace('  ', '').replace(' ', '').replace('\n', '')
-        '''
-
+        
         try:
             # parse the formula
-            pemdas_result = '{:.2f}'.format(calculate(formulas))
-            # pemdas_result = calculate(formula)
+            # pemdas_result = '{:.2f}'.format(calculate(formulas))
+            pemdas_result = calculate(formula)
 
         except Exception as e:
             return await ctx.send(f'```Error: {str(e)}```', delete_after=9)
 
         e = discord.Embed(title=f"Calculation for {person.display_name}'s", colour=self.user_color)
-        e.description = description=f'```bf\n[{formulas}]```'
+        e.description = description=f'```bf\n[{formula}]```'
         e.add_field(name="\N{ABACUS} Answer:", value=f'**```js\n​{pemdas_result}\n```**', inline=False)
         await ctx.send(embed=e)
 
