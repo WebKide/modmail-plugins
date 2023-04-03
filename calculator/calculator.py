@@ -104,7 +104,7 @@ class Calculator(commands.Cog):
 
         try:
             # parse the formula
-            pemdas_result = '{:.2f}'.format(calculate(formula))
+            pemdas_result = '{:.2f}'.format(calculate(formulas))
             # pemdas_result = calculate(formula)
 
         except Exception as e:
