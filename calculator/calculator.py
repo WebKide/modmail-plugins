@@ -14,7 +14,7 @@ def calculate(expression):
     # Define the precedence of operators
     precedence = {"+": 1, "-": 1, "*": 2, "/": 2, "^": 3}
     # Split the expression into tokens
-    tokens = re.findall(r"\d+|\+|-|\*|/|\^|\(|\)|sqrt|\pi", expression)
+    tokens = re.findall(r"\d+|\+|-|\*|/|\^|\(|\)|sqrt|pi", expression)
     # Loop through each token
     for token in tokens:
         # If the token is an operand, append it to the operands stack
