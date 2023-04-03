@@ -14,12 +14,12 @@ def calculate(expression):
     # Define the precedence of operators
     precedence = {"+": 1, "-": 1, "*": 2, "/": 2, "^": 3}
     # Split the expression into tokens
-    tokens = re.findall(r"\d+|\+|-|\*|/|\^|\(|\)|sqrt\((\d+(\.\d+)?)\)|pi", expression)
+    tokens = re.findall(r"\d+(\.\d+)?|\+|-|\*|/|\^|\(|\)|sqrt\(\d+(\.\d+)?\)|pi", expression)
     # Loop through each token
     for token in tokens:
         # If the token is an operand, append it to the operands stack
-        if token.isdigit():
-            operands.append(int(token))
+        if token.replace(".", "").isdigit():
+            operands.append(float(token))
         elif token == "pi":
             operands.append(math.pi)
         elif token == "sqrt":
