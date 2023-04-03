@@ -95,8 +95,11 @@ class Calculator(commands.Cog):
             msg = f'\u200BUsage: `{ctx.prefix}{ctx.invoked_with} [any Maths formula]`'
             return await ctx.send(msg, delete_after=9)
 
+        # convert formulas to string
+        formula_str = str(formulas)
+        
         # replace some specific strings
-        formula = formulas.replace(',', '').replace('x', '*').replace('minus', '-').replace('plus', '+') \
+        formula = formula_str.replace(',', '').replace('x', '*').replace('minus', '-').replace('plus', '+') \
             .replace('into', '*').replace('sub', '-').replace('pi', '3.141592653589793') \
             .replace('π', '3.141592653589793').replace('divide', '/').replace('multiply', '*') \
             .replace('add', '+').replace('div', '/').replace('mult', '*').replace('mul', '*') \
