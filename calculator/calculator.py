@@ -1,4 +1,4 @@
-import re
+import re, math
 
 import discord
 from discord.ext import commands
@@ -14,12 +14,16 @@ def calculate(expression):
     # Define the precedence of operators
     precedence = {"+": 1, "-": 1, "*": 2, "/": 2, "^": 3}
     # Split the expression into tokens
-    tokens = re.findall(r"\d+|\+|-|\*|/|\^|\(|\)", expression)
+    tokens = re.findall(r"\d+|\+|-|\*|/|\^|\(|\)|sqrt|\pi", expression)
     # Loop through each token
     for token in tokens:
         # If the token is an operand, append it to the operands stack
         if token.isdigit():
             operands.append(int(token))
+        elif token == "pi":
+            operands.append(math.pi)
+        elif token == "sqrt":
+            operators.append(token)
         # If the token is an operator
         elif token in precedence:
             # Pop operators from the stack until the stack is empty or the top operator has lower precedence
@@ -46,6 +50,11 @@ def calculate(expression):
                 operands.append(result)
             # Pop the left parenthesis from the stack
             operators.pop()
+        # If the token is sqrt, pop the most recent operand and append the square root
+        elif token == "sqrt":
+            right_operand = operands.pop()
+            result = math.sqrt(right_operand)
+            operands.append(result)
     # Perform any remaining operations
     while operators:
         operator = operators.pop()
@@ -55,6 +64,7 @@ def calculate(expression):
         operands.append(result)
     # The final result is the only element in the operands stack
     return operands[0]
+
 
 def apply_operator(left_operand, right_operand, operator):
     """Applies an operator to two operands"""
@@ -68,7 +78,8 @@ def apply_operator(left_operand, right_operand, operator):
         return left_operand / right_operand
     elif operator == "^":
         return left_operand ** right_operand
-
+    elif operator == "sqrt":
+        return math.sqrt(right_operand)
 
 class Calculator(commands.Cog):
     """(∩｀-´)⊃━☆ﾟ.*･｡ﾟ PEMDAS calculator """
