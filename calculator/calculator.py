@@ -95,15 +95,17 @@ class Calculator(commands.Cog):
             return await ctx.send(msg, delete_after=9)
 
         # replace some specific strings
-        formula = formulas.replace(',', '').replace('x', '*').replace('minus', '-').replace('plus', '+') \
+        '''formula = formulas.replace(',', '').replace('x', '*').replace('minus', '-').replace('plus', '+') \
             .replace('into', '*').replace('sub', '-').replace('pi', '3.141592653589793') \
             .replace('π', '3.141592653589793').replace('divide', '/').replace('multiply', '*') \
             .replace('add', '+').replace('div', '/').replace('mult', '*').replace('mul', '*') \
             .replace('÷', '/').replace('  ', '').replace(' ', '').replace('\n', '')
+        '''
 
         try:
             # parse the formula
-            pemdas_result = '{:.2f}'.format(calculate(formula))
+            # pemdas_result = '{:.2f}'.format(calculate(formula))
+            pemdas_result = calculate(formula)
 
         except Exception as e:
             return await ctx.send(f'```Error: {str(e)}```', delete_after=9)
