@@ -16,20 +16,86 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
+#z
+import re
 
-import discord, re, opp
-
+import discord
 from discord.ext import commands
-from sympy import pi, E, sin, cos, tan, Abs, Integer, Float, sympify
+
+
+def calculate(expression):
+    """Calculates the result of an arithmetic expression"""
+    # Remove any whitespace from the expression
+    expression = expression.replace(" ", "")
+    # Create two stacks, one for operators and one for operands
+    operators = []
+    operands = []
+    # Define the precedence of operators
+    precedence = {"+": 1, "-": 1, "*": 2, "/": 2, "^": 3}
+    # Split the expression into tokens
+    tokens = re.findall(r"\d+|\+|-|\*|/|\^|\(|\)", expression)
+    # Loop through each token
+    for token in tokens:
+        # If the token is an operand, append it to the operands stack
+        if token.isdigit():
+            operands.append(int(token))
+        # If the token is an operator
+        elif token in precedence:
+            # Pop operators from the stack until the stack is empty or the top operator has lower precedence
+            while operators and operators[-1] != "(" and precedence[token] <= precedence[operators[-1]]:
+                operator = operators.pop()
+                # Perform the operation and append the result to the operands stack
+                right_operand = operands.pop()
+                left_operand = operands.pop()
+                result = apply_operator(left_operand, right_operand, operator)
+                operands.append(result)
+            # Push the operator onto the operators stack
+            operators.append(token)
+        # If the token is a left parenthesis, push it onto the operators stack
+        elif token == "(":
+            operators.append(token)
+        # If the token is a right parenthesis
+        elif token == ")":
+            # Pop operators from the stack and perform the operations until a left parenthesis is found
+            while operators[-1] != "(":
+                operator = operators.pop()
+                right_operand = operands.pop()
+                left_operand = operands.pop()
+                result = apply_operator(left_operand, right_operand, operator)
+                operands.append(result)
+            # Pop the left parenthesis from the stack
+            operators.pop()
+    # Perform any remaining operations
+    while operators:
+        operator = operators.pop()
+        right_operand = operands.pop()
+        left_operand = operands.pop()
+        result = apply_operator(left_operand, right_operand, operator)
+        operands.append(result)
+    # The final result is the only element in the operands stack
+    return operands[0]
+
+def apply_operator(left_operand, right_operand, operator):
+    """Applies an operator to two operands"""
+    if operator == "+":
+        return left_operand + right_operand
+    elif operator == "-":
+        return left_operand - right_operand
+    elif operator == "*":
+        return left_operand * right_operand
+    elif operator == "/":
+        return left_operand / right_operand
+    elif operator == "^":
+        return left_operand ** right_operand
+
 
 class Calculator(commands.Cog):
-    """(∩｀-´)⊃━☆ﾟ.*･｡ﾟ powerful calculator command """
+    """(∩｀-´)⊃━☆ﾟ.*･｡ﾟ PEMDAS calculator """
     def __init__(self, bot):
         self.bot = bot
-        self.user_color = discord.Colour(0xed791d) ## orange
-        self.mod_color = discord.Colour(0x7289da) ## blurple
+        self.user_color = discord.Colour(0xed791d)
 
-    @commands.command(description='Scientific calculator', aliases=['calculate', 'maths'])
+    @commands.command(description='Calculator', no_pm=True)
     async def calc(self, ctx, *, formulas: str=None):
         person = ctx.message.author
         if formulas is None:
@@ -43,19 +109,9 @@ class Calculator(commands.Cog):
             .replace('add', '+').replace('div', '/').replace('mult', '*').replace('mul', '*') \
             .replace('÷', '/').replace('  ', '').replace(' ', '').replace('\n', '')
 
-        # define a regular expression to match only mathematical characters
-        regex = re.compile('[^0-9+\-*/().]')
-        # sanitize the input
-        formula = regex.sub('', formula)
-
         try:
-            # parse the formula using OPP
-            expr = opp.parse(formula)
-
-            # evaluate the parsed expression with the Float class for decimal numbers
-            result = float(expr.evaluate({'pi':pi, 'E':E, 'sin':sin, 'cos':cos, 'tan':tan, 'Abs':Abs, 'Integer':Integer, 'Float':Float}))
-
-            formatted_result = '{:.2f}'.format(result)
+            # parse the formula
+            pemdas_result = '{:.2f}'.format(calculate(formula))
 
         except Exception as e:
             return await ctx.send(f'```Error: {str(e)}```', delete_after=9)
