@@ -50,37 +50,51 @@ class Misc(commands.Cog):
 
         return emb
 
-    def generate_embed(self, message):
-        embed_params = {
-            'title': '',
-            'description': '',
-            'fields': [],
-            'footer': '',
-            'thumbnail': '',
-            'avatar_url': ''
-        }
+    def parse_embed_message(message):
+        # Parse the embed message and return it as a dictionary
+        embed_dict = {}
         
-        embed_sections = message.split('|')
-        for section in embed_sections:
-            if section.startswith('embed_title'):
-                embed_params['title'] = section.split('embed_title')[1]
-            elif section.startswith('embed_description'):
-                embed_params['description'] = section.split('embed_description')[1]
-            elif section.startswith('embed_field_name'):
-                field_name = section.split('embed_field_name')[1]
-                field_value = ''
-                try:
-                    field_value = embed_sections[embed_sections.index(section) + 1]
-                except IndexError:
-                    pass
-                embed_params['fields'].append({'name': field_name, 'value': field_value, 'inline': False})
-            elif section.startswith('embed_footer'):
-                embed_params['footer'] = section.split('embed_footer')[1]
-            elif section.startswith('embed_thumbnail'):
-                embed_params['thumbnail'] = section.split('embed_thumbnail')[1]
-            elif section.startswith('embed_avatar'):
-                embed_params['avatar_url'] = section.split('embed_avatar')[1]
-        return embed_params
+        if message.content:
+            embed_dict["description"] = message.content
+        
+        if message.embeds:
+            embed = message.embeds[0]
+            embed_dict["title"] = embed.title
+            embed_dict["description"] = embed.description or "No description provided"
+            embed_dict["url"] = embed.url
+            embed_dict["timestamp"] = embed.timestamp.isoformat()
+            embed_dict["color"] = embed.color.value
+            
+            if embed.footer:
+                embed_dict["footer"] = {
+                    "text": embed.footer.text,
+                    "icon_url": embed.footer.icon_url
+                }
+                
+            if embed.image:
+                embed_dict["image"] = {"url": embed.image.url}
+                
+            if embed.thumbnail:
+                embed_dict["thumbnail"] = {"url": embed.thumbnail.url}
+                
+            if embed.author:
+                embed_dict["author"] = {
+                    "name": embed.author.name,
+                    "url": embed.author.url,
+                    "icon_url": embed.author.icon_url
+                }
+                
+            if embed.fields:
+                embed_dict["fields"] = []
+                for field in embed.fields:
+                    embed_dict["fields"].append({
+                        "name": field.name,
+                        "value": field.value,
+                        "inline": field.inline
+                    })
+        
+        return embed_dict
+
 
     # +------------------------------------------------------------+
     # |                       GEN EMBED                            |
@@ -104,15 +118,15 @@ class Misc(commands.Cog):
             return await ctx.send('I do not have permission to attach files in that channel.')
 
         attachments = ctx.message.attachments
-        embed_params = self.generate_embed(message)
+        embed_dict = self.generate_embed(message)
         if not attachments:
-            embed = discord.Embed(title=embed_params['title'], description=embed_params['description'])
-            for field in embed_params['fields']:
+            embed = discord.Embed(title=embed_dict['title'], description=embed_dict['description'])
+            for field in embed_dict['fields']:
                 embed.add_field(name=field['name'], value=field['value'], inline=field['inline'])
-            embed.set_footer(text=embed_params['footer'])
-            embed.set_thumbnail(url=embed_params['thumbnail'])
-            if embed_params['avatar_url']:
-                embed.set_author(name=ma, icon_url=embed_params['avatar_url'])
+            embed.set_footer(text=embed_dict['footer'])
+            embed.set_thumbnail(url=embed_dict['thumbnail'])
+            if embed_dict['avatar_url']:
+                embed.set_author(name=ma, icon_url=embed_dict['avatar_url'])
             await channel.send(embed=embed)
             await ctx.message.add_reaction('\N{WHITE HEAVY CHECK MARK}')
             return await ctx.send(f'Success {ma}!')
