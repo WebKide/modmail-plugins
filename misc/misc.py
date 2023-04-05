@@ -117,7 +117,7 @@ class Misc(commands.Cog):
         if not channel.permissions_for(ctx.me).attach_files:
             return await ctx.send('I do not have permission to attach files in that channel.')
 
-        embed_dict = parse_embed_message(message)
+        embed_dict = self.parse_embed_message(message)
         try:
             embed = discord.Embed(title=embed_dict['title'], description=embed_dict['description'])
             for field in embed_dict['fields']:
