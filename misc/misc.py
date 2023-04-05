@@ -50,6 +50,97 @@ class Misc(commands.Cog):
 
         return emb
 
+    def generate_embed(self, message):
+        embed_params = {
+            'title': '',
+            'description': '',
+            'fields': [],
+            'footer': '',
+            'thumbnail': '',
+            'avatar_url': ''
+        }
+        
+        embed_sections = message.split('|')
+        for section in embed_sections:
+            if section.startswith('embed_title'):
+                embed_params['title'] = section.split('embed_title')[1]
+            elif section.startswith('embed_description'):
+                embed_params['description'] = section.split('embed_description')[1]
+            elif section.startswith('embed_field_name'):
+                field_name = section.split('embed_field_name')[1]
+                field_value = ''
+                try:
+                    field_value = embed_sections[embed_sections.index(section) + 1]
+                except IndexError:
+                    pass
+                embed_params['fields'].append({'name': field_name, 'value': field_value, 'inline': False})
+            elif section.startswith('embed_footer'):
+                embed_params['footer'] = section.split('embed_footer')[1]
+            elif section.startswith('embed_thumbnail'):
+                embed_params['thumbnail'] = section.split('embed_thumbnail')[1]
+            elif section.startswith('embed_avatar'):
+                embed_params['avatar_url'] = section.split('embed_avatar')[1]
+        return embed_params
+
+    # +------------------------------------------------------------+
+    # |                       GEN EMBED                            |
+    # +------------------------------------------------------------+
+    @commands.command(no_pm=True)
+    async def gembed(self, ctx, channel: discord.TextChannel, *, message: str = None):
+        ma = ctx.message.author.display_name
+        if not channel:
+            try:
+                channel_id = int(channel_name)
+                channel = ctx.guild.get_channel(channel_id)
+            except ValueError:
+                pass
+        if not channel:
+            return await ctx.send(f'To what channel should I send a message {ma}?')
+        if message is None:
+            return await ctx.send('To send a message to a channel, tell me which channel first')
+        if not channel.permissions_for(ctx.me).send_messages:
+            return await ctx.send('I do not have permission to send messages in that channel.')
+        if not channel.permissions_for(ctx.me).attach_files:
+            return await ctx.send('I do not have permission to attach files in that channel.')
+
+        attachments = ctx.message.attachments
+        embed_params = self.generate_embed(message)
+        if not attachments:
+            embed = discord.Embed(title=embed_params['title'], description=embed_params['description'])
+            for field in embed_params['fields']:
+                embed.add_field(name=field['name'], value=field['value'], inline=field['inline'])
+            embed.set_footer(text=embed_params['footer'])
+            embed.set_thumbnail(url=embed_params['thumbnail'])
+            if embed_params['avatar_url']:
+                embed.set_author(name=ma, icon_url=embed_params['avatar_url'])
+            await channel.send(embed=embed)
+            await ctx.message.add_reaction('\N{WHITE HEAVY CHECK MARK}')
+            return await ctx.send(f'Success {ma}!')
+
+        for attachment in attachments:
+            try:
+                if not any(attachment.filename.lower().endswith(ext) for ext in self.allowed_file_types):
+                    return await ctx.send(f'Sorry {ma}, the allowed file types are:\n\n{", ".join(self.allowed_file_types)}')
+
+                async with aiohttp.ClientSession() as session:
+                    async with session.get(attachment.url) as resp:
+                        if resp.status != 200:
+                            return await ctx.send(f'Sorry {ma}, I could not download the attachment: `{attachment.filename}`')
+                        file_content = await resp.read()
+            except Exception as e:
+                return await ctx.send(f'Error: {ma}!\n\n`{e}`')
+            finally:
+                    try:
+                        file = discord.File(io.BytesIO(file_content), filename=attachment.filename)
+                        embed_dict = parse_embed_message(message)
+                        embed = discord.Embed(**embed_dict)
+                        embed.set_image(url=f"attachment://{attachment.filename}")
+                        await channel.send(embed=embed, file=file)
+                        await ctx.message.add_reaction('\N{WHITE HEAVY CHECK MARK}')
+                        await ctx.send(f'Success {ma}!')
+                    except Exception as e:
+                        return await ctx.send(f'Error: {ma}!\n\n`{e}`')
+
     # +------------------------------------------------------------+
     # |                        HACKBAN                             |
     # +------------------------------------------------------------+
