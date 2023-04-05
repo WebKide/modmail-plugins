@@ -55,7 +55,15 @@ class Misc(commands.Cog):
         embed_dict = {}
         
         if message.content:
-            embed_dict["description"] = message.content
+            content = message.content.strip()
+            while content:
+                try:
+                    arg, content = self.extract_arg(content)
+                    arg_name, arg_value = arg.split("=", 1)
+                    if arg_name.startswith("embed_"):
+                        embed_dict[arg_name[6:]] = arg_value.strip('"')
+                except ValueError:
+                    break
         
         if message.embeds:
             embed = message.embeds[0]
@@ -94,6 +102,7 @@ class Misc(commands.Cog):
                     })
         
         return embed_dict
+
 
 
     # +------------------------------------------------------------+
