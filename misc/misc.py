@@ -50,8 +50,8 @@ class Misc(commands.Cog):
 
         return emb
 
-    async def parse_embed_message(message):
-        # Parse the embed message and return it as a dictionary
+    async def parse_embed_message(self, message):
+        ''' Parse the embed message and return it as a dictionary '''
         embed_dict = {}
         
         if message.content:
@@ -100,7 +100,7 @@ class Misc(commands.Cog):
     # |                       GEN EMBED                            |
     # +------------------------------------------------------------+
     @commands.command(description='Send an Embed to another Channel', no_pm=True)
-    async def gembed(self, ctx, channel: discord.TextChannel, *, message: str = None):
+    async def gembed(self, ctx, channel: discord.TextChannel, message: discord.Message = None):
         ma = ctx.message.author.display_name
         if not channel:
             try:
@@ -108,8 +108,9 @@ class Misc(commands.Cog):
                 channel = ctx.guild.get_channel(channel_id)
             except ValueError:
                 pass
-        if not channel:
-            return await ctx.send(f'To what channel should I send a message {ma}?')
+            if not channel:
+                return await ctx.send(f'To what channel should I send a message {ma}?')
+
         if message is None:
             return await ctx.send('To send a message to a channel, tell me which channel first')
         if not channel.permissions_for(ctx.me).send_messages:
@@ -117,7 +118,7 @@ class Misc(commands.Cog):
         if not channel.permissions_for(ctx.me).attach_files:
             return await ctx.send('I do not have permission to attach files in that channel.')
 
-        embed_dict = self.parse_embed_message(message)
+        embed_dict = await self.parse_embed_message(message)
         try:
             embed = discord.Embed(title=embed_dict['title'], description=embed_dict['description'])
             for field in embed_dict['fields']:
@@ -129,7 +130,7 @@ class Misc(commands.Cog):
             await channel.send(embed=embed)
             await ctx.message.add_reaction('\N{WHITE HEAVY CHECK MARK}')
             return await ctx.send(f'Success {ma}!')
-        except Exception as e:
+        except Exception as e
             await ctx.send(f'```py\n{e}```')
 
     # +------------------------------------------------------------+
