@@ -161,34 +161,38 @@ class Misc(commands.Cog):
     @commands.command(description='Send an Embed to another Channel', no_pm=True)
     async def gembed(self, ctx, channel: discord.TextChannel, message: discord.Message = None):
         ma = ctx.message.author.display_name
-        if not channel:
-            try:
-                channel_id = int(channel_name)
-                channel = ctx.guild.get_channel(channel_id)
-            except ValueError:
-                pass
-            if not channel:
-                return await ctx.send(f'To what channel should I send a message {ma}?')
-
-        if message is None:
-            return await ctx.send('To send a message to a channel, tell me which channel first')
-        if not channel.permissions_for(ctx.me).send_messages:
-            return await ctx.send('I do not have permission to send messages in that channel.')
-        if not channel.permissions_for(ctx.me).attach_files:
-            return await ctx.send('I do not have permission to attach files in that channel.')
-
-        embed_dict = await self.parse_embed_message(message)
         try:
-            embed = discord.Embed(title=embed_dict['title'], description=embed_dict['description'])
-            for field in embed_dict['fields']:
-                embed.add_field(name=field['name'], value=field['value'], inline=field['inline'])
-            embed.set_footer(text=embed_dict['footer'])
-            embed.set_thumbnail(url=embed_dict['thumbnail'])
-            if embed_dict['avatar_url']:
-                embed.set_author(name=ma, icon_url=embed_dict['avatar_url'])
-            await channel.send(embed=embed)
-            await ctx.message.add_reaction('\N{WHITE HEAVY CHECK MARK}')
-            return await ctx.send(f'Success {ma}!')
+            if not channel:
+                try:
+                    channel_id = int(channel_name)
+                    channel = ctx.guild.get_channel(channel_id)
+                except ValueError:
+                    pass
+                if not channel:
+                    return await ctx.send(f'To what channel should I send a message {ma}?')
+
+            if message is None:
+                return await ctx.send('To send a message to a channel, tell me which channel first')
+            if not channel.permissions_for(ctx.me).send_messages:
+                return await ctx.send('I do not have permission to send messages in that channel.')
+            if not channel.permissions_for(ctx.me).attach_files:
+                return await ctx.send('I do not have permission to attach files in that channel.')
+
+            embed_dict = await self.parse_embed_message(message)
+            try:
+                embed = discord.Embed(title=embed_dict['title'], description=embed_dict['description'])
+                for field in embed_dict['fields']:
+                    embed.add_field(name=field['name'], value=field['value'], inline=field['inline'])
+                embed.set_footer(text=embed_dict['footer'])
+                embed.set_thumbnail(url=embed_dict['thumbnail'])
+                if embed_dict['avatar_url']:
+                    embed.set_author(name=ma, icon_url=embed_dict['avatar_url'])
+                await channel.send(embed=embed)
+                await ctx.message.add_reaction('\N{WHITE HEAVY CHECK MARK}')
+                return await ctx.send(f'Success {ma}!')
+            except Exception as e:
+                await ctx.send(f'```py\n{e}```')
+
         except Exception as e:
             await ctx.send(f'```py\n{e}```')
 
