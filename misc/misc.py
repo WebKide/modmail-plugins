@@ -50,131 +50,83 @@ class Misc(commands.Cog):
 
         return emb
 
-    async def parse_embed_message(self, message):
-        # Split the command arguments using '|' as the separator
-        args = message.content.split('|')
+async def parse_embed_message(self, message):
+    # Split the command arguments using '|' as the separator
+    args = message.content.split('|')
 
-        # Remove whitespace and quotes from the arguments
-        args = [arg.strip().strip('"') for arg in args]
+    # Remove whitespace and quotes from the arguments
+    args = [arg.strip().strip('"') for arg in args]
 
-        # Create the embed message dictionary
-        embed_dict = {}
-        for arg in args:
-            # Split the argument using the first space as the separator
-            split_arg = arg.split(' ', 1)
+    # Create the embed message dictionary
+    embed_dict = {}
+    for arg in args:
+        # Split the argument using the first space as the separator
+        split_arg = arg.split(' ', 1)
 
-            # Get the argument name and value
-            arg_name = split_arg[0]
-            arg_value = split_arg[1]
+        # Get the argument name and value
+        arg_name = split_arg[0]
+        arg_value = split_arg[1]
 
-            # If the value is surrounded by quotes, unwrap it
-            if arg_value.startswith('"') and arg_value.endswith('"'):
-                arg_value = textwrap.dedent(arg_value.strip('"'))
+        # If the value is surrounded by quotes, unwrap it
+        if arg_value.startswith('"') and arg_value.endswith('"'):
+            arg_value = textwrap.dedent(arg_value.strip('"'))
 
-            # Add the argument to the embed dictionary
-            embed_dict[arg_name] = arg_value
-        
-        # Create the embed message object
-        embed = discord.Embed(
-            title=embed_dict.get('embed_title', None),
-            description=embed_dict.get('embed_description', None),
-            color=embed_dict.get('embed_color', 0xffffff)
-        )
+        # Add the argument to the embed dictionary
+        embed_dict[arg_name] = arg_value
 
-        if 'embed_thumbnail' in embed_dict:
-            embed.set_thumbnail(url=embed_dict['embed_thumbnail'])
-
-        for i in range(10):
-            field_name = f'embed_field_name_{i}'
-            field_value = f'embed_field_value_{i}'
-
-            if field_name in embed_dict and field_value in embed_dict:
-                embed.add_field(name=embed_dict[field_name], value=embed_dict[field_value], inline=False)
-
-        if 'embed_footer' in embed_dict:
-            embed.set_footer(text=embed_dict['embed_footer'])
-
-        return embed_dict
+    return embed_dict
 
 
-        # Create the embed message object
-        embed = discord.Embed(
-            title=embed_dict.get("embed_title", "No title provided"),
-            description=embed_dict.get("embed_description", "No description provided"),
-            url=embed_dict.get("embed_url", discord.Embed.Empty),
-            timestamp=embed_dict.get("embed_timestamp", discord.Embed.Empty),
-            color=int(embed_dict.get("embed_color", "0xffffff"), 16)
-        )
-
-        # Set the footer
-        if "embed_footer" in embed_dict:
-            embed.set_footer(text=embed_dict["embed_footer"], icon_url=embed_dict.get("embed_footer_icon", discord.Embed.Empty))
-
-        # Set the image
-        if "embed_image" in embed_dict:
-            embed.set_image(url=embed_dict["embed_image"])
-
-        # Set the thumbnail
-        if "embed_thumbnail" in embed_dict:
-            embed.set_thumbnail(url=embed_dict["embed_thumbnail"])
-
-        # Set the author
-        if "embed_author" in embed_dict:
-            embed.set_author(name=embed_dict["embed_author"], url=embed_dict.get("embed_author_url", discord.Embed.Empty), icon_url=embed_dict.get("embed_author_icon", discord.Embed.Empty))
-
-        # Set the fields
-        if "embed_fields" in embed_dict:
-            fields = embed_dict["embed_fields"].split(';')
-            for field in fields:
-                split_field = field.split(',')
-                name = split_field[0]
-                value = split_field[1]
-                inline = True if split_field[2] == "True" else False
-                embed.add_field(name=name, value=value, inline=inline)
-
-        return embed_dict
-
-
-    # +------------------------------------------------------------+
-    # |                       GEN EMBED                            |
-    # +------------------------------------------------------------+
-    @commands.command(description='Send an Embed to another Channel', no_pm=True)
-    async def gembed(self, ctx, channel: discord.TextChannel, message: discord.Message = None):
-        ma = ctx.message.author.display_name
-        try:
-            if not channel:
-                try:
-                    channel_id = int(channel_name)
-                    channel = ctx.guild.get_channel(channel_id)
-                except ValueError:
-                    pass
-                if not channel:
-                    return await ctx.send(f'To what channel should I send a message {ma}?')
-
-            if message is None:
-                return await ctx.send('To send a message to a channel, tell me which channel first')
-            if not channel.permissions_for(ctx.me).send_messages:
-                return await ctx.send('I do not have permission to send messages in that channel.')
-            if not channel.permissions_for(ctx.me).attach_files:
-                return await ctx.send('I do not have permission to attach files in that channel.')
-
-            embed_dict = await self.parse_embed_message(message)
+@commands.command(description='Send an Embed to another Channel', no_pm=True)
+async def gembed(self, ctx, channel: discord.TextChannel, message: discord.Message = None):
+    ma = ctx.message.author.display_name
+    try:
+        if not channel:
             try:
-                embed = discord.Embed(title=embed_dict['title'], description=embed_dict['description'])
-                for field in embed_dict['fields']:
-                    embed.add_field(name=field['name'], value=field['value'], inline=field['inline'])
-                embed.set_footer(text=embed_dict['footer'])
-                embed.set_thumbnail(url=embed_dict['thumbnail'])
-                if embed_dict['avatar_url']:
-                    embed.set_author(name=ma, icon_url=embed_dict['avatar_url'])
-                await channel.send(embed=embed)
-                await ctx.message.add_reaction('\N{WHITE HEAVY CHECK MARK}')
-                return await ctx.send(f'Success {ma}!')
-            except Exception as e:
-                await ctx.send(f'```py\n{e}```')
+                channel_id = int(channel_name)
+                channel = ctx.guild.get_channel(channel_id)
+            except ValueError:
+                pass
+            if not channel:
+                return await ctx.send(f'To what channel should I send a message {ma}?')
 
+        if message is None:
+            return await ctx.send('To send a message to a channel, tell me which channel first')
+        if not channel.permissions_for(ctx.me).send_messages:
+            return await ctx.send('I do not have permission to send messages in that channel.')
+        if not channel.permissions_for(ctx.me).embed_links:
+            return await ctx.send('I do not have permission to create embeds in that channel.')
+
+        embed_dict = await self.parse_embed_message(message)
+        try:
+            embed = discord.Embed(title=embed_dict.get('embed_title', None),
+                                  description=embed_dict.get('embed_description', None),
+                                  url=embed_dict.get('embed_url', None),
+                                  color=discord.Color(int(embed_dict.get('embed_color', '0xffffff'), 16)))
+            if 'embed_thumbnail' in embed_dict:
+                embed.set_thumbnail(url=embed_dict['embed_thumbnail'])
+            for i in range(10):
+                field_name = f'embed_field_name_{i}'
+                field_value = f'embed_field_value_{i}'
+                if field_name in embed_dict and field_value in embed_dict:
+                    embed.add_field(name=embed_dict[field_name], value=embed_dict[field_value], inline=False)
+            if 'embed_footer' in embed_dict:
+                embed.set_footer(text=embed_dict['embed_footer'])
+            if 'embed_image' in embed_dict:
+                embed.set_image(url=embed_dict['embed_image'])
+            if 'embed_author' in embed_dict:
+                embed.set_author(name=embed_dict['embed_author'],
+                                 url=embed_dict.get('embed_author_url', None),
+                                 icon_url=embed_dict.get('embed_author_icon', None))
+
+            await channel.send(embed=embed)
+            await ctx.message.add_reaction('\N{WHITE HEAVY CHECK MARK}')
+            return await ctx.send(f'Success {ma}!')
         except Exception as e:
             await ctx.send(f'```py\n{e}```')
+
+    except Exception as e:
+        await ctx.send(f'```py\n{e}```')
 
     # +------------------------------------------------------------+
     # |                        HACKBAN                             |
