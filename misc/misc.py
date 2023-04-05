@@ -51,7 +51,6 @@ class Misc(commands.Cog):
         return emb
 
     async def parse_embed_message(self, message):
-        ''' Parse the embed message and return it as a dictionary '''
         # Split the command arguments using '|' as the separator
         args = message.content.split('|')
 
@@ -73,46 +72,27 @@ class Misc(commands.Cog):
                 arg_value = textwrap.dedent(arg_value.strip('"'))
 
             # Add the argument to the embed dictionary
-            if arg_name == "embed_title":
-                embed_dict["title"] = arg_value
-            elif arg_name == "embed_description":
-                embed_dict["description"] = arg_value
-            elif arg_name == "embed_url":
-                embed_dict["url"] = arg_value
-            elif arg_name == "embed_timestamp":
-                embed_dict["timestamp"] = arg_value
-            elif arg_name == "embed_color":
-                embed_dict["color"] = int(arg_value, 0)
-            elif arg_name == "embed_footer":
-                footer_split = arg_value.split(',')
-                footer_dict = {
-                    "text": footer_split[0].strip(),
-                    "icon_url": footer_split[1].strip()
-                }
-                embed_dict["footer"] = footer_dict
-            elif arg_name == "embed_image":
-                embed_dict["image"] = {"url": arg_value}
-            elif arg_name == "embed_thumbnail":
-                embed_dict["thumbnail"] = {"url": arg_value}
-            elif arg_name == "embed_author":
-                author_split = arg_value.split(',')
-                author_dict = {
-                    "name": author_split[0].strip(),
-                    "url": author_split[1].strip(),
-                    "icon_url": author_split[2].strip()
-                }
-                embed_dict["author"] = author_dict
-            elif arg_name == "embed_field_name":
-                field_dict = {"name": arg_value}
-                if "fields" not in embed_dict:
-                    embed_dict["fields"] = []
-                embed_dict["fields"].append(field_dict)
-            elif arg_name == "embed_field_value":
-                field_dict = embed_dict["fields"][-1]
-                field_dict["value"] = arg_value
-            elif arg_name == "embed_field_inline":
-                field_dict = embed_dict["fields"][-1]
-                field_dict["inline"] = (arg_value.lower() == "true")
+            embed_dict[arg_name] = arg_value
+        
+        # Create the embed message object
+        embed = discord.Embed(
+            title=embed_dict.get('embed_title', None),
+            description=embed_dict.get('embed_description', None),
+            color=embed_dict.get('embed_color', 0xffffff)
+        )
+
+        if 'embed_thumbnail' in embed_dict:
+            embed.set_thumbnail(url=embed_dict['embed_thumbnail'])
+
+        for i in range(10):
+            field_name = f'embed_field_name_{i}'
+            field_value = f'embed_field_value_{i}'
+
+            if field_name in embed_dict and field_value in embed_dict:
+                embed.add_field(name=embed_dict[field_name], value=embed_dict[field_value], inline=False)
+
+        if 'embed_footer' in embed_dict:
+            embed.set_footer(text=embed_dict['embed_footer'])
 
         return embed_dict
 
