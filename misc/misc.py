@@ -87,16 +87,6 @@ class Misc(commands.Cog):
     # +------------------------------------------------------------+
     @commands.command(description='Send an Embed to another Channel', no_pm=True)
     async def gembed(self, ctx, channel: discord.TextChannel, *, message: str = None):
-        """
-        USAGE: you can send any of the following values into the  Embed
-                {embed_title}Title goes here|
-                {embed_description}Description goes here|
-                {embed_field_name}Field Name here|
-                {embed_field_value}Field content here|
-                {embed_avatar}imgurl.png|
-                {embed_footer}Footer text here|
-                {embed_thumbnail}imgurl2.png'
-        """
         ma = ctx.message.author.display_name
         if not channel:
             try:
