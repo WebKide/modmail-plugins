@@ -50,7 +50,7 @@ class Misc(commands.Cog):
 
         return emb
 
-    def parse_embed_message(message, attachments=None):
+    def parse_embed_message(message):
         # Parse the embed message and return it as a dictionary
         embed_dict = {}
         
@@ -117,9 +117,8 @@ class Misc(commands.Cog):
         if not channel.permissions_for(ctx.me).attach_files:
             return await ctx.send('I do not have permission to attach files in that channel.')
 
-        attachments = ctx.message.attachments
         embed_dict = parse_embed_message(message)
-        if not attachments:
+        try:
             embed = discord.Embed(title=embed_dict['title'], description=embed_dict['description'])
             for field in embed_dict['fields']:
                 embed.add_field(name=field['name'], value=field['value'], inline=field['inline'])
@@ -130,30 +129,8 @@ class Misc(commands.Cog):
             await channel.send(embed=embed)
             await ctx.message.add_reaction('\N{WHITE HEAVY CHECK MARK}')
             return await ctx.send(f'Success {ma}!')
-
-        for attachment in attachments:
-            try:
-                if not any(attachment.filename.lower().endswith(ext) for ext in self.allowed_file_types):
-                    return await ctx.send(f'Sorry {ma}, the allowed file types are:\n\n{", ".join(self.allowed_file_types)}')
-
-                async with aiohttp.ClientSession() as session:
-                    async with session.get(attachment.url) as resp:
-                        if resp.status != 200:
-                            return await ctx.send(f'Sorry {ma}, I could not download the attachment: `{attachment.filename}`')
-                        file_content = await resp.read()
-            except Exception as e:
-                return await ctx.send(f'Error: {ma}!\n\n`{e}`')
-            finally:
-                    try:
-                        file = discord.File(io.BytesIO(file_content), filename=attachment.filename)
-                        embed_dict = parse_embed_message(message)
-                        embed = discord.Embed(**embed_dict)
-                        embed.set_image(url=f"attachment://{attachment.filename}")
-                        await channel.send(embed=embed, file=file)
-                        await ctx.message.add_reaction('\N{WHITE HEAVY CHECK MARK}')
-                        await ctx.send(f'Success {ma}!')
-                    except Exception as e:
-                        return await ctx.send(f'Error: {ma}!\n\n`{e}`')
+        except Exception as e:
+            await ctx.send(f'```py\n{e}```')
 
     # +------------------------------------------------------------+
     # |                        HACKBAN                             |
