@@ -50,7 +50,7 @@ class Misc(commands.Cog):
 
         return emb
 
-    def parse_embed_message(message):
+    async def parse_embed_message(message):
         # Parse the embed message and return it as a dictionary
         embed_dict = {}
         
