@@ -130,7 +130,7 @@ class Misc(commands.Cog):
             await channel.send(embed=embed)
             await ctx.message.add_reaction('\N{WHITE HEAVY CHECK MARK}')
             return await ctx.send(f'Success {ma}!')
-        except Exception as e
+        except Exception as e:
             await ctx.send(f'```py\n{e}```')
 
     # +------------------------------------------------------------+
