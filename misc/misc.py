@@ -76,12 +76,11 @@ class Misc(commands.Cog):
             if ctx.author.id == 323578534763298816:    return await ctx.error(f'​`​`​`py\n{e}​`​`​`')
             else:    pass
 
-    '''
     # +------------------------------------------------------------+
     # |                ADD/REMOVE ROLE GROUP                       |
     # +------------------------------------------------------------+
     @commands.group(description='Give or remove roles',  invoke_without_command=True)
-    async def role(self, ctx: str = None):
+    async def guildrole(self, ctx: str = None):
         """ Add or Remove a role for any member """
         msg = f'Command for Mods to give or remove roles for others.\n\nrole add @name RoleName\nrole remove @name RoleName'
         return await ctx.send(msg, delete_after=23)
@@ -95,7 +94,7 @@ class Misc(commands.Cog):
         """ Add a role to someone else
         
         Usage:
-        {prefix}role add @name Listener
+        {prefix}guildrole add @name Listener
         """
         if not member and rolename is None:
             return await ctx.send('To **whom** do I add **which** role? ╰(⇀ᗣ↼‶)╯', delete_after=23)
@@ -124,7 +123,7 @@ class Misc(commands.Cog):
         """ Remove a role from someone else
         
         Usage:
-        {prefix}role remove @name Listener
+        {prefix}guildrole remove @name Listener
         """
         role = discord.utils.find(lambda m: rolename.lower() in m.name.lower(), ctx.message.guild.roles)
         if not role:
@@ -137,7 +136,6 @@ class Misc(commands.Cog):
         except:
             await ctx.send("I don't have the perms to remove that role. ╰(⇀ᗣ↼‶)╯", delete_after=23)
 
-    '''
     # +------------------------------------------------------------+
     # |                     NAME                                   |
     # +------------------------------------------------------------+
