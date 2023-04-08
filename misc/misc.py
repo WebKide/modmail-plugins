@@ -82,13 +82,13 @@ class Misc(commands.Cog):
     @commands.group(description='Give or remove roles',  invoke_without_command=True)
     async def guildrole(self, ctx: str = None):
         """ Add or Remove a role for any member """
-        msg = f'Command for Mods to give or remove roles for others.\n\nrole add @name RoleName\nrole remove @name RoleName'
+        msg = f'Command for Mods to give or remove roles for others.\n\nguildrole add @name RoleName\nguildrole remove @name RoleName'
         return await ctx.send(msg, delete_after=23)
 
     # +------------------------------------------------------------+
     # |                        ADD ROLE                            |
     # +------------------------------------------------------------+
-    @role.command(no_pm=True)
+    @guildrole.command(no_pm=True)
     @commands.has_any_role('Admin', 'Mod', 'Moderator')
     async def add(self, ctx, member: discord.Member, *, rolename: str = None):
         """ Add a role to someone else
@@ -117,7 +117,7 @@ class Misc(commands.Cog):
     # +------------------------------------------------------------+
     # |                     REMOVE ROLE                            |
     # +------------------------------------------------------------+
-    @role.command(no_pm=True)
+    @guildrole.command(no_pm=True)
     @commands.has_any_role('Admin', 'Mod', 'Moderator')
     async def remove(self, ctx, member: discord.Member, *, rolename: str):
         """ Remove a role from someone else
