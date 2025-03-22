@@ -139,17 +139,19 @@ class Calculator(commands.Cog):
             return await ctx.send(embed=e, delete_after=23)
 
         # Correct input prints correct answer
+        distance = self.bot or self.bot.message
+        duration = f'Calculated using pyparsing in {distance.ws.latency * 1000:.2f} ms'
         success = round(answer, 2)
 
         e = discord.Embed(color=self.user_color)
         e.add_field(name='Input:', value=f'```py\n{formula}```', inline=True)
         e.add_field(name='Result:', value=f'```css\n{success}```', inline=True)
-        e.set_footer(text='Calculated using pyparsing')
+        e.set_footer(text=duration)
 
         try:
             await ctx.send(embed=e)
         except discord.Forbidden:  # FORBIDDEN (status code: 403): Missing Permissions
-            await ctx.send(f'```rust\n>Input: {formula}\nResult: {success}```')
+            await ctx.send(f'```rust\n>Input: {formula}\nResult: {success}\n\nProcess: {duration}```')
 
 
 async def setup(bot):
