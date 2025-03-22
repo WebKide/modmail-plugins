@@ -48,7 +48,7 @@ class Private(commands.Cog):
         except discord.Forbidden:
             pass
 
-        _poke = f'<@&358429415417446411> || ⁱⁿᵛᵒᵏᵉᵈ ᵇʸ **{ctx.message.author.display_name}** ||'
+        _poke = f'<@&358429415417446411> || invoked by **{ctx.message.author.display_name}** ||'
         channel =  ctx.channel or ctx.message.channel
         err_m = f"{ctx.message.author.mention}, update this channel's **Topic**.\n\n" \
                 f"**Tip:** ask a Mod for help setting up this channel for the command to work."
