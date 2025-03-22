@@ -18,15 +18,16 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-import discord, asyncio, re, random
-
+import discord
+import asyncio
+import re
+import random
 from datetime import datetime as t
 from pytz import timezone as z
 from discord.ext import commands
 
-
 class Private(commands.Cog):
-    """─=≡Σ(つಠ益ಠ)つ private cog for my personal discord guild, it won't work on yours! """
+    """private"""
     def __init__(self, bot):
         self.bot = bot
 
@@ -48,8 +49,8 @@ class Private(commands.Cog):
         except discord.Forbidden:
             pass
 
-        _poke = f'<@&358429415417446411> || invoked by **{ctx.message.author.display_name}** ||'
-        channel =  ctx.channel or ctx.message.channel
+        _poke = f'<@&358429415417446411> || ⁱⁿᵛᵒᵏᵉᵈ ᵇʸ **{ctx.message.author.display_name}** ||'
+        channel = ctx.channel or ctx.message.channel
         err_m = f"{ctx.message.author.mention}, update this channel's **Topic**.\n\n" \
                 f"**Tip:** ask a Mod for help setting up this channel for the command to work."
 
@@ -109,12 +110,6 @@ class Private(commands.Cog):
                 suffix = {1: 'ˢᵗ', 2: 'ⁿᵈ', 3: 'ʳᵈ'}.get(num % 10, 'ᵗʰ')
             return suffix
 
-        def format_date(date_str):
-            pattern = r'(\d{1,2}),'
-            day = int(re.search(pattern, date_str).group(1))
-            suffix = get_ordinal_suffix(day)
-            return date_str.replace(f"{day},", f"{day}{suffix},")
-
         def get_t_str():
             t_str = []
             for code, tz_name in _TZ.items():
@@ -122,7 +117,14 @@ class Private(commands.Cog):
                 t_now = t.now(tz)
                 suffix = get_ordinal_suffix(t_now.day)
                 flag_moji = f":flag_{code.lower().replace('ist', 'in').replace('bst', 'gb').replace('est', 'us').replace('pst', 'us').replace('bot', 'bo')}:"
-                t_str.append(f"{flag_moji}「{code}」{t_now.strftime('**%H**:%M:%S, %A %b %d' + suffix + ', %Y')}")
+                
+                # Format the date without the suffix first
+                date_str = t_now.strftime('**%H**:%M:%S, %A %b %d, %Y')
+                
+                # Insert the suffix manually
+                date_str = date_str.replace(f"{t_now.day},", f"{t_now.day}{suffix},")
+                
+                t_str.append(f"{flag_moji}「{code}」{date_str}")
             return "\n".join(t_str)
 
         # This is still here in case there is the need for a personalised Notification
@@ -137,7 +139,8 @@ class Private(commands.Cog):
 
         else:
             def _intro():
-                return f'\u200b{random.choice(INTRO)}where we explore the teachings of {random.choice(TEACHINGS)}. Join our host {_host} for a thought-provoking discussion{random.choice(JOIN)} your spiritual journey throught the path of Rūpānuga Ujjvala Mādhurya-prema.\n\n{random.choice(OUTRO)}.'
+                intro_text = f'\u200b{random.choice(INTRO)}where we explore the teachings of {random.choice(TEACHINGS)}. Join our host {_host} for a thought-provoking discussion{random.choice(JOIN)} your spiritual journey throught the path of Rūpānuga Ujjvala Mādhurya-prema.\n\n{random.choice(OUTRO)}.'
+                return intro_text.encode('utf-8').decode('utf-8')
 
             try:
                 em = discord.Embed(colour=discord.Colour(0xff7722), description=get_t_str())
