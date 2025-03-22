@@ -55,7 +55,7 @@ class NumericStringParserForPython3:
         expr = Forward()
         atom = ((Optional(oneOf("- +")) +
                 (pi | e | fnumber | ident + lpar + expr + rpar).setParseAction(self.pushFirst)) | \
-               Optional(oneOf("- +")) + Group(lpar + expr + rpar)
+               Optional(oneOf("- +")) + Group(lpar + expr + rpar))
         factor = Forward()
         factor << atom + ZeroOrMore((expop + factor).setParseAction(self.pushFirst))
         term = factor + ZeroOrMore((multop + factor).setParseAction(self.pushFirst))
