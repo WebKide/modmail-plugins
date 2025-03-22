@@ -122,7 +122,7 @@ class Calculator(commands.Cog):
         replacements = {
             ',': '', 'x': '*', 'minus': '-', 'plus': '+', 'into': '/', 'sub': '-',
             'pi': 'PI', 'π': 'PI', 'divide': '/', 'multiply': '*', 'add': '+',
-            'div': '/', 'mult': '*', 'mul': '*', '÷': '/', '  ': ' ', ' ': '*'
+            'div': '/', 'mult': '*', 'mul': '*', '÷': '/', '  ': ' ', '   ': ' '
         }
         formula = formulas
         for old, new in replacements.items():
