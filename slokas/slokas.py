@@ -5,7 +5,7 @@ from bs4 import BeautifulSoup
 from datetime import datetime
 import re
 
-class BhagavadGita(commands.Cog):
+class Slokas(commands.Cog):
     """The Bhagavad Gītā as it is."""
     
     def __init__(self, bot):
@@ -121,5 +121,5 @@ class BhagavadGita(commands.Cog):
             await ctx.send(f"An error occurred: {e}")
 
 async def setup(bot):
-    await bot.add_cog(BhagavadGita(bot))
+    await bot.add_cog(Slokas(bot))
     
