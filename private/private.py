@@ -27,10 +27,23 @@ from pytz import timezone as z
 from discord.ext import commands
 
 class Private(commands.Cog):
-    """Private Discord.py command that only works in my private Guild, it contains 2 comands for notifications"""
+    """Private Discord.py plugin for managing notifications and announcements.
+    - Includes rich multi-timezone formatting: IST/GMT/EST/PST/BOT.
+    - Requires 'Admin', 'Mod', or 'Moderator' role to use.
+    - Custom UNICODE ordinal indicators.
+    - Optional custom 'extra' event support.
+    - Dual-channel support to send in current channel or in General channel.
+    - Pings @Attentive-Listeners role and adds custom guild reaction.
+    - Provides error fallback messages.
+    - Only works in my personal Guild.
+
+    USAGE:
+    !radhe — Standard announcement with rich-formatting
+    !gaura extra <Festival of Ekādaśī> — Custom event with rich-formatting
+    """
     def __init__(self, bot):
         self.bot = bot
-        self.target_channel_id = 358429353966698500  # Fixed channel ID for 'gaura' notification
+        self.target_channel_id = 728320469119402004  # Fixed channel ID for 'gaura' notification 358429353966698500
 
     # +------------------------------------------------------------+
     # |                 PUSH-NOTIFICATION                          |
