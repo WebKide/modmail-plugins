@@ -46,21 +46,21 @@ class Transform(commands.Cog):
         'ß', 'h', 'j', 'ji', 'k', '', 'l', 'z', 'x', 'c', 'v', 'b', 'n', 'm', ''
         ]
         # Ensure we generate at least some transitions
-    for _ in range(999):
-        word = f'{random.choice(vow)}{random.choice(con)}{random.choice(vow)}' \
-               f'{random.choice(vow)}{random.choice(con)}{random.choice(vow)}' \
-               f'{random.choice(con)}{random.choice(vow)}{random.choice(con)}'
-        # Make sure the word is long enough for transitions
-        if len(word) >= 3:
-            for i in range(len(word) - 2):
-                pair = word[i:i+2]
-                next_letter = word[i+2]
-                self.transitions[pair][next_letter] += 1
-    # If still empty, add some default transitions
-    if not self.transitions:
-        self.transitions['aa']['a'] = 1
-        self.transitions['ab']['b'] = 1
-        self.transitions['ba']['a'] = 1
+        for _ in range(999):
+            word = f'{random.choice(vow)}{random.choice(con)}{random.choice(vow)}' \
+                   f'{random.choice(vow)}{random.choice(con)}{random.choice(vow)}' \
+                   f'{random.choice(con)}{random.choice(vow)}{random.choice(con)}'
+            # Make sure the word is long enough for transitions
+            if len(word) >= 3:
+                for i in range(len(word) - 2):
+                    pair = word[i:i+2]
+                    next_letter = word[i+2]
+                    self.transitions[pair][next_letter] += 1
+        # If still empty, add some default transitions
+        if not self.transitions:
+            self.transitions['aa']['a'] = 1
+            self.transitions['ab']['b'] = 1
+            self.transitions['ba']['a'] = 1
 
     @commands.command(no_pm=True)
     async def word_ai(self, ctx, results: int = 15):
