@@ -40,12 +40,12 @@ class Transform(commands.Cog):
     # |                     Word/Name-generator                    |
     # +------------------------------------------------------------+
     def build_transitions(self):
-    vow = ['a', 'i', 'u', 'e', 'o', 'y', '', 'a', 'i', 'u', 'e', 'o', '']
-    con = [
+        vow = ['a', 'i', 'u', 'e', 'o', 'y', '', 'a', 'i', 'u', 'e', 'o', '']
+        con = [
         'qu', 'w', 'wh', 'r', 't', 'th', 'y', 'p', 'mp', 's', 'ss', 'd', 'f', 'g', 'gü',
         'ß', 'h', 'j', 'ji', 'k', '', 'l', 'z', 'x', 'c', 'v', 'b', 'n', 'm', ''
-    ]
-    # Ensure we generate at least some transitions
+        ]
+        # Ensure we generate at least some transitions
     for _ in range(999):
         word = f'{random.choice(vow)}{random.choice(con)}{random.choice(vow)}' \
                f'{random.choice(vow)}{random.choice(con)}{random.choice(vow)}' \
