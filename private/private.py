@@ -161,7 +161,7 @@ class Private(commands.Cog):
 
             try:
                 em = discord.Embed(colour=discord.Colour(0xff7722), description=get_t_str())
-                em.set_author(name='Hari-kathā reminder', icon_url=author.avatar.url)
+                em.set_author(name='Hari-kathā reminder', icon_url=ctx.message.author.avatar.url)
                 em.add_field(name='Attentive Listeners', value=_intro(), inline=False)
                 em.set_thumbnail(url='https://i.imgur.com/93A0Kdk.png')
                 em.set_footer(text='⇐ Join the Voice Channel NOW!!')
