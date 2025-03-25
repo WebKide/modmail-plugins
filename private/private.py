@@ -27,24 +27,24 @@ from pytz import timezone as z
 from discord.ext import commands
 
 class Private(commands.Cog):
-    """private"""
+    """Private Discord.py command that only works in my private Guild, it contains 2 comands for notifications"""
     def __init__(self, bot):
         self.bot = bot
-        self.target_channel_id = 358429353966698500  # Fixed channel ID for gaura command
+        self.target_channel_id = 358429353966698500  # Fixed channel ID for 'gaura' notification
 
     # +------------------------------------------------------------+
     # |                 PUSH-NOTIFICATION                          |
     # +------------------------------------------------------------+
-    @commands.command(description='For my personal Guild', aliases=['poke'], no_pm=True)
+    @commands.command(description='Deletes original command message and sends notification', aliases=['poke'], no_pm=True)
     @commands.has_any_role('Admin', 'Mod', 'Moderator')
     async def radhe(self, ctx, *, _event_today: str = None):
         """Send a push notification in the current channel"""
         await self._send_notification(ctx, ctx.channel, _event_today)
 
-    @commands.command(description='Send push notification to announcements channel', aliases=['nudge'], no_pm=True)
+    @commands.command(description='Sends the push notification to the General channel', aliases=['nudge'], no_pm=True)
     @commands.has_any_role('Admin', 'Mod', 'Moderator')
     async def gaura(self, ctx, *, _event_today: str = None):
-        """Send a push notification to the announcements channel"""
+        """Send a push notification to the General channel"""
         target_channel = self.bot.get_channel(self.target_channel_id)
         if not target_channel:
             return await ctx.send("Couldn't find the target channel!", delete_after=10)
