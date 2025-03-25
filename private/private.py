@@ -30,6 +30,7 @@ class Private(commands.Cog):
     """private"""
     def __init__(self, bot):
         self.bot = bot
+        self.target_channel_id = 358429353966698500  # Fixed channel ID for gaura command
 
     # +------------------------------------------------------------+
     # |                 PUSH-NOTIFICATION                          |
@@ -37,26 +38,32 @@ class Private(commands.Cog):
     @commands.command(description='For my personal Guild', aliases=['poke', 'nudge'], no_pm=True)
     @commands.has_any_role('Admin', 'Mod', 'Moderator')
     async def radhe(self, ctx, *, _event_today: str = None):
-        """
-        ─=≡Σ(つಠ益ಠ)つ command to send a Push-notification in text-channel
-        
-        **Usage:**
-        {prefix}radhe
-        {prefix}poke extra [write the event do you want to announce here]
-        """
+        """Send a push notification in the current channel"""
+        await self._send_notification(ctx, ctx.channel, _event_today)
+
+    @commands.command(description='Send push notification to announcements channel', aliases=['general'], no_pm=True)
+    @commands.has_any_role('Admin', 'Mod', 'Moderator')
+    async def gaura(self, ctx, *, _event_today: str = None):
+        """Send a push notification to the announcements channel"""
+        target_channel = self.bot.get_channel(self.target_channel_id)
+        if not target_channel:
+            return await ctx.send("Couldn't find the target channel!", delete_after=10)
+        await self._send_notification(ctx, target_channel, _event_today)
+
+    async def _send_notification(self, ctx, channel, _event_today=None):
+        """Shared notification sending logic"""
         try:
             await ctx.message.delete()
         except discord.Forbidden:
             pass
 
         _poke = f'<@&358429415417446411> || ⁱⁿᵛᵒᵏᵉᵈ ᵇʸ **{ctx.message.author.display_name}** ||'
-        channel = ctx.channel or ctx.message.channel
         err_m = f"{ctx.message.author.mention}, update this channel's **Topic**.\n\n" \
                 f"**Tip:** ask a Mod for help setting up this channel for the command to work."
 
         _TZ = {
             "IST": "Asia/Kolkata",
-            "BST": "Europe/London",
+            "GMT": "Europe/London",
             "EST": "America/New_York",
             "PST": "America/Los_Angeles",
             "BOT": "America/La_Paz"
@@ -116,18 +123,14 @@ class Private(commands.Cog):
                 tz = z(tz_name)
                 t_now = t.now(tz)
                 suffix = get_ordinal_suffix(t_now.day)
-                flag_moji = f":flag_{code.lower().replace('ist', 'in').replace('bst', 'gb').replace('est', 'us').replace('pst', 'us').replace('bot', 'bo')}:"
+                flag_moji = f":flag_{code.lower().replace('ist', 'in').replace('gmt', 'gb').replace('est', 'us').replace('pst', 'us').replace('bot', 'bo')}:"
                 
-                # Format the date without the suffix first
                 date_str = t_now.strftime('**%H**:%M:%S, %A %b %d, %Y')
-                
-                # Insert the suffix manually
                 date_str = date_str.replace(f"{t_now.day},", f"{t_now.day}{suffix},")
                 
                 t_str.append(f"{flag_moji}「{code}」{date_str}")
             return "\n".join(t_str)
 
-        # This is still here in case there is the need for a personalised Notification
         if _event_today is not None and _event_today.startswith('extra'):
             _what = ' '.join(_event_today.split(' ')[1:])
             _notif = 'https://cdn.discordapp.com/attachments/375179500604096512/1079876674235154442/flyerdesign_27022023_172353.png'
@@ -135,8 +138,7 @@ class Private(commands.Cog):
             em.add_field(name='Attentive Listeners', value=_what, inline=False)
             em.set_thumbnail(url=_notif)
             em.set_footer(text='⇐ Join the Voice Channel NOW!!')
-            return await ctx.send(content=_poke, embed=em)
-
+            message = await channel.send(content=_poke, embed=em)
         else:
             def _intro():
                 intro_text = f'\u200b{random.choice(INTRO)}where we explore the teachings of {random.choice(TEACHINGS)}. Join our host {_host} for a thought-provoking discussion{random.choice(JOIN)} your spiritual journey throught the path of Rūpānuga Ujjvala Mādhurya-prema.\n\n{random.choice(OUTRO)}.'
@@ -147,17 +149,20 @@ class Private(commands.Cog):
                 em.add_field(name='Attentive Listeners', value=_intro(), inline=False)
                 em.set_thumbnail(url='https://i.imgur.com/93A0Kdk.png')
                 em.set_footer(text='⇐ Join the Voice Channel NOW!!')
-                _nudge = await ctx.send(content=_poke, embed=em)
-
+                message = await channel.send(content=_poke, embed=em)
             except discord.Forbidden:
                 _simple = f'{_poke}\n{get_t_str()}\n\n{_intro()}'
-                _nudge = await ctx.send(_simple)
+                message = await channel.send(_simple)
 
-            try:
-                await asyncio.sleep(2)
-                await _nudge.add_reaction('thankful:695101751707303998')
-            except discord.HTTPException:
-                pass
+        try:
+            await asyncio.sleep(2)
+            await message.add_reaction('thankful:695101751707303998')
+        except discord.HTTPException:
+            pass
+
+        # Send confirmation to original channel
+        if channel.id != ctx.channel.id:
+            await ctx.send(f"Notification sent to {channel.mention}!", delete_after=10)
 
 async def setup(bot):
     await bot.add_cog(Private(bot))
