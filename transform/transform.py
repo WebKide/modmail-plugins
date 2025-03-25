@@ -64,23 +64,23 @@ class Transform(commands.Cog):
 
     @commands.command(no_pm=True)
     async def word_ai(self, ctx, results: int = 15):
-    """ Generate words artificially """
-    if not self.transitions:
-        self.build_transitions()  # Rebuild if empty
-        
-    words = []
-    for _ in range(results):
-        word = ''
-        pair = random.choice(list(self.transitions.keys()))
-        while len(word) < 9:
-            next_letters = list(self.transitions[pair].keys())
-            weights = list(self.transitions[pair].values())
-            next_letter = random.choices(next_letters, weights=weights)[0]
-            word += next_letter
-            pair = pair[1] + next_letter
-        word = word.title()
-        words.append(word)
-    await ctx.send(', '.join(words))
+        """ Generate words artificially """
+        if not self.transitions:
+            self.build_transitions()  # Rebuild if empty
+            
+        words = []
+        for _ in range(results):
+            word = ''
+            pair = random.choice(list(self.transitions.keys()))
+            while len(word) < 9:
+                next_letters = list(self.transitions[pair].keys())
+                weights = list(self.transitions[pair].values())
+                next_letter = random.choices(next_letters, weights=weights)[0]
+                word += next_letter
+                pair = pair[1] + next_letter
+            word = word.title()
+            words.append(word)
+        await ctx.send(', '.join(words))
     
     @commands.command(no_pm=True)
     async def wordaig(self, ctx, results: int = 23):
