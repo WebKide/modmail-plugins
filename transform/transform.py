@@ -1,6 +1,6 @@
 """
 MIT License
-Copyright (c) 2020-2023 WebKide [d.id @323578534763298816]
+Copyright (c) 2020-2025 WebKide [d.id @323578534763298816]
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
@@ -40,36 +40,47 @@ class Transform(commands.Cog):
     # |                     Word/Name-generator                    |
     # +------------------------------------------------------------+
     def build_transitions(self):
-        vow = ['a', 'i', 'u', 'e', 'o', 'y', '', 'a', 'i', 'u', 'e', 'o', '']
-        con = [
-            'qu', 'w', 'wh', 'r', 't', 'th', 'y', 'p', 'mp', 's', 'ss', 'd', 'f', 'g', 'gü',
-            'ß', 'h', 'j', 'ji', 'k', '', 'l', 'z', 'x', 'c', 'v', 'b', 'n', 'm', ''
-        ]
-        for _ in range(999):
-            word = f'{random.choice(vow)}{random.choice(con)}{random.choice(vow)}' \
-                   f'{random.choice(vow)}{random.choice(con)}{random.choice(vow)}' \
-                   f'{random.choice(con)}{random.choice(vow)}{random.choice(con)}'
+    vow = ['a', 'i', 'u', 'e', 'o', 'y', '', 'a', 'i', 'u', 'e', 'o', '']
+    con = [
+        'qu', 'w', 'wh', 'r', 't', 'th', 'y', 'p', 'mp', 's', 'ss', 'd', 'f', 'g', 'gü',
+        'ß', 'h', 'j', 'ji', 'k', '', 'l', 'z', 'x', 'c', 'v', 'b', 'n', 'm', ''
+    ]
+    # Ensure we generate at least some transitions
+    for _ in range(999):
+        word = f'{random.choice(vow)}{random.choice(con)}{random.choice(vow)}' \
+               f'{random.choice(vow)}{random.choice(con)}{random.choice(vow)}' \
+               f'{random.choice(con)}{random.choice(vow)}{random.choice(con)}'
+        # Make sure the word is long enough for transitions
+        if len(word) >= 3:
             for i in range(len(word) - 2):
                 pair = word[i:i+2]
                 next_letter = word[i+2]
                 self.transitions[pair][next_letter] += 1
+    # If still empty, add some default transitions
+    if not self.transitions:
+        self.transitions['aa']['a'] = 1
+        self.transitions['ab']['b'] = 1
+        self.transitions['ba']['a'] = 1
 
-    @commands.command(aliases=['word_ai'])
-    async def wordai(self, ctx, results: int = 15):
-        """ Generate words artificially """
-        words = []
-        for _ in range(results):
-            word = ''
-            pair = random.choice(list(self.transitions.keys()))
-            while len(word) < 9:
-                next_letters = list(self.transitions[pair].keys())
-                weights = list(self.transitions[pair].values())
-                next_letter = random.choices(next_letters, weights=weights)[0]
-                word += next_letter
-                pair = pair[1] + next_letter
-            word = word.title()
-            words.append(word)
-        await ctx.send(', '.join(words))
+    @commands.command(no_pm=True)
+    async def word_ai(self, ctx, results: int = 15):
+    """ Generate words artificially """
+    if not self.transitions:
+        self.build_transitions()  # Rebuild if empty
+        
+    words = []
+    for _ in range(results):
+        word = ''
+        pair = random.choice(list(self.transitions.keys()))
+        while len(word) < 9:
+            next_letters = list(self.transitions[pair].keys())
+            weights = list(self.transitions[pair].values())
+            next_letter = random.choices(next_letters, weights=weights)[0]
+            word += next_letter
+            pair = pair[1] + next_letter
+        word = word.title()
+        words.append(word)
+    await ctx.send(', '.join(words))
     
     @commands.command(no_pm=True)
     async def wordaig(self, ctx, results: int = 23):
@@ -86,6 +97,135 @@ class Transform(commands.Cog):
             artificially_generated_names.append(word.title())
         
         await ctx.send(', '.join(artificially_generated_names))
+
+    # +------------------------------------------------------------+
+    # |                   2 Word/Name-generator                    |
+    # +------------------------------------------------------------+
+    @commands.command(aliases=['generate_word', 'ai_word'])
+    async def aiword(self, ctx, count: int = 10, min_length: int = 4, max_length: int = 12):
+        """Generate realistic-sounding artificial words using Markov chains
+        
+        Parameters:
+        count: Number of words to generate (1-25)
+        min_length: Minimum word length (3-15)
+        max_length: Maximum word length (3-20)
+        """
+        # Validate parameters
+        count = max(1, min(25, count))
+        min_length = max(3, min(15, min_length))
+        max_length = max(min_length, min(20, max_length))
+        
+        # Ensure we have transitions data
+        if not self.transitions:
+            self.build_ai_transitions()
+            if not self.transitions:
+                return await ctx.send("Failed to generate word patterns. Please try again later.")
+
+        words = []
+        for _ in range(count):
+            word = self._generate_ai_word(min_length, max_length)
+            words.append(word.title())
+        
+        embed = discord.Embed(
+            title="🤖 AI-Generated Words",
+            description=', '.join(words),
+            color=self.user_color
+        )
+        embed.set_footer(text=f"Generated {len(words)} words")
+        await ctx.send(embed=embed)
+
+    def _generate_ai_word(self, min_len, max_len):
+        """Generate a single word using Markov chain"""
+        word = ''
+        # Start with a random pair that begins with a vowel (for better pronunciation)
+        vowel_start_pairs = [p for p in self.transitions.keys() if p[0] in 'aeiouy']
+        pair = random.choice(vowel_start_pairs or list(self.transitions.keys()))
+        word += pair
+        
+        while len(word) < max_len:
+            try:
+                next_letters = list(self.transitions[pair].keys())
+                weights = list(self.transitions[pair].values())
+                next_letter = random.choices(next_letters, weights=weights)[0]
+                word += next_letter
+                pair = pair[1] + next_letter
+                
+                # Random chance to end word (longer words get higher chance)
+                if len(word) >= min_len and random.random() < (len(word) - min_len) / (max_len - min_len + 1):
+                    break
+            except:
+                break
+        
+        # Ensure word meets minimum length
+        if len(word) < min_len:
+            word += random.choice('aeiouy')
+        
+        return word
+
+    def build_ai_transitions(self):
+        """Build transition probabilities from sample words"""
+        self.transitions = defaultdict(lambda: defaultdict(int))
+        
+        # Use a more comprehensive set of sample words
+        samples = [
+            # English words
+            "apple", "banana", "cherry", "dragon", "elephant", "fantasy", "garden",
+            "harmony", "illusion", "jungle", "kingdom", "luminous", "mountain",
+            "narrative", "oxygen", "paradox", "quantum", "rainbow", "sunshine",
+            "twilight", "umbrella", "volcano", "waterfall", "xylophone", "yellow", "zebra",
+            
+            # Fantasy-style words
+            "aerdrie", "balor", "cerunnos", "draconis", "elminster", "faerun",
+            "githyanki", "illithid", "jarlaxle", "kobold", "lolth", "mindflayer",
+            "nystul", "obould", "pelor", "quaggoth", "raistlin", "sune",
+            "tiamat", "umberlee", "vecna", "whelm", "xanathar", "yondal", "zariel",
+            
+            # Japanese-inspired
+            "akatsuki", "byakugan", "chidori", "doton", "engan", "futon",
+            "gama", "hyoton", "indra", "jigoku", "kage", "lariat", "mangekyo",
+            "ninken", "oton", "pika", "raikiri", "sharingan", "tsukuyomi",
+            "uzuki", "degu", "wind", "yagura", "zanku"
+        ]
+        
+        # Add generated syllable combinations
+        for _ in range(500):
+            samples.append(self._generate_syllable_combo())
+        
+        # Build transition matrix
+        for word in samples:
+            if len(word) >= 3:
+                for i in range(len(word) - 2):
+                    pair = word[i:i+2]
+                    next_letter = word[i+2]
+                    self.transitions[pair][next_letter] += 1
+
+    def _generate_syllable_combo(self):
+        """Generate random syllable combinations"""
+        syllables = [
+            # Original syllables
+            "ar", "be", "ci", "dra", "el", "fa", "gor", "har", "il", "jo",
+            "ka", "li", "ma", "na", "or", "pa", "qua", "ra", "sa", "ta",
+            "ur", "va", "wa", "xa", "ya", "za", "tay", "ola", "mbe", "ael",
+            "ath", "bel", "cor", "dun", "eth", "fir", "gal", "hol", "ist",
+            "jor", "kel", "lor", "mor", "nal", "ost", "por", "qel", "ros",
+            "syl", "tor", "und", "vor", "wol", "xan", "yor", "zul", "tar",
+            "til", "el", "ni", "ven", "xir", "zyr", "bor", "crux", "dax",
+            "hix", "ix", "jex", "kex", "lux", "myx", "nyx", "ox", "pyx",
+            "qix", "rex", "sic", "tyx", "ux", "vox", "wyg", "der", "her",
+            "aes", "bys", "cys", "dys", "eys", "fys", "gys", "hys", "iys",
+            "jys", "kys", "lys", "mys", "nys", "oys", "pys", "qys", "rys",
+            "sys", "tys", "uys", "vys", "wys", "xys", "ijs", "zys", "aeth",
+            "byr", "cyn", "dyr", "eyl", "fyr", "gyl", "hyr", "iyl", "jyr",
+            "kyr", "lyr", "myr", "nyr", "oyn", "pyr", "qyr", "ryx", "syl",
+            "tyr", "uyr", "vyr", "wyr", "xyr", "yyr", "zyr", "aeg", "beg",
+            "ceg", "deg", "eig", "feg", "geg", "heg", "ieg", "jeg", "keg",
+            "leg", "meg", "neg", "oeg", "peg", "qeg", "reg", "seg", "teg",
+            "ueg", "veg", "weg", "xeg", "yeg", "zeg", "aen", "ben", "cen",
+            "den", "een", "fen", "gen", "hen", "ien", "jen", "ken", "len",
+            "men", "nen", "oen", "pen", "qen", "ren", "sen", "ten", "uen",
+            "ven", "wen", "xen", "yen", "zen", "ex", "fex", "grix"
+        ]
+        return ''.join(random.choices(syllables, k=random.randint(2, 4)))
 
     # +------------------------------------------------------------+
     # |                     CHARINFO                               |
