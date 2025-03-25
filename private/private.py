@@ -1,6 +1,6 @@
 """
 MIT License
-Copyright (c) 2020-2023 WebKide [d.id @323578534763298816]
+Copyright (c) 2020-2025 WebKide [d.id @323578534763298816]
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
@@ -28,7 +28,8 @@ from discord.ext import commands
 
 class Private(commands.Cog):
     """Private Discord.py plugin for managing notifications and announcements.
-    - Includes rich multi-timezone formatting: IST/GMT/EST/PST/BOT.
+    
+    - Includes rich multi-timezone formatting: 「IST/GMT/EST/PST/BOT」
     - Requires 'Admin', 'Mod', or 'Moderator' role to use.
     - Custom UNICODE ordinal indicators.
     - Optional custom 'extra' event support.
@@ -37,18 +38,18 @@ class Private(commands.Cog):
     - Provides error fallback messages.
     - Only works in my personal Guild.
 
-    USAGE:
+    EXAMPLE:
     !radhe — Standard announcement with rich-formatting
     !gaura extra <Festival of Ekādaśī> — Custom event with rich-formatting
     """
     def __init__(self, bot):
         self.bot = bot
-        self.target_channel_id = 728320469119402004  # Fixed channel ID for 'gaura' notification 358429353966698500
+        self.target_channel_id = 358429353966698500  # Fixed channel ID for cmd 'gaura' notification
 
     # +------------------------------------------------------------+
     # |                 PUSH-NOTIFICATION                          |
     # +------------------------------------------------------------+
-    @commands.command(description='Deletes original command message and sends notification', aliases=['poke'], no_pm=True)
+    @commands.command(description='Sends notification into same channel', aliases=['poke'], no_pm=True)
     @commands.has_any_role('Admin', 'Mod', 'Moderator')
     async def radhe(self, ctx, *, _event_today: str = None):
         """Send a push notification in the current channel"""
@@ -141,13 +142,14 @@ class Private(commands.Cog):
                 date_str = t_now.strftime('**%H**:%M:%S, %A %b %d, %Y')
                 date_str = date_str.replace(f"{t_now.day},", f"{t_now.day}{suffix},")
                 
-                t_str.append(f"{flag_moji}「{code}」{date_str}")
+                t_str.append(f"{flag_moji} {code} — {date_str}")
             return "\n".join(t_str)
 
         if _event_today is not None and _event_today.startswith('extra'):
             _what = ' '.join(_event_today.split(' ')[1:])
             _notif = 'https://cdn.discordapp.com/attachments/375179500604096512/1079876674235154442/flyerdesign_27022023_172353.png'
             em = discord.Embed(colour=discord.Colour(0xff7722), description=get_t_str())
+            em.set_author(name='Hari-kathā reminder', icon_url=ctx.message.author.avatar.url)
             em.add_field(name='Attentive Listeners', value=_what, inline=False)
             em.set_thumbnail(url=_notif)
             em.set_footer(text='⇐ Join the Voice Channel NOW!!')
@@ -159,6 +161,7 @@ class Private(commands.Cog):
 
             try:
                 em = discord.Embed(colour=discord.Colour(0xff7722), description=get_t_str())
+                em.set_author(name='Hari-kathā reminder', icon_url=author.avatar.url)
                 em.add_field(name='Attentive Listeners', value=_intro(), inline=False)
                 em.set_thumbnail(url='https://i.imgur.com/93A0Kdk.png')
                 em.set_footer(text='⇐ Join the Voice Channel NOW!!')
