@@ -85,15 +85,15 @@ class Transform(commands.Cog):
     @commands.command(no_pm=True)
     async def wordaig(self, ctx, results: int = 23):
         """ Generate names using AI Generator """
-        vow = ['a', 'i', 'u', 'e', 'o', 'y', '', 'a', 'i', 'u', 'e', 'o', '']
-        con = [
+        vow_ = ['a', 'i', 'u', 'e', 'o', 'y', '', 'a', 'i', 'u', 'e', 'o', '']
+        con_ = [
             'qu', 'w', 'wh', 'r', 't', 'th', 'y', 'p', 'mp', 's', 'ss', 'd', 'f', 'g', 'gü',
             'ß', 'h', 'j', 'ji', 'k', '', 'l', 'z', 'x', 'c', 'v', 'b', 'n', 'm', ''
         ]
         word_length = random.randint(3, 9)  # max length of artificially generated name
         artificially_generated_names = []
         for i in range(results):
-            word = ''.join(random.choice(con if j%2 else vow) for j in range(word_length))
+            word = ''.join(random.choice(con_ if j%2 else vow_) for j in range(word_length))
             artificially_generated_names.append(word.title())
         
         await ctx.send(', '.join(artificially_generated_names))
