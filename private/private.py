@@ -35,13 +35,13 @@ class Private(commands.Cog):
     # +------------------------------------------------------------+
     # |                 PUSH-NOTIFICATION                          |
     # +------------------------------------------------------------+
-    @commands.command(description='For my personal Guild', aliases=['poke', 'nudge'], no_pm=True)
+    @commands.command(description='For my personal Guild', aliases=['poke'], no_pm=True)
     @commands.has_any_role('Admin', 'Mod', 'Moderator')
     async def radhe(self, ctx, *, _event_today: str = None):
         """Send a push notification in the current channel"""
         await self._send_notification(ctx, ctx.channel, _event_today)
 
-    @commands.command(description='Send push notification to announcements channel', aliases=['general'], no_pm=True)
+    @commands.command(description='Send push notification to announcements channel', aliases=['nudge'], no_pm=True)
     @commands.has_any_role('Admin', 'Mod', 'Moderator')
     async def gaura(self, ctx, *, _event_today: str = None):
         """Send a push notification to the announcements channel"""
