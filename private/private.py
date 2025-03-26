@@ -20,6 +20,7 @@ SOFTWARE.
 
 import discord
 import asyncio
+import time
 import re
 import random
 
@@ -70,6 +71,7 @@ class Private(commands.Cog):
 
     async def _send_notification(self, ctx, channel, _event_today=None):
         """Notification sending logic"""
+        start_time = time.time()
         if channel.id != ctx.channel.id:
             try:
                 await ctx.message.delete()
@@ -163,7 +165,7 @@ class Private(commands.Cog):
             em.add_field(name='Event today:', value=_what, inline=False)
             em.add_field(name='Attentive Listeners', value=_intro(), inline=False)
             em.set_thumbnail(url=_notif)
-            em.set_footer(text='⇐ Join the Voice Channel NOW!!')
+            em.set_footer(text=f'⇐ Join the Voice Channel NOW!! {self.bot.latency*1000:.2f}ms')
             message = await channel.send(content=_poke, embed=em)
         else:
             def _intro():
@@ -175,7 +177,7 @@ class Private(commands.Cog):
                 em.set_author(name='𝖧𝖺𝗋𝗂-𝗄𝖺𝗍𝗁𝖺̄ 𝗋𝖾𝗆𝗂𝗇𝖽𝖾𝗋', icon_url=ctx.message.author.avatar.url)
                 em.add_field(name='Attentive Listeners', value=_intro(), inline=False)
                 em.set_thumbnail(url='https://i.imgur.com/93A0Kdk.png')
-                em.set_footer(text='⇐ Join the Voice Channel NOW!!')
+                em.set_footer(text=f'⇐ Join the Voice Channel NOW!! {self.bot.latency*1000:.2f}ms')
                 message = await channel.send(content=_poke, embed=em)
             except discord.Forbidden:
                 _simple = f'{_poke}\n{get_t_str()}\n\n{_intro()}'
