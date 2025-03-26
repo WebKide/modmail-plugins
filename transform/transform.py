@@ -304,7 +304,8 @@ class Transform(commands.Cog):
 
         char = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
         tran = "𝖠𝖡𝖢𝖣𝖤𝖥𝖦𝖧𝖨𝖩𝖪𝖫𝖬𝖭𝖮𝖯𝖰𝖱𝖲𝖳𝖴𝖵𝖶𝖷𝖸𝖹𝖺𝖻𝖼𝖽𝖾𝖿𝗀𝗁𝗂𝗃𝗄𝗅𝗆𝗇𝗈𝗉𝗊𝗋𝗌𝗍𝗎𝗏𝗐𝗑𝗒𝗓"
-        result = text.upper().translate(str.maketrans(char, tran))
+        # result = text.upper().translate(str.maketrans(char, tran))
+        result = text.translate(str.maketrans(char, tran))
 
         em = discord.Embed(color=self.user_color)
         em.add_field(name='Input:', value=f'```\n{text}```', inline=False)
