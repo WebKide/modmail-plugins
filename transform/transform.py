@@ -299,12 +299,16 @@ class Transform(commands.Cog):
         """Smart binary converter with format detection
         
         Usage:
-        !binary Hello       → Text→binary
-        !binary 01000001    → Binary→text
+        !binary Hello       → Text → binary
+        !binary 01000001    → Binary → text
         !binary 16 Hello    → 16-bit encoding
-        !binary 0b1010      → Handles prefix
         """
         start_time = time.time()
+
+        if bits is None:
+            # Handle cases where no bit numbers were given
+            text_fix = "Provide bits int before text to convert"
+            return await ctx.send(text_fix, delete_after=23)
 
         if text is None:
             # Handle cases where only numbers were given
