@@ -47,7 +47,7 @@ class Private(commands.Cog):
         self.target_channel_id = 358429353966698500  # Fixed channel ID for cmd 'gaura' notification
 
     # +------------------------------------------------------------+
-    # |                 PUSH-NOTIFICATION                          |
+    # |             PUSH-NOTIFICATION IN CHANNEL                   |
     # +------------------------------------------------------------+
     @commands.command(description='Sends notification into same channel', aliases=['poke'], no_pm=True)
     @commands.has_any_role('Admin', 'Mod', 'Moderator')
@@ -55,6 +55,9 @@ class Private(commands.Cog):
         """Send a push notification in the current channel"""
         await self._send_notification(ctx, ctx.channel, _event_today)
 
+    # +------------------------------------------------------------+
+    # |             PUSH-NOTIFICATION IN GENERAL                   |
+    # +------------------------------------------------------------+
     @commands.command(description='Sends the push notification to the General channel', aliases=['nudge'], no_pm=True)
     @commands.has_any_role('Admin', 'Mod', 'Moderator')
     async def gaura(self, ctx, *, _event_today: str = None):
@@ -71,7 +74,7 @@ class Private(commands.Cog):
         except discord.Forbidden:
             pass
 
-        _poke = f'<@&358429415417446411> || ⁱⁿᵛᵒᵏᵉᵈ ᵇʸ **{ctx.message.author.display_name}** ||'
+        _poke = f'<@&358429415417446411> || ᵖᵘˢʰ ⁿᵒᵗⁱᶠⁱᶜᵃᵗⁱᵒⁿ ||'
         err_m = f"{ctx.message.author.mention}, update this channel's **Topic**.\n\n" \
                 f"**Tip:** ask a Mod for help setting up this channel for the command to work."
 
@@ -149,8 +152,9 @@ class Private(commands.Cog):
             _what = ' '.join(_event_today.split(' ')[1:])
             _notif = 'https://cdn.discordapp.com/attachments/375179500604096512/1079876674235154442/flyerdesign_27022023_172353.png'
             em = discord.Embed(colour=discord.Colour(0xff7722), description=get_t_str())
-            em.set_author(name='Hari-kathā reminder', icon_url=ctx.message.author.avatar.url)
-            em.add_field(name='Attentive Listeners', value=_what, inline=False)
+            em.set_author(name='ℍ𝕒𝕣𝕚 𝕜𝕒𝕥𝕙𝕒̄', icon_url=ctx.message.author.avatar.url)
+            em.add_field(name='Event today:', value=_what, inline=False)
+            em.add_field(name='Attentive Listeners', value=_intro(), inline=False)
             em.set_thumbnail(url=_notif)
             em.set_footer(text='⇐ Join the Voice Channel NOW!!')
             message = await channel.send(content=_poke, embed=em)
@@ -178,7 +182,7 @@ class Private(commands.Cog):
 
         # Send confirmation to original channel
         if channel.id != ctx.channel.id:
-            await ctx.send(f"Notification sent to {channel.mention}!", delete_after=10)
+            await ctx.send(f"Push-Notification sent to {channel.mention}!")
 
 async def setup(bot):
     await bot.add_cog(Private(bot))
