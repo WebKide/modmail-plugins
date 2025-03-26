@@ -360,8 +360,8 @@ class Transform(commands.Cog):
         if not text:
             return await ctx.send("Please provide some text.", delete_after=23)
 
-        char = "aAeElLoOtTsSgGbB"
-        tran = "443311007755992288"
+        char = "abcdefghijklmnopqrstuvwxyz0123456789+-()."
+        tran = "4b<D3ƒ6#!JK1M^0PQЯ57UVωXY20123456789+-「」･"
         result = text.translate(str.maketrans(char, tran))
 
         em = discord.Embed(color=self.user_color)
