@@ -295,6 +295,24 @@ class Transform(commands.Cog):
         await ctx.send(embed=em, allowed_mentions=discord.AllowedMentions.none())
 
     @commands.command(description='Text transformer command', no_pm=True)
+    async def sans(self, ctx, *, text: str):
+        """Convert text to Sans-serif"""
+        start_time = time.time()
+
+        if not text:
+            return await ctx.send("Please provide some text.", delete_after=23)
+
+        char = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+        tran = "𝖠𝖡𝖢𝖣𝖤𝖥𝖦𝖧𝖨𝖩𝖪𝖫𝖬𝖭𝖮𝖯𝖰𝖱𝖲𝖳𝖴𝖵𝖶𝖷𝖸𝖹𝖺𝖻𝖼𝖽𝖾𝖿𝗀𝗁𝗂𝗃𝗄𝗅𝗆𝗇𝗈𝗉𝗊𝗋𝗌𝗍𝗎𝗏𝗐𝗑𝗒𝗓"
+        result = text.upper().translate(str.maketrans(char, tran))
+
+        em = discord.Embed(color=self.user_color)
+        em.add_field(name='Input:', value=f'```\n{text}```', inline=False)
+        em.add_field(name='Result:', value=f'```\n{result}```', inline=False)
+        em = await self._add_footer(em)
+        await ctx.send(embed=em, allowed_mentions=discord.AllowedMentions.none())
+
+    @commands.command(description='Text transformer command', no_pm=True)
     async def binary(self, ctx, bits: int = 8, *, text: str = None):
         """Smart binary converter with format detection
         
