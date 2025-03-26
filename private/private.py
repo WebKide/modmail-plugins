@@ -22,6 +22,7 @@ import discord
 import asyncio
 import re
 import random
+
 from datetime import datetime as t
 from pytz import timezone as z
 from discord.ext import commands
@@ -151,6 +152,10 @@ class Private(commands.Cog):
             return "\n".join(t_str)
 
         if _event_today is not None and _event_today.startswith('extra'):
+            def _intro():
+                intro_text = f'\u200b{random.choice(INTRO)}where we explore the teachings of {random.choice(TEACHINGS)}. Join our host {_host} for a thought-provoking discussion{random.choice(JOIN)} your spiritual journey throught the path of Rūpānuga Ujjvala Mādhurya-prema.\n\n{random.choice(OUTRO)}.'
+                return intro_text.encode('utf-8').decode('utf-8')
+
             _what = ' '.join(_event_today.split(' ')[1:])
             _notif = 'https://cdn.discordapp.com/attachments/375179500604096512/1079876674235154442/flyerdesign_27022023_172353.png'
             em = discord.Embed(colour=discord.Colour(0xff7722), description=get_t_str())
