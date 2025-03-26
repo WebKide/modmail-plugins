@@ -65,7 +65,7 @@ class Private(commands.Cog):
         """Send a push notification to the General channel"""
         target_channel = self.bot.get_channel(self.target_channel_id)
         if not target_channel:
-            return await ctx.send("Couldn't find the target channel!", delete_after=10)
+            return await ctx.send("Couldn’t find the target channel!", delete_after=10)
         await self._send_notification(ctx, target_channel, _event_today)
 
     async def _send_notification(self, ctx, channel, _event_today=None):
@@ -78,7 +78,7 @@ class Private(commands.Cog):
         
         # Shared notification sending logic
         _poke = f'<@&358429415417446411> || ℍ𝕒𝕣𝕚 𝕜𝕒𝕥𝕙𝕒̄ 𝖯𝗎𝗌𝗁-𝗇𝗈𝗍𝗂𝖿𝗂𝖼𝖺𝗍𝗂𝗈𝗇 ||'
-        err_m = f"{ctx.message.author.mention}, update this channel's **Topic**.\n\n" \
+        err_m = f"{ctx.message.author.mention}, update this channel’s **Topic**.\n\n" \
                 f"**Tip:** ask a Mod for help setting up this channel for the command to work."
 
         _TZ = {
@@ -114,11 +114,11 @@ class Private(commands.Cog):
         ]
 
         OUTRO = [
-            'So, let\'s dive into this valuable study together and learn about this wanderful process',
+            'So, let’s dive into this valuable study together and learn about this wanderful process',
             'So, sit back, relax, and listen attentively as we embark on this spiritual journey together',
             'Without further ado, sit back, relax and, listen attentively',
-            'Hold on to your chairs, and simply "lend us your ears"',
-            'You\'ve been eagerly waiting for this, and so have we. Sit back, relax and, listen attentively'
+            'Hold on to your chairs, and simply “lend us your ears”',
+            'You’ve been eagerly waiting for this, and so have we. Sit back, relax and, listen attentively'
         ]
 
         if isinstance(channel, discord.TextChannel):
@@ -159,7 +159,7 @@ class Private(commands.Cog):
             _what = ' '.join(_event_today.split(' ')[1:])
             _notif = 'https://cdn.discordapp.com/attachments/375179500604096512/1079876674235154442/flyerdesign_27022023_172353.png'
             em = discord.Embed(colour=discord.Colour(0xff7722), description=get_t_str())
-            em.set_author(name='𝖧𝖺𝗋𝗂-𝗄𝖺𝗍𝗁𝖺̄', icon_url=ctx.message.author.avatar.url)
+            em.set_author(name='𝖧𝖺𝗋𝗂-𝗄𝖺𝗍𝗁𝖺̄ 𝗋𝖾𝗆𝗂𝗇𝖽𝖾𝗋', icon_url=ctx.message.author.avatar.url)
             em.add_field(name='Event today:', value=_what, inline=False)
             em.add_field(name='Attentive Listeners', value=_intro(), inline=False)
             em.set_thumbnail(url=_notif)
@@ -172,7 +172,7 @@ class Private(commands.Cog):
 
             try:
                 em = discord.Embed(colour=discord.Colour(0xff7722), description=get_t_str())
-                em.set_author(name='𝖧𝖺𝗋𝗂-𝗄𝖺𝗍𝗁𝖺̄', icon_url=ctx.message.author.avatar.url)
+                em.set_author(name='𝖧𝖺𝗋𝗂-𝗄𝖺𝗍𝗁𝖺̄ 𝗋𝖾𝗆𝗂𝗇𝖽𝖾𝗋', icon_url=ctx.message.author.avatar.url)
                 em.add_field(name='Attentive Listeners', value=_intro(), inline=False)
                 em.set_thumbnail(url='https://i.imgur.com/93A0Kdk.png')
                 em.set_footer(text='⇐ Join the Voice Channel NOW!!')
@@ -192,7 +192,7 @@ class Private(commands.Cog):
             try:
                 confirmation = await ctx.send(f"ℍ𝕒𝕣𝕚 𝕜𝕒𝕥𝕙𝕒̄ Push-Notification sent to **{channel.mention}**!")
                 await asyncio.sleep(2)
-                await confirmation.add_reaction('✅')  # Standard green checkmark reaction
+                await confirmation.add_reaction('✅')  # Green checkmark reaction
             except discord.HTTPException:
                 pass
 
