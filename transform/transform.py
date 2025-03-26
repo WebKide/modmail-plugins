@@ -295,7 +295,7 @@ class Transform(commands.Cog):
         await ctx.send(embed=em, allowed_mentions=discord.AllowedMentions.none())
 
     @commands.command(description='Text transformer command', no_pm=True)
-    async def binary(self, ctx, bits: int = 8, *, text: str = None):
+    async def binary(self, ctx, bits: typing.Optional[int] = 8, *, text: str = None):
         """Smart binary converter with format detection
         
         Usage:
@@ -307,7 +307,16 @@ class Transform(commands.Cog):
         start_time = time.time()
 
         if not text:
+            # Handle cases where only a number was provided
+            if isinstance(bits, int) and bits != 8:
+                return await ctx.send("Please provide text to convert.", delete_after=23)
+            # Handle cases where no arguments were provided
             return await ctx.send("Please provide text or binary.", delete_after=23)
+
+        # If bits was interpreted as text (e.g., "!binary 101010")
+        if isinstance(bits, int) and text.isdigit():
+            text = f"{bits} {text}"  # Reconstruct the original input
+            bits = 8  # Reset to default
 
         # Enhanced detection
         def is_binary(t):
@@ -339,7 +348,7 @@ class Transform(commands.Cog):
         em = discord.Embed(color=self.user_color)
         em.add_field(name='Input:', value=f'```\n{text}```', inline=False)
         em.add_field(name='Result:', value=f'```\n{result}```', inline=False)
-        em.set_footer(text=f"Converted {conversion_type} in {self.bot.latency*1000:.2f}ms")
+        em.set_footer(text=f"{conversion_type} | {self.bot.latency*1000:.2f}ms")
         await ctx.send(embed=em, allowed_mentions=discord.AllowedMentions.none())
 
     @commands.command(description='Text transformer command', no_pm=True)
