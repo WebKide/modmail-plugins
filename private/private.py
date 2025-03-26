@@ -74,7 +74,7 @@ class Private(commands.Cog):
         except discord.Forbidden:
             pass
 
-        _poke = f'<@&358429415417446411> || ᵖᵘˢʰ ⁿᵒᵗⁱᶠⁱᶜᵃᵗⁱᵒⁿ ||'
+        _poke = f'<@&358429415417446411> || 𝖯𝗎𝗌𝗁-𝗇𝗈𝗍𝗂𝖿𝗂𝖼𝖺𝗍𝗂𝗈𝗇 ||'
         err_m = f"{ctx.message.author.mention}, update this channel's **Topic**.\n\n" \
                 f"**Tip:** ask a Mod for help setting up this channel for the command to work."
 
@@ -165,7 +165,7 @@ class Private(commands.Cog):
 
             try:
                 em = discord.Embed(colour=discord.Colour(0xff7722), description=get_t_str())
-                em.set_author(name='Hari-kathā reminder', icon_url=ctx.message.author.avatar.url)
+                em.set_author(name='ℍ𝕒𝕣𝕚 𝕜𝕒𝕥𝕙𝕒̄', icon_url=ctx.message.author.avatar.url)
                 em.add_field(name='Attentive Listeners', value=_intro(), inline=False)
                 em.set_thumbnail(url='https://i.imgur.com/93A0Kdk.png')
                 em.set_footer(text='⇐ Join the Voice Channel NOW!!')
@@ -180,9 +180,14 @@ class Private(commands.Cog):
         except discord.HTTPException:
             pass
 
-        # Send confirmation to original channel
+        # Send confirmation to original text channel
         if channel.id != ctx.channel.id:
-            await ctx.send(f"Push-Notification sent to {channel.mention}!")
+            try:
+                confirmation = await ctx.send(f"ℍ𝕒𝕣𝕚 𝕜𝕒𝕥𝕙𝕒̄ Push-Notification sent to **{channel.mention}**!")
+                await asyncio.sleep(2)
+                await confirmation.add_reaction('✅')  # Standard green checkmark reaction
+            except discord.HTTPException:
+                pass
 
 async def setup(bot):
     await bot.add_cog(Private(bot))
