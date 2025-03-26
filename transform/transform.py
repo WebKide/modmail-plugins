@@ -32,11 +32,11 @@ class Transform(commands.Cog):
 
     Key Features:
     - AI-powered word generation using Markov chains
-    - Text transformers (ᵗⁱⁿʸ, 𝒸𝓊𝓇𝓈𝒾𝓋ℯ, 𝕓𝕠𝕝𝕕, sᴍᴀʟʟ ᴄᴀᴘs, 1337 5P34K, MoCkInG CaSe, ＶＡＰＯＲ, 𝖲𝖺𝗇𝗌-𝗌𝖾𝗋𝗂𝖿)
+    - Text transformers (ᵗⁱⁿʸ, 𝒸𝓊𝓇𝓈𝒾𝓋ℯ, 𝕓𝕠𝕝𝕕, sᴍᴀʟʟ ᴄᴀᴘs, 1337 5P34K, MoCkInG CaSe, ＶＡＰＯＲ, 𝖲𝖺𝗇𝗌-𝗌𝖾𝗋𝗂𝖿, Z͌͆a͠l̓g͊ő)
     - UNICODE character information display
     - Caesar cipher with optional rotation (default: 3)
-    - Smart binary converter with decoder
-    - Fun text modifiers (👏, 🙏, Z͌͆a͠l̓g͊ő)
+    - Smart binary converter with encoder and decoder
+    - Fun text modifiers (👏, 🙏)
     """
     def __init__(self, bot):
         self.bot = bot
