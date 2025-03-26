@@ -68,13 +68,15 @@ class Private(commands.Cog):
         await self._send_notification(ctx, target_channel, _event_today)
 
     async def _send_notification(self, ctx, channel, _event_today=None):
-        """Shared notification sending logic"""
-        try:
-            await ctx.message.delete()
-        except discord.Forbidden:
-            pass
-
-        _poke = f'<@&358429415417446411> || 𝖯𝗎𝗌𝗁-𝗇𝗈𝗍𝗂𝖿𝗂𝖼𝖺𝗍𝗂𝗈𝗇 ||'
+        """Notification sending logic"""
+        if channel.id == ctx.channel.id:
+            try:
+                await ctx.message.delete()
+            except discord.Forbidden:
+                pass
+        
+        # Shared notification sending logic
+        _poke = f'<@&358429415417446411> || ℍ𝕒𝕣𝕚 𝕜𝕒𝕥𝕙𝕒̄ 𝖯𝗎𝗌𝗁-𝗇𝗈𝗍𝗂𝖿𝗂𝖼𝖺𝗍𝗂𝗈𝗇 ||'
         err_m = f"{ctx.message.author.mention}, update this channel's **Topic**.\n\n" \
                 f"**Tip:** ask a Mod for help setting up this channel for the command to work."
 
