@@ -77,7 +77,7 @@ class Transform(commands.Cog):
             self.transitions['ab']['b'] = 1
             self.transitions['ba']['a'] = 1
 
-    @commands.command(aliases=['generate_word', 'ai_word'])
+    @commands.command(description='Command to generate random names', no_pm=True)
     async def aiword(self, ctx, count: int = 10, min_length: int = 4, max_length: int = 12):
         """Generate realistic-sounding artificial words
         
@@ -102,9 +102,10 @@ class Transform(commands.Cog):
             word = self._generate_word(min_length, max_length)
             words.append(word.title())
         
+        result_ai_words = ', '.join(words)
         em = discord.Embed(
-            title="🤖 AI-Generated Words",
-            description=', '.join(words),
+            title="AI-Generated Words:",
+            description=f'```\n{result_ai_words}```',
             color=self.user_color
         )
         em.set_footer(text=f"Generated {len(words)} words in {(time.time() - start_time) * 1000:.2f} ms")
@@ -138,7 +139,7 @@ class Transform(commands.Cog):
     # +------------------------------------------------------------+
     # |                     CHARINFO                               |
     # +------------------------------------------------------------+
-    @commands.command()
+    @commands.command(description='Command to identify characters', no_pm=True)
     async def charinfo(self, ctx, *, characters: str):
         """Show Unicode character information"""
         start_time = time.time()
@@ -161,7 +162,7 @@ class Transform(commands.Cog):
     # +------------------------------------------------------------+
     # |                     TEXT TRANSFORMERS                      |
     # +------------------------------------------------------------+
-    @commands.command()
+    @commands.command(description='Text transformer command', no_pm=True)
     async def tiny(self, ctx, *, text: str):
         """Convert text to ᵗⁱⁿʸ letters"""
         start_time = time.time()
@@ -177,9 +178,9 @@ class Transform(commands.Cog):
         em.add_field(name='Input:', value=f'```\n{text}```', inline=False)
         em.add_field(name='Result:', value=f'```\n{result}```', inline=False)
         em = await self._add_footer(em)
-        await ctx.send(embed=em)
+        await ctx.send(embed=em, allowed_mentions=discord.AllowedMentions.none())
 
-    @commands.command()
+    @commands.command(description='Text transformer command', no_pm=True)
     async def cursive(self, ctx, *, text: str):
         """Convert text to 𝒸𝓊𝓇𝓈𝒾𝓋ℯ"""
         start_time = time.time()
@@ -195,9 +196,9 @@ class Transform(commands.Cog):
         em.add_field(name='Input:', value=f'```\n{text}```', inline=False)
         em.add_field(name='Result:', value=f'```\n{result}```', inline=False)
         em = await self._add_footer(em)
-        await ctx.send(embed=em)
+        await ctx.send(embed=em, allowed_mentions=discord.AllowedMentions.none())
 
-    @commands.command()
+    @commands.command(description='Text transformer command', no_pm=True)
     async def bold(self, ctx, *, text: str):
         """Convert text to 𝕓𝕠𝕝𝕕"""
         start_time = time.time()
@@ -207,16 +208,16 @@ class Transform(commands.Cog):
 
         char = "aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrRsStTuUvVwWxXyYzZ0123456789+-+()."
         tran = "𝕒𝔸𝕓𝔹𝕔ℂ𝕕𝔻𝕖𝔼𝕗𝔽𝕘𝔾𝕙ℍ𝕚𝕀𝕛𝕁𝕜𝕂𝕝𝕃𝕞𝕄𝕟ℕ𝕠𝕆𝕡ℙ𝕢ℚ𝕣ℝ𝕤𝕊𝕥𝕋𝕦𝕌𝕧𝕍𝕨𝕎𝕩𝕏𝕪𝕐𝕫ℤ𝟘𝟙𝟚𝟛𝟜𝟝𝟞𝟟𝟠𝟡+-+()."
-        
+
         result = text.translate(str.maketrans(char, tran))
         
         em = discord.Embed(color=self.user_color)
         em.add_field(name='Input:', value=f'```\n{text}```', inline=False)
         em.add_field(name='Result:', value=f'```\n{result}```', inline=False)
         em = await self._add_footer(em)
-        await ctx.send(embed=em)
+        await ctx.send(embed=em, allowed_mentions=discord.AllowedMentions.none())
 
-    @commands.command(aliases=['sc'])
+    @commands.command(description='Text transformer command', no_pm=True)
     async def smallcaps(self, ctx, *, text: str):
         """Convert text to sᴍᴀʟʟ ᴄᴀᴘs"""
         start_time = time.time()
@@ -245,12 +246,142 @@ class Transform(commands.Cog):
         processing_time = (time.time() - start_time) * 1000  # Convert to milliseconds
         em.set_footer(text=f"Transformed in {processing_time:.2f} ms")
         
-        await ctx.send(embed=em)
+        await ctx.send(embed=em, allowed_mentions=discord.AllowedMentions.none())
+
+    # +------------------------------------------------------------+
+    # |                  NEW TRANSFORMERS 2025                     |
+    # +------------------------------------------------------------+
+    @commands.command(description='Text transformer command', no_pm=True)
+    async def mock(self, ctx, *, text: str):
+        """Convert text to MoCkInG sPoNgEbOb CaSe"""
+        start_time = time.time()
+
+        if not text:
+            return await ctx.send("Please provide some text.", delete_after=23)
+
+        result = ''.join(
+            c.upper() if random.random() < 0.5 else c.lower()
+            for c in text
+        )
+
+        em = discord.Embed(color=self.user_color)
+        em.add_field(name='Input:', value=f'```\n{text}```', inline=False)
+        em.add_field(name='Result:', value=f'```\n{result}```', inline=False)
+        em = await self._add_footer(em)
+        await ctx.send(embed=em, allowed_mentions=discord.AllowedMentions.none())
+
+    @commands.command(description='Text transformer command', no_pm=True)
+    async def vapor(self, ctx, *, text: str):
+        """Convert text to ＶＡＰＯＲＷＡＶＥ ＡＥＳＴＨＥＴＩＣ"""
+        start_time = time.time()
+
+        if not text:
+            return await ctx.send("Please provide some text.", delete_after=23)
+
+        char = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+        tran = "ＡＢＣＤＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺ０１２３４５６７８９"
+        result = text.upper().translate(str.maketrans(char, tran))
+
+        em = discord.Embed(color=self.user_color)
+        em.add_field(name='Input:', value=f'```\n{text}```', inline=False)
+        em.add_field(name='Result:', value=f'```\n{result}```', inline=False)
+        em = await self._add_footer(em)
+        await ctx.send(embed=em, allowed_mentions=discord.AllowedMentions.none())
+
+    @commands.command(description='Text transformer command', no_pm=True)
+    async def binary(self, ctx, bits: int = 8, *, text: str = None):
+        """Smart binary converter with format detection
+        
+        Usage:
+        !binary Hello       → Text→binary
+        !binary 01000001    → Binary→text
+        !binary 16 Hello    → 16-bit encoding
+        !binary 0b1010      → Handles prefix
+        """
+        start_time = time.time()
+
+        if not text:
+            return await ctx.send("Please provide text or binary.", delete_after=23)
+
+        # Enhanced detection
+        def is_binary(t):
+            t = ''.join(t.split()).lower()
+            if t.startswith(('0b', 'b''', '0x')):
+                return True
+            return all(c in '01' for c in t) and len(t) % 8 == 0
+
+        try:
+            if is_binary(text):
+                # Binary→Text conversion
+                clean = text.replace(' ', '').lower()
+                if clean.startswith('0b'):
+                    clean = clean[2:]
+                elif clean.startswith('0x'):
+                    result = bytes.fromhex(clean[2:]).decode('utf-8')
+                else:
+                    result = ''.join(chr(int(clean[i:i+8], 2)) 
+                              for i in range(0, len(clean), 8))
+                conversion_type = "Binary → Text"
+            else:
+                # Text→Binary conversion
+                result = ' '.join(format(ord(c), f'0{bits}b') for c in text)
+                conversion_type = f"Text → Binary ({bits}-bit)"
+        
+        except Exception as e:
+            return await ctx.send(f"Error: {str(e)}", delete_after=30)
+
+        em = discord.Embed(color=self.user_color)
+        em.add_field(name='Input:', value=f'```\n{text}```', inline=False)
+        em.add_field(name='Result:', value=f'```\n{result}```', inline=False)
+        em.set_footer(text=f"Converted {conversion_type} in {self.bot.latency*1000:.2f}ms")
+        await ctx.send(embed=em, allowed_mentions=discord.AllowedMentions.none())
+
+    @commands.command(description='Text transformer command', no_pm=True)
+    async def leet(self, ctx, *, text: str):
+        """Convert text to 1337 5P34K"""
+        start_time = time.time()
+
+        if not text:
+            return await ctx.send("Please provide some text.", delete_after=23)
+
+        char = "aAeElLoOtTsSgGbB"
+        tran = "443311007755992288"
+        result = text.translate(str.maketrans(char, tran))
+
+        em = discord.Embed(color=self.user_color)
+        em.add_field(name='Input:', value=f'```\n{text}```', inline=False)
+        em.add_field(name='Result:', value=f'```\n{result}```', inline=False)
+        em = await self._add_footer(em)
+        await ctx.send(embed=em, allowed_mentions=discord.AllowedMentions.none())
+
+    @commands.command(description='Text transformer command', no_pm=True)
+    async def caesar(self, ctx, shift: int = 3, *, text: str):
+        """Apply Caesar cipher with optional shift (default: 3)"""
+        start_time = time.time()
+
+        if not text:
+            return await ctx.send("Please provide some text.", delete_after=23)
+
+        result = []
+        for c in text:
+            if c.isupper():
+                result.append(chr((ord(c) - 65 + shift) % 26 + 65))
+            elif c.islower():
+                result.append(chr((ord(c) - 97 + shift) % 26 + 97))
+            else:
+                result.append(c)
+        result = ''.join(result)
+
+        em = discord.Embed(color=self.user_color)
+        em.add_field(name='Input:', value=f'```\n{text}```', inline=False)
+        em.add_field(name=f'Result (shift={shift}):', value=f'```\n{result}```', inline=False)
+        em = await self._add_footer(em)
+        await ctx.send(embed=em, allowed_mentions=discord.AllowedMentions.none())
 
     # +------------------------------------------------------------+
     # |                     FUN COMMANDS                           |
     # +------------------------------------------------------------+
-    @commands.command()
+    @commands.command(description='Text transformer command', no_pm=True)
     async def clap(self, ctx, *, text: str = None):
         """Add 👏 between 👏 words 👏"""
         if text and len(text.split()) > 1:
@@ -258,15 +389,18 @@ class Transform(commands.Cog):
         else:
             await ctx.send('👏')
 
-    @commands.command()
+    @commands.command(description='Text transformer command', no_pm=True)
     async def pray(self, ctx, *, text: str = None):
         """Add 🙏 between 🙏 words 🙏"""
         if text and len(text.split()) > 1:
-            await ctx.send(text.replace(' ', ' 🙏 '))
+            await ctx.send(
+                text.replace(' ', ' 🙏 '),
+                allowed_mentions=discord.AllowedMentions.none()
+            )
         else:
             await ctx.send('🙏')
 
-    @commands.command()
+    @commands.command(description='Text transformer command', no_pm=True)
     async def zalgo(self, ctx, *, text: str = None):
         """Z͆͌̓̑͗̀a͒͠l̓͌̾̀̚g͊͝o͋̑̿͝ your text"""
         if not text:
