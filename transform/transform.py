@@ -295,7 +295,7 @@ class Transform(commands.Cog):
         await ctx.send(embed=em, allowed_mentions=discord.AllowedMentions.none())
 
     @commands.command(description='Text transformer command', no_pm=True)
-    async def binary(self, ctx, bits: typing.Optional[int] = 8, *, text: str = None):
+    async def binary(self, ctx, bits: int = 8, *, text: str = None):
         """Smart binary converter with format detection
         
         Usage:
@@ -306,17 +306,14 @@ class Transform(commands.Cog):
         """
         start_time = time.time()
 
-        if not text:
-            # Handle cases where only a number was provided
-            if isinstance(bits, int) and bits != 8:
-                return await ctx.send("Please provide text to convert.", delete_after=23)
-            # Handle cases where no arguments were provided
-            return await ctx.send("Please provide text or binary.", delete_after=23)
-
-        # If bits was interpreted as text (e.g., "!binary 101010")
-        if isinstance(bits, int) and text.isdigit():
-            text = f"{bits} {text}"  # Reconstruct the original input
-            bits = 8  # Reset to default
+        if text is None:
+            # Handle cases where only numbers were given
+            text = str(bits)
+            bits = 8
+        elif isinstance(bits, str):
+            # Handle cases where first "bits" argument is actually binary
+            text = f"{bits} {text}"
+            bits = 8
 
         # Enhanced detection
         def is_binary(t):
@@ -327,7 +324,7 @@ class Transform(commands.Cog):
 
         try:
             if is_binary(text):
-                # Binary→Text conversion
+                # Binary → Text
                 clean = text.replace(' ', '').lower()
                 if clean.startswith('0b'):
                     clean = clean[2:]
@@ -338,12 +335,12 @@ class Transform(commands.Cog):
                               for i in range(0, len(clean), 8))
                 conversion_type = "Binary → Text"
             else:
-                # Text→Binary conversion
+                # Text → Binary
                 result = ' '.join(format(ord(c), f'0{bits}b') for c in text)
                 conversion_type = f"Text → Binary ({bits}-bit)"
         
         except Exception as e:
-            return await ctx.send(f"Error: {str(e)}", delete_after=30)
+            return await ctx.send(f"Error: {str(e)}", delete_after=130)
 
         em = discord.Embed(color=self.user_color)
         em.add_field(name='Input:', value=f'```\n{text}```', inline=False)
