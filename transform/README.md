@@ -1,6 +1,6 @@
 <div align="center">
 <h1>「modmail-plugins」</h1>
-<p><b><i>plugins to expand Modmail2020's functionality 🍆💦🍑</i></b></p>
+<p><b><i>plugins to expand Modmail2025's functionality 🍆💦🍑</i></b></p>
 </div>
 
 
@@ -15,16 +15,32 @@
 
 # Transform
 
-Modmail-plugins to find definitions of English words in Wikipedia, UrbanDictionary, and Oxford English Dictionary
+This Discord.py Plugin provides various text transformation utilities to have fun in your Guild.
 
-- [x] **`charinfo`** - Return UNICODE characters
-- [x] **`clap`** - clap :clap: that :clap: message :clap: !
-- [x] **`pray`** - pray :pray: that :pray: message :pray: !
-- [x] **`tiny`** - Convert any text into ᵗⁱⁿʸ text
-- [x] **`wordai`** - Generate words artificially
-- [x] **`smallcaps`** - ᴄᴏɴᴠᴇʀᴛ ᴀ ᴛᴇxᴛ ᴛᴏ ꜱᴍᴀʟʟ ᴄᴀᴘꜱ
-- [x] **`zalgo`** - S̏p͜ȉt́ o̕u͢ṭ Z͒̕aͣ͟l̾͡g̳̍o̓̀
-- [ ] **`cringe`** - mEsS Up ThE tExT
+### Key Features:
+- AI-powered word generation using Markov chains
+- Text transformers (ᵗⁱⁿʏ, 𝒸𝓊�𝓈𝒾𝓋ℯ, 𝕓𝕠𝕝𝕕, sᴍᴀʟʟ ᴄᴀᴘs, 1337 5P34K, MoCkInG CaSe, ＶＡＰＯＲ, 𝖲𝖺𝗇𝗌-𝗌𝖾𝗋𝗂𝖿, Z͌͆a͠l̓g͊ő)
+- UNICODE character information display
+- Caesar cipher with optional rotation (default: 3)
+- Smart binary converter with decoder
+- Fun text modifiers (👏, 🙏)
+
+### Commands:
+- [x] **`{p}aiword`** - Generate realistic-sounding artificial words
+- [x] **`{p}binary`** - Smart binary converter with format detection
+- [x] **`{p}bold`** - Convert text to 𝕓𝕠𝕝𝕕
+- [x] **`{p}caesar`** - Apply Caesar cipher with optional rot (default: 3)
+- [x] **`{p}charinfo`** - Show Unicode character information
+- [x] **`{p}clap`** - Add 👏 between 👏 words 👏
+- [x] **`{p}cursive`** - Convert text to 𝒸𝓊𝓇𝓈𝒾𝓋ℯ
+- [x] **`{p}leet`** - Convert text to 1337 5P34K
+- [x] **`{p}mock`** - Convert text to MoCkInG CaSe (alternating case)
+- [x] **`{p}pray`** - Add 🙏 between 🙏 words 🙏
+- [x] **`{p}sans`** - Convert text to 𝖲𝖺𝗇𝗌-𝗌𝖾𝗋𝗂𝖿
+- [x] **`{p}smallcaps`** - Convert text to sᴍᴀʟʟ ᴄᴀᴘs
+- [x] **`{p}tiny`** - Convert text to ᵗⁱⁿʸ letters
+- [x] **`{p}vapor`** - Convert text to ＶＡＰＯＲＷＡＶＥ ＡＥＳＴＨＥＴＩＣ
+- [x] **`{p}zalgo`** - Z͆͌̓a͒͠l̓͌̚g͊͝o͋̑̿ your normal text
 
 # Installation
 
