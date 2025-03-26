@@ -27,15 +27,29 @@ from discord.ext import commands
 from collections import defaultdict
 
 class Transform(commands.Cog):
-    """(∩｀-´)⊃━☆ﾟ.*･｡ﾟ modify text in various ways..."""
+    """(∩｀-´)⊃━☆ﾟ.*･｡ﾟ this Discord.py Plugin provides various text transformation utilities.
+
+    Key Features:
+    - AI-powered word generation using Markov chains
+    - Multiple text transformation (ᵗⁱⁿʸ, 𝒸𝓊𝓇𝓈𝒾𝓋ℯ, 𝕓𝕠𝕝𝕕, sᴍᴀʟʟ ᴄᴀᴘs)
+    - UNICODE character information display
+    - Fun text modifiers (👏, 🙏, Z͌͆a͠l̓g͊ő)
+    """
     def __init__(self, bot):
         self.bot = bot
         self.user_color = discord.Colour(0xed791d)  # Orange
         self.transitions = defaultdict(lambda: defaultdict(int))
         self.build_transitions()
 
+    async def _add_footer(self, em):
+        """Add latency information to embed footer"""
+        latency = self.bot.latency * 1000  # Convert to milliseconds
+        duration = f'Transformed in {latency:.2f} ms'
+        em.set_footer(text=duration)
+        return em
+
     # +------------------------------------------------------------+
-    # |                     Word/Name-generator                    |
+    # |                     WORD/NAME-GENERATOR                    |
     # +------------------------------------------------------------+
     def build_transitions(self):
         """Build Markov chain transitions for word generation"""
@@ -67,11 +81,12 @@ class Transform(commands.Cog):
         """Generate realistic-sounding artificial words
         
         Parameters:
-        count: Number of words to generate (1-25)
-        min_length: Minimum word length (3-15)
-        max_length: Maximum word length (3-20)
+        - count:      Number of words to generate (1-25)
+        - min_length: Minimum word length (3-15)
+        - max_length: Maximum word length (3-20)
         """
         # Validate parameters
+        start_time = time.time()
         count = max(1, min(25, count))
         min_length = max(3, min(15, min_length))
         max_length = max(min_length, min(20, max_length))
@@ -86,16 +101,16 @@ class Transform(commands.Cog):
             word = self._generate_word(min_length, max_length)
             words.append(word.title())
         
-        embed = discord.Embed(
+        em = discord.Embed(
             title="🤖 AI-Generated Words",
             description=', '.join(words),
             color=self.user_color
         )
-        embed.set_footer(text=f"Generated {len(words)} words")
-        await ctx.send(embed=embed)
+        em.set_footer(text=f"Generated {len(words)} words in {(time.time() - start_time) * 1000:.2f} ms")
+        await ctx.send(embed=em)
 
     def _generate_word(self, min_len, max_len):
-        """Generate a single word using Markov chain"""
+        """Generate a single ai_word using Markov chain"""
         word = ''
         vowel_start_pairs = [p for p in self.transitions.keys() if p[0] in 'aeiouy']
         pair = random.choice(vowel_start_pairs or list(self.transitions.keys()))
@@ -125,6 +140,8 @@ class Transform(commands.Cog):
     @commands.command()
     async def charinfo(self, ctx, *, characters: str):
         """Show Unicode character information"""
+        start_time = time.time()
+
         if len(characters) > 15:
             return await ctx.send(f'Too many characters ({len(characters)}/15)')
 
@@ -135,16 +152,19 @@ class Transform(commands.Cog):
             name = ud2.name(c, 'Name not found.')
             return fmt.format(digit, name, c)
 
-        embed = discord.Embed(color=self.user_color)
-        embed.description = '\n'.join(map(to_string, characters))
-        await ctx.send(embed=embed)
+        em = discord.Embed(color=self.user_color)
+        em.description = '\n'.join(map(to_string, characters))
+        em = await self._add_footer(em)
+        await ctx.send(embed=em)
 
     # +------------------------------------------------------------+
-    # |                     Text Transformers                      |
+    # |                     TEXT TRANSFORMERS                      |
     # +------------------------------------------------------------+
     @commands.command()
     async def tiny(self, ctx, *, text: str):
         """Convert text to ᵗⁱⁿʸ letters"""
+        start_time = time.time()
+
         if not text:
             return await ctx.send("Please provide some text.", delete_after=23)
 
@@ -152,14 +172,17 @@ class Transform(commands.Cog):
         tran = "ᵃᵇᶜᵈᵉᶠᵍʰⁱʲᵏˡᵐⁿᵒᵖ٩ʳˢᵗᵘᵛʷˣʸᶻ₀₁₂₃₄₅₆₇₈₉₊₋₌₍₎•"
         result = text.translate(str.maketrans(char, tran))
         
-        embed = discord.Embed(color=self.user_color)
-        embed.add_field(name='Input:', value=f'```\n{text}```', inline=False)
-        embed.add_field(name='Result:', value=f'```\n{result}```', inline=False)
-        await ctx.send(embed=embed)
+        em = discord.Embed(color=self.user_color)
+        em.add_field(name='Input:', value=f'```\n{text}```', inline=False)
+        em.add_field(name='Result:', value=f'```\n{result}```', inline=False)
+        em = await self._add_footer(em)
+        await ctx.send(embed=em)
 
     @commands.command()
     async def cursive(self, ctx, *, text: str):
         """Convert text to 𝒸𝓊𝓇𝓈𝒾𝓋ℯ"""
+        start_time = time.time()
+
         if not text:
             return await ctx.send("Please provide some text.", delete_after=23)
 
@@ -167,29 +190,36 @@ class Transform(commands.Cog):
         tran = "𝒶𝒷𝒸𝒹𝑒𝒻𝑔𝒽𝒾𝒿𝓀𝓁𝓂𝓃𝑜𝓅𝓆𝓇𝓈𝓉𝓊𝓋𝓌𝓍𝓎𝓏𝟢𝟣𝟤𝟥𝟦𝟧𝟨𝟩𝟪𝟫+-+()."
         result = text.translate(str.maketrans(char, tran))
         
-        embed = discord.Embed(color=self.user_color)
-        embed.add_field(name='Input:', value=f'```\n{text}```', inline=False)
-        embed.add_field(name='Result:', value=f'```\n{result}```', inline=False)
-        await ctx.send(embed=embed)
+        em = discord.Embed(color=self.user_color)
+        em.add_field(name='Input:', value=f'```\n{text}```', inline=False)
+        em.add_field(name='Result:', value=f'```\n{result}```', inline=False)
+        em = await self._add_footer(em)
+        await ctx.send(embed=em)
 
     @commands.command()
     async def bold(self, ctx, *, text: str):
         """Convert text to 𝕓𝕠𝕝𝕕"""
+        start_time = time.time()
+
         if not text:
             return await ctx.send("Please provide some text.", delete_after=23)
 
         char = "aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrRsStTuUvVwWxXyYzZ0123456789+-+()."
         tran = "𝕒𝔸𝕓𝔹𝕔ℂ𝕕𝔻𝕖𝔼𝕗𝔽𝕘𝔾𝕙ℍ𝕚𝕀𝕛𝕁𝕜𝕂𝕝𝕃𝕞𝕄𝕟ℕ𝕠𝕆𝕡ℙ𝕢ℚ𝕣ℝ𝕤𝕊𝕥𝕋𝕦𝕌𝕧𝕍𝕨𝕎𝕩𝕏𝕪𝕐𝕫ℤ𝟘𝟙𝟚𝟛𝟜𝟝𝟞𝟟𝟠𝟡+-+()."
+        
         result = text.translate(str.maketrans(char, tran))
         
-        embed = discord.Embed(color=self.user_color)
-        embed.add_field(name='Input:', value=f'```\n{text}```', inline=False)
-        embed.add_field(name='Result:', value=f'```\n{result}```', inline=False)
-        await ctx.send(embed=embed)
+        em = discord.Embed(color=self.user_color)
+        em.add_field(name='Input:', value=f'```\n{text}```', inline=False)
+        em.add_field(name='Result:', value=f'```\n{result}```', inline=False)
+        em = await self._add_footer(em)
+        await ctx.send(embed=em)
 
     @commands.command(aliases=['sc'])
     async def smallcaps(self, ctx, *, text: str):
         """Convert text to sᴍᴀʟʟ ᴄᴀᴘs"""
+        start_time = time.time()
+        
         if not text:
             return await ctx.send("Please provide some text.", delete_after=23)
 
@@ -204,10 +234,20 @@ class Transform(commands.Cog):
             else:
                 result.append(letter)
         
-        await ctx.send(''.join(result))
+        result_text = ''.join(result)
+        
+        em = discord.Embed(color=self.user_color)
+        em.add_field(name='Input:', value=f'```\n{text}```', inline=False)
+        em.add_field(name='Result:', value=f'```\n{result_text}```', inline=False)
+        
+        # Add processing time to footer
+        processing_time = (time.time() - start_time) * 1000  # Convert to milliseconds
+        em.set_footer(text=f"Transformed in {processing_time:.2f} ms")
+        
+        await ctx.send(embed=em)
 
     # +------------------------------------------------------------+
-    # |                     Fun Commands                           |
+    # |                     FUN COMMANDS                           |
     # +------------------------------------------------------------+
     @commands.command()
     async def clap(self, ctx, *, text: str = None):
