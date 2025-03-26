@@ -154,7 +154,7 @@ class Private(commands.Cog):
             _what = ' '.join(_event_today.split(' ')[1:])
             _notif = 'https://cdn.discordapp.com/attachments/375179500604096512/1079876674235154442/flyerdesign_27022023_172353.png'
             em = discord.Embed(colour=discord.Colour(0xff7722), description=get_t_str())
-            em.set_author(name='ℍ𝕒𝕣𝕚 𝕜𝕒𝕥𝕙𝕒̄', icon_url=ctx.message.author.avatar.url)
+            em.set_author(name='𝖧𝖺𝗋𝗂-𝗄𝖺𝗍𝗁𝖺̄', icon_url=ctx.message.author.avatar.url)
             em.add_field(name='Event today:', value=_what, inline=False)
             em.add_field(name='Attentive Listeners', value=_intro(), inline=False)
             em.set_thumbnail(url=_notif)
@@ -167,7 +167,7 @@ class Private(commands.Cog):
 
             try:
                 em = discord.Embed(colour=discord.Colour(0xff7722), description=get_t_str())
-                em.set_author(name='ℍ𝕒𝕣𝕚 𝕜𝕒𝕥𝕙𝕒̄', icon_url=ctx.message.author.avatar.url)
+                em.set_author(name='𝖧𝖺𝗋𝗂-𝗄𝖺𝗍𝗁𝖺̄', icon_url=ctx.message.author.avatar.url)
                 em.add_field(name='Attentive Listeners', value=_intro(), inline=False)
                 em.set_thumbnail(url='https://i.imgur.com/93A0Kdk.png')
                 em.set_footer(text='⇐ Join the Voice Channel NOW!!')
