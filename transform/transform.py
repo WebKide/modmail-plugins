@@ -32,8 +32,10 @@ class Transform(commands.Cog):
 
     Key Features:
     - AI-powered word generation using Markov chains
-    - Multiple text transformation (ᵗⁱⁿʸ, 𝒸𝓊𝓇𝓈𝒾𝓋ℯ, 𝕓𝕠𝕝𝕕, sᴍᴀʟʟ ᴄᴀᴘs)
+    - Multiple text transformation (ᵗⁱⁿʸ, 𝒸𝓊𝓇𝓈𝒾𝓋ℯ, 𝕓𝕠𝕝𝕕, sᴍᴀʟʟ ᴄᴀᴘs, 1337 5P34K)
     - UNICODE character information display
+    - Caesar cipher with optional shift (default: 3)
+    - Smart binary converter with decoder
     - Fun text modifiers (👏, 🙏, Z͌͆a͠l̓g͊ő)
     """
     def __init__(self, bot):
@@ -253,22 +255,26 @@ class Transform(commands.Cog):
     # +------------------------------------------------------------+
     @commands.command(description='Text transformer command', no_pm=True)
     async def mock(self, ctx, *, text: str):
-        """Convert text to MoCkInG sPoNgEbOb CaSe"""
+        """Convert text to MoCkInG CaSe (alternating case)"""
         start_time = time.time()
 
         if not text:
             return await ctx.send("Please provide some text.", delete_after=23)
 
-        result = ''.join(
-            c.upper() if random.random() < 0.5 else c.lower()
-            for c in text
-        )
+        result = []
+        should_upper = random.choice([True, False])  # Random starting case
+        for char in text:
+            if char.isalpha():  # Only alter letters
+                result.append(char.upper() if should_upper else char.lower())
+                should_upper = not should_upper  # Flip case for next letter
+            else:
+                result.append(char)  # Leave spaces/symbols untouched
 
         em = discord.Embed(color=self.user_color)
         em.add_field(name='Input:', value=f'```\n{text}```', inline=False)
-        em.add_field(name='Result:', value=f'```\n{result}```', inline=False)
+        em.add_field(name='Result:', value=f'```\n{"".join(result)}```', inline=False)
         em = await self._add_footer(em)
-        await ctx.send(embed=em, allowed_mentions=discord.AllowedMentions.none())
+        await ctx.send(embed=em)
 
     @commands.command(description='Text transformer command', no_pm=True)
     async def vapor(self, ctx, *, text: str):
