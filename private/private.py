@@ -69,7 +69,7 @@ class Private(commands.Cog):
 
     async def _send_notification(self, ctx, channel, _event_today=None):
         """Notification sending logic"""
-        if channel.id == ctx.channel.id:
+        if channel.id != ctx.channel.id:
             try:
                 await ctx.message.delete()
             except discord.Forbidden:
