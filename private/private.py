@@ -192,7 +192,7 @@ class Private(commands.Cog):
         # Send confirmation to original text channel
         if channel.id != ctx.channel.id:
             try:
-                confirmation = await ctx.send(f"ℍ𝕒𝕣𝕚 𝕜𝕒𝕥𝕙𝕒̄ Push-Notification sent to **{channel.mention}**!")
+                confirmation = await ctx.send(f"ℍ𝕒𝕣𝕚 𝕜𝕒𝕥𝕙𝕒̄ Push-Notification sent to **{channel.mention}**! \nSent in {self.bot.latency*1000:.2f}ms'")
                 await asyncio.sleep(2)
                 await confirmation.add_reaction('✅')  # Green checkmark reaction
             except discord.HTTPException:
@@ -200,3 +200,4 @@ class Private(commands.Cog):
 
 async def setup(bot):
     await bot.add_cog(Private(bot))
+    
