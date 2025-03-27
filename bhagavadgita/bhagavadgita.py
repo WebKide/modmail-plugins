@@ -190,13 +190,26 @@ class BhagavadGita(commands.Cog):
         elif class_name == 'av-synonyms':
             text_div = section.find('div', class_='text-justify')
             if text_div:
-                # Convert <em> tags to Discord italics
+                # Handle hyphenated terms by finding all <a> tags first
+                for a in text_div.find_all('a'):
+                    if '-' in a.text:
+                        # Replace parent span with the hyphenated term wrapped in underscores
+                        parent_span = a.find_parent('span', class_='inline')
+                        if parent_span:
+                            hyphenated_term = '_' + a.text + '_'
+                            parent_span.replace_with(hyphenated_term)
+                
+                # Now handle remaining <em> tags
                 for em in text_div.find_all('em'):
                     em.replace_with(f"_{em.get_text(strip=True)}_")
                 
-                # Get the cleaned text
+                # Get the cleaned text and fix spacing
                 text = text_div.get_text(' ', strip=True)
-                return ' '.join(text.split())  # Normalize whitespace
+                # Fix specific formatting cases
+                text = text.replace(' - ', '-')  # Fix hyphen spacing
+                text = text.replace(' ;', ';')   # Fix semicolon spacing
+                text = text.replace(' .', '.')   # Fix period spacing
+                return text
 
         elif class_name == 'av-translation':
             text_div = section.find('div', class_='s-justify')
