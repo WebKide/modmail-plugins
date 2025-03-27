@@ -188,7 +188,7 @@ class BhagavadGita(commands.Cog):
                 return text_div.get_text(strip=False)
 
         # Handle different section types differently
-        if class_name == 'av-synonyms':
+        elif class_name == 'av-synonyms':
             text_div = section.find('div', class_='text-justify')
             if text_div:
                 # Process each <em> tag to make it italic for Discord
