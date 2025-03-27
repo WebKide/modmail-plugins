@@ -74,6 +74,7 @@ class BhagavadGita(commands.Cog):
         if cached:
             return await self.send_sloka_embed(ctx, cached, verse)
         
+        # If not found in cache, scrape the website
         verse_data = await self.scrape_verse_data(valid_chapter, verse_str)
         if not verse_data:
             return await ctx.send("Failed to retrieve verse data. Please try again later.", delete_after=10)
@@ -198,16 +199,25 @@ class BhagavadGita(commands.Cog):
 
     async def send_sloka_embed(self, ctx, verse_data: Dict[str, Any], requested_verse: str):
         chapter = verse_data["chapter"]
+        verse_str = verse_data["verse_range"]
         
         if '-' not in requested_verse:
             verse_num = requested_verse
             verse = verse_data["verses"].get(verse_num)
             
+            # Try to find the verse in different formats
             if not verse:
-                # Check if verse exists but is stored as an integer key
-                verse = verse_data["verses"].get(str(int(verse_num)))
-                if not verse:
-                    return await ctx.send("Verse not found in cached data", delete_after=10)
+                verse = verse_data["verses"].get(str(int(verse_num)))  # Try as integer string
+            
+            if not verse:
+                # If we still can't find it, try to extract from grouped ranges
+                if '-' in verse_str:
+                    start, end = map(int, verse_str.split('-'))
+                    if start <= int(verse_num) <= end:
+                        verse = verse_data["verses"].get(verse_num)
+            
+            if not verse:
+                return await ctx.send("Verse not found in the retrieved data", delete_after=10)
             
             embed = discord.Embed(
                 title=f"Bhagavad Gītā {chapter}.{verse_num}",
@@ -228,7 +238,7 @@ class BhagavadGita(commands.Cog):
             
             await ctx.send(embed=embed)
         else:
-            start, end = map(int, verse_str.split('-')) if '-' in (verse_str := verse_data["verse_range"]) else (int(verse_str), int(verse_str))
+            start, end = map(int, verse_str.split('-')) if '-' in verse_str else (int(verse_str), int(verse_str))
             verses = [str(v) for v in range(start, end + 1) if str(v) in verse_data["verses"]]
             
             if not verses:
