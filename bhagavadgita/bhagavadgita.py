@@ -202,7 +202,6 @@ class BhagavadGita(commands.Cog):
     async def scrape_verse_data(self, chapter: int, verse_str: str) -> Optional[Dict[str, Any]]:
         """Scrape verse data from website with proper error handling"""
         url = f"{self.base_url}/{chapter}/{verse_str}/"
-        await ctx.send(f"10 {url}")  # Step-by-step
         try:
             async with self.session.get(url) as response:
                 if response.status == 404:
@@ -214,6 +213,7 @@ class BhagavadGita(commands.Cog):
                 
                 html = await response.text()
                 soup = BeautifulSoup(html, 'html.parser')
+                await ctx.send(f"10 {url}")  # Step-by-step
                 
                 verse_data = {
                     "chapter": chapter,
