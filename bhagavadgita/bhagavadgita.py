@@ -103,13 +103,13 @@ class BhagavadGita(commands.Cog):
             'grouped_ranges': [(5, 6), (26, 27)]
         }
     }
-    
+
     def __init__(self, bot):
         self.bot = bot
-        self.user_color = discord.Colour(0xed791d)  # Orange color
+        self.user_color = discord.Colour(0xed791d)
         self.base_url = "https://vedabase.io/en/library/bg"
         self.db = bot.plugin_db.get_partition(self)
-        self.session = aiohttp.ClientSession()  # Reusable session
+        self.session = aiohttp.ClientSession()
 
     def cog_unload(self):
         asyncio.create_task(self.session.close())
@@ -141,7 +141,7 @@ class BhagavadGita(commands.Cog):
         await self.send_sloka_embed(ctx, verse_data, verse)
 
     def validate_verse_input(self, chapter: int, verse_input: str) -> Tuple[bool, Union[str, Tuple[int, str]]]:
-        """Improved validation with better type hints and error messages"""
+        """Validate chapter and verse input"""
         if chapter not in self.BG_CHAPTER_INFO:
             return (False, f"Invalid chapter. Bhagavad Gītā has 18 chapters (requested {chapter})")
         
@@ -237,6 +237,25 @@ class BhagavadGita(commands.Cog):
             print(f"Scraping error: {e}")
             return None
 
+    async def save_to_cache(self, verse_data: dict) -> bool:
+        """Save verse data to cache"""
+        try:
+            await self.db.replace_one(
+                {
+                    "chapter": verse_data["chapter"],
+                    "verse_range": verse_data["verse_range"]
+                },
+                verse_data,
+                upsert=True
+            )
+            return True
+        except Exception as e:
+            print(f"Error saving to cache: {str(e)}")
+            return False
+
+    async def send_sloka_embed(self, ctx, verse_data: dict, requested_verse: str):
+        """Send verse embed to Discord"""
+
     def _get_text(self, container, class_name: str, separator: str = " ") -> str:
         """Helper method to safely extract text"""
         element = container.find(class_=class_name)
@@ -301,4 +320,3 @@ class BhagavadGita(commands.Cog):
 
 async def setup(bot):
     await bot.add_cog(BhagavadGita(bot))
-    
