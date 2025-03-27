@@ -161,8 +161,8 @@ class BhagavadGita(commands.Cog):
 
     def validate_verse_input(self, chapter: int, verse_input: str) -> Tuple[bool, Union[str, Tuple[int, str]]]:
         """Validate chapter and verse input"""
-        await ctx.send("10")  # Step-by-step
         if chapter not in self.BG_CHAPTER_INFO:
+            await ctx.send("10")  # Step-by-step
             return (False, f"Invalid chapter. Bhagavad Gītā has 18 chapters (requested {chapter})")
         
         chapter_data = self.BG_CHAPTER_INFO[chapter]
