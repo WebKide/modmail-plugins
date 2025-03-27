@@ -212,17 +212,37 @@ class BhagavadGita(commands.Cog):
                     "created_at": datetime.utcnow(),
                     "last_accessed": datetime.utcnow()
                 }
-                
-                for container in soup.find_all(class_="r-verse"):
-                    verse_num = verse_num.strip('.: ')
-                    verse_num = container.find(class_="r-verse__num").get_text(strip=True)
-                    verse_data["verses"][verse_num] = {
-                        "devanagari": self._get_text(container, "av-devanagari"),
-                        "transliteration": self._get_text(container, "av-verse_text"),
-                        "synonyms": self._get_text(container, "av-synonyms", "; "),
-                        "translation": self._get_text(container, "av-translation")
-                    }
-                
+
+                # Extract verse number from H1 heading
+                h1 = soup.find('h1', {'class': 'text-center'})
+                if h1:
+                    verse_num = h1.text.strip().split('.')[-1].strip()
+                else:
+                    verse_num = verse_str.split('-')[0]  # Fallback to input
+
+                # Devanagari text
+                devanagari_div = soup.find('div', class_='av-devanagari')
+                devanagari = devanagari_div.find('div', class_='text-center').get_text('\n', strip=True) if devanagari_div else "Not available"
+
+                # Transliteration text
+                verse_text_div = soup.find('div', class_='av-verse_text')
+                transliteration = verse_text_div.find('div', class_='italic').get_text('\n', strip=True) if verse_text_div else "Not available"
+
+                # Synonyms text
+                synonyms_div = soup.find('div', class_='av-synonyms')
+                synonyms = synonyms_div.find('div', class_='text-justify').get_text(' ', strip=True) if synonyms_div else "Not available"
+
+                # Translation text
+                translation_div = soup.find('div', class_='av-translation')
+                translation = translation_div.find('div', class_='s-justify').get_text(strip=True) if translation_div else "Not available"
+
+                verse_data["verses"][verse_num] = {
+                    "devanagari": devanagari,
+                    "transliteration": transliteration,
+                    "synonyms": synonyms,
+                    "translation": translation
+                }
+
                 return verse_data
         except Exception as e:
             print(f"Scraping error in scrape_verse_data: {e}")
