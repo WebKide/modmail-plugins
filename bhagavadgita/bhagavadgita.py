@@ -73,37 +73,45 @@ class BhagavadGita(commands.Cog):
         """
         # 1. VALIDATION
         is_valid, result = self.validate_verse_input(chapter, verse)
+        await ctx.send(f"1 {chapter} {verse}")  # Step-by-step
         if not is_valid:
             return await ctx.send(result, delete_after=10)
         
         valid_chapter, verse_str = result
+        await ctx.send(f"2 {result}")  # Step-by-step
         
         # 2. DATABASE CHECK
         cached_data = await self.get_cached_verse(valid_chapter, verse_str)
         if cached_data:
+            await ctx.send(f"3 {valid_chapter} {verse_str}")  # Step-by-step
             return await self.send_sloka_embed(ctx, cached_data, verse)
         
         # 3. WEBSITE SCRAPING
         scraped_data = await self.scrape_verse_data(valid_chapter, verse_str)
         if scraped_data is None:
+            await ctx.send(f"4 {valid_chapter} {verse_str}")  # Step-by-step
             return await ctx.send(f"Verse {valid_chapter}.{verse_str} not found or an error occurred while fetching.", delete_after=10)
 
         # 4. CACHING INTO DATABASE
+        await ctx.send("4 caching...")  # Step-by-step
         await self.cache_verse_data(scraped_data)
         
         # 5. RESPONSE IN EMBED
+        await ctx.send("5 embed...")  # Step-by-step
         await self.send_sloka_embed(ctx, scraped_data, verse)
 
     async def get_cached_verse(self, chapter: int, verse_str: str) -> Optional[Dict[str, Any]]:
         """Check database for cached verse with proper error handling and streamlined grouped range search"""
         try:
             # Try exact match first
+            await ctx.send("6")  # Step-by-step
             cached_doc = await self.db.find_one({
                 "chapter": chapter,
                 "verse_range": verse_str
             })
             
             if cached_doc:
+                await ctx.send("7")  # Step-by-step
                 # Update last accessed time
                 await self.db.update_one(
                     {"_id": cached_doc["_id"]},
@@ -114,6 +122,7 @@ class BhagavadGita(commands.Cog):
             # If the request is for a single verse, check if it's part of a grouped range
             if '-' not in verse_str:
                 verse_num = int(verse_str)
+                await ctx.send(f"8 {verse_num}")  # Step-by-step
                 # Query only for documents with a grouped range (i.e. verse_range contains a hyphen)
                 async for doc in self.db.find({
                     "chapter": chapter,
@@ -136,6 +145,7 @@ class BhagavadGita(commands.Cog):
     async def cache_verse_data(self, verse_data: Dict[str, Any]) -> bool:
         """Cache verse data in database with proper error handling"""
         try:
+            await ctx.send("9")  # Step-by-step
             await self.db.replace_one(
                 {
                     "chapter": verse_data["chapter"],
@@ -151,6 +161,7 @@ class BhagavadGita(commands.Cog):
 
     def validate_verse_input(self, chapter: int, verse_input: str) -> Tuple[bool, Union[str, Tuple[int, str]]]:
         """Validate chapter and verse input"""
+        await ctx.send("10")  # Step-by-step
         if chapter not in self.BG_CHAPTER_INFO:
             return (False, f"Invalid chapter. Bhagavad Gītā has 18 chapters (requested {chapter})")
         
