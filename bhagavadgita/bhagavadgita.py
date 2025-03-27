@@ -183,6 +183,11 @@ class BhagavadGita(commands.Cog):
         
         return (True, (chapter, str(verse)))
 
+    def _get_text(self, container, class_name: str, separator: str = " ") -> str:
+        """Helper method to safely extract text"""
+        element = container.find(class_=class_name)
+        return element.get_text(separator, strip=True) if element else "Not available"
+
     async def check_cached_verse(self, chapter: int, verse_str: str) -> Optional[dict]:
         """Check cache with proper error handling"""
         try:
@@ -253,13 +258,50 @@ class BhagavadGita(commands.Cog):
             print(f"Error saving to cache: {str(e)}")
             return False
 
+    '''
     async def send_sloka_embed(self, ctx, verse_data: dict, requested_verse: str):
         """Send verse embed to Discord"""
-
-    def _get_text(self, container, class_name: str, separator: str = " ") -> str:
-        """Helper method to safely extract text"""
-        element = container.find(class_=class_name)
-        return element.get_text(separator, strip=True) if element else "Not available"
+        chapter = verse_data["chapter"]
+        
+        # Handle both single verse and verse range requests
+        if '-' not in requested_verse:
+            # First try exact verse match
+            verse = verse_data["verses"].get(requested_verse)
+            
+            # If not found, check if it's part of a grouped range
+            if not verse:
+                for verse_range in verse_data["verses"]:
+                    if '-' in verse_range:
+                        start, end = map(int, verse_range.split('-'))
+                        if start <= int(requested_verse) <= end:
+                            verse = verse_data["verses"][verse_range].get(requested_verse)
+                            break
+            
+            if not verse:
+                return await ctx.send("Verse not found in cached data", delete_after=10)
+            
+            embed = discord.Embed(
+                title=f"Bhagavad Gītā {chapter}.{requested_verse}",
+                url=verse_data["url"],
+                color=self.user_color
+            )
+            
+            fields = [
+                ("Devanagari", verse["devanagari"]),
+                ("Transliteration", verse["transliteration"]),
+                ("Synonyms", self._truncate_text(verse["synonyms"], 1000)),
+                ("Translation", verse["translation"])
+            ]
+            
+            for name, value in fields:
+                if value and value != "Not available":
+                    embed.add_field(name=name, value=value, inline=False)
+            
+            await ctx.send(embed=embed)
+        else:
+            # Handle verse range output (existing code remains the same)
+            pass
+    '''
 
     def _truncate_text(self, text: str, max_len: int) -> str:
         """Helper method to truncate long text"""
