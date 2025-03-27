@@ -19,328 +19,187 @@ SOFTWARE.
 """
 
 import discord
-import aiohttp
-import asyncio
-
 from bs4 import BeautifulSoup
-from datetime import datetime
+import aiohttp
 from discord.ext import commands
-from typing import Optional, Union, Tuple, Dict, Any
+from datetime import datetime
+
+# Chapter info dict
+BG_CHAPTER_INFO = {
+    1: {'total_verses': 46, 'grouped_ranges': [(16, 18), (21, 22), (32, 35), (37, 38)]},
+    2: {'total_verses': 72, 'grouped_ranges': [(42, 43)]},
+    3: {'total_verses': 43, 'grouped_ranges': []},
+    4: {'total_verses': 42, 'grouped_ranges': []},
+    5: {'total_verses': 29, 'grouped_ranges': [(8, 9), (27, 28)]},
+    6: {'total_verses': 47, 'grouped_ranges': [(11, 12), (13, 14), (20, 23)]},
+    7: {'total_verses': 30, 'grouped_ranges': []},
+    8: {'total_verses': 28, 'grouped_ranges': []},
+    9: {'total_verses': 34, 'grouped_ranges': []},
+    10: {'total_verses': 42, 'grouped_ranges': [(4, 5), (12, 13)]},
+    11: {'total_verses': 55, 'grouped_ranges': [(10, 11), (26, 27), (41, 42)]},
+    12: {'total_verses': 20, 'grouped_ranges': [(3, 4), (6, 7), (13, 14), (18, 19)]},
+    13: {'total_verses': 35, 'grouped_ranges': [(1, 2), (6, 7), (8, 12)]},
+    14: {'total_verses': 27, 'grouped_ranges': [(22, 25)]},
+    15: {'total_verses': 20, 'grouped_ranges': [(3, 4)]},
+    16: {'total_verses': 24, 'grouped_ranges': [(1, 3), (11, 12), (13, 15)]},
+    17: {'total_verses': 28, 'grouped_ranges': [(7, 9), (14, 16), (23, 24)]},
+    18: {'total_verses': 78, 'grouped_ranges': [(5, 6), (26, 27)]}
+}
 
 class BhagavadGita(commands.Cog):
-    """Discord.py plugin for retrieving Bhagavad Gītā ślokas"""
-    
-    BG_CHAPTER_INFO = {
-        1: {'total_verses': 46, 'grouped_ranges': [(16, 18), (21, 22), (32, 35), (37, 38)]},
-        2: {'total_verses': 72, 'grouped_ranges': [(42, 43)]},
-        3: {'total_verses': 43, 'grouped_ranges': []},
-        4: {'total_verses': 42, 'grouped_ranges': []},
-        5: {'total_verses': 29, 'grouped_ranges': [(8, 9), (27, 28)]},
-        6: {'total_verses': 47, 'grouped_ranges': [(11, 12), (13, 14), (20, 23)]},
-        7: {'total_verses': 30, 'grouped_ranges': []},
-        8: {'total_verses': 28, 'grouped_ranges': []},
-        9: {'total_verses': 34, 'grouped_ranges': []},
-        10: {'total_verses': 42, 'grouped_ranges': [(4, 5), (12, 13)]},
-        11: {'total_verses': 55, 'grouped_ranges': [(10, 11), (26, 27), (41, 42)]},
-        12: {'total_verses': 20, 'grouped_ranges': [(3, 4), (6, 7), (13, 14), (18, 19)]},
-        13: {'total_verses': 35, 'grouped_ranges': [(1, 2), (6, 7), (8, 12)]},
-        14: {'total_verses': 27, 'grouped_ranges': [(22, 25)]},
-        15: {'total_verses': 20, 'grouped_ranges': [(3, 4)]},
-        16: {'total_verses': 24, 'grouped_ranges': [(1, 3), (11, 12), (13, 15)]},
-        17: {'total_verses': 28, 'grouped_ranges': [(7, 9), (14, 16), (23, 24)]},
-        18: {'total_verses': 78, 'grouped_ranges': [(5, 6), (26, 27)]}
-    }
-
     def __init__(self, bot):
         self.bot = bot
-        self.user_color = discord.Colour(0xed791d)
         self.base_url = "https://vedabase.io/en/library/bg"
-        self.db = bot.plugin_db.get_partition(self)
         self.session = aiohttp.ClientSession()
 
     def cog_unload(self):
         self.bot.loop.create_task(self.session.close())
 
-
-
-    @commands.command(name="bg")
+    @commands.command(aliases=['gita'], no_pm=True)
     async def bg(self, ctx, chapter: int, verse: str):
-        """Retrieve a śloka from the Bhagavad Gītā
+        """Retrieve a Bhagavad Gita verse from Vedabase.io"""
         
-        Pipeline Flow:
-        1. Validation → 2. Database Check → 3. Website Scraping → 
-        4. Caching into Database → 5. Response in Embed
-        """
-        # 1. VALIDATION
-        is_valid, result = self.validate_verse_input(chapter, verse)
-        await ctx.send(f"1 {chapter} {verse}")  # Step-by-step
+        # --- Input Validation Start ---
+        is_valid, validated_verse_or_error = self.validate_input(chapter, verse)
         if not is_valid:
-            return await ctx.send(result, delete_after=10)
-        
-        valid_chapter, verse_str = result
-        await ctx.send(f"2 {result}")  # Step-by-step
-        
-        # 2. DATABASE CHECK
-        cached_data = await self.get_cached_verse(valid_chapter, verse_str)
-        if cached_data:
-            await ctx.send(f"3 {valid_chapter} {verse_str}")  # Step-by-step
-            return await self.send_sloka_embed(ctx, cached_data, verse)
-        
-        # 3. WEBSITE SCRAPING
-        scraped_data = await self.scrape_verse_data(valid_chapter, verse_str)
-        if scraped_data is None:
-            await ctx.send(f"4 {valid_chapter} {verse_str}")  # Step-by-step
-            return await ctx.send(f"Verse {valid_chapter}.{verse_str} not found or an error occurred while fetching.", delete_after=10)
+            return await ctx.send(validated_verse_or_error)
+        # Use the possibly modified verse string (e.g. a snapped grouped range)
+        verse = validated_verse_or_error
+        # --- Input Validation End ---
 
-        # 4. CACHING INTO DATABASE
-        await ctx.send("4 caching...")  # Step-by-step
-        await self.cache_verse_data(scraped_data)
+        url = f"{self.base_url}/{chapter}/{verse}/"
         
-        # 5. RESPONSE IN EMBED
-        await ctx.send("5 embed...")  # Step-by-step
-        await self.send_sloka_embed(ctx, scraped_data, verse)
-
-    async def get_cached_verse(self, chapter: int, verse_str: str) -> Optional[Dict[str, Any]]:
-        """Check database for cached verse with proper error handling and streamlined grouped range search"""
         try:
-            # Try exact match first
-            await ctx.send("6")  # Step-by-step
-            cached_doc = await self.db.find_one({
-                "chapter": chapter,
-                "verse_range": verse_str
-            })
-            
-            if cached_doc:
-                await ctx.send("7")  # Step-by-step
-                # Update last accessed time
-                await self.db.update_one(
-                    {"_id": cached_doc["_id"]},
-                    {"$set": {"last_accessed": datetime.utcnow()}}
+            async with self.session.get(url) as response:
+                if response.status != 200:
+                    return await ctx.send(f"Couldn't retrieve verse {chapter}.{verse}. Status: {response.status}")
+                
+                html = await response.text()
+                soup = BeautifulSoup(html, 'html.parser')
+
+                # Get chapter title from breadcrumbs
+                breadcrumbs = soup.find('nav', {'aria-label': 'Breadcrumb'})
+                chapter_title = "Unknown Chapter"
+                if breadcrumbs:
+                    last_crumb = breadcrumbs.find_all('li')[-1]
+                    chapter_title = last_crumb.text.strip().replace('»', '').strip()
+
+                # Get verse data
+                devanagari = self._get_verse_section(soup, 'av-devanagari')
+                verse_text = self._get_verse_section(soup, 'av-verse_text')
+                synonyms = self._get_verse_section(soup, 'av-synonyms')
+                translation = self._get_verse_section(soup, 'av-translation')
+
+                # Create embed
+                embed = discord.Embed(
+                    title=f"Chapter {chapter}: {chapter_title}",
+                    colour=discord.Colour(0x1cfbc3),
+                    url=url,
+                    description=chapter_title,
+                    timestamp=datetime.utcnow()
                 )
-                return cached_doc
-            
-            # If the request is for a single verse, check if it's part of a grouped range
-            if '-' not in verse_str:
-                verse_num = int(verse_str)
-                await ctx.send(f"8 {verse_num}")  # Step-by-step
-                # Query only for documents with a grouped range (i.e. verse_range contains a hyphen)
-                async for doc in self.db.find({
-                    "chapter": chapter,
-                    "verse_range": {"$regex": "-"}
-                }):
-                    start, end = map(int, doc["verse_range"].split('-'))
-                    if start <= verse_num <= end and str(verse_num) in doc.get("verses", {}):
-                        # Update last accessed time for the grouped range
-                        await self.db.update_one(
-                            {"_id": doc["_id"]},
-                            {"$set": {"last_accessed": datetime.utcnow()}}
-                        )
-                        return doc
+
+                embed.set_author(
+                    name="Bhagavad Gītā — As It Is",
+                    url="https://vedabase.io/en/library/bg/",
+                    icon_url="https://asitis.com/gif/bgcover.jpg"  # Book cover
+                )
+                embed.set_footer(text="Retrieved in")
+
+                embed.add_field(name="Devanagari", value=devanagari, inline=False)
+                embed.add_field(name="Verse text", value=verse_text, inline=False)
+                embed.add_field(name="Synonyms", value=synonyms, inline=False)
+                embed.add_field(name="Translation", value=f"**{translation}**", inline=False)
+
+                await ctx.send(embed=embed)
+
         except Exception as e:
-            print(f"Database error in get_cached_verse: {e}")
+            await ctx.send(f"An error occurred: {str(e)}")
+
+    def validate_input(self, chapter: int, verse_input: str):
+        """
+        Validate chapter and verse input against BG_CHAPTER_INFO.
+        Returns a tuple (is_valid, result) where result is either an error message
+        or the validated/modified verse string.
+        """
+        # Check if chapter exists
+        if chapter not in BG_CHAPTER_INFO:
+            return (False, f"Invalid chapter. Bhagavad Gītā has 18 chapters (requested {chapter}).")
         
-        return None
-
-
-    async def cache_verse_data(self, verse_data: Dict[str, Any]) -> bool:
-        """Cache verse data in database with proper error handling"""
-        try:
-            await ctx.send("9")  # Step-by-step
-            await self.db.replace_one(
-                {
-                    "chapter": verse_data["chapter"],
-                    "verse_range": verse_data["verse_range"]
-                },
-                verse_data,
-                upsert=True
-            )
-            return True
-        except Exception as e:
-            print(f"Database error in cache_verse_data: {e}")
-            return False
-
-    def validate_verse_input(self, chapter: int, verse_input: str) -> Tuple[bool, Union[str, Tuple[int, str]]]:
-        """Validate chapter and verse input"""
-        if chapter not in self.BG_CHAPTER_INFO:
-            return (False, f"Invalid chapter. Bhagavad Gītā has 18 chapters (requested {chapter})")
-        
-        chapter_data = self.BG_CHAPTER_INFO[chapter]
+        chapter_data = BG_CHAPTER_INFO[chapter]
         total_verses = chapter_data['total_verses']
-        
+
+        # Handle a verse range (e.g., "20-23")
         if '-' in verse_input:
             try:
                 start, end = sorted(map(int, verse_input.split('-')))
                 if end > total_verses:
-                    return (False, f"Chapter {chapter} has only {total_verses} verses")
+                    return (False, f"Chapter {chapter} only has {total_verses} verses.")
                 
+                # Check if the requested range falls inside any predefined grouped range
                 for r_start, r_end in chapter_data['grouped_ranges']:
                     if start >= r_start and end <= r_end:
-                        return (True, (chapter, f"{r_start}-{r_end}"))  # Valid grouped request
-
-                    if (start <= r_end and end >= r_start):  # Partial overlap detected
-                        return (False, f"Requested verses {start}-{end} overlap with predefined grouped range {r_start}-{r_end}")
+                        # If valid grouped range, use the complete grouped range
+                        return (True, f"{r_start}-{r_end}")
+                    # If there is partial overlap, flag an error
+                    if (start <= r_end and end >= r_start):
+                        return (False, f"Requested verses {start}-{end} overlap with predefined grouped range {r_start}-{r_end}.")
                 
-                return (True, (chapter, f"{start}-{end}"))
-            
+                # If no grouped range issues, assume the input is fine.
+                return (True, f"{start}-{end}")
             except ValueError:
-                return (False, "Invalid verse range format. Use '20-23' or single verse '21'")
+                return (False, "Invalid verse range format. Use for example '20-23' or a single verse like '21'.")
         
+        # Handle a single verse
         try:
-            verse = int(verse_input)
-            if verse > total_verses:
-                return (False, f"Chapter {chapter} has only {total_verses} verses")
+            verse_num = int(verse_input)
+            if verse_num < 1 or verse_num > total_verses:
+                return (False, f"Chapter {chapter} has only {total_verses} verses.")
             
+            # Check if this verse belongs to any grouped range
             for r_start, r_end in chapter_data['grouped_ranges']:
-                if r_start <= verse <= r_end:
-                    return (True, (chapter, f"{r_start}-{r_end}"))
+                if r_start <= verse_num <= r_end:
+                    return (True, f"{r_start}-{r_end}")
             
-            return (True, (chapter, str(verse)))
-        
+            return (True, str(verse_num))
         except ValueError:
             return (False, f"Invalid verse number: {verse_input}")
 
-    async def scrape_verse_data(self, chapter: int, verse_str: str) -> Optional[Dict[str, Any]]:
-        """Scrape verse data from website with proper error handling"""
-        url = f"{self.base_url}/{chapter}/{verse_str}/"
-        try:
-            async with self.session.get(url) as response:
-                if response.status == 404:
-                    print(f"Verse {chapter}.{verse_str} not found on Vedabase. (HTTP 404)")
-                    return None
-                if response.status != 200:
-                    print(f"Error {response.status}: Failed to retrieve data from {url}")
-                    return None
-                
-                html = await response.text()
-                soup = BeautifulSoup(html, 'html.parser')
-                await ctx.send(f"10 {url}")  # Step-by-step
-                
-                verse_data = {
-                    "chapter": chapter,
-                    "verse_range": verse_str,
-                    "verses": {},
-                    "url": url,
-                    "created_at": datetime.utcnow(),
-                    "last_accessed": datetime.utcnow()
-                }
-
-                # Extract verse number from H1 heading
-                h1 = soup.find('h1', {'class': 'text-center'})
-                if h1:
-                    verse_num = h1.text.strip().split('.')[-1].strip()
-                else:
-                    verse_num = verse_str.split('-')[0]  # Fallback to input
-
-                # Devanagari text
-                devanagari_div = soup.find('div', class_='av-devanagari')
-                devanagari = devanagari_div.find('div', class_='text-center').get_text('\n', strip=True) if devanagari_div else "Not available"
-
-                # Transliteration text
-                verse_text_div = soup.find('div', class_='av-verse_text')
-                transliteration = verse_text_div.find('div', class_='italic').get_text('\n', strip=True) if verse_text_div else "Not available"
-
-                # Synonyms text
-                synonyms_div = soup.find('div', class_='av-synonyms')
-                synonyms = synonyms_div.find('div', class_='text-justify').get_text(' ', strip=True) if synonyms_div else "Not available"
-
-                # Translation text
-                translation_div = soup.find('div', class_='av-translation')
-                translation = translation_div.find('div', class_='s-justify').get_text(strip=True) if translation_div else "Not available"
-
-                verse_data["verses"][verse_num] = {
-                    "devanagari": devanagari,
-                    "transliteration": transliteration,
-                    "synonyms": synonyms,
-                    "translation": translation
-                }
-
-                return verse_data
-        except Exception as e:
-            print(f"Scraping error in scrape_verse_data: {e}")
-            return None
-
-
-    def _get_text(self, container, class_name: str, separator: str = " ") -> str:
-        """Helper method to extract text from BeautifulSoup container"""
-        element = container.find(class_=class_name)
-        return element.get_text(separator, strip=True) if element else "Not available"
-
-    async def send_sloka_embed(self, ctx, verse_data: Dict[str, Any], requested_verse: str):
-        """Send verse data as Discord embed with proper fallbacks"""
-        chapter = verse_data["chapter"]
-        verse_str = verse_data["verse_range"]
+    def _get_verse_section(self, soup, class_name):
+        """Helper method to extract verse sections"""
+        section = soup.find('div', class_=class_name)
+        if not section:
+            return "Not available"
         
-        if '-' not in requested_verse:
-            verse_num = requested_verse
-            verse = verse_data["verses"].get(verse_num)
-            
-            # Try different formats if not found
-            if not verse:
-                verse = verse_data["verses"].get(str(int(verse_num)))  # Try as integer string
-            
-            if not verse and '-' in verse_str:
-                # Check if it's part of a grouped range
-                start, end = map(int, verse_str.split('-'))
-                if start <= int(verse_num) <= end:
-                    verse = verse_data["verses"].get(verse_num)
-            
-            if not verse:
-                return await ctx.send("Verse not found in the retrieved data", delete_after=10)
-            
-            embed = discord.Embed(
-                title=f"Bhagavad Gītā {chapter}.{verse_num}",
-                url=verse_data["url"],
-                color=self.user_color
-            )
-            
-            fields = [
-                ("Devanagari", verse["devanagari"]),
-                ("Transliteration", verse["transliteration"]),
-                ("Synonyms", self._truncate_text(verse["synonyms"], 1000)),
-                ("Translation", verse["translation"])
-            ]
-            
-            for name, value in fields:
-                if value and value != "Not available":
-                    embed.add_field(name=name, value=value, inline=False)
-            
-            await ctx.send(embed=embed)
-        else:
-            start, end = map(int, verse_str.split('-')) if '-' in verse_str else (int(verse_str), int(verse_str))
-            verses = [str(v) for v in range(start, end + 1) if str(v) in verse_data["verses"]]
-            
-            if not verses:
-                available_verses = list(verse_data["verses"].keys())
-                return await ctx.send(
-                    f"Requested verses not found. Available verses in this section: {', '.join(available_verses)}", 
-                    delete_after=10
-                )
-            
-            for i in range(0, len(verses), 5):
-                embed = discord.Embed(
-                    title=f"Bhagavad Gītā {chapter}.{verse_str} (Part {i//5 + 1})",
-                    url=verse_data["url"],
-                    color=self.user_color
-                )
-                
-                for v in verses[i:i+5]:
-                    verse = verse_data["verses"][v]
-                    embed.add_field(
-                        name=f"Verse {v}",
-                        value=(
-                            f"**Devanagari:** {verse['devanagari']}\n"
-                            f"**Transliteration:** {verse['transliteration']}\n"
-                            f"**Translation:** {self._truncate_text(verse['translation'], 200)}"
-                        ),
-                        inline=False
-                    )
-                
-                await ctx.send(embed=embed)
-
-
-    def _truncate_text(self, text: str, max_len: int) -> str:
-        """Helper method to truncate long text"""
-        return (text[:max_len] + "...") if len(text) > max_len else text
+        # Handle different section types differently
+        if class_name == 'av-devanagari':
+            text_div = section.find('div', class_='text-center')
+            if text_div:
+                # Replace <br> tags with newlines
+                for br in text_div.find_all('br'):
+                    br.replace_with('\n')
+                return text_div.get_text(strip=False)
+        
+        elif class_name == 'av-verse_text':
+            text_div = section.find('div', class_='italic')
+            if text_div:
+                for br in text_div.find_all('br'):
+                    br.replace_with('\n')
+                return text_div.get_text(strip=False)
+        
+        elif class_name == 'av-synonyms':
+            text_div = section.find('div', class_='text-justify')
+            if text_div:
+                # Clean up synonyms text
+                text = text_div.get_text(' ', strip=True)
+                return ' '.join(text.split())  # Normalize whitespace
+        
+        elif class_name == 'av-translation':
+            text_div = section.find('div', class_='s-justify')
+            if text_div:
+                return text_div.get_text(strip=True)
+        
+        return "Not available"
 
 async def setup(bot):
     await bot.add_cog(BhagavadGita(bot))
