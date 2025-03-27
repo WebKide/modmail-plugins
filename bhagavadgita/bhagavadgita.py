@@ -162,7 +162,6 @@ class BhagavadGita(commands.Cog):
     def validate_verse_input(self, chapter: int, verse_input: str) -> Tuple[bool, Union[str, Tuple[int, str]]]:
         """Validate chapter and verse input"""
         if chapter not in self.BG_CHAPTER_INFO:
-            await ctx.send("10")  # Step-by-step
             return (False, f"Invalid chapter. Bhagavad Gītā has 18 chapters (requested {chapter})")
         
         chapter_data = self.BG_CHAPTER_INFO[chapter]
@@ -170,6 +169,7 @@ class BhagavadGita(commands.Cog):
         
         if '-' in verse_input:
             try:
+                await ctx.send("10")  # Step-by-step
                 start, end = sorted(map(int, verse_input.split('-')))
                 if end > total_verses:
                     return (False, f"Chapter {chapter} has only {total_verses} verses")
