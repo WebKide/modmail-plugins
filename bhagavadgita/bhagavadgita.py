@@ -59,7 +59,8 @@ class BhagavadGita(commands.Cog):
         self.session = aiohttp.ClientSession()
 
     def cog_unload(self):
-        asyncio.run(self.session.close())
+        self.bot.loop.create_task(self.session.close())
+
 
 
     @commands.command(name="bg")
@@ -84,9 +85,9 @@ class BhagavadGita(commands.Cog):
         
         # 3. WEBSITE SCRAPING
         scraped_data = await self.scrape_verse_data(valid_chapter, verse_str)
-        if not scraped_data:
-            return await ctx.send("Failed to retrieve verse data. Please try again later.", delete_after=10)
-        
+        if scraped_data is None:
+            return await ctx.send(f"Verse {valid_chapter}.{verse_str} not found or an error occurred while fetching.", delete_after=10)
+
         # 4. CACHING INTO DATABASE
         await self.cache_verse_data(scraped_data)
         
@@ -94,7 +95,7 @@ class BhagavadGita(commands.Cog):
         await self.send_sloka_embed(ctx, scraped_data, verse)
 
     async def get_cached_verse(self, chapter: int, verse_str: str) -> Optional[Dict[str, Any]]:
-        """Check database for cached verse with proper error handling"""
+        """Check database for cached verse with proper error handling and streamlined grouped range search"""
         try:
             # Try exact match first
             cached_doc = await self.db.find_one({
@@ -110,24 +111,27 @@ class BhagavadGita(commands.Cog):
                 )
                 return cached_doc
             
-            # If single verse not found, check if it's part of a grouped range
+            # If the request is for a single verse, check if it's part of a grouped range
             if '-' not in verse_str:
                 verse_num = int(verse_str)
-                async for doc in self.db.find({"chapter": chapter}):
-                    if '-' in doc["verse_range"]:
-                        start, end = map(int, doc["verse_range"].split('-'))
-                        if start <= verse_num <= end and str(verse_num) in doc.get("verses", {}):
-                            # Update last accessed time for the grouped range
-                            await self.db.update_one(
-                                {"_id": doc["_id"]},
-                                {"$set": {"last_accessed": datetime.utcnow()}}
-                            )
-                            return doc
-        
+                # Query only for documents with a grouped range (i.e. verse_range contains a hyphen)
+                async for doc in self.db.find({
+                    "chapter": chapter,
+                    "verse_range": {"$regex": "-"}
+                }):
+                    start, end = map(int, doc["verse_range"].split('-'))
+                    if start <= verse_num <= end and str(verse_num) in doc.get("verses", {}):
+                        # Update last accessed time for the grouped range
+                        await self.db.update_one(
+                            {"_id": doc["_id"]},
+                            {"$set": {"last_accessed": datetime.utcnow()}}
+                        )
+                        return doc
         except Exception as e:
             print(f"Database error in get_cached_verse: {e}")
         
         return None
+
 
     async def cache_verse_data(self, verse_data: Dict[str, Any]) -> bool:
         """Cache verse data in database with proper error handling"""
@@ -190,7 +194,11 @@ class BhagavadGita(commands.Cog):
         url = f"{self.base_url}/{chapter}/{verse_str}/"
         try:
             async with self.session.get(url) as response:
+                if response.status == 404:
+                    print(f"Verse {chapter}.{verse_str} not found on Vedabase. (HTTP 404)")
+                    return None
                 if response.status != 200:
+                    print(f"Error {response.status}: Failed to retrieve data from {url}")
                     return None
                 
                 html = await response.text()
@@ -218,6 +226,7 @@ class BhagavadGita(commands.Cog):
         except Exception as e:
             print(f"Scraping error in scrape_verse_data: {e}")
             return None
+
 
     def _get_text(self, container, class_name: str, separator: str = " ") -> str:
         """Helper method to extract text from BeautifulSoup container"""
@@ -268,9 +277,12 @@ class BhagavadGita(commands.Cog):
             start, end = map(int, verse_str.split('-')) if '-' in verse_str else (int(verse_str), int(verse_str))
             verses = [str(v) for v in range(start, end + 1) if str(v) in verse_data["verses"]]
             
-            if not verse:
+            if not verses:
                 available_verses = list(verse_data["verses"].keys())
-                return await ctx.send(f"Verse {verse_num} not found. Available verses in this section: {', '.join(available_verses)}", delete_after=10)
+                return await ctx.send(
+                    f"Requested verses not found. Available verses in this section: {', '.join(available_verses)}", 
+                    delete_after=10
+                )
             
             for i in range(0, len(verses), 5):
                 embed = discord.Embed(
@@ -292,6 +304,7 @@ class BhagavadGita(commands.Cog):
                     )
                 
                 await ctx.send(embed=embed)
+
 
     def _truncate_text(self, text: str, max_len: int) -> str:
         """Helper method to truncate long text"""
