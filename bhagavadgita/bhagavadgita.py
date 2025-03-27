@@ -170,7 +170,7 @@ class BhagavadGita(commands.Cog):
         section = soup.find('div', class_=class_name)
         if not section:
             return "Not available"
-                
+        
         # Handle different section types differently
         if class_name == 'av-devanagari':
             text_div = section.find('div', class_='text-center')
@@ -187,29 +187,17 @@ class BhagavadGita(commands.Cog):
                     br.replace_with('\n')
                 return text_div.get_text(strip=False)
 
-        # Handle different section types differently
         elif class_name == 'av-synonyms':
             text_div = section.find('div', class_='text-justify')
             if text_div:
-                # Process each <em> tag to make it italic for Discord
+                # Convert <em> tags to Discord italics
                 for em in text_div.find_all('em'):
-                    em.string = f"_{em.text}_" if em.text else ""
+                    em.replace_with(f"_{em.get_text(strip=True)}_")
                 
-                # Get the text while preserving the formatting
-                synonyms_text = text_div.get_text(' ', strip=True)
-                # Clean up any extra spaces around underscores
-                synonyms_text = synonyms_text.replace(' _', '_').replace('_ ', '_')
-                return synonyms_text
-
-        '''
-        elif class_name == 'av-synonyms':
-            text_div = section.find('div', class_='text-justify')
-            if text_div:
-                # Clean up synonyms text
+                # Get the cleaned text
                 text = text_div.get_text(' ', strip=True)
                 return ' '.join(text.split())  # Normalize whitespace
-        '''
-        
+
         elif class_name == 'av-translation':
             text_div = section.find('div', class_='s-justify')
             if text_div:
