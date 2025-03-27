@@ -107,7 +107,7 @@ class BhagavadGita(commands.Cog):
                 embed.set_footer(text="Retrieved")
 
                 embed.add_field(name="Devanagari", value=devanagari, inline=False)
-                embed.add_field(name=f"Text {verse}", value=f"**verse_text}**", inline=False)
+                embed.add_field(name=f"Text {verse}", value=f"**{verse_text}**", inline=False)
                 embed.add_field(name="Synonyms", value=f"> {synonyms}", inline=False)
                 embed.add_field(name="Translation", value=f"**{translation}**", inline=False)
 
