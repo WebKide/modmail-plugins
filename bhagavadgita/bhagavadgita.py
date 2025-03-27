@@ -214,6 +214,7 @@ class BhagavadGita(commands.Cog):
                 }
                 
                 for container in soup.find_all(class_="r-verse"):
+                    verse_num = verse_num.strip('.: ')
                     verse_num = container.find(class_="r-verse__num").get_text(strip=True)
                     verse_data["verses"][verse_num] = {
                         "devanagari": self._get_text(container, "av-devanagari"),
