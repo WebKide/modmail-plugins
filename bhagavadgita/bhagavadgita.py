@@ -57,7 +57,9 @@ class BhagavadGita(commands.Cog):
 
     @commands.command(aliases=['gita'], no_pm=True)
     async def bg(self, ctx, chapter: int, verse: str):
-        """Retrieve a Bhagavad Gita verse from Vedabase.io"""
+        """Retrieve a Bhagavad Gita śloka from Vedabase.io
+        - Supports Devanagari, Sanskrit, Synonyms and Translation
+        """
         
         # --- Input Validation Start ---
         is_valid, validated_verse_or_error = self.validate_input(chapter, verse)
@@ -99,17 +101,19 @@ class BhagavadGita(commands.Cog):
                     timestamp=datetime.utcnow()
                 )
 
+                '''
                 embed.set_author(
                     name="Bhagavad Gītā — As It Is",
                     url="https://vedabase.io/en/library/bg/",
                     icon_url="https://asitis.com/gif/bgcover.jpg"  # Book cover
                 )
+                '''
                 embed.set_footer(text="Retrieved")
 
-                embed.add_field(name="Devanagari", value=devanagari, inline=False)
-                embed.add_field(name=f"Text {verse}", value=f"**{verse_text}**", inline=False)
-                embed.add_field(name="Synonyms", value=f"> {synonyms}", inline=False)
-                embed.add_field(name="Translation", value=f"**```py\n{translation}\n```**", inline=False)
+                embed.add_field(name="Devanagari", value=self._truncate_text(devanagari), inline=False)
+                embed.add_field(name=f"Text {verse}", value=self._truncate_text(f"**{verse_text}**"), inline=False)
+                embed.add_field(name="Synonyms", value=self._truncate_text(f"> {synonyms}"), inline=False)
+                embed.add_field(name="Translation", value=self._truncate_text(f"**```py\n{translation}\n```**"), inline=False)
 
                 await ctx.send(embed=embed)
 
@@ -217,6 +221,10 @@ class BhagavadGita(commands.Cog):
                 return text_div.get_text(strip=True)
         
         return "Not found: 404"
+
+    def _truncate_text(self, text: str, max_len: int = 1024) -> str:
+        """Helper method to truncate text for Discord embed limits"""
+        return text[:max_len-3] + "..." if len(text) > max_len else text
 
 async def setup(bot):
     await bot.add_cog(BhagavadGita(bot))
