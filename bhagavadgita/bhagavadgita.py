@@ -92,10 +92,10 @@ class BhagavadGita(commands.Cog):
 
                 # Create embed
                 embed = discord.Embed(
-                    title=f"Chapter {chapter}: {chapter_title}",
+                    title=chapter_title,
                     colour=discord.Colour(0x1cfbc3),
                     url=url,
-                    description=chapter_title,
+                    description=None,
                     timestamp=datetime.utcnow()
                 )
 
@@ -109,7 +109,7 @@ class BhagavadGita(commands.Cog):
                 embed.add_field(name="Devanagari", value=devanagari, inline=False)
                 embed.add_field(name=f"Text {verse}", value=f"**{verse_text}**", inline=False)
                 embed.add_field(name="Synonyms", value=f"> {synonyms}", inline=False)
-                embed.add_field(name="Translation", value=f"**{translation}**", inline=False)
+                embed.add_field(name="Translation", value=f"**```py\n{translation}\n```**", inline=False)
 
                 await ctx.send(embed=embed)
 
@@ -216,7 +216,7 @@ class BhagavadGita(commands.Cog):
             if text_div:
                 return text_div.get_text(strip=True)
         
-        return "Not available"
+        return "Not found: 404"
 
 async def setup(bot):
     await bot.add_cog(BhagavadGita(bot))
