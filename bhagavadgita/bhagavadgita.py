@@ -104,11 +104,11 @@ class BhagavadGita(commands.Cog):
                     url="https://vedabase.io/en/library/bg/",
                     icon_url="https://asitis.com/gif/bgcover.jpg"  # Book cover
                 )
-                embed.set_footer(text="Retrieved in")
+                embed.set_footer(text="Retrieved")
 
                 embed.add_field(name="Devanagari", value=devanagari, inline=False)
-                embed.add_field(name="Verse text", value=verse_text, inline=False)
-                embed.add_field(name="Synonyms", value=synonyms, inline=False)
+                embed.add_field(name=f"Text {verse}", value=f"**verse_text}**", inline=False)
+                embed.add_field(name="Synonyms", value=f"> {synonyms}", inline=False)
                 embed.add_field(name="Translation", value=f"**{translation}**", inline=False)
 
                 await ctx.send(embed=embed)
