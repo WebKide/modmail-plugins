@@ -168,8 +168,8 @@ class BhagavadGita(commands.Cog):
         total_verses = chapter_data['total_verses']
         
         if '-' in verse_input:
+            await ctx.send("10")  # Step-by-step
             try:
-                await ctx.send("10")  # Step-by-step
                 start, end = sorted(map(int, verse_input.split('-')))
                 if end > total_verses:
                     return (False, f"Chapter {chapter} has only {total_verses} verses")
