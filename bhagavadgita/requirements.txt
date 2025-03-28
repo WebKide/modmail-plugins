@@ -1,3 +1,4 @@
 aiohttp
 bs4
 typing
+fake_useragent
