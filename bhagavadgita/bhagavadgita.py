@@ -19,8 +19,14 @@ SOFTWARE.
 """
 
 import discord
-from bs4 import BeautifulSoup
 import aiohttp
+import random
+import asyncio
+import time
+
+from bs4 import BeautifulSoup
+from fake_useragent import UserAgent  # pip install fake-useragent
+from typing import Tuple, Union
 from discord.ext import commands
 from datetime import datetime
 
@@ -50,83 +56,132 @@ class BhagavadGita(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.base_url = "https://vedabase.io/en/library/bg"
-        self.session = aiohttp.ClientSession()
+        self.ua = UserAgent()
+        self.session = None
+        self.last_request_time = 0
+        self.request_delay = 2  # seconds between requests
+        
+    async def ensure_session(self):
+        """Initialize session with proper headers if not exists"""
+        if not self.session or self.session.closed:
+            headers = {
+                'User-Agent': self.ua.random,
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                'Accept-Language': 'en-US,en;q=0.5',
+                'Referer': 'https://vedabase.io/',
+                'DNT': '1',
+                'Connection': 'keep-alive'
+            }
+            timeout = aiohttp.ClientTimeout(total=10)
+            self.session = aiohttp.ClientSession(headers=headers, timeout=timeout)
 
-    def cog_unload(self):
-        self.bot.loop.create_task(self.session.close())
+    async def scrape_with_retry(self, url, max_retries=3):
+        """Robust scraping with retry logic"""
+        await self.ensure_session()
+        
+        for attempt in range(max_retries):
+            try:
+                # Respect crawl delay
+                elapsed = time.time() - self.last_request_time
+                if elapsed < self.request_delay:
+                    await asyncio.sleep(self.request_delay - elapsed)
+                
+                self.last_request_time = time.time()
+                
+                # Rotate user agent
+                self.session.headers.update({'User-Agent': self.ua.random})
+                
+                async with self.session.get(url) as response:
+                    if response.status == 429:
+                        retry_after = int(response.headers.get('Retry-After', 5))
+                        await asyncio.sleep(retry_after)
+                        continue
+                        
+                    if response.status == 403:
+                        raise ValueError("Access forbidden - potentially blocked")
+                        
+                    if response.status != 200:
+                        continue
+                        
+                    return await response.text()
+                    
+            except (aiohttp.ClientError, asyncio.TimeoutError) as e:
+                if attempt == max_retries - 1:
+                    raise
+                await asyncio.sleep(1 + random.random())
+                
+        raise ValueError(f"Failed after {max_retries} attempts")
 
+    # +------------------------------------------------------------+
+    # |                     Bhagavad gītā CMD                      |
+    # +------------------------------------------------------------+
     @commands.command(aliases=['gita'], no_pm=True)
     async def bg(self, ctx, chapter: int, verse: str):
         """Retrieve a Bhagavad Gita śloka from Vedabase.io
         - Supports Devanagari, Sanskrit, Synonyms and Translation
         """
         
-        # --- Input Validation Start ---
+        # Input Validation
         is_valid, validated_verse_or_error = self.validate_input(chapter, verse)
         if not is_valid:
             return await ctx.send(validated_verse_or_error)
-        # Use the possibly modified verse string (e.g. a snapped grouped range)
+        
         verse = validated_verse_or_error
-        # --- Input Validation End ---
-
         url = f"{self.base_url}/{chapter}/{verse}/"
         
         try:
-            async with self.session.get(url) as response:
-                if response.status != 200:
-                    return await ctx.send(f"Couldn't retrieve verse {chapter}.{verse}. Status: {response.status}")
-                
-                html = await response.text()
-                soup = BeautifulSoup(html, 'html.parser')
+            # Use scrape_with_retry instead of direct session call
+            html = await self.scrape_with_retry(url)
+            soup = BeautifulSoup(html, 'html.parser')
 
-                # Get chapter title from breadcrumbs
-                breadcrumbs = soup.find('nav', {'aria-label': 'Breadcrumb'})
-                chapter_title = "Unknown Chapter"
-                if breadcrumbs:
-                    last_crumb = breadcrumbs.find_all('li')[-1]
-                    chapter_title = last_crumb.text.strip().replace('»', '').strip()
+            # Get chapter title from breadcrumbs
+            breadcrumbs = soup.find('nav', {'aria-label': 'Breadcrumb'})
+            chapter_title = "Unknown Chapter"
+            if breadcrumbs:
+                last_crumb = breadcrumbs.find_all('li')[-1]
+                chapter_title = last_crumb.text.strip().replace('»', '').strip()
 
-                # Get verse data
-                devanagari = self._get_verse_section(soup, 'av-devanagari')
-                verse_text = self._get_verse_section(soup, 'av-verse_text')
-                synonyms = self._get_verse_section(soup, 'av-synonyms')
-                translation = self._get_verse_section(soup, 'av-translation')
+            # Get verse data
+            devanagari = self._get_verse_section(soup, 'av-devanagari')
+            verse_text = self._get_verse_section(soup, 'av-verse_text')
+            synonyms = self._get_verse_section(soup, 'av-synonyms')
+            translation = self._get_verse_section(soup, 'av-translation')
 
-                # Create embed
-                embed = discord.Embed(
-                    title=chapter_title,
-                    colour=discord.Colour(0x1cfbc3),
-                    url=url,
-                    description=None,
-                    timestamp=datetime.utcnow()
-                )
+            # Create and send embed
+            embed = discord.Embed(
+                title=chapter_title,
+                colour=discord.Colour(0x1cfbc3),
+                url=url,
+                timestamp=datetime.utcnow()
+            )
+            embed.set_footer(text="Retrieved")
 
-                '''
-                embed.set_author(
-                    name="Bhagavad Gītā — As It Is",
-                    url="https://vedabase.io/en/library/bg/",
-                    icon_url="https://asitis.com/gif/bgcover.jpg"  # Book cover
-                )
-                '''
-                embed.set_footer(text="Retrieved")
+            # Add fields with smart splitting
+            await self._add_field_safe(embed, "Devanagari", devanagari)
+            await self._add_field_safe(embed, f"Text {verse}", f"**{verse_text}**")
+            await self._add_field_safe(embed, "Synonyms", f"> {synonyms}")
+            await self._add_field_safe(embed, "Translation", f"**```\n{translation}\n```**")
 
-                embed.add_field(name="Devanagari", value=self._truncate_text(devanagari), inline=False)
-                embed.add_field(name=f"Text {verse}", value=self._truncate_text(f"**{verse_text}**"), inline=False)
-                embed.add_field(name="Synonyms", value=self._truncate_text(f"> {synonyms}"), inline=False)
-                embed.add_field(name="Translation", value=self._truncate_text(f"**```py\n{translation}\n```**"), inline=False)
-
-                await ctx.send(embed=embed)
+            await ctx.send(embed=embed)
 
         except Exception as e:
-            await ctx.send(f"An error occurred: {str(e)}")
+            await ctx.send(f"🚫 Error retrieving verse: \n{str(e)}")
+            if hasattr(self.bot, 'logger'):
+                self.bot.logger.error(f"BG command failed: \n\n{e}", exc_info=True)
 
+    def cog_unload(self):
+        if self.session:
+            self.bot.loop.create_task(self.session.close())
+
+    # +------------------------------------------------------------+
+    # |                 FUNCTION TO SCRAPE WEBSITE                 |
+    # +------------------------------------------------------------+
     def validate_input(self, chapter: int, verse_input: str):
         """
         Validate chapter and verse input against BG_CHAPTER_INFO.
         Returns a tuple (is_valid, result) where result is either an error message
         or the validated/modified verse string.
         """
-        # Check if chapter exists
         if chapter not in BG_CHAPTER_INFO:
             return (False, f"Invalid chapter. Bhagavad Gītā has 18 chapters (requested {chapter}).")
         
@@ -140,16 +195,12 @@ class BhagavadGita(commands.Cog):
                 if end > total_verses:
                     return (False, f"Chapter {chapter} only has {total_verses} verses.")
                 
-                # Check if the requested range falls inside any predefined grouped range
                 for r_start, r_end in chapter_data['grouped_ranges']:
                     if start >= r_start and end <= r_end:
-                        # If valid grouped range, use the complete grouped range
                         return (True, f"{r_start}-{r_end}")
-                    # If there is partial overlap, flag an error
                     if (start <= r_end and end >= r_start):
                         return (False, f"Requested verses {start}-{end} overlap with predefined grouped range {r_start}-{r_end}.")
                 
-                # If no grouped range issues, assume the input is fine.
                 return (True, f"{start}-{end}")
             except ValueError:
                 return (False, "Invalid verse range format. Use for example '20-23' or a single verse like '21'.")
@@ -160,7 +211,6 @@ class BhagavadGita(commands.Cog):
             if verse_num < 1 or verse_num > total_verses:
                 return (False, f"Chapter {chapter} has only {total_verses} verses.")
             
-            # Check if this verse belongs to any grouped range
             for r_start, r_end in chapter_data['grouped_ranges']:
                 if r_start <= verse_num <= r_end:
                     return (True, f"{r_start}-{r_end}")
@@ -175,11 +225,9 @@ class BhagavadGita(commands.Cog):
         if not section:
             return "Not available"
         
-        # Handle different section types differently
         if class_name == 'av-devanagari':
             text_div = section.find('div', class_='text-center')
             if text_div:
-                # Replace <br> tags with newlines
                 for br in text_div.find_all('br'):
                     br.replace_with('\n')
                 return text_div.get_text(strip=False)
@@ -194,25 +242,20 @@ class BhagavadGita(commands.Cog):
         elif class_name == 'av-synonyms':
             text_div = section.find('div', class_='text-justify')
             if text_div:
-                # Handle hyphenated terms by finding all <a> tags first
                 for a in text_div.find_all('a'):
                     if '-' in a.text:
-                        # Replace parent span with the hyphenated term wrapped in underscores
                         parent_span = a.find_parent('span', class_='inline')
                         if parent_span:
                             hyphenated_term = '_' + a.text + '_'
                             parent_span.replace_with(hyphenated_term)
                 
-                # Now handle remaining <em> tags
                 for em in text_div.find_all('em'):
                     em.replace_with(f"_{em.get_text(strip=True)}_")
                 
-                # Get the cleaned text and fix spacing
                 text = text_div.get_text(' ', strip=True)
-                # Fix specific formatting cases
-                text = text.replace(' - ', '-')  # Fix hyphen spacing
-                text = text.replace(' ;', ';')   # Fix semicolon spacing
-                text = text.replace(' .', '.')   # Fix period spacing
+                text = text.replace(' - ', '-')
+                text = text.replace(' ;', ';')
+                text = text.replace(' .', '.')
                 return text
 
         elif class_name == 'av-translation':
@@ -222,9 +265,34 @@ class BhagavadGita(commands.Cog):
         
         return "Not found: 404"
 
-    def _truncate_text(self, text: str, max_len: int = 1024) -> str:
-        """Helper method to truncate text for Discord embed limits"""
-        return text[:max_len-3] + "..." if len(text) > max_len else text
+    def _split_content(self, text: str, max_len: int = 1020) -> list:
+        """Smart content splitting at natural breaks"""
+        if len(text) <= max_len:
+            return [text]
+        
+        chunks = []
+        while text:
+            split_pos = max(
+                text.rfind('\n', 0, max_len),
+                text.rfind(';', 0, max_len),
+                text.rfind(' ', 0, max_len)
+            )
+            
+            if split_pos <= 0:
+                split_pos = max_len
+            
+            chunks.append(text[:split_pos].strip())
+            text = text[split_pos:].strip()
+        
+        return chunks
+
+    async def _add_field_safe(self, embed, name, value, inline=False):
+        """Add field with automatic splitting if needed"""
+        chunks = self._split_content(value)
+        embed.add_field(name=name, value=chunks[0], inline=inline)
+        for chunk in chunks[1:]:
+            embed.add_field(name="↳ Continued", value=chunk, inline=inline)
 
 async def setup(bot):
     await bot.add_cog(BhagavadGita(bot))
+    
