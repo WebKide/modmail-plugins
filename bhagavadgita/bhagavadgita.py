@@ -149,9 +149,10 @@ class BhagavadGita(commands.Cog):
 
             # Create and send embed
             embed = discord.Embed(
-                title=chapter_title,
+                title="Bhagavad Gītā — As It Is",
                 colour=discord.Colour(0x1cfbc3),
                 url=url,
+                description=chapter_title,
                 timestamp=datetime.utcnow()
             )
             embed.set_footer(text="Retrieved")
