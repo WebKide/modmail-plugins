@@ -32,24 +32,24 @@ from datetime import datetime
 
 # Chapter info dict
 BG_CHAPTER_INFO = {
-    1: {'total_verses': 46, 'grouped_ranges': [(16, 18), (21, 22), (32, 35), (37, 38)]},
-    2: {'total_verses': 72, 'grouped_ranges': [(42, 43)]},
-    3: {'total_verses': 43, 'grouped_ranges': []},
-    4: {'total_verses': 42, 'grouped_ranges': []},
-    5: {'total_verses': 29, 'grouped_ranges': [(8, 9), (27, 28)]},
-    6: {'total_verses': 47, 'grouped_ranges': [(11, 12), (13, 14), (20, 23)]},
-    7: {'total_verses': 30, 'grouped_ranges': []},
-    8: {'total_verses': 28, 'grouped_ranges': []},
-    9: {'total_verses': 34, 'grouped_ranges': []},
-    10: {'total_verses': 42, 'grouped_ranges': [(4, 5), (12, 13)]},
-    11: {'total_verses': 55, 'grouped_ranges': [(10, 11), (26, 27), (41, 42)]},
-    12: {'total_verses': 20, 'grouped_ranges': [(3, 4), (6, 7), (13, 14), (18, 19)]},
-    13: {'total_verses': 35, 'grouped_ranges': [(1, 2), (6, 7), (8, 12)]},
-    14: {'total_verses': 27, 'grouped_ranges': [(22, 25)]},
-    15: {'total_verses': 20, 'grouped_ranges': [(3, 4)]},
-    16: {'total_verses': 24, 'grouped_ranges': [(1, 3), (11, 12), (13, 15)]},
-    17: {'total_verses': 28, 'grouped_ranges': [(7, 9), (14, 16), (23, 24)]},
-    18: {'total_verses': 78, 'grouped_ranges': [(5, 6), (26, 27)]}
+    1: {'total_verses': 46, 'grouped_ranges': [(16, 18), (21, 22), (32, 35), (37, 38)], 'chapter_title': '1. Observing the Armies on the Battlefield of Kurukṣetra'},
+    2: {'total_verses': 72, 'grouped_ranges': [(42, 43)], 'chapter_title': '2. Contents of the Gītā Summarized'},
+    3: {'total_verses': 43, 'grouped_ranges': [], 'chapter_title': '3. Karma-yoga'},
+    4: {'total_verses': 42, 'grouped_ranges': [], 'chapter_title': '4. Transcendental Knowledge'},
+    5: {'total_verses': 29, 'grouped_ranges': [(8, 9), (27, 28)], 'chapter_title': '5. Karma-yoga — Action in Kṛṣṇa Consciousness'},
+    6: {'total_verses': 47, 'grouped_ranges': [(11, 12), (13, 14), (20, 23)], 'chapter_title': '6. Sāṅkhya-yoga'},
+    7: {'total_verses': 30, 'grouped_ranges': [], 'chapter_title': '7. Knowledge of the Absolute'},
+    8: {'total_verses': 28, 'grouped_ranges': [], 'chapter_title': '8. Attaining the Supreme'},
+    9: {'total_verses': 34, 'grouped_ranges': [], 'chapter_title': '9. The Most Confidential Knowledge'},
+    10: {'total_verses': 42, 'grouped_ranges': [(4, 5), (12, 13)], 'chapter_title': '10. The Opulence of the Absolute'},
+    11: {'total_verses': 55, 'grouped_ranges': [(10, 11), (26, 27), (41, 42)], 'chapter_title': '11. The Universal Form'},
+    12: {'total_verses': 20, 'grouped_ranges': [(3, 4), (6, 7), (13, 14), (18, 19)], 'chapter_title': '12. Devotional Service'},
+    13: {'total_verses': 35, 'grouped_ranges': [(1, 2), (6, 7), (8, 12)], 'chapter_title': '13. Nature, the Enjoyer, and Consciousness'},
+    14: {'total_verses': 27, 'grouped_ranges': [(22, 25)], 'chapter_title': '14. The Three Modes of Material Nature'},
+    15: {'total_verses': 20, 'grouped_ranges': [(3, 4)], 'chapter_title': '15. The Yoga of the Supreme Person'},
+    16: {'total_verses': 24, 'grouped_ranges': [(1, 3), (11, 12), (13, 15)], 'chapter_title': '16. The Divine and Demoniac Natures'},
+    17: {'total_verses': 28, 'grouped_ranges': [(7, 9), (14, 16), (23, 24)], 'chapter_title': '17. The Divisions of Faith'},
+    18: {'total_verses': 78, 'grouped_ranges': [(5, 6), (26, 27), 'chapter_title': '18. Conclusion-The Perfection of Renunciation']}
 }
 
 class BhagavadGita(commands.Cog):
@@ -112,6 +112,12 @@ class BhagavadGita(commands.Cog):
                 
         raise ValueError(f"Failed after {max_retries} attempts")
 
+    def get_chapter_title(self, chapter: int) -> str:
+        """Retrieve the formatted chapter title from BG_CHAPTER_INFO"""
+        if chapter not in BG_CHAPTER_INFO:
+            return f"Chapter {chapter}"
+        return BG_CHAPTER_INFO[chapter].get('chapter_title', f"Chapter {chapter}") 
+        
     # +------------------------------------------------------------+
     # |                     Bhagavad gītā CMD                      |
     # +------------------------------------------------------------+
@@ -133,13 +139,9 @@ class BhagavadGita(commands.Cog):
             # Use scrape_with_retry instead of direct session call
             html = await self.scrape_with_retry(url)
             soup = BeautifulSoup(html, 'html.parser')
-
-            # Get chapter title from breadcrumbs
-            breadcrumbs = soup.find('nav', {'aria-label': 'Breadcrumb'})
-            chapter_title = "Unknown Chapter"
-            if breadcrumbs:
-                last_crumb = breadcrumbs.find_all('li')[-1]
-                chapter_title = last_crumb.text.strip().replace('»', '').strip()
+            
+            # Get chapter title from our dictionary instead of scraping
+            chapter_title = self.get_chapter_title(chapter)
 
             # Get verse data
             devanagari = self._get_verse_section(soup, 'av-devanagari')
@@ -147,15 +149,18 @@ class BhagavadGita(commands.Cog):
             synonyms = self._get_verse_section(soup, 'av-synonyms')
             translation = self._get_verse_section(soup, 'av-translation')
 
+            # Time taken to retrieve verse
+            distance = self.bot or self.bot.message
+            duration = f'Retrieved in {distance.ws.latency * 1000:.2f} ms'
+            
             # Create and send embed
             embed = discord.Embed(
-                title="Bhagavad Gītā — As It Is",
+                title="Bhagavad Gītā — As It Is (1972)",
                 colour=discord.Colour(0x1cfbc3),
                 url=url,
-                description=chapter_title,
-                timestamp=datetime.utcnow()
+                description=f"`{chapter_title}`"
             )
-            embed.set_footer(text="Retrieved")
+            embed.set_footer(text=duration)
 
             # Add fields with smart splitting
             await self._add_field_safe(embed, "Devanagari", devanagari)
