@@ -115,8 +115,8 @@ class BhagavadGita(commands.Cog):
     def get_chapter_title(self, chapter: int) -> str:
         """Retrieve the formatted chapter title from BG_CHAPTER_INFO"""
         if chapter not in BG_CHAPTER_INFO:
-            return f"Chapter {chapter}"
-        return BG_CHAPTER_INFO[chapter].get('chapter_title', f"Chapter {chapter}") 
+            return f"Number {chapter}"
+        return BG_CHAPTER_INFO[chapter].get('chapter_title', f"Number {chapter}") 
         
     # +------------------------------------------------------------+
     # |                     Bhagavad gītā CMD                      |
@@ -151,14 +151,14 @@ class BhagavadGita(commands.Cog):
 
             # Time taken to retrieve verse
             distance = self.bot or self.bot.message
-            duration = f'Retrieved in {distance.ws.latency * 1000:.2f} ms'
+            duration = f'Śloka retrieved in {distance.ws.latency * 1000:.2f} ms'
             
             # Create and send embed
             embed = discord.Embed(
                 title="Bhagavad Gītā — As It Is (1972)",
                 colour=discord.Colour(0x1cfbc3),
                 url=url,
-                description=f"`{chapter_title}`"
+                description=f"**Chapter {chapter_title}**"
             )
             embed.set_footer(text=duration)
 
@@ -297,7 +297,7 @@ class BhagavadGita(commands.Cog):
         chunks = self._split_content(value)
         embed.add_field(name=name, value=chunks[0], inline=inline)
         for chunk in chunks[1:]:
-            embed.add_field(name="↳ Continued", value=chunk, inline=inline)
+            embed.add_field(name="↳", value=chunk, inline=inline)
 
 async def setup(bot):
     await bot.add_cog(BhagavadGita(bot))
