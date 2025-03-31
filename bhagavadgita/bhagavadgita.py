@@ -155,7 +155,7 @@ class BhagavadGita(commands.Cog):
             
             # Create and send embed
             embed = discord.Embed(
-                title="Bhagavad Gītā — As It Is (1972)",
+                title=f"Bhagavad Gītā — As It Is (1972) [{chapter}.{verse}]",
                 colour=discord.Colour(0x1cfbc3),
                 url=url,
                 description=f"**Chapter {chapter_title}**"
@@ -164,9 +164,9 @@ class BhagavadGita(commands.Cog):
 
             # Add fields with smart splitting
             await self._add_field_safe(embed, "देवनागरी:", devanagari)
-            await self._add_field_safe(embed, f"Text {verse}:", f"**{verse_text}**")
-            await self._add_field_safe(embed, "Synonyms:", f"> {synonyms}")
-            await self._add_field_safe(embed, "Translation:", f"**```\n{translation}\n```**")
+            await self._add_field_safe(embed, f"TEXT {verse}:", f"**{verse_text}**")
+            await self._add_field_safe(embed, "SYNONYMS:", synonyms)
+            await self._add_field_safe(embed, "TRANSLATION:", f"**```\n{translation}\n```**")
 
             await ctx.send(embed=embed)
 
