@@ -35,7 +35,7 @@ class Html2Json(commands.Cog):
         except Exception as e:
             await ctx.send(f"An error occurred: {str(e)}")
 
-    def html_to_json_converter(self, html_content):  # Moved inside class
+    def html_to_json_converter(self, html_content):
         soup = BeautifulSoup(html_content, 'html.parser')
         
         result = {
@@ -46,7 +46,7 @@ class Html2Json(commands.Cog):
         # Get chapter description
         chapter_desc = soup.find('div', class_='Chapter-Desc')
         if chapter_desc:
-            result["Chapter-Desc"] = chapter_desc.get_text(strip=True)
+            result["Chapter-Desc"] = chapter_desc.get_text(" ", strip=True)
         
         # Process each verse block
         current_verse = {}
@@ -55,13 +55,13 @@ class Html2Json(commands.Cog):
                 continue
                 
             class_name = element['class'][0]
-            text = element.get_text(strip=True)
+            text = element.get_text(" ", strip=True)  # Preserve spaces with " " separator
             
             if not text:
                 continue
                 
             if class_name == 'Textnum':
-                if current_verse:  # Save previous verse before starting new one
+                if current_verse:
                     result["Verses"].append(current_verse)
                     current_verse = {}
                 current_verse["Textnum"] = text
@@ -74,13 +74,17 @@ class Html2Json(commands.Cog):
             elif class_name == 'Synonyms-Section':
                 current_verse["Synonyms-Section"] = text
             elif class_name == 'Synonyms-SA':
-                # Clean up synonyms text
-                synonyms = re.sub(r'\s+', ' ', text).strip()
-                synonyms = re.sub(r'\s*-\s*', ' — ', synonyms)
-                current_verse["Synonyms-SA"] = synonyms
+                # Improved synonym cleaning with proper spacing
+                text = re.sub(r'\s+', ' ', text)  # Normalize whitespace
+                text = re.sub(r'\s*—\s*', ' — ', text)  # Consistent spacing around em-dash
+                text = re.sub(r'(\w)—(\w)', r'\1 — \2', text)  # Fix missing spaces around dashes
+                current_verse["Synonyms-SA"] = text.strip()
             elif class_name == 'Titles':
                 current_verse["Titles"] = text
             elif class_name == 'Translation':
+                # Fix spacing in translation
+                text = re.sub(r'(\w)([A-Za-zā-ṣ])', r'\1 \2', text)  # Add space between words
+                text = re.sub(r'\s+', ' ', text).strip()
                 current_verse["Translation"] = text
         
         # Add the last verse
