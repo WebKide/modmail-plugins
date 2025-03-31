@@ -249,20 +249,19 @@ class BhagavadGita(commands.Cog):
         elif class_name == 'av-synonyms':
             text_div = section.find('div', class_='text-justify')
             if text_div:
-                for a in text_div.find_all('a'):
-                    if '-' in a.text:
-                        parent_span = a.find_parent('span', class_='inline')
-                        if parent_span:
-                            hyphenated_term = '_' + a.text + '_'
-                            parent_span.replace_with(hyphenated_term)
+                # [existing processing code...]
                 
-                for em in text_div.find_all('em'):
-                    em.replace_with(f"_{em.get_text(strip=True)}_")
-                
+                # After processing, split at semicolons first
                 text = text_div.get_text(' ', strip=True)
                 text = text.replace(' - ', '-')
                 text = text.replace(' ;', ';')
                 text = text.replace(' .', '.')
+                
+                # Split at semicolons if they exist
+                if ';' in text:
+                    parts = [p.strip() + ';' for p in text.split(';') if p.strip()]
+                    parts[-1] = parts[-1].rstrip(';')  # Remove last semicolon
+                    return ' '.join(parts) if len(parts) == 1 else parts
                 return text
 
         elif class_name == 'av-translation':
@@ -277,29 +276,49 @@ class BhagavadGita(commands.Cog):
         if len(text) <= max_len:
             return [text]
         
+        # Preferred split points in order of priority
+        split_chars = ['\n', ';', '. ', ', ', ' - ', ' ']
+        
         chunks = []
         while text:
-            split_pos = max(
-                text.rfind('\n', 0, max_len),
-                text.rfind(';', 0, max_len),
-                text.rfind(' ', 0, max_len)
-            )
+            # Find the best possible split point
+            split_pos = -1
+            for char in split_chars:
+                temp_pos = text.rfind(char, 0, max_len)
+                if temp_pos > split_pos:
+                    split_pos = temp_pos
             
+            # If no good split point found, split at max_len
             if split_pos <= 0:
                 split_pos = max_len
+            else:
+                # Include the split character (except for spaces)
+                if text[split_pos] not in [' ', '\n']:
+                    split_pos += len(text[split_pos:].lstrip())
             
-            chunks.append(text[:split_pos].strip())
+            chunk = text[:split_pos].strip()
+            # Remove any trailing punctuation that doesn't belong
+            if chunk.endswith(('.', ',', ';', ':')):
+                chunk = chunk[:-1].strip()
+            
+            chunks.append(chunk)
             text = text[split_pos:].strip()
         
         return chunks
 
     async def _add_field_safe(self, embed, name, value, inline=False):
         """Add field with automatic splitting if needed"""
-        chunks = self._split_content(value)
-        embed.add_field(name=name, value=chunks[0], inline=inline)
-        for chunk in chunks[1:]:
-            embed.add_field(name="↳", value=chunk, inline=inline)
+        if isinstance(value, list):  # Already pre-split (like synonyms)
+            if not value:
+                return
+            embed.add_field(name=name, value=value[0], inline=inline)
+            for chunk in value[1:]:
+                embed.add_field(name="↳", value=chunk, inline=inline)
+        else:  # Regular text
+            chunks = self._split_content(value)
+            embed.add_field(name=name, value=chunks[0], inline=inline)
+            for chunk in chunks[1:]:
+                embed.add_field(name="↳", value=chunk, inline=inline)
 
 async def setup(bot):
     await bot.add_cog(BhagavadGita(bot))
-    
