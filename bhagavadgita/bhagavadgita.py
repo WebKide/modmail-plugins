@@ -239,7 +239,7 @@ class BhagavadGita(commands.Cog):
                 return text_div.get_text(strip=False)
         
         elif class_name == 'av-verse_text':
-            text_div = section.find('div', class_='em:mb-4')  # looking for the right class that will retrieve full content
+            text_div = section.find('div', class_='em')  # looking for the right class that will retrieve full content
             if text_div:
                 for br in text_div.find_all('br'):
                     br.replace_with('\n')
