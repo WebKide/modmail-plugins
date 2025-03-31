@@ -238,12 +238,13 @@ class BhagavadGita(commands.Cog):
                     br.replace_with('\n')
                 return text_div.get_text(strip=False)
         
-        elif class_name == 'av-verse_text':
-            text_div = section.find('div', class_='em')  # looking for the right class that will retrieve full content
-            if text_div:
-                for br in text_div.find_all('br'):
+        elif class_name == 'av-verse_text':  # new method to get all the verses from the <div>
+            verse_parts = []
+            for italic_div in section.find_all('div', class_='italic'):
+                for br in italic_div.find_all('br'):
                     br.replace_with('\n')
-                return text_div.get_text(strip=False)
+                verse_parts.append(italic_div.get_text(strip=False))
+            return '\n'.join(verse_parts)
 
         elif class_name == 'av-synonyms':
             text_div = section.find('div', class_='text-justify')
