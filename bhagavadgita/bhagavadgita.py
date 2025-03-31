@@ -163,10 +163,10 @@ class BhagavadGita(commands.Cog):
             embed.set_footer(text=duration)
 
             # Add fields with smart splitting
-            await self._add_field_safe(embed, "Devanagari", devanagari)
-            await self._add_field_safe(embed, f"Text {verse}", f"**{verse_text}**")
-            await self._add_field_safe(embed, "Synonyms", f"> {synonyms}")
-            await self._add_field_safe(embed, "Translation", f"**```\n{translation}\n```**")
+            await self._add_field_safe(embed, "देवनागरी:", devanagari)
+            await self._add_field_safe(embed, f"Text {verse}":, f"**{verse_text}**")
+            await self._add_field_safe(embed, "Synonyms:", f"> {synonyms}")
+            await self._add_field_safe(embed, "Translation:", f"**```\n{translation}\n```**")
 
             await ctx.send(embed=embed)
 
@@ -239,7 +239,7 @@ class BhagavadGita(commands.Cog):
                 return text_div.get_text(strip=False)
         
         elif class_name == 'av-verse_text':
-            text_div = section.find('div', class_='italic')
+            text_div = section.find('div', class_='em:mb-4')  # looking for the right class that will retrieve full content
             if text_div:
                 for br in text_div.find_all('br'):
                     br.replace_with('\n')
