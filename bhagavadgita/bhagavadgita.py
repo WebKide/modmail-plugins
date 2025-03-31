@@ -164,7 +164,7 @@ class BhagavadGita(commands.Cog):
 
             # Add fields with smart splitting
             await self._add_field_safe(embed, "देवनागरी:", devanagari)
-            await self._add_field_safe(embed, f"Text {verse}":, f"**{verse_text}**")
+            await self._add_field_safe(embed, f"Text {verse}:", f"**{verse_text}**")
             await self._add_field_safe(embed, "Synonyms:", f"> {synonyms}")
             await self._add_field_safe(embed, "Translation:", f"**```\n{translation}\n```**")
 
