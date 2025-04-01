@@ -158,8 +158,8 @@ class BhagavadGita(commands.Cog):
             
             # Create and send embed
             embed = discord.Embed(
-                title=f"Bhagavad Gītā — As It Is [ {chapter}.{verse} ] ⁿᵉʷ",
-                colour=discord.Colour(0xd0021b), # red border-left
+                title=f"Bhagavad Gītā ⁿᵉʷ — Śloka [ {chapter}.{verse} ]",
+                colour=discord.Colour(0x50e3c2), # neon green border-left
                 url=url,
                 description=f"**Chapter {chapter_title}**"
             )
