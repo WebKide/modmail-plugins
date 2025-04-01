@@ -159,11 +159,12 @@ class BhagavadGita(commands.Cog):
             # Create and send embed
             embed = discord.Embed(
                 title=f"Bhagavad Gītā — As It Is [ {chapter}.{verse} ] ⁿᵉʷ",
-                colour=discord.Colour(0x1cfbc3), # neon green border-left
+                colour=discord.Colour(0xd0021b), # red border-left
                 url=url,
                 description=f"**Chapter {chapter_title}**"
             )
             embed.set_footer(text=duration)
+            embed.set_thumbnail(url="https://imgur.com/Yx661rW.png")
 
             # Add fields with smart splitting
             await self._add_field_safe(embed, "देवनागरी:", devanagari)
