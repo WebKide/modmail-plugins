@@ -48,40 +48,55 @@ BG_CHAPTER_INFO = {
     18: {'total_verses': 78, 'grouped_ranges': [(5, 6), (26, 27)], 'chapter_title': '18. Conclusion-The Perfection of Renunciation'}
 }
 
+
 class AsItIs(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.data_path = Path(__file__).parent / "gita"  # Path to JSON files
+        self.data_path = Path(__file__).parent / "gita"
+        self._chapter_cache = {}  # Cache for loaded chapter data
 
-    # +------------------------------------------------------------+
-    # |               JSON chapters with verses                    |
-    # +------------------------------------------------------------+
     def _load_chapter_data(self, chapter: int) -> dict:
-        """Load chapter data from JSON file"""
+        """Load chapter data from JSON file with caching"""
+        if chapter in self._chapter_cache:
+            return self._chapter_cache[chapter]
+            
         file_path = self.data_path / f"bg_ch{chapter:02d}.json"
         if not file_path.exists():
             raise FileNotFoundError(f"Chapter {chapter} data file not found")
-        with open(file_path, 'r', encoding='utf-8') as f:
-            return json.load(f)
+            
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                self._chapter_cache[chapter] = data
+                return data
+        except json.JSONDecodeError as e:
+            raise ValueError(f"Invalid JSON in chapter {chapter} file: {str(e)}")
 
-    def _validate_verse(self, chapter: int, verse: str) -> tuple:
-        """Validate chapter and verse input"""
+    def _validate_verse(self, chapter: int, verse: str) -> Tuple[bool, str]:
+        """Validate chapter and verse input with enhanced checks"""
         if chapter not in BG_CHAPTER_INFO:
             return False, f"Invalid chapter. Bhagavad Gītā has 18 chapters (requested {chapter})."
         
         chapter_info = BG_CHAPTER_INFO[chapter]
         
-        # Handle multiple verses (e.g. "16-18")
+        # Handle multiple verses (e.g., "16-18")
         if '-' in verse:
             try:
                 start, end = sorted(map(int, verse.split('-')))
+                if start >= end:
+                    return False, "Start verse must be less than end verse"
+                
                 # Check against predefined grouped ranges
                 for r_start, r_end in chapter_info['grouped_ranges']:
                     if start == r_start and end == r_end:
                         return True, f"{start}-{end}"
+                
                 # Validate bounds
                 if end > chapter_info['total_verses']:
                     return False, f"Chapter {chapter} only has {chapter_info['total_verses']} verses."
+                if start < 1:
+                    return False, "Verse numbers start at 1"
+                
                 return True, f"{start}-{end}"
             except ValueError:
                 return False, "Invalid verse range format. Use like '16-18'"
@@ -91,10 +106,12 @@ class AsItIs(commands.Cog):
             verse_num = int(verse)
             if verse_num < 1 or verse_num > chapter_info['total_verses']:
                 return False, f"Chapter {chapter} has verses 1-{chapter_info['total_verses']}"
+            
             # Check if part of grouped range
             for r_start, r_end in chapter_info['grouped_ranges']:
                 if r_start <= verse_num <= r_end:
                     return True, f"{r_start}-{r_end}"
+            
             return True, verse
         except ValueError:
             return False, f"Invalid verse number: {verse}"
@@ -113,43 +130,87 @@ class AsItIs(commands.Cog):
                 possible_keys.append(f"{prefix} {base_ref.replace('-', '–')}")  # En dash
         
         # Check for each possible key
-        for verse_data in chapter_data["Verses"]:
-            if verse_data["Text-num"] in possible_keys:
+        for verse_data in chapter_data.get("Verses", []):
+            if verse_data.get("Text-num", "") in possible_keys:
                 return verse_data
         
         # Fallback: Check if any verse contains the reference
         search_num = base_ref.split('-')[0] if '-' in base_ref else base_ref
-        for verse_data in chapter_data["Verses"]:
-            if search_num in verse_data["Text-num"]:
+        for verse_data in chapter_data.get("Verses", []):
+            if search_num in verse_data.get("Text-num", ""):
                 return verse_data
         
         raise ValueError(f"Verse {verse_ref} not found (tried: {', '.join(possible_keys)})")
 
     def _format_verse_text(self, verse_data: dict) -> str:
-        """Format verse text with proper line breaks"""
-        verse_text = verse_data['Verse-Text'].replace(';', '\n')
+        """Enhanced verse formatting with proper line breaks and context"""
+        verse_text = verse_data.get('Verse-Text', '').replace(';', '\n')
         if 'Uvaca-line' in verse_data:
-            return f"{verse_data['Uvaca-line']}\n{verse_text}"
+            uvaca = verse_data['Uvaca-line'].strip()
+            if not uvaca.endswith((':', '-', '—')):
+                uvaca += ':'
+            return f"**{uvaca}**\n{verse_text}"
         return verse_text
-    
-    def _format_synonyms(self, synonyms: str) -> str:
-        """Format synonyms with italics and proper spacing"""
+
+    def _split_long_text(self, text: str, max_len: int = 1000) -> List[str]:
+        """Improved text splitting that preserves context"""
+        if len(text) <= max_len:
+            return [text]
+        
+        chunks = []
+        while text:
+            # Find the last space/newline before max_len
+            split_at = text.rfind('\n', 0, max_len)
+            if split_at == -1:
+                split_at = text.rfind(' ', 0, max_len)
+            if split_at == -1:  # No natural break found
+                split_at = max_len
+            
+            chunk = text[:split_at].strip()
+            if chunk:
+                chunks.append(chunk)
+            text = text[split_at:].strip()
+        
+        return chunks
+
+    def _format_synonyms(self, synonyms: str) -> List[str]:
+        """Improved synonyms formatting with markdown"""
+        if not synonyms:
+            return ["No synonyms available"]
+            
         formatted = []
         for item in synonyms.split(';'):
             item = item.strip()
             if not item:
                 continue
-            if '—' in item:
-                word, meaning = item.split('—', 1)
-                formatted.append(f"_{word.strip()}_ — {meaning.strip()}")
+                
+            # Handle different separator styles
+            for sep in ('—', '--', '-'):
+                if sep in item:
+                    parts = item.split(sep, 1)
+                    formatted.append(f"_{parts[0].strip()}_ {sep} {parts[1].strip()}")
+                    break
             else:
                 formatted.append(item)
-        return '\n'.join(formatted)
+        
+        return self._split_long_text('\n'.join(formatted))
 
-    # +------------------------------------------------------------+
-    # |             Bhagavad Gītā As It Is 1972                    |
-    # +------------------------------------------------------------+
-    @commands.command(name='asitis', aliases=['bg1972', '1972'])
+    def _format_translation(self, translation: str) -> List[str]:
+        """Format translation with proper paragraph breaks"""
+        if not translation:
+            return ["No translation available"]
+        
+        # Clean up excessive whitespace
+        translation = ' '.join(translation.split())
+        return self._split_long_text(translation)
+
+    def _safe_add_field(self, embed: discord.Embed, name: str, value: str, inline: bool = False):
+        """Safely add field without exceeding limits"""
+        if len(value) > 1024:
+            value = value[:1000] + "... [content truncated]"
+        embed.add_field(name=name, value=value, inline=inline)
+
+    @commands.command(name='asitis', aliases=['bg1972', '1972'], no_pm=True)
     async def gita_verse(self, ctx, chapter: int, verse: str):
         """Retrieve a Bhagavad Gita verse with full validation and formatting"""
         start_time = datetime.now()
@@ -166,38 +227,63 @@ class AsItIs(commands.Cog):
             
             # Create embed
             embed = discord.Embed(
-                title=f"Bhagavad Gītā — As It Is (₁₉₇₂) [ {chapter}.{verse_ref} ]",
-                color=discord.Color(0xed791d),
+                color=discord.Color(0x50e3c2),
                 description=f"**{BG_CHAPTER_INFO[chapter]['chapter_title']}**"
             )
             
-            # Add fields
-            embed.add_field(
+            # Add verse text field
+            verse_text = self._format_verse_text(verse_data)
+            self._safe_add_field(
+                embed,
                 name=f"TEXT {verse_ref}:",
-                value=f"```{self._format_verse_text(verse_data)}```",
+                value=verse_text,
                 inline=False
             )
-            
-            embed.add_field(
-                name="SYNONYMS:",
-                value=self._format_synonyms(verse_data['Word-for-Word']),
-                inline=False
+
+            # Thumbnail with original artwork
+            embed.set_thumbnail(url="https://imgur.com/wGEGAiw.png")
+            embed.set_author(
+                name="Bhagavad Gītā — As It Is (Edition 1972)",
+                icon_url="https://imgur.com/10jxmCh.png"
             )
             
-            embed.add_field(
-                name="TRANSLATION:",
-                value=f"```\n{verse_data['Translation-En']}\n```",
-                inline=False
-            )
+            # Add synonyms (split into multiple fields if needed)
+            synonyms = verse_data.get('Word-for-Word', '')
+            synonyms_chunks = self._format_synonyms(synonyms)
+            for i, chunk in enumerate(synonyms_chunks):
+                self._safe_add_field(
+                    embed,
+                    name="SYNONYMS:" if i == 0 else "↳",
+                    value=chunk,
+                    inline=False
+                )
             
-            # Footer with latency
+            # Add translation (split into multiple fields if needed)
+            translation = verse_data.get('Translation-En', '')
+            translation_chunks = self._format_translation(translation)
+            for i, chunk in enumerate(translation_chunks):
+                self._safe_add_field(
+                    embed,
+                    name="TRANSLATION:" if i == 0 else "↳",
+                    value=f"```\n{chunk}\n```",
+                    inline=False
+                )
+            
+            # Footer with time duration latency
             latency = (datetime.now() - start_time).total_seconds() * 1000
-            embed.set_footer(text=f"Śloka retrieved in {latency:.2f} ms")
+            embed.set_footer(
+                text=f"Śloka retrieved in {latency:.2f} ms",
+                icon_url="https://imgur.com/wGEGAiw.png"
+            )
             
             await ctx.send(embed=embed)
         
+        except FileNotFoundError as e:
+            await ctx.send(f"🚫 {str(e)}")
+        except ValueError as e:
+            await ctx.send(f"🚫 Error in verse data: {str(e)}")
         except Exception as e:
-            await ctx.send(f"🚫 Error retrieving verse:\n\n {str(e)}")
+            await ctx.send(f"🚫 Unexpected error retrieving verse:\n\n{str(e)}")
 
 async def setup(bot):
     await bot.add_cog(AsItIs(bot))
