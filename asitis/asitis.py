@@ -23,7 +23,7 @@ import json
 
 from pathlib import Path
 from discord.ext import commands
-from typing import Tuple
+from typing import List, Tuple, Dict
 from datetime import datetime
 
 # Chapter info dict
