@@ -50,6 +50,8 @@ BG_CHAPTER_INFO = {
 
 
 class AsItIs(commands.Cog):
+    """ (∩｀-´)⊃━☆ﾟ.*･｡ﾟ
+    Plugin to print verses inside Discord guild in full Embed """
     def __init__(self, bot):
         self.bot = bot
         self.data_path = Path(__file__).parent / "gita"
@@ -288,9 +290,16 @@ class AsItIs(commands.Cog):
     # +------------------------------------------------------------+
     # |               Bhagavad Gītā As It Is 1972                  |
     # +------------------------------------------------------------+
-    @commands.command(name='asitis', aliases=['bg1972', '1972'], no_pm=True)
+    @commands.command(name='asitis', aliases=['1972'], no_pm=True)
     async def gita_verse(self, ctx, chapter: int, verse: str):
-        """Retrieve a Bhagavad Gita verse with full validation and formatting"""
+        """Retrieve a śloka from the Bhagavad Gītā As It Is (1972):
+
+        - Supports Chapter Title
+        - Supports Sanskrit Text
+        - Supports Synonyms
+        - Supports English Translation
+        - Supports multiple verses
+        """
         start_time = datetime.now()
         
         # Validate input
@@ -303,9 +312,9 @@ class AsItIs(commands.Cog):
             chapter_data = self._load_chapter_data(chapter)
             verse_data = self._find_verse_data(chapter_data, verse_ref)
             
-            # Create embed
+            # Create embed: Orange border-left
             embed = discord.Embed(
-                color=discord.Color(0x50e3c2),
+                color=discord.Color(0xF5A623),
                 description=f"**Chapter {BG_CHAPTER_INFO[chapter]['chapter_title']}**"
             )
             
