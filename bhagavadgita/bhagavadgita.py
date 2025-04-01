@@ -121,8 +121,8 @@ class BhagavadGita(commands.Cog):
     # +------------------------------------------------------------+
     # |                     Bhagavad gītā CMD                      |
     # +------------------------------------------------------------+
-    @commands.command(aliases=['gita'], no_pm=True)
-    async def bg(self, ctx, chapter: int, verse: str):
+    @commands.command(aliases=['gita', 'bhagavad_gita', 'bhagavad-gita'], no_pm=True)
+    async def bhagavadgita(self, ctx, chapter: int, verse: str):
         """Retrieve a Bhagavad Gītā śloka from Vedabase.io
         
         - Supports Devanāgarī, Sanskrit, Synonyms and Translation
@@ -158,19 +158,20 @@ class BhagavadGita(commands.Cog):
             
             # Create and send embed
             embed = discord.Embed(
-                title=f"Bhagavad Gītā ⁿᵉʷ — Śloka [ {chapter}.{verse} ]",
+                # title=f"Bhagavad Gītā ⁿᵉʷ — Śloka [ {chapter}.{verse} ]",
                 colour=discord.Colour(0x50e3c2), # neon green border-left
                 url=url,
                 description=f"**Chapter {chapter_title}**"
             )
             embed.set_footer(text=duration)
-            embed.set_thumbnail(url="https://imgur.com/Yx661rW.png")
+            # embed.set_thumbnail(url="https://imgur.com/Yx661rW.png")
+            embed.set_author(name=f"Bhagavad Gītā ⁿᵉʷ — Śloka [ {chapter}.{verse} ]", url=url, icon_url="https://imgur.com/Yx661rW.png")
 
             # Add fields with smart splitting
             await self._add_field_safe(embed, "देवनागरी:", devanagari)
-            await self._add_field_safe(embed, f"TEXT {verse}:", f"**{verse_text}**")
+            await self._add_field_safe(embed, f"TEXT {verse}:", f"**```py\n{verse_text}\n```**")
             await self._add_field_safe(embed, "SYNONYMS:", synonyms)
-            await self._add_field_safe(embed, "TRANSLATION:", f"**```\n{translation}\n```**")
+            await self._add_field_safe(embed, "TRANSLATION:", f"> **{translation}**")
 
             await ctx.send(embed=embed)
 
