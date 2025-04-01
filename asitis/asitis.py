@@ -56,10 +56,18 @@ class AsItIs(commands.Cog):
     # +------------------------------------------------------------+
     # |               JSON chapters with verses                    |
     # +------------------------------------------------------------+
-    def _validate_verse(self, chapter: int, verse: str) -> tuple:
-        """Validate chapter and verse using BG_CHAPTER_INFO"""
+    def _load_chapter_data(self, chapter: int) -> dict:
+        """Load chapter data from JSON file"""
+        file_path = self.data_path / f"bg_ch{chapter:02d}.json"
+        if not file_path.exists():
+            raise FileNotFoundError(f"Chapter {chapter} data file not found")
+        with open(file_path, 'r', encoding='utf-8') as f:
+            return json.load(f)
+
+     def _validate_verse(self, chapter: int, verse: str) -> tuple:
+        """Validate chapter and verse input"""
         if chapter not in BG_CHAPTER_INFO:
-            return False, f"Invalid chapter.\nThe Bhagavad Gītā As It Is (1972) has 18 chapters (and you requested **Chapter {chapter}**)."
+            return False, f"Invalid chapter. Bhagavad Gītā has 18 chapters (requested {chapter})."
         
         chapter_info = BG_CHAPTER_INFO[chapter]
         
@@ -67,16 +75,13 @@ class AsItIs(commands.Cog):
         if '-' in verse:
             try:
                 start, end = sorted(map(int, verse.split('-')))
-                
-                # Check if this matches any predefined grouped range
+                # Check against predefined grouped ranges
                 for r_start, r_end in chapter_info['grouped_ranges']:
                     if start == r_start and end == r_end:
                         return True, f"{start}-{end}"
-                
                 # Validate bounds
-                if start < 1 or end > chapter_info['total_verses']:
-                    return False, f"Chapter {chapter} has verses 1-{chapter_info['total_verses']}"
-                
+                if end > chapter_info['total_verses']:
+                    return False, f"Chapter {chapter} only has {chapter_info['total_verses']} verses."
                 return True, f"{start}-{end}"
             except ValueError:
                 return False, "Invalid verse range format. Use like '16-18'"
@@ -86,49 +91,60 @@ class AsItIs(commands.Cog):
             verse_num = int(verse)
             if verse_num < 1 or verse_num > chapter_info['total_verses']:
                 return False, f"Chapter {chapter} has verses 1-{chapter_info['total_verses']}"
-            
-            # Check if verse is part of any grouped range
+            # Check if part of grouped range
             for r_start, r_end in chapter_info['grouped_ranges']:
                 if r_start <= verse_num <= r_end:
                     return True, f"{r_start}-{r_end}"
-            
             return True, verse
         except ValueError:
             return False, f"Invalid verse number: {verse}"
 
-    def _load_chapter_data(self, chapter: int) -> dict:
-        """Load chapter data from JSON file"""
-        file_path = self.data_path / f"bg_ch{chapter:02d}.json"
-        if not file_path.exists():
-            raise FileNotFoundError(f"Chapter {chapter} data file not found")
-        with open(file_path, 'r', encoding='utf-8') as f:
-            return json.load(f)
-    
     def _find_verse_data(self, chapter_data: dict, verse_ref: str) -> dict:
-        """Improved verse finding with grouped verse support"""
-        # Try exact match first
-        search_key = f"TEXT {verse_ref}"
+        """Comprehensive verse finding that handles all TEXT/TEXTS formats"""
+        possible_keys = []
+        base_ref = verse_ref.replace('-', '-')  # Normalize hyphen
+        
+        # Generate all possible key variations
+        for prefix in ['TEXT', 'TEXTS']:
+            possible_keys.append(f"{prefix} {base_ref}")
+            if '-' in base_ref:
+                start = base_ref.split('-')[0]
+                possible_keys.append(f"{prefix} {start}")
+                possible_keys.append(f"{prefix} {base_ref.replace('-', '–')}")  # En dash
+        
+        # Check for each possible key
         for verse_data in chapter_data["Verses"]:
-            if verse_data["Text-num"] == search_key:
+            if verse_data["Text-num"] in possible_keys:
                 return verse_data
         
-        # If range and not found, try first verse in range
-        if '-' in verse_ref:
-            first_verse = verse_ref.split('-')[0]
-            search_key = f"TEXT {first_verse}"
-            for verse_data in chapter_data["Verses"]:
-                if verse_data["Text-num"] == search_key:
-                    return verse_data
+        # Fallback: Check if any verse contains the reference
+        search_num = base_ref.split('-')[0] if '-' in base_ref else base_ref
+        for verse_data in chapter_data["Verses"]:
+            if search_num in verse_data["Text-num"]:
+                return verse_data
         
-        raise ValueError(f"Verse {verse_ref} not found in chapter data")
+        raise ValueError(f"Verse {verse_ref} not found (tried: {', '.join(possible_keys)})")
 
+    def _format_verse_text(self, verse_data: dict) -> str:
+        """Format verse text with proper line breaks"""
+        verse_text = verse_data['Verse-Text'].replace(';', '\n')
+        if 'Uvaca-line' in verse_data:
+            return f"{verse_data['Uvaca-line']}\n{verse_text}"
+        return verse_text
+    
     def _format_synonyms(self, synonyms: str) -> str:
-        """Format synonyms with italics"""
-        return '; '.join(
-            f"_{word.strip()}_ — {meaning.strip()}" if '—' in item else item
-            for item in (item.strip() for item in synonyms.split(';'))
-            if item
-        )
+        """Format synonyms with italics and proper spacing"""
+        formatted = []
+        for item in synonyms.split(';'):
+            item = item.strip()
+            if not item:
+                continue
+            if '—' in item:
+                word, meaning = item.split('—', 1)
+                formatted.append(f"_{word.strip()}_ — {meaning.strip()}")
+            else:
+                formatted.append(item)
+        return '\n'.join(formatted)
 
     # +------------------------------------------------------------+
     # |             Bhagavad Gītā As It Is 1972                    |
@@ -137,11 +153,6 @@ class AsItIs(commands.Cog):
     async def gita_verse(self, ctx, chapter: int, verse: str):
         """Retrieve a Bhagavad Gita verse with full validation and formatting"""
         start_time = datetime.now()
-        
-        # Validate input
-        is_valid, verse_ref = self._validate_verse(chapter, verse)
-        if not is_valid:
-            return await ctx.send(f"🚫 {verse_ref}")
         
         # Validate input
         is_valid, verse_ref = self._validate_verse(chapter, verse)
@@ -160,28 +171,22 @@ class AsItIs(commands.Cog):
                 description=f"**{BG_CHAPTER_INFO[chapter]['chapter_title']}**"
             )
             
-            # Verse text with uvaca line
-            verse_text = verse_data['Verse-Text']
-            if 'Uvaca-line' in verse_data:
-                verse_text = f"{verse_data['Uvaca-line']}\n{verse_text}"
-            
+            # Add fields
             embed.add_field(
                 name=f"TEXT {verse_ref}:",
-                value=f"```{verse_text}```",
+                value=f"```{self._format_verse_text(verse_data)}```",
                 inline=False
             )
             
-            # Synonyms
             embed.add_field(
                 name="SYNONYMS:",
                 value=self._format_synonyms(verse_data['Word-for-Word']),
                 inline=False
             )
             
-            # Translation
             embed.add_field(
                 name="TRANSLATION:",
-                value=f"```py\n{verse_data['Translation-En']}\n```",
+                value=f"```\n{verse_data['Translation-En']}\n```",
                 inline=False
             )
             
@@ -196,4 +201,3 @@ class AsItIs(commands.Cog):
 
 async def setup(bot):
     await bot.add_cog(AsItIs(bot))
-    
