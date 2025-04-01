@@ -26,7 +26,7 @@ from discord.ext import commands
 from typing import List, Tuple, Dict
 from datetime import datetime
 
-# Chapter info dict
+# v1.17
 BG_CHAPTER_INFO = {
     1: {'total_verses': 46, 'grouped_ranges': [(16, 18), (21, 22), (32, 35), (37, 38)], 'chapter_title': '1. Observing the Armies on the Battlefield of Kurukṣetra'},
     2: {'total_verses': 72, 'grouped_ranges': [(42, 43)], 'chapter_title': '2. Contents of the Gītā Summarized'},
@@ -50,7 +50,7 @@ BG_CHAPTER_INFO = {
 
 
 class AsItIs(commands.Cog):
-    """ (∩｀-´)⊃━☆ﾟ.*･｡ﾟ Bhagavad Gītā As It Is (Original 1972 edition)
+    """ (∩｀-´)⊃━☆ﾟ.*･｡ﾟ Bhagavad Gītā As It Is (Original 1972 Macmillan edition)
 
     Free Plugin to print Gītā verses inside a Discord text-channel. Full embed support.
 
@@ -85,7 +85,7 @@ class AsItIs(commands.Cog):
     def _validate_verse(self, chapter: int, verse: str) -> Tuple[bool, str]:
         """Validate chapter and verse input"""
         if chapter not in BG_CHAPTER_INFO:
-            return False, f"Invalid chapter. Bhagavad Gītā has 18 chapters (requested {chapter})."
+            return False, f"Invalid chapter entry. Bhagavad Gītā has 18 chapters (requested {chapter})."
         
         chapter_info = BG_CHAPTER_INFO[chapter]
         
@@ -296,7 +296,7 @@ class AsItIs(commands.Cog):
             embed.add_field(name="↳", value=chunk, inline=inline)
 
     # +------------------------------------------------------------+
-    # |               Bhagavad Gītā As It Is 1972                  |
+    # |         Bhagavad Gītā As It Is (1972) Macmillan            |
     # +------------------------------------------------------------+
     @commands.command(name='asitis', aliases=['1972', 'bg'], no_pm=True)
     async def gita_verse(self, ctx, chapter: int, verse: str):
@@ -361,7 +361,7 @@ class AsItIs(commands.Cog):
                 self._safe_add_field(
                     embed,
                     name="TRANSLATION:" if i == 0 else "↳",
-                    value=f"**```py\n{chunk}\n```**",
+                    value=f"> **{chunk}**",
                     inline=False
                 )
             
@@ -377,7 +377,7 @@ class AsItIs(commands.Cog):
         except FileNotFoundError as e:
             await ctx.send(f"🚫 {str(e)}")
         except ValueError as e:
-            await ctx.send(f"🚫 Error in verse data: {str(e)}")
+            await ctx.send(f"🚫 Error in verse data:\n\n{str(e)}")
         except Exception as e:
             await ctx.send(f"🚫 Unexpected error retrieving verse:\n\n{str(e)}")
 
