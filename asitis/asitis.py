@@ -44,8 +44,8 @@ BG_CHAPTER_INFO = {
     14: {'total_verses': 27, 'grouped_ranges': [(22, 25)], 'chapter_title': '14. The Three Modes of Material Nature'},
     15: {'total_verses': 20, 'grouped_ranges': [(3, 4)], 'chapter_title': '15. The Yoga of the Supreme Person'},
     16: {'total_verses': 24, 'grouped_ranges': [(1, 3), (11, 12), (13, 15)], 'chapter_title': '16. The Divine and Demoniac Natures'},
-    17: {'total_verses': 28, 'grouped_ranges': [(7, 9), (14, 16), (23, 24)], 'chapter_title': '17. The Divisions of Faith'},
-    18: {'total_verses': 78, 'grouped_ranges': [(5, 6), (26, 27)], 'chapter_title': '18. Conclusion-The Perfection of Renunciation'}
+    17: {'total_verses': 28, 'grouped_ranges': [(5, 6), (26, 27)], 'chapter_title': '17. The Divisions of Faith'},
+    18: {'total_verses': 78, 'grouped_ranges': [(13, 14), (36, 37), (51, 53)], 'chapter_title': '18. Conclusion-The Perfection of Renunciation'}
 }
 
 
