@@ -181,42 +181,53 @@ class AsItIs(commands.Cog):
         return formatted_text
 
     def _format_synonyms(self, synonyms: str) -> List[str]:
-        """Format synonyms with proper semicolon handling"""
+        """Format synonyms while keeping them together in a single field when possible"""
         if not synonyms.strip():
             return ["No synonyms available"]
         
-        # First split by semicolons that have space after
-        items = []
-        current_item = ""
+        # First clean up the synonyms string
+        synonyms = synonyms.replace('\n', ' ')  # Remove any existing newlines
+        synonyms = ' '.join(synonyms.split())  # Collapse multiple spaces
         
-        for char in synonyms:
-            if char == ';' and not current_item.strip().endswith(('ā', 'ī', 'ū', 'ṁ', 'ṣ', 'ṭ', 'ḥ')):
-                if current_item.strip():
-                    items.append(current_item.strip())
-                    current_item = ""
+        # Format each synonym pair with italics
+        formatted_items = []
+        for item in synonyms.split(';'):
+            item = item.strip()
+            if not item:
                 continue
                 
-            current_item += char
-        
-        if current_item.strip():
-            items.append(current_item.strip())
-        
-        # Format each item
-        formatted = []
-        for item in items:
             # Handle word-meaning separation
             if '—' in item:
                 word, meaning = item.split('—', 1)
-                formatted.append(f"_{word.strip()}_ — {meaning.strip()}")
+                formatted_items.append(f"_{word.strip()}_ — {meaning.strip()}")
             elif '-' in item and not any(c in item for c in ['ā', 'ī', 'ū', 'ṁ', 'ṣ', 'ṭ', 'ḥ']):
                 parts = item.split('-', 1)
-                formatted.append(f"_{parts[0].strip()}_ - {parts[1].strip()}")
+                formatted_items.append(f"_{parts[0].strip()}_ - {parts[1].strip()}")
             else:
-                formatted.append(item)
+                formatted_items.append(item)
         
-        # Join with semicolons and newlines
-        formatted_text = ';\n'.join(formatted)
-        return self._split_long_text(formatted_text)
+        # Join all synonyms with semicolons and spaces
+        formatted_text = '; '.join(formatted_items)
+        
+        # Only split if absolutely necessary (exceeds Discord limit)
+        if len(formatted_text) > 1000:
+            # Split at natural breaks (after semicolons)
+            chunks = []
+            current_chunk = ""
+            for item in formatted_items:
+                if len(current_chunk) + len(item) + 2 > 1000:  # +2 for "; "
+                    chunks.append(current_chunk)
+                    current_chunk = item
+                else:
+                    if current_chunk:
+                        current_chunk += "; " + item
+                    else:
+                        current_chunk = item
+            if current_chunk:
+                chunks.append(current_chunk)
+            return chunks
+        
+        return [formatted_text]
 
     def _format_translation(self, translation: str) -> List[str]:
         """Format translation with proper paragraph breaks"""
