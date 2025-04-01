@@ -46,7 +46,7 @@ class Html2Json(commands.Cog):
         # Get chapter description
         chapter_desc = soup.find('div', class_='Chapter-Desc')
         if chapter_desc:
-            result["Chapter-Desc"] = chapter_desc.get_text(" ", strip=True)
+            result["Chapter-Desc"] = ' '.join(chapter_desc.get_text().split())
         
         # Process each verse block
         current_verse = {}
@@ -55,36 +55,43 @@ class Html2Json(commands.Cog):
                 continue
                 
             class_name = element['class'][0]
-            text = element.get_text(" ", strip=True)  # Preserve spaces with " " separator
+            raw_text = element.get_text()
             
-            if not text:
+            if not raw_text.strip():
                 continue
                 
+            # Custom text processing per field type
             if class_name == 'Textnum':
+                text = ' '.join(raw_text.split())
                 if current_verse:
                     result["Verses"].append(current_verse)
                     current_verse = {}
                 current_verse["Textnum"] = text
             elif class_name == 'Uvaca-line':
-                current_verse["Uvaca-line"] = text
+                current_verse["Uvaca-line"] = ' '.join(raw_text.split())
             elif class_name == 'Verse-Text':
                 if "Verse-Text" not in current_verse:
                     current_verse["Verse-Text"] = []
-                current_verse["Verse-Text"].append(text)
+                current_verse["Verse-Text"].append(' '.join(raw_text.split()))
             elif class_name == 'Synonyms-Section':
-                current_verse["Synonyms-Section"] = text
+                current_verse["Synonyms-Section"] = raw_text.strip()
             elif class_name == 'Synonyms-SA':
-                # Improved synonym cleaning with proper spacing
-                text = re.sub(r'\s+', ' ', text)  # Normalize whitespace
-                text = re.sub(r'\s*—\s*', ' — ', text)  # Consistent spacing around em-dash
-                text = re.sub(r'(\w)—(\w)', r'\1 — \2', text)  # Fix missing spaces around dashes
-                current_verse["Synonyms-SA"] = text.strip()
+                # Special handling for synonyms
+                text = ' '.join(raw_text.split())
+                # Fix hyphen spacing cases like "dharma - kṣetre"
+                text = re.sub(r'(\w)\s*-\s*(\w)', r'\1-\2', text)
+                # Standardize em-dash spacing
+                text = re.sub(r'\s*—\s*', ' — ', text)
+                # Fix spacing around punctuation
+                text = re.sub(r'\s*([,.;])\s*', r'\1 ', text)
+                current_verse["Synonyms-SA"] = text
             elif class_name == 'Titles':
-                current_verse["Titles"] = text
+                current_verse["Titles"] = raw_text.strip()
             elif class_name == 'Translation':
-                # Fix spacing in translation
-                text = re.sub(r'(\w)([A-Za-zā-ṣ])', r'\1 \2', text)  # Add space between words
-                text = re.sub(r'\s+', ' ', text).strip()
+                # Conservative spacing for translation
+                text = ' '.join(raw_text.split())
+                # Fix common Sanskrit word boundaries
+                text = re.sub(r'([a-zA-Zā-ṣ])\s+([A-Z][a-zā-ṣ])', r'\1 \2', text)
                 current_verse["Translation"] = text
         
         # Add the last verse
