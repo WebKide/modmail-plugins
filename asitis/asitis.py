@@ -176,7 +176,7 @@ class AsItIs(commands.Cog):
             uvaca = verse_data['Uvaca-line'].strip()
             if not uvaca.endswith((':', '-', '—')):
                 uvaca += ':'
-            return f"**{uvaca}**\n{formatted_text}"
+            return f"{uvaca}\n{formatted_text}"
         
         return formatted_text
 
@@ -199,10 +199,10 @@ class AsItIs(commands.Cog):
             # Handle word-meaning separation
             if '—' in item:
                 word, meaning = item.split('—', 1)
-                formatted_items.append(f"_{word.strip()}_ — {meaning.strip()}")
+                formatted_items.append(f"_**{word.strip()}**_ — {meaning.strip()}")
             elif '-' in item and not any(c in item for c in ['ā', 'ī', 'ū', 'ṁ', 'ṣ', 'ṭ', 'ḥ']):
                 parts = item.split('-', 1)
-                formatted_items.append(f"_{parts[0].strip()}_ - {parts[1].strip()}")
+                formatted_items.append(f"_**{parts[0].strip()}**_ - {parts[1].strip()}")
             else:
                 formatted_items.append(item)
         
@@ -343,7 +343,7 @@ class AsItIs(commands.Cog):
                 self._safe_add_field(
                     embed,
                     name="TRANSLATION:" if i == 0 else "↳",
-                    value=f"```\n{chunk}\n```",
+                    value=f"**```py\n{chunk}\n```**",
                     inline=False
                 )
             
