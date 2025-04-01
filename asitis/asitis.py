@@ -50,8 +50,16 @@ BG_CHAPTER_INFO = {
 
 
 class AsItIs(commands.Cog):
-    """ (∩｀-´)⊃━☆ﾟ.*･｡ﾟ
-    Plugin to print verses inside Discord guild in full Embed """
+    """ (∩｀-´)⊃━☆ﾟ.*･｡ﾟ Bhagavad Gītā As It Is (Original 1972 edition)
+
+    Free Plugin to print Gītā verses inside a Discord text-channel. Full embed support.
+
+    Śrīla Prabhupāda's original 1972 Macmillan Bhagavad-gītā As It Is with elaborate commentary [not available here, yet], original Sanskrit and English word meanings. It is a first-class EXACT reproduction of the original hard cover book.
+
+    No other philosophical or religious work reveals, in such a lucid and profound way, the nature of consciousness, the self, the universe and the Supreme.
+
+    Bhagavad Gītā As It Is is the largest-selling, most widely used edition of the Gītā in the world.
+    """
     def __init__(self, bot):
         self.bot = bot
         self.data_path = Path(__file__).parent / "gita"
@@ -183,7 +191,7 @@ class AsItIs(commands.Cog):
         return formatted_text
 
     def _format_synonyms(self, synonyms: str) -> List[str]:
-        """Format synonyms while keeping them together in a single field when possible"""
+        """Format synonyms and keep them in a single or two adjacent fields"""
         if not synonyms.strip():
             return ["No synonyms available"]
         
@@ -211,9 +219,9 @@ class AsItIs(commands.Cog):
         # Join all synonyms with semicolons and spaces
         formatted_text = '; '.join(formatted_items)
         
-        # Only split if absolutely necessary (exceeds Discord limit)
+        # Only split if absolutely necessary (exceeds Discord char limit)
         if len(formatted_text) > 1000:
-            # Split at natural breaks (after semicolons)
+            # Split at natural break points (after semicolons)
             chunks = []
             current_chunk = ""
             for item in formatted_items:
@@ -290,15 +298,16 @@ class AsItIs(commands.Cog):
     # +------------------------------------------------------------+
     # |               Bhagavad Gītā As It Is 1972                  |
     # +------------------------------------------------------------+
-    @commands.command(name='asitis', aliases=['1972'], no_pm=True)
+    @commands.command(name='asitis', aliases=['1972', 'bg'], no_pm=True)
     async def gita_verse(self, ctx, chapter: int, verse: str):
-        """Retrieve a śloka from the Bhagavad Gītā As It Is (1972):
+        """Retrieve a śloka from the Bhagavad Gītā As It Is (Original 1972 Macmillan edition):
 
         - Supports Chapter Title
         - Supports Sanskrit Text
         - Supports Synonyms
         - Supports English Translation
         - Supports multiple verses
+        - No-support for elaborate commentaries, yet
         """
         start_time = datetime.now()
         
@@ -328,9 +337,9 @@ class AsItIs(commands.Cog):
             )
 
             # Add Thumbnail with original artwork from BBT
-            embed.set_thumbnail(url="https://imgur.com/wGEGAiw.png")
+            # embed.set_thumbnail(url="https://imgur.com/wGEGAiw.png")
             embed.set_author(
-                name="Bhagavad Gītā — As It Is (Edition 1972)",
+                name="Bhagavad Gītā — As It Is (Original 1972 edition)",
                 icon_url="https://imgur.com/10jxmCh.png"
             )
             
@@ -360,7 +369,7 @@ class AsItIs(commands.Cog):
             latency = (datetime.now() - start_time).total_seconds() * 1000
             embed.set_footer(
                 text=f"Śloka retrieved in {latency:.2f} ms",
-                icon_url="https://imgur.com/wGEGAiw.png"
+                icon_url="https://imgur.com/iZ6CHAz.png"
             )
             
             await ctx.send(embed=embed)
