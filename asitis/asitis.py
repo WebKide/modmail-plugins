@@ -153,46 +153,65 @@ class AsItIs(commands.Cog):
         return verse_text
 
     def _split_long_text(self, text: str, max_len: int = 1000) -> List[str]:
-        """Improved text splitting that preserves context"""
+        """Split text at line breaks when possible, preserving complete lines"""
         if len(text) <= max_len:
             return [text]
         
+        lines = text.split('\n')
         chunks = []
-        while text:
-            # Find the last space/newline before max_len
-            split_at = text.rfind('\n', 0, max_len)
-            if split_at == -1:
-                split_at = text.rfind(' ', 0, max_len)
-            if split_at == -1:  # No natural break found
-                split_at = max_len
-            
-            chunk = text[:split_at].strip()
-            if chunk:
-                chunks.append(chunk)
-            text = text[split_at:].strip()
+        current_chunk = ""
+        
+        for line in lines:
+            if len(current_chunk) + len(line) + 1 > max_len:
+                if current_chunk:
+                    chunks.append(current_chunk)
+                    current_chunk = line
+                else:  # Single line too long
+                    chunks.append(line[:max_len-3] + "...")
+                    current_chunk = line[max_len-3:]
+            else:
+                if current_chunk:
+                    current_chunk += '\n' + line
+                else:
+                    current_chunk = line
+        
+        if current_chunk:
+            chunks.append(current_chunk)
         
         return chunks
 
     def _format_synonyms(self, synonyms: str) -> List[str]:
-        """Improved synonyms formatting with markdown"""
-        if not synonyms:
+        """Format synonyms with proper line breaks and grouping"""
+        if not synonyms.strip():
             return ["No synonyms available"]
-            
+        
+        # First split by semicolons that are followed by space (original separators)
+        items = [item.strip() for item in synonyms.split('; ') if item.strip()]
+        
+        # For items that weren't split (like "ātma-saṁ; stutiḥ"), handle them
+        refined_items = []
+        for item in items:
+            if ';' in item:
+                # Handle cases where semicolon appears mid-item without space
+                sub_items = [sub.strip() for sub in item.split(';') if sub.strip()]
+                refined_items.extend(sub_items)
+            else:
+                refined_items.append(item)
+        
+        # Now format each item with markdown
         formatted = []
-        for item in synonyms.split(';'):
-            item = item.strip()
-            if not item:
-                continue
-                
-            # Handle different separator styles
-            for sep in ('—', '--', '-'):
-                if sep in item:
-                    parts = item.split(sep, 1)
-                    formatted.append(f"_{parts[0].strip()}_ {sep} {parts[1].strip()}")
-                    break
+        for item in refined_items:
+            # Handle the word-meaning separator (— or -)
+            if '—' in item:
+                word, meaning = item.split('—', 1)
+                formatted.append(f"_{word.strip()}_ — {meaning.strip()}")
+            elif '-' in item and not any(c in item for c in ['ā', 'ī', 'ū', 'ṁ', 'ṣ', 'ṭ']):  # Avoid splitting Sanskrit words
+                parts = item.split('-', 1)
+                formatted.append(f"_{parts[0].strip()}_ - {parts[1].strip()}")
             else:
                 formatted.append(item)
         
+        # Split into chunks if too long, preserving line groups
         return self._split_long_text('\n'.join(formatted))
 
     def _format_translation(self, translation: str) -> List[str]:
@@ -228,7 +247,7 @@ class AsItIs(commands.Cog):
             # Create embed
             embed = discord.Embed(
                 color=discord.Color(0x50e3c2),
-                description=f"**{BG_CHAPTER_INFO[chapter]['chapter_title']}**"
+                description=f"**Chapter {BG_CHAPTER_INFO[chapter]['chapter_title']}**"
             )
             
             # Add verse text field
