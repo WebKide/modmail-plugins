@@ -123,8 +123,11 @@ class BhagavadGita(commands.Cog):
     # +------------------------------------------------------------+
     @commands.command(aliases=['gita'], no_pm=True)
     async def bg(self, ctx, chapter: int, verse: str):
-        """Retrieve a Bhagavad Gita śloka from Vedabase.io
-        - Supports Devanagari, Sanskrit, Synonyms and Translation
+        """Retrieve a Bhagavad Gītā śloka from Vedabase.io
+        
+        - Supports Devanāgarī, Sanskrit, Synonyms and Translation
+        - Supports multiple verses
+        - Supports formatted word-for-word with italics
         """
         
         # Input Validation
@@ -155,8 +158,8 @@ class BhagavadGita(commands.Cog):
             
             # Create and send embed
             embed = discord.Embed(
-                title=f"Bhagavad Gītā — As It Is (1972) [{chapter}.{verse}]",
-                colour=discord.Colour(0x1cfbc3),
+                title=f"Bhagavad Gītā — As It Is [ {chapter}.{verse} ] ⁿᵉʷ",
+                colour=discord.Colour(0x1cfbc3), # neon green border-left
                 url=url,
                 description=f"**Chapter {chapter_title}**"
             )
