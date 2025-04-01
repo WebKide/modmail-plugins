@@ -24,6 +24,7 @@ import json
 from pathlib import Path
 from discord.ext import commands
 from typing import Tuple
+from datetime import datetime
 
 # Chapter info dict
 BG_CHAPTER_INFO = {
@@ -55,94 +56,136 @@ class AsItIs(commands.Cog):
     # +------------------------------------------------------------+
     # |               JSON chapters with verses                    |
     # +------------------------------------------------------------+
-    def _get_chapter_path(self, chapter: int) -> Path:
-        """Get the full path to a chapter JSON file"""
-        return self.data_path / f"bg_ch{chapter:02d}.json"
-    
+    def _validate_verse(self, chapter: int, verse: str) -> tuple:
+        """Validate chapter and verse using BG_CHAPTER_INFO"""
+        if chapter not in BG_CHAPTER_INFO:
+            return False, f"Invalid chapter. Bhagavad Gītā has 18 chapters (requested {chapter})."
+        
+        chapter_info = BG_CHAPTER_INFO[chapter]
+        
+        # Handle verse ranges (e.g., "16-18")
+        if '-' in verse:
+            try:
+                start, end = map(int, verse.split('-'))
+                if start > end:
+                    start, end = end, start
+                
+                # Check against grouped ranges
+                for r_start, r_end in chapter_info['grouped_ranges']:
+                    if start == r_start and end == r_end:
+                        return True, f"{start}-{end}"
+                
+                # Validate range bounds
+                if end > chapter_info['total_verses']:
+                    return False, f"Chapter {chapter} only has {chapter_info['total_verses']} verses."
+                
+                return True, f"{start}-{end}"
+            except ValueError:
+                return False, "Invalid verse range format. Use like '16-18' or single verse '1'"
+        
+        # Handle single verse
+        try:
+            verse_num = int(verse)
+            if verse_num < 1 or verse_num > chapter_info['total_verses']:
+                return False, f"Chapter {chapter} has only {chapter_info['total_verses']} verses."
+            
+            # Check if verse is part of a grouped range
+            for r_start, r_end in chapter_info['grouped_ranges']:
+                if r_start <= verse_num <= r_end:
+                    return True, f"{r_start}-{r_end}"
+            
+            return True, str(verse_num)
+        except ValueError:
+            return False, f"Invalid verse number: {verse}"
+
     def _load_chapter_data(self, chapter: int) -> dict:
         """Load chapter data from JSON file"""
-        file_path = self._get_chapter_path(chapter)
+        file_path = self.data_path / f"bg_ch{chapter:02d}.json"
         if not file_path.exists():
-            raise FileNotFoundError(f"Chapter {chapter} JSON file not found at {file_path}")
-        
+            raise FileNotFoundError(f"Chapter {chapter} data file not found")
         with open(file_path, 'r', encoding='utf-8') as f:
             return json.load(f)
     
-    def _find_verse_data(self, chapter_data: dict, verse: str) -> dict:
-        """Find specific verse data in chapter"""
+    def _find_verse_data(self, chapter_data: dict, verse_ref: str) -> dict:
+        """Find verse data using TEXT X or TEXT X-Y format"""
+        search_key = f"TEXT {verse_ref}"
         for verse_data in chapter_data["Verses"]:
-            if verse_data["Text-num"] == f"TEXT {verse}":
+            if verse_data["Text-num"] == search_key:
                 return verse_data
-        raise ValueError(f"Verse {verse} not found in chapter data")
-    
-    def _validate_verse(self, chapter: int, verse: str) -> Tuple[bool, str]:
-        """Validate chapter and verse input"""
-        try:
-            chapter = int(chapter)
-            verse = str(verse)
-            
-            # Check if chapter file exists
-            if not self._get_chapter_path(chapter).exists():
-                return False, f"Chapter {chapter} not available"
-            
-            return True, verse
-        except ValueError:
-            return False, "Invalid chapter or verse format"
+        raise ValueError(f"Verse {verse_ref} not found in chapter data")
 
-    # +------------------------------------------------------------+
-    # |              Bhagavad gītā — As It Is 1972                 |
-    # +------------------------------------------------------------+
-    @commands.command(aliases=['bg1972', '1972', 'as_it_is'], no_pm=True)
-    async def asitis(self, ctx, chapter: int, verse: str):
-        """Retrieve a Bhagavad Gītā As It Is (1972) śloka from local JSON files"""
+    def _format_synonyms(self, synonyms: str) -> str:
+        """Format synonyms with italics for Sanskrit terms"""
+        parts = []
+        for item in synonyms.split(';'):
+            item = item.strip()
+            if '—' in item:
+                word, meaning = item.split('—', 1)
+                parts.append(f"_{word.strip()}_ — {meaning.strip()}")
+            else:
+                parts.append(item)
+        return '; '.join(parts)
+
+    @commands.command(name='asitis', aliases=['bg1972', '1972'])
+    async def gita_verse(self, ctx, chapter: int, verse: str):
+        """Retrieve a Bhagavad Gita verse with full validation and formatting"""
+        start_time = datetime.now()
         
-        # Input validation
-        is_valid, validated_verse = self._validate_verse(chapter, verse)
+        # Validate input using BG_CHAPTER_INFO
+        is_valid, verse_ref = self._validate_verse(chapter, verse)
         if not is_valid:
-            return await ctx.send(f"❌ {validated_verse}")
+            return await ctx.send(f"🚫 {verse_ref}")
         
         try:
             # Load data
             chapter_data = self._load_chapter_data(chapter)
-            verse_data = self._find_verse_data(chapter_data, validated_verse)
+            verse_data = self._find_verse_data(chapter_data, verse_ref)
             
             # Create embed
             embed = discord.Embed(
-                title=f"Bhagavad Gītā As It Is [ {chapter}.{validated_verse} ]",
-                color=discord.Color.orange(),
-                description=f"**{chapter_data['Chapter-Desc']}**"
+                title=f"Bhagavad Gītā — As It Is (₁₉₇₂) [ {chapter}.{verse_ref} ]",
+                color=discord.Color(0x50e3c2),
+                description=f"**{BG_CHAPTER_INFO[chapter]['chapter_title']}**"
             )
             
-            embed.add_field(
-                name=f"TEXT {validated_verse}",
-                value=f"```{verse_data['Verse-Text']}```",
-                inline=False
-            )
-            
+            #  Thumbnail with ORIGINAL artwork by BBT artists
+            embed.set_thumbnail(url="https://imgur.com/wGEGAiw.png")
+
+            # Build verse text with uvaca line if present
+            verse_text = verse_data['Verse-Text']
             if 'Uvaca-line' in verse_data:
-                embed.add_field(
-                    name="Spoken by",
-                    value=verse_data['Uvaca-line'],
-                    inline=False
-                )
+                verse_text = f"{verse_data['Uvaca-line']}\n{verse_text}"
             
             embed.add_field(
-                name="SYNONYMS",
-                value=verse_data['Word-for-Word'],
+                name=f"TEXT {verse_ref}:",
+                value=verse_text,
                 inline=False
             )
             
+            # Add formatted synonyms
             embed.add_field(
-                name="TRANSLATION",
-                value=f"```\n{verse_data['Translation-En']}\n```",
+                name="SYNONYMS:",
+                value=self._format_synonyms(verse_data['Word-for-Word']),
                 inline=False
             )
+            
+            # Add translation
+            embed.add_field(
+                name="TRANSLATION:",
+                value=f"**```\n{verse_data['Translation-En']}\n```**",
+                inline=False
+            )
+            
+            # Calculate latency
+            latency = (datetime.now() - start_time).total_seconds() * 1000
+            
+            # Set footer with latency
+            embed.set_footer(text=f"Śloka retrieved in {latency:.2f} ms", icon_url="https://imgur.com/wGEGAiw.png")
             
             await ctx.send(embed=embed)
             
         except Exception as e:
-            await ctx.send(f"❌ Error retrieving verse: {str(e)}")
+            await ctx.send(f"🚫 Error retrieving verse:\n {str(e)}")
 
 async def setup(bot):
     await bot.add_cog(AsItIs(bot))
-    
