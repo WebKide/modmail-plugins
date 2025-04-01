@@ -74,11 +74,11 @@ class AsItIs(commands.Cog):
         return None
 
     # +------------------------------------------------------------+
-    # |               Bhagavad gītā As It Is 1972                  |
+    # |              Bhagavad gītā — As It Is 1972                 |
     # +------------------------------------------------------------+
-    @commands.command(name=['asitis'], aliases=['1972'], no_pm=True)
-    async def as_it_is(self, ctx, chapter: int, verse: str):
-        """Retrieve a Bhagavad Gita śloka from local JSON files"""
+    @commands.command(aliases=['bg1972', '1972', 'as_it_is'], no_pm=True)
+    async def asitis(self, ctx, chapter: int, verse: str):
+        """Retrieve a Bhagavad Gītā As It Is (1972) śloka from local JSON files"""
         
         # Input Validation
         is_valid, validated_verse_or_error = self.validate_input(chapter, verse)
