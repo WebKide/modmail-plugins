@@ -126,6 +126,9 @@ class AsItIs(commands.Cog):
                 parts.append(item)
         return '; '.join(parts)
 
+    # +------------------------------------------------------------+
+    # |             Bhagavad Gītā As It Is 1972                    |
+    # +------------------------------------------------------------+
     @commands.command(name='asitis', aliases=['bg1972', '1972'])
     async def gita_verse(self, ctx, chapter: int, verse: str):
         """Retrieve a Bhagavad Gita verse with full validation and formatting"""
@@ -143,13 +146,13 @@ class AsItIs(commands.Cog):
             
             # Create embed
             embed = discord.Embed(
-                title=f"Bhagavad Gītā — As It Is (₁₉₇₂) [ {chapter}.{verse_ref} ]",
                 color=discord.Color(0x50e3c2),
-                description=f"**{BG_CHAPTER_INFO[chapter]['chapter_title']}**"
+                description=f"**Chapter {BG_CHAPTER_INFO[chapter]['chapter_title']}**"
             )
             
             #  Thumbnail with ORIGINAL artwork by BBT artists
             embed.set_thumbnail(url="https://imgur.com/wGEGAiw.png")
+            embed.set_author(name=f"Bhagavad Gītā — As It Is (₁₉₇₂) [ {chapter}.{verse_ref} ]", icon_url="https://imgur.com/10jxmCh.png")
 
             # Build verse text with uvaca line if present
             verse_text = verse_data['Verse-Text']
