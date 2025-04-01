@@ -64,7 +64,7 @@ class AsItIs(commands.Cog):
         with open(file_path, 'r', encoding='utf-8') as f:
             return json.load(f)
 
-     def _validate_verse(self, chapter: int, verse: str) -> tuple:
+    def _validate_verse(self, chapter: int, verse: str) -> tuple:
         """Validate chapter and verse input"""
         if chapter not in BG_CHAPTER_INFO:
             return False, f"Invalid chapter. Bhagavad Gītā has 18 chapters (requested {chapter})."
