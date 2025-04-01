@@ -123,10 +123,10 @@ class BhagavadGita(commands.Cog):
     # +------------------------------------------------------------+
     @commands.command(aliases=['gita', 'bhagavad_gita', 'bhagavad-gita'], no_pm=True)
     async def bhagavadgita(self, ctx, chapter: int, verse: str):
-        """Retrieve a Bhagavad Gītā śloka from Vedabase.io
+        """Retrieve a Bhagavad Gītā śloka from Vedabase.io (with over 5k changes)
         
         - Supports Devanāgarī, Sanskrit, Synonyms and Translation
-        - Supports multiple verses
+        - Supports multiple verses together
         - Supports formatted word-for-word with italics
         """
         
@@ -263,7 +263,7 @@ class BhagavadGita(commands.Cog):
                             parent_span.replace_with(hyphenated_term)
                 
                 for em in text_div.find_all('em'):
-                    em.replace_with(f"_{em.get_text(strip=True)}_")
+                    em.replace_with(f"_**{em.get_text(strip=True)}**_")  # Bold-italics
                 
                 text = text_div.get_text(' ', strip=True)
                 text = text.replace(' - ', '-')
