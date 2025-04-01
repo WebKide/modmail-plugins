@@ -73,7 +73,7 @@ class AsItIs(commands.Cog):
             raise ValueError(f"Invalid JSON in chapter {chapter} file: {str(e)}")
 
     def _validate_verse(self, chapter: int, verse: str) -> Tuple[bool, str]:
-        """Validate chapter and verse input with enhanced checks"""
+        """Validate chapter and verse input"""
         if chapter not in BG_CHAPTER_INFO:
             return False, f"Invalid chapter. Bhagavad Gītā has 18 chapters (requested {chapter})."
         
@@ -117,43 +117,118 @@ class AsItIs(commands.Cog):
             return False, f"Invalid verse number: {verse}"
 
     def _find_verse_data(self, chapter_data: dict, verse_ref: str) -> dict:
-        """Comprehensive verse finding that handles all TEXT/TEXTS formats"""
+        """Find verse data handling TEXT/TEXTS formats"""
         possible_keys = []
-        base_ref = verse_ref.replace('-', '-')  # Normalize hyphen
+        base_ref = verse_ref.replace('-', '-')
         
-        # Generate all possible key variations
+        # Generate possible key variations
         for prefix in ['TEXT', 'TEXTS']:
             possible_keys.append(f"{prefix} {base_ref}")
             if '-' in base_ref:
                 start = base_ref.split('-')[0]
                 possible_keys.append(f"{prefix} {start}")
-                possible_keys.append(f"{prefix} {base_ref.replace('-', '–')}")  # En dash
+                possible_keys.append(f"{prefix} {base_ref.replace('-', '–')}")
         
-        # Check for each possible key
+        # Check each possible key
         for verse_data in chapter_data.get("Verses", []):
             if verse_data.get("Text-num", "") in possible_keys:
                 return verse_data
         
-        # Fallback: Check if any verse contains the reference
+        # Fallback search
         search_num = base_ref.split('-')[0] if '-' in base_ref else base_ref
         for verse_data in chapter_data.get("Verses", []):
             if search_num in verse_data.get("Text-num", ""):
                 return verse_data
         
-        raise ValueError(f"Verse {verse_ref} not found (tried: {', '.join(possible_keys)})")
+        raise ValueError(f"Verse {verse_ref} not found")
 
     def _format_verse_text(self, verse_data: dict) -> str:
-        """Enhanced verse formatting with proper line breaks and context"""
-        verse_text = verse_data.get('Verse-Text', '').replace(';', '\n')
+        """Format verse text preserving line breaks and bold sections"""
+        verse_text = verse_data.get('Verse-Text', '')
+        
+        # Replace ; with \n but preserve complete lines
+        lines = []
+        current_line = ""
+        in_bold = False
+        
+        for char in verse_text:
+            if char == ';' and not in_bold:
+                if current_line:
+                    lines.append(current_line.strip())
+                    current_line = ""
+                continue
+                
+            current_line += char
+            if char == '*':
+                in_bold = not in_bold
+                
+            if char == '\n':
+                if current_line.strip():
+                    lines.append(current_line.strip())
+                current_line = ""
+        
+        if current_line.strip():
+            lines.append(current_line.strip())
+        
+        # Handle Uvaca line
+        formatted_text = '\n'.join(lines)
         if 'Uvaca-line' in verse_data:
             uvaca = verse_data['Uvaca-line'].strip()
             if not uvaca.endswith((':', '-', '—')):
                 uvaca += ':'
-            return f"**{uvaca}**\n{verse_text}"
-        return verse_text
+            return f"**{uvaca}**\n{formatted_text}"
+        
+        return formatted_text
+
+    def _format_synonyms(self, synonyms: str) -> List[str]:
+        """Format synonyms with proper semicolon handling"""
+        if not synonyms.strip():
+            return ["No synonyms available"]
+        
+        # First split by semicolons that have space after
+        items = []
+        current_item = ""
+        
+        for char in synonyms:
+            if char == ';' and not current_item.strip().endswith(('ā', 'ī', 'ū', 'ṁ', 'ṣ', 'ṭ', 'ḥ')):
+                if current_item.strip():
+                    items.append(current_item.strip())
+                    current_item = ""
+                continue
+                
+            current_item += char
+        
+        if current_item.strip():
+            items.append(current_item.strip())
+        
+        # Format each item
+        formatted = []
+        for item in items:
+            # Handle word-meaning separation
+            if '—' in item:
+                word, meaning = item.split('—', 1)
+                formatted.append(f"_{word.strip()}_ — {meaning.strip()}")
+            elif '-' in item and not any(c in item for c in ['ā', 'ī', 'ū', 'ṁ', 'ṣ', 'ṭ', 'ḥ']):
+                parts = item.split('-', 1)
+                formatted.append(f"_{parts[0].strip()}_ - {parts[1].strip()}")
+            else:
+                formatted.append(item)
+        
+        # Join with semicolons and newlines
+        formatted_text = ';\n'.join(formatted)
+        return self._split_long_text(formatted_text)
+
+    def _format_translation(self, translation: str) -> List[str]:
+        """Format translation with proper paragraph breaks"""
+        if not translation:
+            return ["No translation available"]
+        
+        # Clean up excessive whitespace
+        translation = ' '.join(translation.split())
+        return self._split_long_text(translation)
 
     def _split_long_text(self, text: str, max_len: int = 1000) -> List[str]:
-        """Split text at line breaks when possible, preserving complete lines"""
+        """Split text at natural breaks while preserving complete lines"""
         if len(text) <= max_len:
             return [text]
         
@@ -167,8 +242,14 @@ class AsItIs(commands.Cog):
                     chunks.append(current_chunk)
                     current_chunk = line
                 else:  # Single line too long
-                    chunks.append(line[:max_len-3] + "...")
-                    current_chunk = line[max_len-3:]
+                    # Try to split at last space
+                    split_pos = line.rfind(' ', 0, max_len-3)
+                    if split_pos > 0:
+                        chunks.append(line[:split_pos] + '...')
+                        current_chunk = line[split_pos+1:]
+                    else:
+                        chunks.append(line[:max_len-3] + '...')
+                        current_chunk = line[max_len-3:]
             else:
                 if current_chunk:
                     current_chunk += '\n' + line
@@ -180,55 +261,22 @@ class AsItIs(commands.Cog):
         
         return chunks
 
-    def _format_synonyms(self, synonyms: str) -> List[str]:
-        """Format synonyms with proper line breaks and grouping"""
-        if not synonyms.strip():
-            return ["No synonyms available"]
-        
-        # First split by semicolons that are followed by space (original separators)
-        items = [item.strip() for item in synonyms.split('; ') if item.strip()]
-        
-        # For items that weren't split (like "ātma-saṁ; stutiḥ"), handle them
-        refined_items = []
-        for item in items:
-            if ';' in item:
-                # Handle cases where semicolon appears mid-item without space
-                sub_items = [sub.strip() for sub in item.split(';') if sub.strip()]
-                refined_items.extend(sub_items)
-            else:
-                refined_items.append(item)
-        
-        # Now format each item with markdown
-        formatted = []
-        for item in refined_items:
-            # Handle the word-meaning separator (— or -)
-            if '—' in item:
-                word, meaning = item.split('—', 1)
-                formatted.append(f"_{word.strip()}_ — {meaning.strip()}")
-            elif '-' in item and not any(c in item for c in ['ā', 'ī', 'ū', 'ṁ', 'ṣ', 'ṭ']):  # Avoid splitting Sanskrit words
-                parts = item.split('-', 1)
-                formatted.append(f"_{parts[0].strip()}_ - {parts[1].strip()}")
-            else:
-                formatted.append(item)
-        
-        # Split into chunks if too long, preserving line groups
-        return self._split_long_text('\n'.join(formatted))
-
-    def _format_translation(self, translation: str) -> List[str]:
-        """Format translation with proper paragraph breaks"""
-        if not translation:
-            return ["No translation available"]
-        
-        # Clean up excessive whitespace
-        translation = ' '.join(translation.split())
-        return self._split_long_text(translation)
-
     def _safe_add_field(self, embed: discord.Embed, name: str, value: str, inline: bool = False):
-        """Safely add field without exceeding limits"""
-        if len(value) > 1024:
-            value = value[:1000] + "... [content truncated]"
-        embed.add_field(name=name, value=value, inline=inline)
+        """Add field with automatic splitting if needed"""
+        if not value:
+            return
+        
+        if isinstance(value, list):
+            value = '\n'.join(value)
+        
+        chunks = self._split_long_text(str(value))
+        embed.add_field(name=name, value=chunks[0], inline=inline)
+        for chunk in chunks[1:]:
+            embed.add_field(name="↳", value=chunk, inline=inline)
 
+    # +------------------------------------------------------------+
+    # |               Bhagavad Gītā As It Is 1972                  |
+    # +------------------------------------------------------------+
     @commands.command(name='asitis', aliases=['bg1972', '1972'], no_pm=True)
     async def gita_verse(self, ctx, chapter: int, verse: str):
         """Retrieve a Bhagavad Gita verse with full validation and formatting"""
@@ -259,7 +307,7 @@ class AsItIs(commands.Cog):
                 inline=False
             )
 
-            # Thumbnail with original artwork
+            # Add Thumbnail with original artwork from BBT
             embed.set_thumbnail(url="https://imgur.com/wGEGAiw.png")
             embed.set_author(
                 name="Bhagavad Gītā — As It Is (Edition 1972)",
@@ -277,7 +325,7 @@ class AsItIs(commands.Cog):
                     inline=False
                 )
             
-            # Add translation (split into multiple fields if needed)
+            # Add Translation (split into multiple fields if needed)
             translation = verse_data.get('Translation-En', '')
             translation_chunks = self._format_translation(translation)
             for i, chunk in enumerate(translation_chunks):
@@ -288,7 +336,7 @@ class AsItIs(commands.Cog):
                     inline=False
                 )
             
-            # Footer with time duration latency
+            # Add Footer with time duration latency and IMG
             latency = (datetime.now() - start_time).total_seconds() * 1000
             embed.set_footer(
                 text=f"Śloka retrieved in {latency:.2f} ms",
