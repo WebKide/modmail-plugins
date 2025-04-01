@@ -1,4 +1,4 @@
-# v0.01
+#  v0.02
 """
 MIT License
 Copyright (c) 2020-2025 WebKide [d.id @323578534763298816]
@@ -542,10 +542,17 @@ SB_CANTO_INFO = {
 
 
 class VedaBase(commands.Cog):
+    """ Retrieve ślokas from Bhagavad Gītā, Caitanya-caritāmṛta and Śrīmad Bhāgavatam from Vedabase.io
+
+    - Supports Devanāgarī, Sanskrit/Bengali, Synonyms and Translation
+    - Supports multiple verses grouped together
+    - Supports formatted word-for-word with bold-italics
+    - Robust scraping for web-crawler function
+    """
     def __init__(self, bot):
         self.bot = bot
         self.base_url = "https://vedabase.io/en/library/"
-        self.ua = UserAgent()
+        self.ua = UserAgent(use_cache_server=False)  # Disable caching self.ua = UserAgent()
         self.session = None
         self.last_request_time = 0
         self.request_delay = 5  # seconds between requests
@@ -961,6 +968,8 @@ class VedaBase(commands.Cog):
                 self.bot.logger.error(f"SB command failed: \n\n{e}", exc_info=True)
 
     def cog_unload(self):
+        if hasattr(self, 'ua'):
+            self.ua = None  # Helps with garbage collection
         if self.session:
             self.bot.loop.create_task(self.session.close())
 
