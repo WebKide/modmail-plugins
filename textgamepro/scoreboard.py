@@ -1,6 +1,9 @@
+import discord
+
 from discord.ext import commands
 from discord import Embed
 from .models import GameType, Scoreboard
+
 
 class ScoreboardCommands(commands.Cog):
     def __init__(self, bot):
