@@ -1,3 +1,5 @@
+import discord
+
 from discord.ext import commands
 from .commands import TextGameCommands
 from .scoreboard import ScoreboardCommands
@@ -11,19 +13,18 @@ class TextGames(commands.Cog):
         self.scoreboard = ScoreboardCommands(bot)
         self.admin = ScoreboardAdmin(bot)
 
+        # Register command groups
+        self.scoreboard_command = commands.Group(
+            self.scoreboard.scoreboard,
+            name="scoreboard",
+            invoke_without_command=True
+        )
+        self.bot.add_command(self.scoreboard_command)
+
     def cog_unload(self):
-        # Cleanup if needed
-        pass
+        # Clean up commands when cog is unloaded
+        self.bot.remove_command("scoreboard")
 
 async def setup(bot):
-    # Initialize all components
-    cog = TextGames(bot)
-    await bot.add_cog(cog)
-    
-    # Manually add command groups
-    bot.add_command(cog.games.settle)
-    bot.add_command(cog.games.guess)
-    bot.add_command(cog.scoreboard.scoreboard)
-    bot.add_command(cog.admin.clean_user)
-    # Add all other commands...
+    await bot.add_cog(TextGames(bot))
     
