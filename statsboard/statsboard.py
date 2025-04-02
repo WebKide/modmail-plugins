@@ -254,6 +254,5 @@ class StatsBoard(commands.Cog):
         await self.update_stats()
         await ctx.send("Stats refreshed!", delete_after=3)
 
-def setup(bot):
-    bot.add_cog(StatsBoard(bot))
-    
+async def setup(bot):
+    await bot.add_cog(StatsBoard(bot))
