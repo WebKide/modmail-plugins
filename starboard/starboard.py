@@ -20,186 +20,147 @@ SOFTWARE.
 
 import discord
 import re
-import time
 from discord.ext import commands
-from typing import Optional, List, Dict
 
 class Starboard(commands.Cog):
     """A fully automated, configurable Starboard system that highlights popular messages in your Discord server"""
-    
     def __init__(self, bot):
         self.bot = bot
         self.starboard_channels = {}
         self._load_default_settings()
-        self.cooldowns: Dict[int, float] = {}  # {message_id: last_processed_time}
 
     def _load_default_settings(self):
         """Set default values before channel settings are loaded"""
-        self.default_emoji = '⭐'
-        self.default_count = 1
-        self.default_ignore = []
+        self.star_emoji = '⭐'
+        self.star_count = 1
+        self.ignored_channels = []  # channels that will be ignored and can be modified with command
 
-    async def _get_channel_settings(self, channel: discord.TextChannel) -> dict:
+    async def _load_channel_settings(self, channel):
         """Load settings from channel topic"""
-        settings = {
-            'emoji': self.default_emoji,
-            'count': self.default_count,
-            'ignore': self.default_ignore.copy()
-        }
-        
         if not channel.topic:
-            return settings
+            return
             
         # Extract emoji from topic
         emoji_match = re.search(r'default_emoji:(\S+)', channel.topic)
         if emoji_match:
-            settings['emoji'] = emoji_match.group(1)
+            self.star_emoji = emoji_match.group(1)
             
         # Extract star count from topic
         count_match = re.search(r'default_count:(\d+)', channel.topic)
         if count_match:
-            settings['count'] = int(count_match.group(1))
-            
-        # Extract ignored channels from topic
-        ignore_match = re.search(r'default_ignore:\(([\d, ]+)\)', channel.topic)
-        if ignore_match:
-            try:
-                settings['ignore'] = [int(x.strip()) for x in ignore_match.group(1).split(',')]
-            except (ValueError, AttributeError):
-                pass
-                
-        return settings
-
-    @commands.Cog.listener()
-    async def on_channel_topic_update(self, before: str, after: str, channel: discord.TextChannel):
-        """Update settings when channel topic is edited"""
-        if channel.name == "starboard":
-            # No need to do anything specific here as settings are loaded dynamically
-            pass
+            self.star_count = int(count_match.group(1))
 
     @commands.command(aliases=['setstars'], no_pm=True)
     @commands.has_permissions(manage_channels=True)
-    async def starconfig(self, ctx, emoji: Optional[str] = None, count: Optional[int] = None):
-        """Configure starboard settings or show current configuration
+    async def starconfig(self, ctx, emoji: str = None, count: int = None):
+        """Configure starboard settings
         
         Examples:
         ?starconfig ⭐ 5      - Set 5 stars required
         ?starconfig 🌟        - Just change emoji
         ?starconfig reset     - Reset to defaults
-        ?starconfig           - Show current settings
         """
         channel = await self.ensure_starboard_channel(ctx.guild)
-        settings = await self._get_channel_settings(channel)
         
-        # Show current settings if no arguments
-        if emoji is None and count is None:
-            embed = discord.Embed(
-                title="Starboard Settings",
-                color=discord.Color.gold()
-            )
-            embed.add_field(name="Emoji", value=settings['emoji'], inline=True)
-            embed.add_field(name="Required Stars", value=settings['count'], inline=True)
-            if settings['ignore']:
-                ignored = ', '.join(f"<#{cid}>" for cid in settings['ignore'])
-                embed.add_field(name="Ignored Channels", value=ignored, inline=False)
-            embed.set_footer(text=f"Configure with {ctx.prefix}starconfig [emoji] [count]")
-            return await ctx.send(embed=embed)
-            
         if emoji and str(emoji).lower() == 'reset':
             new_topic = "Starboard channel - Reset to defaults"
             self._load_default_settings()
             await channel.edit(topic=new_topic)
-            return await ctx.send("✅ Reset starboard to defaults (⭐ 1)")
+            return await ctx.send("✅ Reset starboard default reactions **(⭐ 1)**")
             
-        # Build new topic string
+        # Build new topic string in Starboard channel
         parts = []
         if channel.topic and not channel.topic.startswith("Starboard channel"):
             parts.append(channel.topic.split('\n')[0])
             
-        # Keep existing ignore settings unless we're resetting
-        ignore_str = f"default_ignore:({','.join(map(str, settings['ignore']))})" if settings['ignore'] else ""
-            
         if emoji:
             parts.append(f"default_emoji:{emoji}")
-            settings['emoji'] = emoji
+            self.star_emoji = emoji
             
         if count:
             parts.append(f"default_count:{count}")
-            settings['count'] = count
-            
-        if ignore_str:
-            parts.append(ignore_str)
+            self.star_count = count
             
         new_topic = "Starboard channel\n" + " ".join(parts)
         await channel.edit(topic=new_topic)
         
-        # Show updated settings
-        settings_msg = []
+        # Show current settings
+        settings = []
         if emoji:
-            settings_msg.append(f"Emoji: {settings['emoji']}")
+            settings.append(f"Emoji: {self.star_emoji}")
         if count:
-            settings_msg.append(f"Required stars: {settings['count']}")
+            settings.append(f"Required stars: {self.star_count}")
             
-        await ctx.send(f"✅ Updated starboard settings: {' '.join(settings_msg)}")
+        await ctx.send(f"✅ Updated starboard settings: {' '.join(settings)}")
 
-    async def ensure_starboard_channel(self, guild: discord.Guild) -> discord.TextChannel:
-        """Ensure starboard channel exists with correct permissions"""
+    async def ensure_starboard_channel(self, guild):
+        """Find or create starboard channel and load settings"""
         channel = discord.utils.get(guild.text_channels, name="starboard")
         
         if not channel:
-            # Create channel
-            overwrites = {
-                guild.default_role: discord.PermissionOverwrite(
-                    view_channel=True,
-                    read_message_history=True,
-                    send_messages=False,
-                    manage_messages=False,
-                    add_reactions=False,
-                    embed_links=False,
-                    attach_files=False,
-                    mention_everyone=False,
-                    use_application_commands=False,
-                    create_public_threads=False,
-                    create_private_threads=False,
-                    send_messages_in_threads=False,
-                    use_external_emojis=False,
-                    use_external_stickers=False,
-                    manage_threads=False,
-                    manage_webhooks=False,
-                    manage_channels=False
-                ),
-                guild.me: discord.PermissionOverwrite(
-                    view_channel=True,
-                    send_messages=True,
-                    embed_links=True,
-                    attach_files=True,
-                    read_message_history=True,
-                    manage_messages=True,
-                    add_reactions=True,
-                    manage_channels=True,
-                    use_external_emojis=True,
-                    mention_everyone=False,
-                    manage_webhooks=False
-                )
-            }
-
+            # Create the channel
             channel = await guild.create_text_channel(
                 "starboard",
-                position=0,
-                overwrites=overwrites,
-                topic=f"Starboard channel\ndefault_emoji:{self.default_emoji} default_count:{self.default_count}"
+                topic="Starboard channel\ndefault_emoji:⭐ default_count:1",
+                reason="Automatic starboard creation",
+                position=0
             )
+            
+            # Permissions for @everyone
+            everyone_perms = discord.PermissionOverwrite(
+                view_channel=True,
+                read_message_history=True,
+
+                # Prevent misuse of the Starboard channel
+                send_messages=False,
+                create_public_threads=False,
+                create_private_threads=False,
+                send_messages_in_threads=False,
+                embed_links=False,
+                attach_files=False,
+                add_reactions=False,
+                use_external_emojis=False,
+                use_external_stickers=False,
+                manage_messages=False,
+                manage_threads=False,
+                manage_channels=False,
+                manage_permissions=False
+            )
+            
+            # Permissions for self.bot
+            bot_member = guild.get_member(self.bot.user.id)
+            bot_perms = discord.PermissionOverwrite(
+                view_channel=True,
+                read_message_history=True,
+                send_messages=True,
+                manage_messages=True,
+                embed_links=True,
+                attach_files=True,
+                use_external_emojis=True,
+                manage_channels=True,
+                manage_permissions=True
+            )
+            
+            # Apply permissions
+            await channel.set_permissions(guild.default_role, overwrite=everyone_perms)
+            if bot_member:
+                await channel.set_permissions(bot_member, overwrite=bot_perms)
+            
+            await channel.send("# ⭐ **Welcome to the Starboard!** ⭐\n\n"
+                             "Messages that get enough star reactions will appear here.")
         
+        await self._load_channel_settings(channel)
+        self.starboard_channels[guild.id] = channel.id
         return channel
         
-    async def get_star_reaction(self, message: discord.Message, emoji: str) -> Optional[discord.Reaction]:
-        """Get the star reaction from a message if it exists"""
+    async def get_star_reaction(self, message):
+        """Helper to get the star reaction from a message"""
         for reaction in message.reactions:
-            if str(reaction.emoji) == emoji:
+            if str(reaction.emoji) == self.star_emoji:
                 return reaction
         return None
 
-    def create_starboard_embed(self, message: discord.Message, emoji: str, count: int) -> discord.Embed:
+    def create_starboard_embed(self, message):
         """Create an embed for the starboard that handles all content types"""
         embed = discord.Embed(
             description=message.content if message.content else None,
@@ -211,10 +172,10 @@ class Starboard(commands.Cog):
             icon_url=message.author.display_avatar.url
         )
         embed.add_field(name="Original", value=f"[Jump!]({message.jump_url})")
-        embed.add_field(name="Stars", value=f"{count}{emoji}")
+        embed.add_field(name="Stars", value=f"1{self.star_emoji}")
         embed.set_footer(text=f"Starboard ID: {message.id}")
 
-        # Handle attachments
+        # Handle attachments (images, videos, files)
         if message.attachments:
             first_attachment = message.attachments[0]
             if first_attachment.content_type:
@@ -240,13 +201,13 @@ class Starboard(commands.Cog):
 
         return embed
 
-    async def update_starboard_message(self, starboard_message: discord.Message, count: int, emoji: str):
+    async def update_starboard_message(self, starboard_message, star_count):
         """Update an existing starboard message"""
         embed = starboard_message.embeds[0]
-        embed.set_field_at(1, name="Stars", value=f"{count}{emoji}")
+        embed.set_field_at(1, name="Stars", value=f"{star_count}{self.star_emoji}")
         await starboard_message.edit(embed=embed)
 
-    async def find_starboard_message(self, channel: discord.TextChannel, original_message_id: int) -> Optional[discord.Message]:
+    async def find_starboard_message(self, channel, original_message_id):
         """Find existing starboard message for a given original message"""
         async for message in channel.history(limit=200):
             if message.embeds and message.embeds[0].footer.text == f"Starboard ID: {original_message_id}":
@@ -254,100 +215,106 @@ class Starboard(commands.Cog):
         return None
 
     @commands.Cog.listener()
-    async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
+    async def on_raw_reaction_add(self, payload):
         """Handle when a reaction is added"""
-        # Early returns for invalid cases
-        if not payload.guild_id:
+        # Ignore if not our star emoji or in DMs
+        if str(payload.emoji) != self.star_emoji or not payload.guild_id:
             return
-        if payload.member and payload.member.bot:
-            return
-
-        # Simple cooldown implementation
-        current_time = time.time()
-        if payload.message_id in self.cooldowns:
-            if current_time - self.cooldowns[payload.message_id] < 5.0:  # 5 second cooldown
-                return
-        self.cooldowns[payload.message_id] = current_time
-
+            
         guild = self.bot.get_guild(payload.guild_id)
-        if not guild:
+        if guild is None:
             return
-
+            
         try:
             starboard_channel = await self.ensure_starboard_channel(guild)
-            settings = await self._get_channel_settings(starboard_channel)
+        except commands.BotMissingPermissions:
+            return
             
-            # Ignore reactions in starboard channel or ignored channels
-            if payload.channel_id == starboard_channel.id or payload.channel_id in settings['ignore']:
-                return
+        # Ignore reactions in starboard channel
+        if payload.channel_id == starboard_channel.id:
+            return
+            
+        channel = self.bot.get_channel(payload.channel_id)
+        if not channel:
+            return
+            
+        try:
+            message = await channel.fetch_message(payload.message_id)
+        except discord.NotFound:
+            return
+        except discord.Forbidden:
+            return
+        except discord.HTTPException:
+            return
+            
+        # Ignore bot's own reactions or self-starring
+        #if payload.user_id == message.author.id or payload.user_id == self.bot.user.id:
+        #    return
+            
+        star_reaction = await self.get_star_reaction(message)
+        if not star_reaction or star_reaction.count < self.star_count:
+            return
+            
+        # Check if message is already in starboard
+        existing_message = await self.find_starboard_message(starboard_channel, message.id)
+        if existing_message:
+            await self.update_starboard_message(existing_message, star_reaction.count)
+            return
                 
-            if str(payload.emoji) != settings['emoji']:
-                return
-
-            channel = guild.get_channel(payload.channel_id)
-            if not channel or not channel.permissions_for(guild.me).manage_messages:
-                return
+        # Create new starboard entry
+        try:
+            embed = self.create_starboard_embed(message)
+            files = []
+            
+            # Handle all attachments (including non-image files)
+            for attachment in message.attachments:
+                if not attachment.is_spoiler() and attachment.size < 8_000_000:  # 8MB limit
+                    try:
+                        files.append(await attachment.to_file())
+                    except:
+                        continue  # Skip if we can't process the file
+            
+            # Send message with embed and files
+            if files:
+                # If we have multiple files, we need to handle them carefully
+                # Discord allows up to 10 files per message, but we'll limit to 5 for safety
+                for i in range(0, len(files), 5):
+                    batch = files[i:i+5]
+                    if i == 0:
+                        # First batch includes the embed
+                        starboard_msg = await starboard_channel.send(embed=embed, files=batch)
+                    else:
+                        # Subsequent batches are just files
+                        await starboard_channel.send(files=batch)
+            else:
+                starboard_msg = await starboard_channel.send(embed=embed)
                 
-            try:
-                message = await channel.fetch_message(payload.message_id)
-            except discord.NotFound:
-                return
-                
-            # Ignore self-starring
-            if payload.user_id == message.author.id or payload.user_id == self.bot.user.id:
-                return
-                
-            star_reaction = await self.get_star_reaction(message, settings['emoji'])
-            if not star_reaction or star_reaction.count < settings['count']:
-                return
-                
-            # Check if message is already in starboard
-            existing_message = await self.find_starboard_message(starboard_channel, message.id)
-            if existing_message:
-                await self.update_starboard_message(existing_message, star_reaction.count, settings['emoji'])
-                return
-                    
-            # Create new starboard entry
-            try:
-                embed = self.create_starboard_embed(message, settings['emoji'], star_reaction.count)
-                files = []
-                
-                # Handle file attachments
-                if message.attachments:
-                    for attachment in message.attachments:
-                        if not attachment.is_spoiler() and attachment.size < 8_000_000:
-                            files.append(await attachment.to_file())
-                
-                if files:
-                    starboard_msg = await starboard_channel.send(embed=embed, files=files)
-                else:
-                    starboard_msg = await starboard_channel.send(embed=embed)
-                    
-                await starboard_msg.add_reaction(settings['emoji'])
-            except Exception as e:
-                print(f"Error creating starboard entry: {e}")
-
+            await starboard_msg.add_reaction(self.star_emoji)
         except Exception as e:
-            print(f"Error in on_raw_reaction_add: {e}")
+            print(f"Error creating starboard entry: {e}")
 
     @commands.Cog.listener()
-    async def on_raw_reaction_remove(self, payload: discord.RawReactionActionEvent):
+    async def on_raw_reaction_remove(self, payload):
         """Handle when a reaction is removed"""
-        if not payload.guild_id:
+        if str(payload.emoji) != self.star_emoji or not payload.guild_id:
             return
             
         guild = self.bot.get_guild(payload.guild_id)
-        if not guild:
+        if guild is None:
             return
             
-        starboard_channel = await self.ensure_starboard_channel(guild)
-        settings = await self._get_channel_settings(starboard_channel)
+        starboard_channel = self.bot.get_channel(self.starboard_channels.get(guild.id))
+        if not starboard_channel:
+            starboard_channel = discord.utils.get(guild.text_channels, name="starboard")
+            if not starboard_channel:
+                return
+            self.starboard_channels[guild.id] = starboard_channel.id
             
-        if str(payload.emoji) != settings['emoji'] or payload.channel_id == starboard_channel.id:
+        if payload.channel_id == starboard_channel.id:
             return
             
-        channel = guild.get_channel(payload.channel_id)
-        if not channel or channel.id in settings['ignore']:
+        channel = self.bot.get_channel(payload.channel_id)
+        if not channel:
             return
             
         try:
@@ -355,30 +322,35 @@ class Starboard(commands.Cog):
         except discord.NotFound:
             return
             
-        star_reaction = await self.get_star_reaction(message, settings['emoji'])
+        star_reaction = await self.get_star_reaction(message)
         existing_message = await self.find_starboard_message(starboard_channel, message.id)
         if not existing_message:
             return
             
-        if star_reaction and star_reaction.count >= settings['count']:
-            await self.update_starboard_message(existing_message, star_reaction.count, settings['emoji'])
-        # Don't delete when stars go below threshold - just leave it
+        if star_reaction and star_reaction.count >= self.star_count:
+            await self.update_starboard_message(existing_message, star_reaction.count)
+        else:
+            await existing_message.delete()
 
     @commands.Cog.listener()
-    async def on_raw_message_edit(self, payload: discord.RawMessageUpdateEvent):
+    async def on_raw_message_edit(self, payload):
         """Handle when a message is edited"""
         if not payload.guild_id:
             return
             
         guild = self.bot.get_guild(payload.guild_id)
-        if not guild:
+        if guild is None:
             return
             
-        starboard_channel = await self.ensure_starboard_channel(guild)
-        settings = await self._get_channel_settings(starboard_channel)
+        starboard_channel = self.bot.get_channel(self.starboard_channels.get(guild.id))
+        if not starboard_channel:
+            starboard_channel = discord.utils.get(guild.text_channels, name="starboard")
+            if not starboard_channel:
+                return
+            self.starboard_channels[guild.id] = starboard_channel.id
             
-        channel = guild.get_channel(payload.channel_id)
-        if not channel or channel.id == starboard_channel.id or channel.id in settings['ignore']:
+        channel = self.bot.get_channel(payload.channel_id)
+        if not channel or channel.id == starboard_channel.id:
             return
             
         try:
@@ -386,7 +358,7 @@ class Starboard(commands.Cog):
         except discord.NotFound:
             return
             
-        star_reaction = await self.get_star_reaction(message, settings['emoji'])
+        star_reaction = await self.get_star_reaction(message)
         if not star_reaction:
             return
             
@@ -394,7 +366,8 @@ class Starboard(commands.Cog):
         if not existing_message:
             return
             
-        embed = self.create_starboard_embed(message, settings['emoji'], star_reaction.count)
+        embed = self.create_starboard_embed(message)
+        embed.set_field_at(1, name="Stars", value=f"{star_reaction.count}{self.star_emoji}")
         await existing_message.edit(embed=embed)
 
     @commands.command()
@@ -406,7 +379,8 @@ class Starboard(commands.Cog):
             'manage_messages': "Edit star counts",
             'embed_links': "Create rich embeds",
             'read_message_history': "Fetch messages",
-            'add_reactions': "Add star reactions"
+            'add_reactions': "Add star reactions",
+            'attach_files': "Upload attachments"
         }
         
         missing = []
@@ -421,4 +395,3 @@ class Starboard(commands.Cog):
     
 async def setup(bot):
     await bot.add_cog(Starboard(bot))
-    
