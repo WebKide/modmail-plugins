@@ -77,7 +77,7 @@ class Starboard(commands.Cog):
             # No need to do anything specific here as settings are loaded dynamically
             pass
 
-    @commands.command(aliases=['setstars'], description=f'{p}starconfig - show current settings', no_pm=True)
+    @commands.command(aliases=['setstars'], description='?starconfig - show current settings', no_pm=True)
     @commands.has_permissions(manage_channels=True)
     async def starconfig(self, ctx, emoji: Optional[str] = None, count: Optional[int] = None):
         """Configure starboard settings or show current configuration
