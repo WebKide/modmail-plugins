@@ -23,7 +23,6 @@ import re
 from discord.ext import commands
 from typing import Optional, List
 
-p = ctx.prefix
 
 class Starboard(commands.Cog):
     """A fully automated, configurable, user-friendly Starboard system that highlights popular messages in your Discord server"""
@@ -89,6 +88,7 @@ class Starboard(commands.Cog):
         {p}starconfig reset     - Reset to defaults
         {p}starconfig           - Show current settings
         """
+        p = ctx.prefix
         channel = await self.ensure_starboard_channel(ctx.guild)
         settings = await self._get_channel_settings(channel)
         
