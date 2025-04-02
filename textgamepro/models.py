@@ -91,7 +91,8 @@ class Scoreboard:
         
     async def get_leaderboard(self, game_type: GameType, limit: int = 10):
         """Get leaderboard for a specific game"""
-        return await self.db.find({'game_type': game_type.value})
-            .sort('activity_score', -1)
-            .limit(limit)
+        return await self.db.find({'game_type': game_type.value}) \
+            .sort('activity_score', -1) \
+            .limit(limit) \
             .to_list(None)
+        
