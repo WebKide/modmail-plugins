@@ -4,13 +4,11 @@ from discord.ext import commands
 from discord import Embed
 from .models import GameType, Scoreboard
 
-
-class ScoreboardCommands(commands.Cog):
+class ScoreboardCommands:
     def __init__(self, bot):
         self.bot = bot
         self.scoreboard = Scoreboard(bot.plugin_db.get_partition(self))
-        
-    @commands.group(invoke_without_command=True)
+
     async def scoreboard(self, ctx, game_type: str = None):
         """View scoreboards and player stats"""
         if not game_type:
@@ -39,8 +37,8 @@ class ScoreboardCommands(commands.Cog):
             await ctx.send(embed=embed)
         except ValueError:
             await ctx.send("Invalid game type. Available: rpsls, guess, scramble, coinflip")
-            
-    @scoreboard.command()
+
+    @commands.command()
     async def stats(self, ctx, member: discord.Member = None):
         """View your game statistics"""
         player = member or ctx.author
@@ -56,3 +54,4 @@ class ScoreboardCommands(commands.Cog):
             )
             
         await ctx.send(embed=embed)
+        
