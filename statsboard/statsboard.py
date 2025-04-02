@@ -19,13 +19,12 @@ SOFTWARE.
 """
 
 import discord
-import json
+from discord.ext import commands, tasks
 import datetime
 import psutil
-
-from pathlib import Path
-from discord.ext import commands, tasks
 from collections import defaultdict
+import json
+from pathlib import Path
 
 class StatsBoard(commands.Cog):
     """Automatic stats display system for bot statistics"""
@@ -39,7 +38,7 @@ class StatsBoard(commands.Cog):
         self.messages_sent = 0
         self.config_file = Path('data/stats_config.json')
         self.config = self.load_config()
-        self.update_stats.start()
+        self.initialized = False
 
     def load_config(self):
         """Load or create configuration file"""
@@ -47,7 +46,7 @@ class StatsBoard(commands.Cog):
             'channel_name': 'bot-stats',
             'channel_id': None,
             'message_id': None,
-            'enabled': True
+            'enabled': False  # Default to disabled until setup
         }
         
         if not self.config_file.exists():
@@ -66,7 +65,8 @@ class StatsBoard(commands.Cog):
 
     def cog_unload(self):
         """Cleanup when cog is unloaded"""
-        self.update_stats.cancel()
+        if self.update_stats.is_running():
+            self.update_stats.cancel()
 
     async def get_stats_channel(self):
         """Get or create the stats channel"""
@@ -77,6 +77,9 @@ class StatsBoard(commands.Cog):
                 return channel
         
         # Channel not found, create new one
+        if not self.bot.guilds:
+            return None
+            
         guild = self.bot.guilds[0]  # Use first guild the bot is in
         
         # Set up permissions
@@ -110,7 +113,10 @@ class StatsBoard(commands.Cog):
     def create_stats_embed(self):
         """Generate the stats embed"""
         embed = discord.Embed(title="Bot Statistics", timestamp=datetime.datetime.utcnow())
-        embed.set_author(name=self.bot.user.name, icon_url=self.bot.user.avatar_url)
+        
+        # Use display_avatar (works in newer discord.py versions)
+        avatar_url = self.bot.user.display_avatar.url if hasattr(self.bot.user, 'display_avatar') else self.bot.user.avatar_url
+        embed.set_author(name=self.bot.user.name, icon_url=avatar_url)
         
         # Uptime calculation
         delta = datetime.datetime.utcnow() - self.bot.uptime
@@ -147,7 +153,7 @@ class StatsBoard(commands.Cog):
     @tasks.loop(seconds=16)
     async def update_stats(self):
         """Update the stats message"""
-        if not self.config['enabled']:
+        if not self.config['enabled'] or not self.initialized:
             return
             
         try:
@@ -185,22 +191,61 @@ class StatsBoard(commands.Cog):
         """Wait for bot to be ready before starting loop"""
         await self.bot.wait_until_ready()
 
-    @commands.command(name="statsrefresh", hidden=True, no_pm=True)
+    @commands.group(name="statsboard", invoke_without_command=True, no_pm=True)
     @commands.is_owner()
-    async def manual_refresh(self, ctx):
-        """Manually refresh the stats embed"""
-        await self.update_stats()
-        await ctx.send("Stats refreshed!", delete_after=23)
+    async def statsboard_group(self, ctx):
+        """Manage the stats board system"""
+        await ctx.send_help(ctx.command)
 
-    @commands.command(name="togglestats", hidden=True, no_pm=True)
+    @statsboard_group.command(name="setup", no_pm=True)
+    @commands.is_owner()
+    async def setup_stats(self, ctx):
+        """Initialize the stats board system"""
+        try:
+            self.stats_channel = await self.get_stats_channel()
+            if not self.stats_channel:
+                return await ctx.send("Failed to create stats channel.")
+            
+            embed = self.create_stats_embed()
+            self.stats_message = await self.stats_channel.send(embed=embed)
+            self.config['message_id'] = self.stats_message.id
+            self.config['enabled'] = True
+            self.initialized = True
+            self.save_config()
+            
+            if not self.update_stats.is_running():
+                self.update_stats.start()
+            
+            await ctx.send(f"Stats board initialized in {self.stats_channel.mention}")
+        except Exception as e:
+            await ctx.send(f"Setup failed: {e}")
+
+    @statsboard_group.command(name="toggle", no_pm=True)
     @commands.is_owner()
     async def toggle_stats(self, ctx):
         """Toggle the stats display system"""
         self.config['enabled'] = not self.config['enabled']
         self.save_config()
         status = "enabled" if self.config['enabled'] else "disabled"
+        
+        if self.config['enabled'] and not self.update_stats.is_running():
+            self.update_stats.start()
+        elif not self.config['enabled'] and self.update_stats.is_running():
+            self.update_stats.cancel()
+            
         await ctx.send(f"Stats display system is now {status}.")
 
-def setup(bot):
-    bot.add_cog(StatsBoard(bot))
-  
+    @statsboard_group.command(name="refresh", no_pm=True)
+    @commands.is_owner()
+    async def manual_refresh(self, ctx):
+        """Manually refresh the stats embed"""
+        if not self.initialized:
+            return await ctx.send("Stats board not initialized. Use `statsboard setup` first.")
+            
+        await self.update_stats()
+        await ctx.send("Stats refreshed!", delete_after=3)
+
+async def setup(bot):
+    cog = StatsBoard(bot)
+    await bot.add_cog(cog)
+    
