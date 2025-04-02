@@ -83,12 +83,12 @@ class Starboard(commands.Cog):
         """Configure starboard settings or show current configuration
         
         Examples:
-        {p}starconfig ⭐ 5      - Set 5 stars required
-        {p}starconfig 🌟        - Just change emoji
-        {p}starconfig reset     - Reset to defaults
-        {p}starconfig           - Show current settings
+        {ctx.prefix}starconfig ⭐ 5      - Set 5 stars required
+        {ctx.prefix}starconfig 🌟        - Just change emoji
+        {ctx.prefix}starconfig reset     - Reset to defaults
+        {ctx.prefix}starconfig           - Show current settings
         """
-        p = ctx.prefix
+        #  p = ctx.prefix
         channel = await self.ensure_starboard_channel(ctx.guild)
         settings = await self._get_channel_settings(channel)
         
