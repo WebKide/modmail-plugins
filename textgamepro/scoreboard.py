@@ -24,8 +24,11 @@ class ScoreboardCommands(commands.Cog):
             
             embed = Embed(title=f"🏆 {game.value} Leaderboard")
             for i, entry in enumerate(leaderboard, 1):
+                user = self.bot.get_user(entry['player_id'])
+                username = user.display_name if user else f"Unknown User ({entry['player_id']})"
+                
                 embed.add_field(
-                    name=f"{i}. {self.bot.get_user(entry['player_id']}",
+                    name=f"{i}. {username}",
                     value=f"Wins: {entry['wins']} | Streak: {entry['current_streak']}",
                     inline=False
                 )
