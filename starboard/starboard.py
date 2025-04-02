@@ -97,26 +97,58 @@ class Starboard(commands.Cog):
         channel = discord.utils.get(guild.text_channels, name="starboard")
         
         if not channel:
+            # Create the channel
             channel = await guild.create_text_channel(
                 "starboard",
                 topic="Starboard channel\ndefault_emoji:⭐ default_count:1",
                 reason="Automatic starboard creation",
                 position=0
             )
-            # Set default permissions
+            
+            # Set permissions for @everyone
             await channel.set_permissions(
                 guild.default_role,
+                view_channel=True,
+                read_message_history=True,
                 send_messages=False,
-                add_reactions=True,
-                read_message_history=True
+                create_public_threads=False,
+                create_private_threads=False,
+                send_messages_in_threads=False,
+                embed_links=False,
+                attach_files=False,
+                add_reactions=False,
+                use_external_emojis=False,
+                use_external_stickers=False,
+                manage_messages=False,
+                manage_threads=False,
+                manage_channels=False,
+                manage_permissions=False,
+                create_polls=False
             )
+            
+            # Set permissions for bot
+            bot_member = guild.get_member(self.bot.user.id)
+            if bot_member:
+                await channel.set_permissions(
+                    bot_member,
+                    view_channel=True,
+                    read_message_history=True,
+                    send_messages=True,
+                    manage_messages=True,
+                    embed_links=True,
+                    attach_files=True,
+                    use_external_emojis=True,
+                    manage_channels=True,
+                    manage_permissions=True
+                )
+            
             await channel.send("⭐ **Welcome to the starboard!** ⭐\n"
                              "Messages that get enough star reactions will appear here.")
         
         await self._load_channel_settings(channel)
         self.starboard_channels[guild.id] = channel.id
         return channel
-
+        
     async def get_star_reaction(self, message):
         """Helper to get the star reaction from a message"""
         for reaction in message.reactions:
@@ -282,4 +314,3 @@ class Starboard(commands.Cog):
 
 async def setup(bot):
     await bot.add_cog(Starboard(bot))
-    
