@@ -1,6 +1,9 @@
+import discord
+
 from discord.ext import commands
 from discord import Embed
 from .models import Scoreboard
+
 
 class ScoreboardAdmin(commands.Cog):
     def __init__(self, bot):
