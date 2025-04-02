@@ -39,7 +39,12 @@ class StatsBoard(commands.Cog):
         self.config_file = Path('data/stats_config.json')
         self.config = self.load_config()
         self.initialized = False
-        self.bot.uptime = datetime.datetime.utcnow()  # Ensure uptime is set
+        self._uptime = datetime.datetime.utcnow()  # Use internal uptime tracking
+
+    @property
+    def uptime(self):
+        """Get the uptime, falls back to current time if not set"""
+        return getattr(self, '_uptime', datetime.datetime.utcnow())
 
     def load_config(self):
         """Load or create configuration file"""
@@ -112,24 +117,17 @@ class StatsBoard(commands.Cog):
         """Generate the stats embed"""
         embed = discord.Embed(title="Bot Statistics", timestamp=datetime.datetime.utcnow())
         
-        # Handle avatar URL for different discord.py versions
+        # Handle avatar URL
         avatar_url = getattr(self.bot.user.display_avatar, 'url', None) or getattr(self.bot.user.avatar, 'url', None)
         if avatar_url:
             embed.set_author(name=self.bot.user.name, icon_url=avatar_url)
         
-        # Ensure uptime is a datetime object
-        if not hasattr(self.bot, 'uptime') or not isinstance(self.bot.uptime, datetime.datetime):
-            self.bot.uptime = datetime.datetime.utcnow()
-        
-        # Calculate uptime
-        try:
-            delta = datetime.datetime.utcnow() - self.bot.uptime
-            hours, remainder = divmod(int(delta.total_seconds()), 3600)
-            minutes, seconds = divmod(remainder, 60)
-            days, hours = divmod(hours, 24)
-            uptime = f"{days}d {hours}h {minutes}m {seconds}s" if days else f"{hours}h {minutes}m {seconds}s"
-        except:
-            uptime = "Not available"
+        # Calculate uptime using our internal property
+        delta = datetime.datetime.utcnow() - self.uptime
+        hours, remainder = divmod(int(delta.total_seconds()), 3600)
+        minutes, seconds = divmod(remainder, 60)
+        days, hours = divmod(hours, 24)
+        uptime = f"{days}d {hours}h {minutes}m {seconds}s" if days else f"{hours}h {minutes}m {seconds}s"
         
         # System stats
         try:
@@ -149,21 +147,18 @@ class StatsBoard(commands.Cog):
             total_unique = 0
             channels = 0
         
-        # Add fields with error handling
-        try:
-            embed.add_field(name="Uptime", value=uptime)
-            embed.add_field(name="Latency", value=f"{self.bot.latency*1000:.2f} ms")
-            embed.add_field(name="\u200b", value="\u200b")
-            
-            embed.add_field(name="Guilds", value=len(self.bot.guilds))
-            embed.add_field(name="Members", value=f"{total_online}/{total_unique}")
-            embed.add_field(name="Channels", value=channels)
-            
-            embed.add_field(name="RAM Usage", value=f"{memory_usage:.2f} MiB")
-            embed.add_field(name="CPU Usage", value=f"{cpu_usage:.2f}%")
-            embed.add_field(name="Commands Run", value=sum(self.commands_used.values()))
-        except Exception as e:
-            embed.add_field(name="Error", value=f"Failed to generate stats: {str(e)}")
+        # Add fields
+        embed.add_field(name="Uptime", value=uptime)
+        embed.add_field(name="Latency", value=f"{self.bot.latency*1000:.2f} ms")
+        embed.add_field(name="\u200b", value="\u200b")
+        
+        embed.add_field(name="Guilds", value=len(self.bot.guilds))
+        embed.add_field(name="Members", value=f"{total_online}/{total_unique}")
+        embed.add_field(name="Channels", value=channels)
+        
+        embed.add_field(name="RAM Usage", value=f"{memory_usage:.2f} MiB")
+        embed.add_field(name="CPU Usage", value=f"{cpu_usage:.2f}%")
+        embed.add_field(name="Commands Run", value=sum(self.commands_used.values()))
         
         embed.set_footer(text="Bot Statistics")
         return embed
@@ -211,15 +206,11 @@ class StatsBoard(commands.Cog):
         """Manage the stats board system"""
         await ctx.send_help(ctx.command)
 
-    @statsboard_group.command(name="setup")
+    @statsboard_group.command(name="setup", no_pm=True)
     @commands.is_owner()
     async def setup_stats(self, ctx):
         """Initialize the stats board system"""
         try:
-            # Ensure uptime is set
-            if not hasattr(self.bot, 'uptime'):
-                self.bot.uptime = datetime.datetime.utcnow()
-                
             self.stats_channel = await self.get_stats_channel()
             if not self.stats_channel:
                 return await ctx.send("Failed to create stats channel.")
@@ -238,7 +229,7 @@ class StatsBoard(commands.Cog):
         except Exception as e:
             await ctx.send(f"Setup failed: {str(e)}")
 
-    @statsboard_group.command(name="toggle")
+    @statsboard_group.command(name="toggle", no_pm=True)
     @commands.is_owner()
     async def toggle_stats(self, ctx):
         """Toggle the stats display system"""
@@ -253,7 +244,7 @@ class StatsBoard(commands.Cog):
             
         await ctx.send(f"Stats display system is now {status}.")
 
-    @statsboard_group.command(name="refresh")
+    @statsboard_group.command(name="refresh", no_pm=True)
     @commands.is_owner()
     async def manual_refresh(self, ctx):
         """Manually refresh the stats embed"""
@@ -263,5 +254,6 @@ class StatsBoard(commands.Cog):
         await self.update_stats()
         await ctx.send("Stats refreshed!", delete_after=3)
 
-async def setup(bot):
-    await bot.add_cog(StatsBoard(bot))
+def setup(bot):
+    bot.add_cog(StatsBoard(bot))
+    
