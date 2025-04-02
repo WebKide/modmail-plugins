@@ -5,88 +5,152 @@
 
 <div align="center">
 <img src="http://forthebadge.com/images/badges/made-with-crayons.svg?style=for-the-badge" alt="made with crayons"><br>
-<img src="https://img.shields.io/badge/python-v3.7-12a4ff?style=for-the-badge&logo=python&logoColor=12a4ff">
-<img src="https://img.shields.io/badge/library-discord%2Epy-ffbb10?style=for-the-badge&logo=discord">
+<img src="https://img.shields.io/badge/python-v3.7+-12a4ff?style=for-the-badge&logo=python&logoColor=12a4ff">
+<img src="https://img.shields.io/badge/library-discord%2Epy%202%2Ex-ffbb10?style=for-the-badge&logo=discord">
 
 <br><br>
 </div>
 
-# ⭐ Starboard
+# ⭐ Starboard Plugin
 
-A fully automated, configurable starboard system that highlights popular messages in your Discord server. When messages receive enough star reactions (⭐), they're automatically posted to a dedicated **#starboard** channel.
+A fully automated, configurable starboard system that highlights popular messages in your Discord server. When messages receive enough star reactions, they're automatically posted to a dedicated **#starboard** channel with rich media support.
 
-## ✨ Key Features
+## ✨ Enhanced Features
 
-- **Auto-channel creation** - Creates **#starboard** channel in guild if none exists
-- **Multi-guild support** - Works in every server your bot is in
-- **Smart updates** - Edits starboard posts when:
-  - Original message is edited
-  - Stars are added/removed
-- **Self-cleaning** - Removes posts that fall below star threshold
-- **Rich embeds** - Beautiful formatted posts with:
-  - Original message content
-  - Author info
-  - Jump link
-  - Star count
-  - Supports Image attachments
+- **Multi-media support** - Handles images, videos, and all file attachments
+- **Batch file processing** - Supports multiple attachments per message (up to 5 files per batch)
+- **Smart content preservation** - Maintains original message formatting and embeds
+- **Auto-channel setup** - Creates **#starboard** with optimal permissions if missing
+- **Cross-server ready** - Fully isolated configuration per guild
+- **Self-maintaining** - Automatic updates and cleanup
+
+## 🚀 New Functionality
+
+✅ **Full file attachment support**  
+- Images display in embed
+- Videos show as clickable links  
+- Other files appear as downloadable attachments  
+- Handles multiple files per message  
+
+✅ **Enhanced media handling**  
+- Preserves original message embeds  
+- Merges rich content seamlessly  
+- Smart file size limits (8MB max)  
+
+✅ **Improved reliability**  
+- Better error handling for edge cases  
+- More robust permission checks  
+- Efficient message processing  
 
 ## 📦 Installation
-
-🔸 <b>Installation</b>: 
 
 ```py
 {p}plugin add WebKide/modmail-plugins/starboard@master
 ```
 
-> `{p}` will be your guild's prefix, by default it is **`?`** unless you changed it
+> Replace `{p}` with your server's prefix (default: `?`)
 
-## 🔑 How It Works
+## 🔍 How It Works
 
-1. When a message gets ⭐ reactions:
-   - Bot checks if it meets the star threshold `(default: 1)`
-2. If qualified:
-   - Creates embed in **#starboard** channel
-   - Adds star reaction to the embed
-3. Ongoing maintenance:
-   - Updates star count when reactions change
-   - Updates content if original message is edited
-   - Removes if stars drop below threshold
+1. **Reaction Detection**  
+   - Monitors for configured star emoji (default: ⭐)
+   - Ignores bot reactions and self-stars
 
-- **Dynamic Configuration**:
-  - Change star emoji and required count anytime
-  - Settings stored in channel topic for persistence
-  - `?starconfig` command for easy management
+2. **Qualification Check**  
+   - Compares against star threshold (default: 1)
+   - Verifies channel isn't ignored
 
-- **Auto-Setup**:
-  - Creates #starboard channel if missing
-  - Sets optimal permissions automatically
-  - Welcome message on first creation
+3. **Starboard Posting**  
+   - Creates rich embed with:  
+     - Original content  
+     - Author info  
+     - Jump link  
+     - Star count  
+     - Attachments  
+   - Adds star reaction to new post
 
-- **Smart Processing**:
-  - Real-time updates when reactions change
-  - Automatic cleanup of unqualified posts
-  - Edits sync when original messages change
+4. **Dynamic Updates**  
+   - Live star count updates  
+   - Message edit synchronization  
+   - Automatic removal if stars drop below threshold
 
 ## ⚙️ Configuration
 
-Configure through channel topic or commands:
+### 🛠️ Command Options
 
-### 🔸 Via Command:
+| Command | Description | Example |
+|---------|-------------|---------|
+| `{p}starconfig <emoji> <count>` | Set both emoji and threshold | `?starconfig 🌟 5` |
+| `{p}starconfig <emoji>` | Change just the reaction emoji | `?starconfig 💫` |
+| `{p}starconfig reset` | Reset to defaults (⭐ 1) | `?starconfig reset` |
 
-> **`{p}starconfig ⭐ 5`**  — Set both emoji and star threshold
-> 
-> **`{p}starconfig 🌟`**    — Change the emoji used for reaction
->
-> **`{p}starconfig reset`** —  Reset to default values (⭐ 1)
+### 📝 Channel Topic Configuration
 
-`{p}` will be your guild's prefix, by default it is `?starconfig` unless you changed it
+Edit **#starboard** channel topic with:
 
-### 🔖 Via Channel Topic:
+```
+default_emoji:🌟 default_count:3
+```
 
-Edit **#starboard's topic** to include:
+## 🔐 Permission Requirements
 
-> **default_emoji:🌟 default_count:3**
+The bot requires these permissions in the starboard channel:
 
-<p>🛠️ if you experience a problem with the <b>Starboard plugin</b>, please open an issue or submit a pull-request in this repo<br><br></p>
+- `View Channel`
+- `Send Messages`
+- `Embed Links`
+- `Attach Files`
+- `Manage Messages`
+- `Add Reactions`
+- `Read Message History`
 
-<br><br>
+Verify permissions with:  
+`{p}check_starboard_perms`
+
+## 🖼️ Media Support
+
+**Supported Content Types:**
+- Images (PNG, JPG, GIF, etc.)
+- Videos (MP4, MOV, etc.)
+- Documents (PDF, TXT, etc.)
+- Other files (ZIP, EXE, etc.)
+
+**Handling Notes:**
+- First image becomes embed thumbnail
+- Videos show as clickable links
+- Other files appear as attachments
+- Maximum 8MB file size
+- Up to 5 files per batch
+
+## ❓ Frequently Asked Questions
+
+**Q: Can I use custom emojis?**  
+A: Yes! Any emoji (including server custom emojis) can be set as the reaction trigger.
+
+**Q: What happens if a message is deleted?**  
+A: The starboard post will remain but the jump link will stop working.
+
+**Q: Can I exclude certain channels?**  
+A: Yes, add channel IDs to `ignored_channels` in the cog code.
+
+**Q: How many files can be attached?**  
+A: The bot will process up to 5 files per message batch.
+
+## 🐛 Troubleshooting
+
+If you encounter issues:
+1. Verify bot permissions with `{p}check_starboard_perms`
+2. Check for console errors
+3. Ensure files are under 8MB
+4. Confirm the channel isn't in ignored_channels
+
+For persistent issues, please [open an issue](https://github.com/WebKide/modmail-plugins/issues) with:
+- Error messages
+- Reproduction steps
+- Screenshots if applicable
+
+---
+
+<div align="center">
+<b>Enjoy the plugin? Consider starring the repository! ⭐</b>
+</div>
