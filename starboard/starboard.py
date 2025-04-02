@@ -33,7 +33,7 @@ class Starboard(commands.Cog):
         """Set default values before channel settings are loaded"""
         self.star_emoji = '⭐'
         self.star_count = 1
-        self.ignored_channels = []  # channels that will be ignored and can be modified with command
+        self.ignored_channels = []  # channels that will be ignored now also loaded from channel.topic
 
     async def _load_channel_settings(self, channel):
         """Load settings from channel topic"""
@@ -50,6 +50,115 @@ class Starboard(commands.Cog):
         if count_match:
             self.star_count = int(count_match.group(1))
 
+        # Extract ignored channels from topic
+        ignored_match = re.search(r'ignored_channels:\(([\d,\s]+)\)', channel.topic)
+        if ignored_match:
+            self.ignored_channels = [int(cid.strip()) for cid in ignored_match.group(1).split(',')]
+
+    async def _update_channel_topic(self, channel):
+        """Update channel topic with current settings"""
+        parts = []
+        if channel.topic and not channel.topic.startswith("Starboard channel"):
+            parts.append(channel.topic.split('\n')[0])
+        
+        parts.append(f"default_emoji:{self.star_emoji}")
+        parts.append(f"default_count:{self.star_count}")
+        
+        if self.ignored_channels:
+            ignored_str = ",".join(str(cid) for cid in self.ignored_channels)
+            parts.append(f"ignored_channels:({ignored_str})")
+        
+        new_topic = "Starboard channel\n" + " ".join(parts)
+        await channel.edit(topic=new_topic)
+
+    # +------------------------------------------------------------+
+    # |             CMD:  IGNORE GROUP                             |
+    # +------------------------------------------------------------+
+    @commands.group(aliases=['ignore'], invoke_without_command=True)
+    @commands.has_permissions(manage_channels=True)
+    async def ignored(self, ctx):
+        """Manage ignored channels for starboard"""
+        if not ctx.invoked_subcommand:
+            await ctx.send_help(ctx.command)
+
+    # +------------------------------------------------------------+
+    # |             SUB-CMD:  IGNORE LIST                          |
+    # +------------------------------------------------------------+
+    @ignored.command(name='list')
+    async def ignored_list(self, ctx):
+        """List all ignored channels"""
+        starboard_channel = await self.ensure_starboard_channel(ctx.guild)
+        await self._load_channel_settings(starboard_channel)
+        
+        if not self.ignored_channels:
+            return await ctx.send("No channels are currently ignored.")
+            
+        channels = []
+        for channel_id in self.ignored_channels:
+            channel = ctx.guild.get_channel(channel_id)
+            channels.append(f"{channel.mention if channel else 'Deleted Channel'} (`{channel_id}`)")
+            
+        embed = discord.Embed(
+            title="Ignored Channels",
+            description="\n".join(channels) or "No channels ignored",
+            color=discord.Color.orange()
+        )
+        await ctx.send(embed=embed)
+
+    # +------------------------------------------------------------+
+    # |             SUB-CMD:  IGNORE ADD                           |
+    # +------------------------------------------------------------+
+    @ignored.command(name='add')
+    async def ignored_add(self, ctx, channel: discord.TextChannel):
+        """Add a channel to the ignored list"""
+        starboard_channel = await self.ensure_starboard_channel(ctx.guild)
+        await self._load_channel_settings(starboard_channel)
+        
+        if channel.id in self.ignored_channels:
+            return await ctx.send(f"{channel.mention} is already ignored.")
+            
+        if channel.id == starboard_channel.id:
+            return await ctx.send("Cannot ignore the starboard channel itself.")
+            
+        self.ignored_channels.append(channel.id)
+        await self._update_channel_topic(starboard_channel)
+        await ctx.send(f"✅ Added {channel.mention} to ignored channels.")
+
+    # +------------------------------------------------------------+
+    # |             SUB-CMD:  IGNORE REMOVE                        |
+    # +------------------------------------------------------------+
+    @ignored.command(name='remove')
+    async def ignored_remove(self, ctx, channel: discord.TextChannel):
+        """Remove a channel from the ignored list"""
+        starboard_channel = await self.ensure_starboard_channel(ctx.guild)
+        await self._load_channel_settings(starboard_channel)
+        
+        if channel.id not in self.ignored_channels:
+            return await ctx.send(f"{channel.mention} wasn't in the ignored list.")
+            
+        self.ignored_channels.remove(channel.id)
+        await self._update_channel_topic(starboard_channel)
+        await ctx.send(f"✅ Removed {channel.mention} from ignored channels.")
+
+    # +------------------------------------------------------------+
+    # |             SUB-CMD:  IGNORE CLEAR                         |
+    # +------------------------------------------------------------+
+    @ignored.command(name='clear')
+    async def ignored_clear(self, ctx):
+        """Clear all ignored channels"""
+        starboard_channel = await self.ensure_starboard_channel(ctx.guild)
+        await self._load_channel_settings(starboard_channel)
+        
+        if not self.ignored_channels:
+            return await ctx.send("No channels were ignored to begin with.")
+            
+        self.ignored_channels.clear()
+        await self._update_channel_topic(starboard_channel)
+        await ctx.send("✅ Cleared all ignored channels.")
+
+    # +------------------------------------------------------------+
+    # |             CMD:  starconfig                               |
+    # +------------------------------------------------------------+
     @commands.command(aliases=['setstars'], no_pm=True)
     @commands.has_permissions(manage_channels=True)
     async def starconfig(self, ctx, emoji: str = None, count: int = None):
@@ -214,6 +323,9 @@ class Starboard(commands.Cog):
                 return message
         return None
 
+    # +------------------------------------------------------------+
+    # |             LISTENER:  RAW REACTION ADD                    |
+    # +------------------------------------------------------------+
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
         """Handle when a reaction is added"""
@@ -229,8 +341,12 @@ class Starboard(commands.Cog):
             starboard_channel = await self.ensure_starboard_channel(guild)
         except commands.BotMissingPermissions:
             return
+
+        # Ignore reactions in ignored_channels
+        if payload.channel_id in self.ignored_channels:
+            return
             
-        # Ignore reactions in starboard channel
+        # Ignore reactions in starboard_channel
         if payload.channel_id == starboard_channel.id:
             return
             
@@ -293,6 +409,10 @@ class Starboard(commands.Cog):
         except Exception as e:
             print(f"Error creating starboard entry: {e}")
 
+
+    # +------------------------------------------------------------+
+    # |             LISTENER:  RAW REACTION REMOVE                 |
+    # +------------------------------------------------------------+
     @commands.Cog.listener()
     async def on_raw_reaction_remove(self, payload):
         """Handle when a reaction is removed"""
@@ -332,6 +452,9 @@ class Starboard(commands.Cog):
         else:
             await existing_message.delete()
 
+    # +------------------------------------------------------------+
+    # |             LISTENER:  RAW EDIT                            |
+    # +------------------------------------------------------------+
     @commands.Cog.listener()
     async def on_raw_message_edit(self, payload):
         """Handle when a message is edited"""
@@ -370,7 +493,10 @@ class Starboard(commands.Cog):
         embed.set_field_at(1, name="Stars", value=f"{star_reaction.count}{self.star_emoji}")
         await existing_message.edit(embed=embed)
 
-    @commands.command()
+    # +------------------------------------------------------------+
+    # |             CMD:  check_starboard_perms                    |
+    # +------------------------------------------------------------+
+    @commands.command(description='Check bot perms', no_pm=True)
     @commands.has_permissions(manage_guild=True)
     async def check_starboard_perms(self, ctx):
         """Verify the bot has correct permissions"""
