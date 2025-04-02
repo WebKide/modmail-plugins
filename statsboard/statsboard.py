@@ -39,6 +39,7 @@ class StatsBoard(commands.Cog):
         self.config_file = Path('data/stats_config.json')
         self.config = self.load_config()
         self.initialized = False
+        self.bot.uptime = datetime.datetime.utcnow()  # Ensure uptime is set
 
     def load_config(self):
         """Load or create configuration file"""
@@ -46,7 +47,7 @@ class StatsBoard(commands.Cog):
             'channel_name': 'bot-stats',
             'channel_id': None,
             'message_id': None,
-            'enabled': False  # Default to disabled until setup
+            'enabled': False
         }
         
         if not self.config_file.exists():
@@ -65,24 +66,21 @@ class StatsBoard(commands.Cog):
 
     def cog_unload(self):
         """Cleanup when cog is unloaded"""
-        if self.update_stats.is_running():
+        if hasattr(self, 'update_stats') and self.update_stats.is_running():
             self.update_stats.cancel()
 
     async def get_stats_channel(self):
         """Get or create the stats channel"""
-        # Try to find existing channel first
         if self.config['channel_id']:
             channel = self.bot.get_channel(self.config['channel_id'])
             if channel:
                 return channel
         
-        # Channel not found, create new one
         if not self.bot.guilds:
             return None
             
-        guild = self.bot.guilds[0]  # Use first guild the bot is in
+        guild = self.bot.guilds[0]
         
-        # Set up permissions
         overwrites = {
             guild.default_role: discord.PermissionOverwrite(
                 send_messages=False,
@@ -114,40 +112,60 @@ class StatsBoard(commands.Cog):
         """Generate the stats embed"""
         embed = discord.Embed(title="Bot Statistics", timestamp=datetime.datetime.utcnow())
         
-        # Use display_avatar (works in newer discord.py versions)
-        avatar_url = self.bot.user.display_avatar.url if hasattr(self.bot.user, 'display_avatar') else self.bot.user.avatar_url
-        embed.set_author(name=self.bot.user.name, icon_url=avatar_url)
+        # Handle avatar URL for different discord.py versions
+        avatar_url = getattr(self.bot.user.display_avatar, 'url', None) or getattr(self.bot.user.avatar, 'url', None)
+        if avatar_url:
+            embed.set_author(name=self.bot.user.name, icon_url=avatar_url)
         
-        # Uptime calculation
-        delta = datetime.datetime.utcnow() - self.bot.uptime
-        hours, remainder = divmod(int(delta.total_seconds()), 3600)
-        minutes, seconds = divmod(remainder, 60)
-        days, hours = divmod(hours, 24)
-        uptime = f"{days}d {hours}h {minutes}m {seconds}s" if days else f"{hours}h {minutes}m {seconds}s"
+        # Ensure uptime is a datetime object
+        if not hasattr(self.bot, 'uptime') or not isinstance(self.bot.uptime, datetime.datetime):
+            self.bot.uptime = datetime.datetime.utcnow()
+        
+        # Calculate uptime
+        try:
+            delta = datetime.datetime.utcnow() - self.bot.uptime
+            hours, remainder = divmod(int(delta.total_seconds()), 3600)
+            minutes, seconds = divmod(remainder, 60)
+            days, hours = divmod(hours, 24)
+            uptime = f"{days}d {hours}h {minutes}m {seconds}s" if days else f"{hours}h {minutes}m {seconds}s"
+        except:
+            uptime = "Not available"
         
         # System stats
-        memory_usage = self.process.memory_full_info().uss / 1024**2
-        cpu_usage = self.process.cpu_percent() / psutil.cpu_count()
+        try:
+            memory_usage = self.process.memory_full_info().uss / 1024**2
+            cpu_usage = self.process.cpu_percent() / psutil.cpu_count()
+        except:
+            memory_usage = 0
+            cpu_usage = 0
         
         # Guild/member stats
-        total_online = len({m.id for m in self.bot.get_all_members() if m.status is not discord.Status.offline})
-        total_unique = len(self.bot.users)
-        channels = sum(1 for g in self.bot.guilds for _ in g.channels)
+        try:
+            total_online = len({m.id for m in self.bot.get_all_members() if m.status is not discord.Status.offline})
+            total_unique = len(self.bot.users)
+            channels = sum(1 for g in self.bot.guilds for _ in g.channels)
+        except:
+            total_online = 0
+            total_unique = 0
+            channels = 0
         
-        # Add fields in 3 columns
-        embed.add_field(name="Uptime", value=uptime)
-        embed.add_field(name="Latency", value=f"{self.bot.latency*1000:.2f} ms")
-        embed.add_field(name="\u200b", value="\u200b")  # Empty column
+        # Add fields with error handling
+        try:
+            embed.add_field(name="Uptime", value=uptime)
+            embed.add_field(name="Latency", value=f"{self.bot.latency*1000:.2f} ms")
+            embed.add_field(name="\u200b", value="\u200b")
+            
+            embed.add_field(name="Guilds", value=len(self.bot.guilds))
+            embed.add_field(name="Members", value=f"{total_online}/{total_unique}")
+            embed.add_field(name="Channels", value=channels)
+            
+            embed.add_field(name="RAM Usage", value=f"{memory_usage:.2f} MiB")
+            embed.add_field(name="CPU Usage", value=f"{cpu_usage:.2f}%")
+            embed.add_field(name="Commands Run", value=sum(self.commands_used.values()))
+        except Exception as e:
+            embed.add_field(name="Error", value=f"Failed to generate stats: {str(e)}")
         
-        embed.add_field(name="Guilds", value=len(self.bot.guilds))
-        embed.add_field(name="Members", value=f"{total_online}/{total_unique}")
-        embed.add_field(name="Channels", value=channels)
-        
-        embed.add_field(name="RAM Usage", value=f"{memory_usage:.2f} MiB")
-        embed.add_field(name="CPU Usage", value=f"{cpu_usage:.2f}%")
-        embed.add_field(name="Commands Run", value=sum(self.commands_used.values()))
-        
-        embed.set_footer(text=f"Last Updated")
+        embed.set_footer(text="Bot Statistics")
         return embed
 
     @tasks.loop(seconds=16)
@@ -165,14 +183,12 @@ class StatsBoard(commands.Cog):
             embed = self.create_stats_embed()
             
             if not self.stats_message:
-                # Try to find existing message
                 if self.config['message_id']:
                     try:
                         self.stats_message = await self.stats_channel.fetch_message(self.config['message_id'])
                     except discord.NotFound:
                         pass
                         
-                # Create new message if none exists
                 if not self.stats_message:
                     self.stats_message = await self.stats_channel.send(embed=embed)
                     self.config['message_id'] = self.stats_message.id
@@ -180,28 +196,30 @@ class StatsBoard(commands.Cog):
             else:
                 await self.stats_message.edit(embed=embed)
                 
-        except discord.HTTPException as e:
+        except Exception as e:
             print(f"Stats update failed: {e}")
-            # Reset message/channel references to attempt fresh start next time
             self.stats_message = None
             self.stats_channel = None
 
     @update_stats.before_loop
     async def before_update_stats(self):
-        """Wait for bot to be ready before starting loop"""
         await self.bot.wait_until_ready()
 
-    @commands.group(name="statsboard", invoke_without_command=True, no_pm=True)
+    @commands.group(name="statsboard", invoke_without_command=True)
     @commands.is_owner()
     async def statsboard_group(self, ctx):
         """Manage the stats board system"""
         await ctx.send_help(ctx.command)
 
-    @statsboard_group.command(name="setup", no_pm=True)
+    @statsboard_group.command(name="setup")
     @commands.is_owner()
     async def setup_stats(self, ctx):
         """Initialize the stats board system"""
         try:
+            # Ensure uptime is set
+            if not hasattr(self.bot, 'uptime'):
+                self.bot.uptime = datetime.datetime.utcnow()
+                
             self.stats_channel = await self.get_stats_channel()
             if not self.stats_channel:
                 return await ctx.send("Failed to create stats channel.")
@@ -218,9 +236,9 @@ class StatsBoard(commands.Cog):
             
             await ctx.send(f"Stats board initialized in {self.stats_channel.mention}")
         except Exception as e:
-            await ctx.send(f"Setup failed: {e}")
+            await ctx.send(f"Setup failed: {str(e)}")
 
-    @statsboard_group.command(name="toggle", no_pm=True)
+    @statsboard_group.command(name="toggle")
     @commands.is_owner()
     async def toggle_stats(self, ctx):
         """Toggle the stats display system"""
@@ -235,7 +253,7 @@ class StatsBoard(commands.Cog):
             
         await ctx.send(f"Stats display system is now {status}.")
 
-    @statsboard_group.command(name="refresh", no_pm=True)
+    @statsboard_group.command(name="refresh")
     @commands.is_owner()
     async def manual_refresh(self, ctx):
         """Manually refresh the stats embed"""
@@ -246,6 +264,4 @@ class StatsBoard(commands.Cog):
         await ctx.send("Stats refreshed!", delete_after=3)
 
 async def setup(bot):
-    cog = StatsBoard(bot)
-    await bot.add_cog(cog)
-    
+    await bot.add_cog(StatsBoard(bot))
