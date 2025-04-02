@@ -213,33 +213,70 @@ class Starboard(commands.Cog):
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
-        # ... (previous checks remain the same) ...
-
-        # If not, create new starboard entry
-        embed = self.create_starboard_embed(message)
-        content = None
-        
-        # Handle cases where we need to send both embed and files
-        files = []
-        if message.attachments:
-            for attachment in message.attachments:
-                if not attachment.is_spoiler() and attachment.size < 8_000_000:  # 8MB limit
-                    files.append(await attachment.to_file())
-        
-        try:
-            if files:
-                # Send with files if we have downloadable attachments
-                starboard_msg = await starboard_channel.send(content=content, embed=embed, files=files)
-            else:
-                # Otherwise just send the embed
-                starboard_msg = await starboard_channel.send(content=content, embed=embed)
+        """Handle when a reaction is added"""
+        # Ignore if not our star emoji or in DMs
+        if str(payload.emoji) != self.star_emoji or not payload.guild_id:
+            return
             
-            await starboard_msg.add_reaction(self.star_emoji)
-        except discord.HTTPException as e:
-            if e.code == 40005:  # Request entity too large
-                # Fallback to just links if files are too big
+        guild = self.bot.get_guild(payload.guild_id)
+        if guild is None:
+            return
+            
+        try:
+            starboard_channel = await self.ensure_starboard_channel(guild)
+        except commands.BotMissingPermissions:
+            return
+            
+        # Ignore reactions in starboard channel
+        if payload.channel_id == starboard_channel.id:
+            return
+            
+        channel = self.bot.get_channel(payload.channel_id)
+        if not channel:
+            return
+            
+        try:
+            message = await channel.fetch_message(payload.message_id)
+        except discord.NotFound:
+            return
+        except discord.Forbidden:
+            return
+        except discord.HTTPException:
+            return
+            
+        # Ignore bot's own reactions or self-starring
+        if payload.user_id == message.author.id or payload.user_id == self.bot.user.id:
+            return
+            
+        star_reaction = await self.get_star_reaction(message)
+        if not star_reaction or star_reaction.count < self.star_count:
+            return
+            
+        # Check if message is already in starboard
+        existing_message = await self.find_starboard_message(starboard_channel, message.id)
+        if existing_message:
+            await self.update_starboard_message(existing_message, star_reaction.count)
+            return
+                
+        # Create new starboard entry
+        try:
+            embed = self.create_starboard_embed(message)
+            files = []
+            
+            # Handle file attachments
+            if message.attachments:
+                for attachment in message.attachments:
+                    if not attachment.is_spoiler() and attachment.size < 8_000_000:
+                        files.append(await attachment.to_file())
+            
+            if files:
+                starboard_msg = await starboard_channel.send(embed=embed, files=files)
+            else:
                 starboard_msg = await starboard_channel.send(embed=embed)
-                await starboard_msg.add_reaction(self.star_emoji)
+                
+            await starboard_msg.add_reaction(self.star_emoji)
+        except Exception as e:
+            print(f"Error creating starboard entry: {e}")
 
     @commands.Cog.listener()
     async def on_raw_reaction_remove(self, payload):
