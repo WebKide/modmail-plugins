@@ -134,12 +134,14 @@ CC_BOOK_INFO = {
             "CHAPTER NINETEEN: The Inconceivable Behavior of Lord Śrī Caitanya Mahāprabhu",
             "CHAPTER TWENTY: The Śikṣāṣṭaka Prayers"
         ]
-    },
+    }
+}
+# Numeric references after the main dict is defined
+CC_BOOK_INFO.update({
     "1": {"title": "Ādi-līlā", "chapter_title": CC_BOOK_INFO["adi"]["chapter_title"]},
     "2": {"title": "Madhya-līlā", "chapter_title": CC_BOOK_INFO["madhya"]["chapter_title"]},
     "3": {"title": "Antya-līlā", "chapter_title": CC_BOOK_INFO["antya"]["chapter_title"]}
-}
-
+})
 
 # Canto info for Śrīmad Bhāgavatam
 SB_CANTO_INFO = {
