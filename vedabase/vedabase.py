@@ -30,7 +30,7 @@ from fake_useragent import UserAgent
 from typing import Tuple, Union
 from discord.ext import commands
 from datetime import datetime
-from .info_dict import BG_CHAPTER_INFO, CC_BOOK_INFO, CC_BOOK_INFO.update, SB_CANTO_INFO
+from .info_dict import BG_CHAPTER_INFO, CC_BOOK_INFO, SB_CANTO_INFO
 
 
 class VedaBase(commands.Cog):
