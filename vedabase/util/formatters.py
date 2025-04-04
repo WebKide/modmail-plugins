@@ -1,8 +1,8 @@
-# core/formatters.py
 import discord
-from typing import List, Dict
+from typing import List, Dict, Union
 from enum import Enum
 from .info_dict import BG_CHAPTER_INFO, CC_BOOK_INFO, SB_CANTO_INFO
+
 
 class VedabaseFormatter:
     def __init__(self):
