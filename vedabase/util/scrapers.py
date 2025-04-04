@@ -5,30 +5,57 @@ import time
 
 from typing import Dict, List, Optional, Tuple
 from bs4 import BeautifulSoup
-from fake_useragent import UserAgent
 
 class VedabaseScraper:
     def __init__(self, bot):
         self.bot = bot
         self.base_url = "https://vedabase.io/en/library/"
         self.search_url = "https://vedabase.io/en/search/synonyms/"
-        self.ua = UserAgent()  # self.ua = UserAgent(use_cache_server=False)
+        # self.ua = UserAgent(use_cache_server=False)
+        # 10 Modern User Agents for Rotation
+        self.user_agents = [
+            # Chrome (Windows/Mac/Linux)
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            
+            # Firefox (Windows/Mac/Linux)
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/115.0",
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:109.0) Gecko/20100101 Firefox/115.0",
+            "Mozilla/5.0 (X11; Linux i686; rv:109.0) Gecko/20100101 Firefox/115.0",
+            
+            # Safari
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.5 Safari/605.1.15",
+            
+            # Edge
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0",
+            
+            # Mobile (Android/iPhone)
+            "Mozilla/5.0 (Linux; Android 10; SM-A205U) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.6099.43 Mobile Safari/537.36",
+            "Mozilla/5.0 (iPhone; CPU iPhone OS 16_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.5 Mobile/15E148 Safari/604.1"
+        ]
+        
         self.session: Optional[aiohttp.ClientSession] = None
         self.last_request_time = 0
         self.request_delay = 5  # seconds between requests
         self.timeout = aiohttp.ClientTimeout(total=10)
 
+    def get_random_user_agent(self) -> str:
+        """Return a random user agent from the list"""
+        return random.choice(self.user_agents)
+
     async def ensure_session(self) -> None:
-        """Initialize or renew the aiohttp session with proper headers"""
+        """Initialize session with rotating user agent"""
+        headers = {
+            'User-Agent': self.get_random_user_agent(),
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.5',
+            'Referer': 'https://vedabase.io/',
+            'DNT': '1',
+            'Connection': 'keep-alive'
+        }
+        
         if not self.session or self.session.closed:
-            headers = {
-                'User-Agent': self.ua.random,
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-                'Accept-Language': 'en-US,en;q=0.5',
-                'Referer': 'https://vedabase.io/',
-                'DNT': '1',
-                'Connection': 'keep-alive'
-            }
             self.session = aiohttp.ClientSession(headers=headers, timeout=self.timeout)
 
     async def scrape_with_retry(self, url: str, max_retries: int = 3) -> str:
@@ -43,7 +70,8 @@ class VedabaseScraper:
                     await asyncio.sleep(self.request_delay - elapsed)
                 
                 self.last_request_time = time.time()
-                self.session.headers.update({'User-Agent': self.ua.random})
+                # Rotate user agent for each attempt
+                self.session.headers.update({'User-Agent': self.get_random_user_agent()})
                 
                 async with self.session.get(url) as response:
                     if response.status == 429:
@@ -67,7 +95,7 @@ class VedabaseScraper:
         raise ValueError(f"Failed after {max_retries} attempts")
 
     async def get_verse_content(self, scripture: str, *path_parts: str) -> Dict[str, str]:
-        """Get verse content from Vedabase for BG, CC, or SB"""
+        """Get verse content from Vedabase"""
         url = f"{self.base_url}{scripture}/{'/'.join(str(p) for p in path_parts)}/"
         html = await self.scrape_with_retry(url)
         soup = BeautifulSoup(html, 'html.parser')
@@ -128,13 +156,8 @@ class VedabaseScraper:
         }
 
     async def search_synonyms(self, word: str, search_type: str = "contains") -> List[Dict[str, any]]:
-        """Search Vedabase for word synonyms and references"""
-        params = {
-            'original': word,
-            'search': search_type
-        }
+        """Search Vedabase for word synonyms"""
         url = f"{self.search_url}?original={word}&search={search_type}"
-        
         html = await self.scrape_with_retry(url)
         soup = BeautifulSoup(html, 'html.parser')
         
