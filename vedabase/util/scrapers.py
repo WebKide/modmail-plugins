@@ -2,6 +2,7 @@ import aiohttp
 import random
 import asyncio
 import time
+
 from typing import Dict, List, Optional, Tuple
 from bs4 import BeautifulSoup
 from fake_useragent import UserAgent
@@ -11,7 +12,7 @@ class VedabaseScraper:
         self.bot = bot
         self.base_url = "https://vedabase.io/en/library/"
         self.search_url = "https://vedabase.io/en/search/synonyms/"
-        self.ua = UserAgent(use_cache_server=False)
+        self.ua = UserAgent()  # self.ua = UserAgent(use_cache_server=False)
         self.session: Optional[aiohttp.ClientSession] = None
         self.last_request_time = 0
         self.request_delay = 5  # seconds between requests
