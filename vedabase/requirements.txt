@@ -1,4 +1,5 @@
-aiohttp
-bs4
+aiohttp>=3.8.0
+beautifulsoup4>=4.11.0
+fake-useragent>=1.1.3
 typing
-fake_useragent
+# bs4
