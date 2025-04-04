@@ -23,13 +23,10 @@ import discord
 from discord.ext import commands
 from typing import Union
 
-from .core.scrapers import VedabaseScraper
-try:
-    from .core.formatters import VedabaseFormatter  # Try relative import
-except ImportError:
-    from core.formatters import VedabaseFormatter  # Fallback to absolute
-from .core.validators import VedabaseValidator
-from .core.info_dict import BG_CHAPTER_INFO, CC_BOOK_INFO, SB_CANTO_INFO
+from .util.scrapers import VedabaseScraper
+from .util.formatters import VedabaseFormatter  # Try relative import
+from .util.validators import VedabaseValidator
+from .util.info_dict import BG_CHAPTER_INFO, CC_BOOK_INFO, SB_CANTO_INFO
 
 from discord import app_commands, ButtonStyle
 from discord.ui import View, Button
