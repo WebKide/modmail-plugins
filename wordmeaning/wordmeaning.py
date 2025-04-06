@@ -200,102 +200,107 @@ class WordMeaning(commands.Cog):
     # +------------------------------------------------------------+
     @commands.command(name='dict', description='Oxford English Dictionary', aliases=['oed'])
     async def _dict(self, ctx, *, term: str = None):
-        """(∩｀-´)⊃━☆ﾟ.*･｡ﾟ Search definitions in English
-        using Oxford English Dictionary database
-        
-        Usage:
-        {prefix}dict <word> [synonyms|proverbs|examples]"""
+        """(∩｀-´)⊃━☆ﾟ.*･｡ﾟ Search definitions in English using Oxford Learner's Dictionaries"""
         if term is None:
             sample = random.choice(['lecture', 'fantasy', 'gathering', 'gradually', 'international', 'desire'])
-            v = f'{ctx.prefix}{ctx.invoked_with} {sample}'
-            usage = f'**Usage:** basic results\n{v}\n\n' \
-                   f'**Advanced Usage:** add any parameter\n{v} `examples` `synonyms` `proverbs` `sourcecode`'
-            return await ctx.send(usage)
-        
-        await ctx.channel.typing()
-
-        query = term.split(' ')[0].lower()  # First term is the word to search
-        url = f"{self.query_url}{query}"
-        
-        try:
-            page = requests.get(url, headers=_HEADERS)
-            page.raise_for_status()  # Raise exception for bad status codes
-            
-            embed = discord.Embed(color=self.user_color)
-            embed.set_author(
-                name=f'Definition of {query.title()} in English by Oxford Dictionaries',
-                url=url,
-                icon_url="https://media.discordapp.net/attachments/541059392951418880/557660549073207296/oxford_favicon.png"
+            return await ctx.send(
+                f"**Usage:** `{ctx.prefix}dict <word>`\n"
+                f"**Example:** `{ctx.prefix}dict {sample}`\n"
+                f"Add `examples`, `synonyms`, or `proverbs` for more details"
             )
 
-            # Parse only relevant sections for performance
-            _section_content = ss("section", attrs={"class": ["gramb", "etymology etym", "pronSection etym"]})
-            soup = bs(page.content, "html.parser", parse_only=_section_content, from_encoding="utf-8")
+        await ctx.channel.typing()
+        query = term.split(' ')[0].lower()
+        base_url = "https://www.oxfordlearnersdictionaries.com/definition/english/"
+        
+        try:
+            # First try the direct URL
+            url = f"{base_url}{query}"
+            page = requests.get(url, headers=_HEADERS)
+            
+            # If we get redirected to a numbered entry (like love_1)
+            if page.history and '_' in page.url.split('/')[-1]:
+                final_url = page.url
+                word_id = final_url.split('/')[-1]  # Gets love_1
+                query = word_id.split('_')[0]      # Gets just 'love'
+                page = requests.get(final_url, headers=_HEADERS)
+            elif page.status_code == 404:
+                return await ctx.send(f"Couldn't find a definition for *{query}*. Please check the spelling.")
 
-            # Word classification (noun, verb, etc.)
-            classification = soup.find('span', attrs={"class": "pos"})
-            if classification:
-                embed.title = f"*`[{classification.text}]`*"
+            soup = bs(page.content, 'html.parser')
+            
+            # Create embed
+            embed = discord.Embed(color=self.user_color)
+            embed.set_author(
+                name=f'Oxford Learner\'s Dictionaries: {query.title()}',
+                url=url,
+                icon_url="https://www.oxfordlearnersdictionaries.com/favicon.ico"
+            )
 
-            # Definition
-            definition = soup.find('span', attrs={"class": "ind"})
-            if definition:
-                embed.description = f"1. {definition.text[:500]}"
+            # Get word type (noun, verb, etc.)
+            pos = soup.find('span', {'class': 'pos'})
+            if pos:
+                embed.title = f"[{pos.text}] {query.title()}"
+
+            # Get pronunciation
+            phonetics = soup.find('span', {'class': 'phon'})
+            if phonetics:
+                embed.add_field(name="Pronunciation", value=phonetics.text.strip(), inline=False)
+
+            # Get all senses (definitions)
+            senses = soup.find_all('li', {'class': 'sense'})
+            if not senses:
+                return await ctx.send(f"Found the word but couldn't extract definitions. Try visiting: {url}")
+
+            # Add first 3 definitions (or fewer)
+            definition_text = ""
+            for i, sense in enumerate(senses[:3], 1):
+                definition = sense.find('span', {'class': 'def'})
+                if definition:
+                    grammar = sense.find('span', {'class': 'grammar'})
+                    grammar_text = f" {grammar.text}" if grammar else ""
+                    definition_text += f"{i}.{grammar_text} {definition.text}\n\n"
+            
+            if definition_text:
+                embed.description = definition_text.strip()
             else:
-                embed.description = f"Whoopsie! I couldn't find a definition for *{query}*.\n" \
-                                    f"Check spelling, or look for a variation of {query} as verb, noun, etc."
+                return await ctx.send(f"Found the word but couldn't extract definitions. Try visiting: {url}")
 
             # Examples
-            if 'examples' in term.lower() and query != 'examples':
-                examples = soup.find_all('div', attrs={"class": "exg"})
+            if 'examples' in term.lower():
+                examples = []
+                for sense in senses[:2]:  # Get examples from first 2 senses
+                    sense_examples = sense.find_all('span', {'class': 'x'})
+                    examples.extend([ex.text.strip() for ex in sense_examples[:2]])  # Get 2 examples per sense
+                
                 if examples:
-                    example_text = "\n".join([f"*{ex.text[1:]}*" for ex in examples[:3]])
-                    embed.add_field(name='Examples', value=example_text[:1024], inline=False)
+                    example_text = "\n".join([f"• {ex}" for ex in examples[:4]])  # Show max 4 examples
+                    embed.add_field(name="Examples", value=example_text[:1024], inline=False)
 
             # Synonyms
-            if 'synonyms' in term.lower() and query != 'synonyms':
-                synonyms = soup.find('div', attrs={"class": "synonyms"})
+            if 'synonyms' in term.lower():
+                synonyms = soup.find('div', {'class': 'synonyms'})
                 if synonyms:
-                    syns_text = synonyms.text.replace('Synonyms', '').replace('View synonyms', '').strip()
-                    if syns_text:
-                        embed.add_field(name='Synonyms', value=f'```bf\n{syns_text[:460]}```', inline=False)
+                    embed.add_field(name="Synonyms", value=synonyms.text.strip()[:1024], inline=False)
 
-            # Proverbs
-            if 'proverbs' in term.lower() and query != 'proverbs':
-                proverb = soup.find('div', attrs={"class": "trg"})
-                if proverb:
-                    try:
-                        x = proverb.text.replace("’ ‘", "’\n‘").replace(". ‘", ".\n\n‘")
-                        z = '’'.join(x.split("’")[3:-4])
-                        embed.add_field(name='Proverb', value=f"*{z[1:][:960]}...*", inline=False)
-                    except (TypeError, IndexError):
-                        pass
+            # Related words (proverbs, idioms)
+            if 'proverbs' in term.lower():
+                idioms = soup.find('span', {'id': lambda x: x and x.endswith('idmgs_1')})
+                if idioms:
+                    idiom_text = "\n".join([f"• {idm.text.strip()}" for idm in idioms.find_all('span', {'class': 'idm'})[:3]])
+                    embed.add_field(name="Idioms", value=idiom_text[:1024], inline=False)
 
-            # Etymology and pronunciation
-            pronunciation = soup.find('span', attrs={"class": "phoneticspelling"})
-            if pronunciation:
-                etymology = ""
-                try:
-                    etymology_section = soup.find_all('section', attrs={"class": "etymology etym"})
-                    if len(etymology_section) > 1:
-                        etymology = f"\n**Origin:** *{etymology_section[1].find('p').text}*"
-                except (IndexError, AttributeError):
-                    pass
-                
-                embed.add_field(
-                    name=f'Etymology of {query.title()}',
-                    value=f"**Pronunciation:** `({pronunciation.text.replace('/', '')})`{etymology[:750]}",
-                    inline=False
-                )
+            # Add extra info if there's space
+            if len(embed) < 5500:  # Discord embed limit is 6000
+                topics = soup.find_all('span', {'class': 'topic_name'})
+                if topics:
+                    topic_text = ", ".join([t.text for t in topics[:3]])
+                    embed.set_footer(text=f"Topics: {topic_text}")
 
-            embed.set_footer(text=f'Oxford University Press © {dt.now().year} | Latency: {self.bot.latency*1000:.2f}ms')
             await ctx.send(embed=embed)
 
-        except requests.HTTPError:
-            await ctx.send(f"Couldn't find a definition for *{query}*. Please check the spelling.")
         except Exception as e:
-            tb = traceback.format_exc()
-            await ctx.send(f'```css\n[DICTIONARY ERROR]\n{e}```\n```py\n{tb[:1000]}```')
+            await ctx.send(f"An error occurred while looking up '{query}'. Please try again later.\nError: {str(e)}")
 
 async def setup(bot):
     await bot.add_cog(WordMeaning(bot))
