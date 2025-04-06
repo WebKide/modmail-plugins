@@ -1,8 +1,7 @@
 <div align="center">
 <h1>「modmail-plugins」</h1>
-<p><b><i>plugins to expand Modmail2020's functionality 🍆💦🍑</i></b></p>
+<p><b><i>plugins to expand Modmail2025's functionality 🍆💦🍑</i></b></p>
 </div>
-
 
 <div align="center">
 <img src="http://forthebadge.com/images/badges/made-with-crayons.svg?style=for-the-badge" alt="made with crayons"><br>
@@ -15,14 +14,54 @@
 
 # WordMeaning
 
-Modmail-plugins to find definitions of English words in Wikipedia, UrbanDictionary, and Oxford English Dictionary
+Enhanced dictionary plugin with interactive searching capabilities for Wikipedia, UrbanDictionary, and Oxford English Dictionary
 
-- [x] **`dict`** - Search definitions in English, supports **[synonyms|proverbs|examples]** as arguments
-- [x] **`urban`** - Urban Dictionary search, fetches up to 10 results per query
-- [x] **`wiki`** - Wikipedia search command that displays the abstract of the result
+## Features
 
-# Installation
+- [x] **`dict`** - Oxford Dictionary search with:
+  - Multi-word query support (auto-converts spaces to hyphens)
+  - Grammar information display (e.g. `[uncountable]`)
+  - Related matches section
+  - Supports `examples`, `synonyms`, and `proverbs` as arguments
 
-🔸 <b>Installation</b>: `{p}plugin add webkide/modmail-plugins/wordmeaning@master`
+- [x] **`urban`** - Urban Dictionary with:
+  - Interactive pagination through definitions
+  - Thumbs up/down counts
+  - Clean example formatting
 
-> `{p}` will be your guild's prefix, by default it is **`?`** unless you changed it
+- [x] **`wiki`** - Wikipedia search with:
+  - Numbered disambiguation pages (1️⃣-9️⃣)
+  - Automatic summary extraction
+  - Image thumbnails when available
+  - Handles ambiguous searches gracefully
+
+## Installation
+
+🔸 <b>Installation</b>: 
+```py
+[p]plugin add webkide/modmail-plugins/wordmeaning@master
+```
+
+> `[p]` will be your guild's prefix, by default it is **`?`** unless you changed it
+
+## Usage Examples
+
+`?dict love examples` # Shows definitions with usage examples
+
+`?urban yeet` # Urban Dictionary search with pagination
+
+`?wiki pandemonium` # Wikipedia search with disambiguation handling
+
+`?dict music-box` # Multi-word dictionary lookup
+
+
+## Recent Improvements
+
+✨ **v2.05 Updates**:
+- Complete rewrite of dictionary parsing engine
+- Added interactive elements for better navigation
+- Improved error handling and user feedback
+- Enhanced formatting for clearer results
+- Multi-word query support in dictionary
+- Numbered disambiguation for Wikipedia
+
