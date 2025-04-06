@@ -213,94 +213,171 @@ class WordMeaning(commands.Cog):
         query = term.split(' ')[0].lower()
         base_url = "https://www.oxfordlearnersdictionaries.com/definition/english/"
         
-        try:
-            # First try the direct URL
-            url = f"{base_url}{query}"
-            page = requests.get(url, headers=_HEADERS)
+        # Track current entry number for pagination
+        current_entry = 0
+        max_entries_to_check = 3  # Check up to _1, _2, _3
+        
+        # Store all found entries and their data
+        entries = []
+        
+        # First try the base URL (without _1, _2, etc.)
+        initial_url = f"{base_url}{query}"
+        initial_page = requests.get(initial_url, headers=_HEADERS)
+        
+        # Check if we got redirected to a numbered entry (like love_1)
+        if initial_page.history and '_' in initial_page.url.split('/')[-1]:
+            final_url = initial_page.url
+            word_id = final_page.url.split('/')[-1]
+            base_query = word_id.split('_')[0]
+            entry_num = int(word_id.split('_')[1]) if '_' in word_id else 0
+            entries.append({'url': final_url, 'num': entry_num, 'query': base_query})
+        elif initial_page.status_code == 200:
+            # Base URL worked, treat as entry 0
+            entries.append({'url': initial_url, 'num': 0, 'query': query})
+        
+        # Now check for numbered entries (_1, _2, etc.)
+        for i in range(1, max_entries_to_check + 1):
+            numbered_url = f"{base_url}{query}_{i}"
+            numbered_page = requests.get(numbered_url, headers=_HEADERS)
+            if numbered_page.status_code == 200:
+                entries.append({'url': numbered_url, 'num': i, 'query': query})
+        
+        if not entries:
+            return await ctx.send(f"Couldn't find a definition for *{query}*. Please check the spelling.")
+        
+        # Sort entries by their number
+        entries.sort(key=lambda x: x['num'])
+        
+        # Function to create embed for a specific entry
+        async def create_dict_embed(entry):
+            url = entry['url']
+            query = entry['query']
+            entry_num = entry['num']
             
-            # If we get redirected to a numbered entry (like love_1)
-            if page.history and '_' in page.url.split('/')[-1]:
-                final_url = page.url
-                word_id = final_url.split('/')[-1]  # Gets love_1
-                query = word_id.split('_')[0]      # Gets just 'love'
-                page = requests.get(final_url, headers=_HEADERS)
-            elif page.status_code == 404:
-                return await ctx.send(f"Couldn't find a definition for *{query}*. Please check the spelling.")
-
-            soup = bs(page.content, 'html.parser')
-            
-            # Create embed
-            embed = discord.Embed(color=self.user_color)
-            embed.set_author(
-                name=f'Oxford Learner\'s Dictionaries: {query.title()}',
-                url=url,
-                icon_url="https://www.oxfordlearnersdictionaries.com/favicon.ico"
-            )
-
-            # Get word type (noun, verb, etc.)
-            pos = soup.find('span', {'class': 'pos'})
-            if pos:
-                embed.title = f"[{pos.text}] {query.title()}"
-
-            # Get pronunciation
-            phonetics = soup.find('span', {'class': 'phon'})
-            if phonetics:
-                embed.add_field(name="Pronunciation", value=phonetics.text.strip(), inline=False)
-
-            # Get all senses (definitions)
-            senses = soup.find_all('li', {'class': 'sense'})
-            if not senses:
-                return await ctx.send(f"Found the word but couldn't extract definitions. Try visiting: {url}")
-
-            # Add first 3 definitions (or fewer)
-            definition_text = ""
-            for i, sense in enumerate(senses[:3], 1):
-                definition = sense.find('span', {'class': 'def'})
-                if definition:
-                    grammar = sense.find('span', {'class': 'grammar'})
-                    grammar_text = f" {grammar.text}" if grammar else ""
-                    definition_text += f"{i}.{grammar_text} {definition.text}\n\n"
-            
-            if definition_text:
-                embed.description = definition_text.strip()
-            else:
-                return await ctx.send(f"Found the word but couldn't extract definitions. Try visiting: {url}")
-
-            # Examples
-            if 'examples' in term.lower():
-                examples = []
-                for sense in senses[:2]:  # Get examples from first 2 senses
-                    sense_examples = sense.find_all('span', {'class': 'x'})
-                    examples.extend([ex.text.strip() for ex in sense_examples[:2]])  # Get 2 examples per sense
+            try:
+                page = requests.get(url, headers=_HEADERS)
+                soup = bs(page.content, 'html.parser')
                 
-                if examples:
-                    example_text = "\n".join([f"• {ex}" for ex in examples[:4]])  # Show max 4 examples
-                    embed.add_field(name="Examples", value=example_text[:1024], inline=False)
-
-            # Synonyms
-            if 'synonyms' in term.lower():
-                synonyms = soup.find('div', {'class': 'synonyms'})
-                if synonyms:
-                    embed.add_field(name="Synonyms", value=synonyms.text.strip()[:1024], inline=False)
-
-            # Related words (proverbs, idioms)
-            if 'proverbs' in term.lower():
-                idioms = soup.find('span', {'id': lambda x: x and x.endswith('idmgs_1')})
-                if idioms:
-                    idiom_text = "\n".join([f"• {idm.text.strip()}" for idm in idioms.find_all('span', {'class': 'idm'})[:3]])
-                    embed.add_field(name="Idioms", value=idiom_text[:1024], inline=False)
-
-            # Add extra info if there's space
-            if len(embed) < 5500:  # Discord embed limit is 6000
-                topics = soup.find_all('span', {'class': 'topic_name'})
-                if topics:
-                    topic_text = ", ".join([t.text for t in topics[:3]])
-                    embed.set_footer(text=f"Topics: {topic_text}")
-
-            await ctx.send(embed=embed)
-
-        except Exception as e:
-            await ctx.send(f"An error occurred while looking up '{query}'. Please try again later.\nError: {str(e)}")
+                embed = discord.Embed(color=self.user_color)
+                embed.set_author(
+                    name=f'Oxford Learner\'s Dictionaries: {query.title()}',
+                    url=url,
+                    icon_url="https://www.oxfordlearnersdictionaries.com/favicon.ico"
+                )
+                
+                # Add entry number indicator if not the base entry
+                if entry_num > 0:
+                    embed.title = f"Entry {entry_num}"
+                
+                # Get word type (noun, verb, etc.)
+                pos = soup.find('span', {'class': 'pos'})
+                
+                # Get all senses (definitions)
+                senses = soup.find_all('li', {'class': 'sense'})
+                if not senses:
+                    return None
+                
+                # Add definitions as fields
+                for i, sense in enumerate(senses[:3], 1):  # Limit to 3 senses
+                    definition = sense.find('span', {'class': 'def'})
+                    if definition:
+                        # Get grammar info (like [uncountable])
+                        grammar = sense.find('span', {'class': 'grammar'})
+                        grammar_text = f"{grammar.text} " if grammar else ""
+                        
+                        # Get sense heading if available (like "romantic" for love)
+                        sense_heading = sense.find_previous('h2', {'class': 'shcut'})
+                        heading_text = f"**{sense_heading.text}**\n" if sense_heading else ""
+                        
+                        # Format the field
+                        field_name = f"{pos.text} {query.title()}" if pos else query.title()
+                        field_value = f"{heading_text}`{grammar_text}`{definition.text}"
+                        
+                        embed.add_field(
+                            name=field_name,
+                            value=field_value[:1024],  # Field value limit
+                            inline=False
+                        )
+                
+                # Get pronunciation
+                phonetics = soup.find('span', {'class': 'phon'})
+                if phonetics:
+                    embed.add_field(name="Pronunciation", value=phonetics.text.strip(), inline=False)
+                
+                # Examples
+                if 'examples' in term.lower():
+                    examples = []
+                    for sense in senses[:2]:  # Get examples from first 2 senses
+                        sense_examples = sense.find_all('span', {'class': 'x'})
+                        examples.extend([ex.text.strip() for ex in sense_examples[:2]])
+                    
+                    if examples:
+                        example_text = "\n".join([f"• {ex}" for ex in examples[:4]])
+                        embed.add_field(name="Examples", value=example_text[:1024], inline=False)
+                
+                # Related matches
+                related = soup.find('div', {'id': 'relatedentries'})
+                if related:
+                    all_matches = related.find('dt', text='All matches')
+                    if all_matches:
+                        matches = []
+                        for item in all_matches.find_next('dd').find_all('li')[:5]:  # First 5 matches
+                            match_text = item.text.strip()
+                            if match_text and not match_text.startswith('See more'):
+                                matches.append(f"• {match_text}")
+                        
+                        if matches:
+                            embed.add_field(
+                                name="All Matches",
+                                value="\n".join(matches)[:1024],
+                                inline=False
+                            )
+                
+                return embed
+            
+            except Exception as e:
+                print(f"Error creating embed for {url}: {e}")
+                return None
+        
+        # Create initial embed for first entry
+        current_index = 0
+        embed = await create_dict_embed(entries[current_index])
+        if not embed:
+            return await ctx.send(f"Found entries but couldn't extract definitions. Try visiting: {entries[0]['url']}")
+        
+        message = await ctx.send(embed=embed)
+        
+        # Add pagination if multiple entries
+        if len(entries) > 1:
+            await message.add_reaction("⬅️")
+            await message.add_reaction("➡️")
+            
+            def check(reaction, user):
+                return (
+                    user == ctx.author
+                    and reaction.message.id == message.id
+                    and str(reaction.emoji) in ["⬅️", "➡️"]
+                )
+            
+            while True:
+                try:
+                    reaction, user = await self.bot.wait_for(
+                        "reaction_add", timeout=60.0, check=check
+                    )
+                    
+                    if str(reaction.emoji) == "➡️":
+                        current_index = (current_index + 1) % len(entries)
+                    else:
+                        current_index = (current_index - 1) % len(entries)
+                    
+                    new_embed = await create_dict_embed(entries[current_index])
+                    if new_embed:
+                        await message.edit(embed=new_embed)
+                    await message.remove_reaction(reaction, user)
+                    
+                except asyncio.TimeoutError:
+                    await message.clear_reactions()
+                    break
 
 async def setup(bot):
     await bot.add_cog(WordMeaning(bot))
