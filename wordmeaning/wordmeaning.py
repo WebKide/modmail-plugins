@@ -161,14 +161,14 @@ class WordMeaning(commands.Cog):
                 return await self.send_wiki_result(ctx, page)
             except wikipedia.DisambiguationError as e:
                 # Handle disambiguation pages with numbered options
-                options = e.options[:10]  # Limit to first 10 options
+                options = e.options[:9]  # Limit to first 9 options (1️⃣-9️⃣)
                 if not options:
                     return await ctx.send("No results found. Try a different search term.")
                 
                 # Create disambiguation embed
                 embed = discord.Embed(
                     title=f"Disambiguation: {search}",
-                    description="Please select an option by reacting with the corresponding number:",
+                    description="Please select an option by reacting with the corresponding number (1-9):",
                     color=self.user_color
                 )
                 
@@ -180,14 +180,14 @@ class WordMeaning(commands.Cog):
                         inline=False
                     )
                 
-                if len(e.options) > 10:
-                    embed.set_footer(text=f"Showing 1-10 of {len(e.options)} options")
+                if len(e.options) > 9:
+                    embed.set_footer(text=f"Showing 1-9 of {len(e.options)} options | For more options, type the exact name")
                 
                 message = await ctx.send(embed=embed)
                 
-                # Add number reactions
-                for i in range(1, min(len(options), 10) + 1):
-                    await message.add_reaction(f"{i}\uFE0F\u20E3")  # Number emoji
+                # Add number reactions (1-9)
+                for i in range(1, min(len(options), 9) + 1):
+                    await message.add_reaction(f"{i}\uFE0F\u20E3")  # Number emoji (1️⃣-9️⃣)
                 
                 # Wait for user reaction
                 def check(reaction, user):
@@ -199,7 +199,7 @@ class WordMeaning(commands.Cog):
                 
                 try:
                     reaction, user = await self.bot.wait_for(
-                        "reaction_add", timeout=360.0, check=check
+                        "reaction_add", timeout=60.0, check=check
                     )
                     
                     # Get selected option index
