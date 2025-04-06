@@ -44,7 +44,8 @@ class WordMeaning(commands.Cog):
         self._last_result = None
         self.mod_color = discord.Colour(0x7289da)  # Blurple
         self.user_color = discord.Colour(0xed791d)  # Orange
-        self.query_url = "https://en.oxforddictionaries.com/definition/"
+        # self.query_url = "https://en.oxforddictionaries.com/definition/"
+        self.query_url = "https://www.oxfordlearnersdictionaries.com/definition/english/"
         self.sess = requests.Session()
 
     # +------------------------------------------------------------+
@@ -243,49 +244,60 @@ class WordMeaning(commands.Cog):
     # +------------------------------------------------------------+
     # |               Oxford English Dictionary                    |
     # +------------------------------------------------------------+
-    @commands.command(name='dict', description='Oxford English Dictionary', aliases=['oed'])
-    async def _dict(self, ctx, *, term: str = None):
-        """(∩｀-´)⊃━☆ﾟ.*･｡ﾟ Search definitions in English using Oxford Learner's Dictionaries"""
-        if term is None:
+    @commands.group(name='dict', aliases=['oed'], invoke_without_command=True)
+    async def dictionary(self, ctx, *, term: str = None):
+        """Base dictionary command with subcommands"""
+        if term is None or ctx.invoked_subcommand is not None:
             sample = random.choice(['lecture', 'fantasy', 'gathering', 'gradually', 'international', 'desire'])
-            return await ctx.send(
-                f"**Usage:** `{ctx.prefix}dict <word>`\n"
-                f"**Example:** `{ctx.prefix}dict {sample}`\n"
-                f"Add `examples`, `synonyms`, or `proverbs` for more details"
+            embed = discord.Embed(
+                title="Dictionary Help",
+                description=(
+                    f"**Usage:** `{ctx.prefix}dict <word>`\n"
+                    f"**Example:** `{ctx.prefix}dict {sample}`\n\n"
+                    "**Subcommands:**\n"
+                    f"`{ctx.prefix}dict examples <word>` - Show usage examples\n"
+                    f"`{ctx.prefix}dict synonyms <word>` - Show synonyms\n"
+                    f"`{ctx.prefix}dict proverbs <word>` - Show proverbs/idioms"
+                ),
+                color=self.user_color
             )
+            return await ctx.send(embed=embed)
+        
+        await self._lookup_word(ctx, term)
 
+    @dictionary.command(name='examples')
+    async def dict_examples(self, ctx, *, term: str):
+        """Show dictionary examples for a word"""
+        await self._lookup_word(ctx, term, show_examples=True)
+
+    @dictionary.command(name='synonyms')
+    async def dict_synonyms(self, ctx, *, term: str):
+        """Show synonyms for a word"""
+        await self._lookup_word(ctx, term, show_synonyms=True)
+
+    @dictionary.command(name='proverbs')
+    async def dict_proverbs(self, ctx, *, term: str):
+        """Show proverbs/idioms for a word"""
+        await self._lookup_word(ctx, term, show_proverbs=True)
+
+    async def _lookup_word(self, ctx, term: str, show_examples=False, show_synonyms=False, show_proverbs=False):
+        """Shared lookup function for all dictionary commands"""
         await ctx.channel.typing()
         
         # Convert spaces to hyphens for multi-word queries
-        query = term.split(' ')[0].lower()  # First term is the word to search
-        if ' ' in term:
-            query = '-'.join(term.split())
-        
-        base_url = "https://www.oxfordlearnersdictionaries.com/definition/english/"
+        query = '-'.join(term.split())
+        url = f"{self.query_url}{query.lower()}"
         
         try:
-            # First try the direct URL
-            url = f"{base_url}{query}"
-            response = requests.get(url, headers=_HEADERS, allow_redirects=True)
-            
-            # If we got redirected, use the final URL
-            final_url = response.url
-            if response.history:
-                url = final_url
-            
-            # Check if this is a numbered entry (like love_1)
-            is_numbered = '_' in final_url.split('/')[-1]
-            
             page = requests.get(url, headers=_HEADERS)
-            if page.status_code != 200:
-                return await ctx.send(f"Couldn't find a definition for *{query}*. Please check the spelling.")
+            if page.status_code == 404:
+                return await ctx.send(f"Couldn't find a definition for *{query.replace('-', ' ')}*. Please check the spelling.")
 
             soup = bs(page.content, 'html.parser')
             
-            # Create embed
             embed = discord.Embed(color=self.user_color)
             embed.set_author(
-                name=f'Oxford Learner\'s Dictionaries: {query.replace("-", " ").title()}',
+                name=f'Oxford Dictionary: {query.replace("-", " ").title()}',
                 url=url,
                 icon_url="https://www.oxfordlearnersdictionaries.com/favicon.ico"
             )
@@ -294,44 +306,35 @@ class WordMeaning(commands.Cog):
             pos = soup.find('span', {'class': 'pos'})
             if pos:
                 embed.title = f"[{pos.text}] {query.replace('-', ' ').title()}"
-                if is_numbered:
-                    embed.title += f" ({final_url.split('_')[-1]})"  # Add (_1) if numbered entry
 
             # Get pronunciation
             phonetics = soup.find('span', {'class': 'phon'})
             if phonetics:
                 embed.add_field(name="Pronunciation", value=phonetics.text.strip(), inline=False)
 
-            # Get all senses (definitions)
+            # Get definitions
             senses = soup.find_all('li', {'class': 'sense'})
             if not senses:
                 return await ctx.send(f"Found the word but couldn't extract definitions. Try visiting: {url}")
 
-            # Add definitions as fields
-            for i, sense in enumerate(senses[:3], 1):  # Limit to 3 senses
+            # Add first 3 definitions
+            definition_text = ""
+            for i, sense in enumerate(senses[:3], 1):
                 definition = sense.find('span', {'class': 'def'})
                 if definition:
-                    # Get grammar info (like [uncountable])
                     grammar = sense.find('span', {'class': 'grammar'})
-                    grammar_text = f"{grammar.text} " if grammar else ""
-                    
-                    # Get sense heading if available (like "romantic" for love)
-                    sense_heading = sense.find_previous('h2', {'class': 'shcut'})
-                    heading_text = f"**{sense_heading.text}**\n" if sense_heading else ""
-                    
-                    # Format the field value
-                    field_value = f"{heading_text}`{grammar_text}`{definition.text}"
-                    
-                    embed.add_field(
-                        name=f"Definition {i}",
-                        value=field_value[:1024],  # Field value limit
-                        inline=False
-                    )
+                    grammar_text = f" {grammar.text}" if grammar else ""
+                    definition_text += f"{i}.{grammar_text} {definition.text}\n\n"
+            
+            if definition_text:
+                embed.description = definition_text.strip()
+            else:
+                return await ctx.send(f"Found the word but couldn't extract definitions. Try visiting: {url}")
 
-            # Examples
-            if 'examples' in term.lower():
+            # Examples (only if requested or in base command)
+            if show_examples or (not any([show_examples, show_synonyms, show_proverbs])):
                 examples = []
-                for sense in senses[:2]:  # Get examples from first 2 senses
+                for sense in senses[:2]:
                     sense_examples = sense.find_all('span', {'class': 'x'})
                     examples.extend([ex.text.strip() for ex in sense_examples[:2]])
                 
@@ -339,23 +342,18 @@ class WordMeaning(commands.Cog):
                     example_text = "\n".join([f"• {ex}" for ex in examples[:4]])
                     embed.add_field(name="Examples", value=example_text[:1024], inline=False)
 
-            # Related matches
-            related = soup.find('div', {'id': 'relatedentries'})
-            if related:
-                all_matches = related.find('dt', text='All matches')
-                if all_matches:
-                    matches = []
-                    for item in all_matches.find_next('dd').find_all('li')[:5]:  # First 5 matches
-                        match_text = item.text.strip()
-                        if match_text and not match_text.startswith('See more'):
-                            matches.append(f"• {match_text}")
-                    
-                    if matches:
-                        embed.add_field(
-                            name="All Matches",
-                            value="\n".join(matches)[:1024],
-                            inline=False
-                        )
+            # Synonyms (only if requested)
+            if show_synonyms:
+                synonyms = soup.find('div', {'class': 'synonyms'})
+                if synonyms:
+                    embed.add_field(name="Synonyms", value=synonyms.text.strip()[:1024], inline=False)
+
+            # Proverbs/Idioms (only if requested)
+            if show_proverbs:
+                idioms = soup.find('span', {'id': lambda x: x and x.endswith('idmgs_1')})
+                if idioms:
+                    idiom_text = "\n".join([f"• {idm.text.strip()}" for idm in idioms.find_all('span', {'class': 'idm'})[:3]])
+                    embed.add_field(name="Idioms", value=idiom_text[:1024], inline=False)
 
             await ctx.send(embed=embed)
 
