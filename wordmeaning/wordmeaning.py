@@ -60,6 +60,7 @@ class WordMeaning(commands.Cog):
             return await ctx.send('What should I search for you?')
 
         else:
+            await ctx.channel.typing()
             search_terms = search_terms.split()
             definition_number = terms = None
 
@@ -151,7 +152,7 @@ class WordMeaning(commands.Cog):
             usage = f'**Usage:** basic results\n{v}\n\n' \
                 f'**Advanced Usage:** add any parameter\n{v} `examples` `synonyms` `proverbs` `sourcecode`'
             return await ctx.send(usage)
-        await ctx.channel.trigger_typing()
+        await ctx.channel.typing()
 
         query = ''.join(term.split(' ')[0])  # We only want to search the first term, the rest is for extra result
         url = f"{self.query_url}{query.lower()}"  # we lower it so it works as part of the search link
