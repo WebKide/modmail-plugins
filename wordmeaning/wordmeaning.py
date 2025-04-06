@@ -106,7 +106,7 @@ class WordMeaning(commands.Cog):
             while True:
                 try:
                     reaction, user = await self.bot.wait_for(
-                        "reaction_add", timeout=60.0, check=check
+                        "reaction_add", timeout=360.0, check=check
                     )
                     
                     if str(reaction.emoji) == "➡️":
@@ -148,52 +148,97 @@ class WordMeaning(commands.Cog):
     # +------------------------------------------------------------+
     @commands.command(aliases=['wikipedia'])
     async def wiki(self, ctx, *, search: str = None):
-        """(∩｀-´)⊃━☆ﾟ.*･｡ﾟ Wikipedia search command
-        
-        Usage:
-        {prefix}wikipedia <term>
-        {prefix}wiki origami
-        """
-        if search is None:
-            return await ctx.send(f'Usage: `{ctx.prefix}wiki [search terms]`', delete_after=23)
+        """(∩｀-´)⊃━☆ﾟ.*･｡ﾟ Search Wikipedia with numbered disambiguation"""
+        if not search:
+            return await ctx.send(f"Usage: `{ctx.prefix}wiki <search term>`")
 
         try:
-            # Set language to English and disable suggestion redirects
             wikipedia.set_lang("en")
             
-            # Search for the term
-            results = wikipedia.search(search)
-            if not results:
-                return await ctx.send("Sorry, didn't find any result.", delete_after=23)
-            
-            # Get the page for the first result
+            # Try to get the page directly first
             try:
-                page = wikipedia.page(results[0], auto_suggest=False)
+                page = wikipedia.page(search, auto_suggest=False)
+                return await self.send_wiki_result(ctx, page)
             except wikipedia.DisambiguationError as e:
-                options = "\n".join(e.options[:5])  # Show first 5 options
-                return await ctx.send(
-                    f"**Disambiguation Error:** This term may refer to:\n\n{options}\n\n"
-                    f"Please be more specific with your search."
+                # Handle disambiguation pages with numbered options
+                options = e.options[:10]  # Limit to first 10 options
+                if not options:
+                    return await ctx.send("No results found. Try a different search term.")
+                
+                # Create disambiguation embed
+                embed = discord.Embed(
+                    title=f"Disambiguation: {search}",
+                    description="Please select an option by reacting with the corresponding number:",
+                    color=self.user_color
                 )
-            
-            # Create embed
-            embed = discord.Embed(
-                title=page.title,
-                color=self.user_color,
-                url=page.url,
-                description=wikipedia.summary(search, sentences=2)
-            )
-            
-            if page.images:
-                embed.set_thumbnail(url=page.images[0])
-            
-            await ctx.send(embed=embed)
-            
-        except wikipedia.PageError:
-            await ctx.send("Sorry, I couldn't find a page for that term.", delete_after=23)
+                
+                # Add numbered options
+                for i, option in enumerate(options, 1):
+                    embed.add_field(
+                        name=f"{i}. {option}",
+                        value="\u200b",  # Zero-width space
+                        inline=False
+                    )
+                
+                if len(e.options) > 10:
+                    embed.set_footer(text=f"Showing 1-10 of {len(e.options)} options")
+                
+                message = await ctx.send(embed=embed)
+                
+                # Add number reactions
+                for i in range(1, min(len(options), 10) + 1):
+                    await message.add_reaction(f"{i}\uFE0F\u20E3")  # Number emoji
+                
+                # Wait for user reaction
+                def check(reaction, user):
+                    return (
+                        user == ctx.author and
+                        reaction.message.id == message.id and
+                        str(reaction.emoji) in [f"{i}\uFE0F\u20E3" for i in range(1, len(options) + 1)]
+                    )
+                
+                try:
+                    reaction, user = await self.bot.wait_for(
+                        "reaction_add", timeout=360.0, check=check
+                    )
+                    
+                    # Get selected option index
+                    selected_index = int(str(reaction.emoji)[0]) - 1
+                    selected_option = options[selected_index]
+                    
+                    # Get the page for selected option
+                    try:
+                        selected_page = wikipedia.page(selected_option, auto_suggest=False)
+                        await message.delete()  # Remove the disambiguation message
+                        return await self.send_wiki_result(ctx, selected_page)
+                    except wikipedia.PageError:
+                        await ctx.send(f"Couldn't find a page for '{selected_option}'. Please try another option.")
+                    except wikipedia.DisambiguationError:
+                        await ctx.send(f"'{selected_option}' is still ambiguous. Please try a more specific search.")
+                    
+                except asyncio.TimeoutError:
+                    await message.clear_reactions()
+                    return
+                
+            except wikipedia.PageError:
+                return await ctx.send("Couldn't find a specific page for that term. Try a different search.")
+
         except Exception as e:
-            tb = traceback.format_exc()
-            await ctx.send(f'```css\n[WIKI ERROR]\n{e}```\n```py\n{tb[:1000]}```')
+            await ctx.send(f"An error occurred while searching Wikipedia: {str(e)}")
+
+    async def send_wiki_result(self, ctx, page):
+        """Helper function to send wiki results"""
+        embed = discord.Embed(
+            title=page.title,
+            color=self.user_color,
+            url=page.url,
+            description=wikipedia.summary(page.title, sentences=3)
+        )
+        
+        if page.images:
+            embed.set_thumbnail(url=page.images[0])
+        
+        await ctx.send(embed=embed)
 
     # +------------------------------------------------------------+
     # |               Oxford English Dictionary                    |
