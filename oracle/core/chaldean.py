@@ -1,0 +1,156 @@
+chaldean_list = [
+    # 01 Sun
+    {
+        'chaldean_number': '1', 
+        'chaldean_planet': 'Represented by the Celestial body of the Sun', 
+        'chaldean_keywords': 'Leadership, independence, creation', 
+        'chaldean_title': '', 
+        'chaldean_day': '', 
+        'chaldean_dob': '', 
+        'chaldean_vowels_soul_urge': '', 
+        'chaldean_consonants_personality': '', 
+        'chaldean_full_name_destiny': '', 
+        'chaldean_first_name': '', 
+        'chaldean_tablets': 'No description', 
+        'chaldean_meaning': '', 
+        'chaldean_interpretation': '',
+        'chaldean_colour': '0xff00ff'
+    },
+    # 02 Moon
+    {
+        'chaldean_number': '2', 
+        'chaldean_planet': 'Represented by the Celestial body of the Moon', 
+        'chaldean_keywords': 'Harmony, cooperation, sensitivity', 
+        'chaldean_title': '', 
+        'chaldean_day': '', 
+        'chaldean_dob': '', 
+        'chaldean_vowels_soul_urge': '', 
+        'chaldean_consonants_personality': '', 
+        'chaldean_full_name_destiny': '', 
+        'chaldean_first_name': '', 
+        'chaldean_tablets': 'No description', 
+        'chaldean_meaning': '', 
+        'chaldean_interpretation': '',
+        'chaldean_colour': '0xff00ff'
+    },
+    # 03 Jupiter
+    {
+        'chaldean_number': '3', 
+        'chaldean_planet': 'Represented by the Celestial body of Jupiter', 
+        'chaldean_keywords': 'Creativity, expression, communication', 
+        'chaldean_title': '', 
+        'chaldean_day': '', 
+        'chaldean_dob': '', 
+        'chaldean_vowels_soul_urge': '', 
+        'chaldean_consonants_personality': '', 
+        'chaldean_full_name_destiny': '', 
+        'chaldean_first_name': '', 
+        'chaldean_tablets': 'No description', 
+        'chaldean_meaning': '', 
+        'chaldean_interpretation': '',
+        'chaldean_colour': '0xff00ff'
+    },
+    # 04 Uranus
+    {
+        'chaldean_number': '4', 
+        'chaldean_planet': 'Represented by the Celestial body of Uranus', 
+        'chaldean_keywords': 'Stability, organization, hard work', 
+        'chaldean_title': '', 
+        'chaldean_day': '', 
+        'chaldean_dob': '', 
+        'chaldean_vowels_soul_urge': '', 
+        'chaldean_consonants_personality': '', 
+        'chaldean_full_name_destiny': '', 
+        'chaldean_first_name': '', 
+        'chaldean_tablets': 'No description', 
+        'chaldean_meaning': '', 
+        'chaldean_interpretation': '',
+        'chaldean_colour': '0xff00ff'
+    },
+    # 05 Mercury
+    {
+        'chaldean_number': '5', 
+        'chaldean_planet': 'Represented by the Celestial body of Mercury', 
+        'chaldean_keywords': 'Freedom, adventure, change', 
+        'chaldean_title': '', 
+        'chaldean_day': '', 
+        'chaldean_dob': '', 
+        'chaldean_vowels_soul_urge': '', 
+        'chaldean_consonants_personality': '', 
+        'chaldean_full_name_destiny': '', 
+        'chaldean_first_name': '', 
+        'chaldean_tablets': 'No description', 
+        'chaldean_meaning': '', 
+        'chaldean_interpretation': '',
+        'chaldean_colour': '0xff00ff'
+    },
+    # 06 Venus
+    {
+        'chaldean_number': '6', 
+        'chaldean_planet': 'Represented by the Celestial body of Venus', 
+        'chaldean_keywords': 'Responsibility, love, family', 
+        'chaldean_title': '', 
+        'chaldean_day': '', 
+        'chaldean_dob': '', 
+        'chaldean_vowels_soul_urge': '', 
+        'chaldean_consonants_personality': '', 
+        'chaldean_full_name_destiny': '', 
+        'chaldean_first_name': '', 
+        'chaldean_tablets': 'No description', 
+        'chaldean_meaning': '', 
+        'chaldean_interpretation': '',
+        'chaldean_colour': '0xff00ff'
+    },
+    # 07 Neptune
+    {
+        'chaldean_number': '7', 
+        'chaldean_planet': 'Represented by the Celestial body of Neptune', 
+        'chaldean_keywords': 'Wisdom, spirituality, introspection', 
+        'chaldean_title': '', 
+        'chaldean_day': '', 
+        'chaldean_dob': '', 
+        'chaldean_vowels_soul_urge': '', 
+        'chaldean_consonants_personality': '', 
+        'chaldean_full_name_destiny': '', 
+        'chaldean_first_name': '', 
+        'chaldean_tablets': 'No description', 
+        'chaldean_meaning': '', 
+        'chaldean_interpretation': '',
+        'chaldean_colour': '0xff00ff'
+    },
+    # 08 Saturn
+    {
+        'chaldean_number': '8', 
+        'chaldean_planet': 'Represented by the Celestial body of Saturn', 
+        'chaldean_keywords': 'Power, abundance, ambition', 
+        'chaldean_title': '', 
+        'chaldean_day': '', 
+        'chaldean_dob': '', 
+        'chaldean_vowels_soul_urge': '', 
+        'chaldean_consonants_personality': '', 
+        'chaldean_full_name_destiny': '', 
+        'chaldean_first_name': '', 
+        'chaldean_tablets': 'No description', 
+        'chaldean_meaning': '', 
+        'chaldean_interpretation': '',
+        'chaldean_colour': '0xff00ff'
+    },
+    # 09 Mars
+    {
+        'chaldean_number': '9', 
+        'chaldean_planet': 'Represented by the Celestial body of Mars', 
+        'chaldean_keywords': 'Compassion, humanity, altruism', 
+        'chaldean_title': '', 
+        'chaldean_day': '', 
+        'chaldean_dob': '', 
+        'chaldean_vowels_soul_urge': '', 
+        'chaldean_consonants_personality': '', 
+        'chaldean_full_name_destiny': '', 
+        'chaldean_first_name': '', 
+        'chaldean_tablets': 'No description', 
+        'chaldean_meaning': '', 
+        'chaldean_interpretation': '',
+        'chaldean_colour': '0xff00ff'
+    },
+
+]
