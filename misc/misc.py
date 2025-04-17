@@ -1,6 +1,6 @@
 """
 MIT License
-Copyright (c) 2020 WebKide [d.id @323578534763298816]
+Copyright (c) 2020-2025 WebKide [d.id @323578534763298816]
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
@@ -23,7 +23,7 @@ import discord, aiohttp, io, asyncio, random, textwrap, traceback, inspect2
 from discord.ext import commands
 from discord import File
 
-dev_list = [323578534763298816]
+dev_list = [1094090021914554510, 323578534763298816]
 
 
 class Misc(commands.Cog):
