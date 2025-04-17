@@ -27,7 +27,9 @@ dev_list = [1094090021914554510, 323578534763298816]
 
 
 class Misc(commands.Cog):
-    """(∩｀-´)⊃━☆ﾟ.*･｡ﾟ Useful commands to make your life easier """
+    """(∩｀-´)⊃━☆ﾟ.*･｡ﾟ Useful commands to make your life easier
+    Only works with Admin perms, and a few commands require dev_list to be modified
+     - This cog was made to keep a few commands that went out of fashion but are useful to run a server"""
     def __init__(self, bot):
         self.bot = bot
         self.mod_color = discord.Colour(0x7289da)  # Blurple
