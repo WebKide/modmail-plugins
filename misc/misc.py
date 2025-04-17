@@ -55,6 +55,7 @@ class Misc(commands.Cog):
     # |                        HACKBAN                             |
     # +------------------------------------------------------------+
     @commands.command(description='Ban using ID if they are no longer in server', no_pm=True)
+    @commands.has_permissions(administrator=True)
     async def hackban(self, ctx, userid, *, reason=None):
         """ Ban someone using ID """
         if ctx.author.id not in dev_list:
@@ -140,6 +141,7 @@ class Misc(commands.Cog):
     # |                     NAME                                   |
     # +------------------------------------------------------------+
     @commands.command(no_pm=True, hidden=True)
+    @commands.has_permissions(administrator=True)
     async def name(self, ctx, text: str = None):
         """ Change Bot's name """
         if ctx.author.id not in dev_list:    return
@@ -159,11 +161,14 @@ class Misc(commands.Cog):
     # |                       LOGO                                 |
     # +------------------------------------------------------------+
     @commands.command(no_pm=True, hidden=True)
+    @commands.has_permissions(administrator=True)
     async def logo(self, ctx, link: str = None):
         """ Change Bot's avatar img """
-        if ctx.author.id not in dev_list:    return
-
-        if link is None:    return await ctx.send('You need to use an image URL as a link.')
+        if ctx.author.id not in dev_list:
+            return
+            
+        if link is None:
+            return await ctx.send('You need to use an image URL as a link.')
 
         else:
             try:
@@ -182,10 +187,9 @@ class Misc(commands.Cog):
     # |                     SAUCE                                  |
     # +------------------------------------------------------------+
     @commands.command(no_pm=True)
+    @commands.has_permissions(administrator=True)
     async def sauce(self, ctx, *, command: str = None):
         """ Show source code for any command """
-        if ctx.author.id not in dev_list:    return
-
         if command is not None:
             i = str(inspect2.getsource(self.bot.get_command(command).callback))
 
@@ -203,6 +207,7 @@ class Misc(commands.Cog):
     # |                          SAY                               |
     # +------------------------------------------------------------+
     @commands.command(no_pm=True)
+    @commands.has_permissions(administrator=True)
     async def say(self, ctx, *, msg=''):
         """ Bot sends message """
         if f'{ctx.prefix}{ctx.invoked_with}' in msg:
@@ -219,6 +224,7 @@ class Misc(commands.Cog):
     # |                     SAY DELET                              |
     # +------------------------------------------------------------+
     @commands.command(no_pm=True)
+    @commands.has_permissions(administrator=True)
     async def sayd(self, ctx, *, msg=''):
         """ Sends message and delete original """
         if f'{ctx.prefix}{ctx.invoked_with}' in msg:
@@ -239,6 +245,7 @@ class Misc(commands.Cog):
     # |                      GEN                                   |
     # +------------------------------------------------------------+
     @commands.command(aliases=['general'], no_pm=True)
+    @commands.has_permissions(administrator=True)
     async def g(self, ctx, channel: discord.TextChannel, *, message: str = None):
         """ Send a msg to another channel """
         ma = ctx.message.author.display_name
@@ -274,24 +281,24 @@ class Misc(commands.Cog):
     # |                       PURGE                                |
     # +------------------------------------------------------------+
     @commands.command(aliases=['del', 'p', 'prune'], bulk=True, no_pm=True)
+    @commands.has_permissions(administrator=True)
     async def purge(self, ctx, limit: int):
-        """ Delete a number of messages """
-        if ctx.author.id not in dev_list:    return
+        """ Delete x number of messages """
+        try:
+            if not limit:
+                return await ctx.send('Enter the number of messages you want me to delete.', delete_after=23)
 
-        else:
-            try:
-                if not limit:
-                    return await ctx.send('Enter the number of messages you want me to delete.', delete_after=23)
+            if limit < 99:
+                await ctx.message.delete()
+                deleted = await ctx.channel.purge(limit=limit)
+                succ = f'₍₍◝(°꒳°)◜₎₎ Successfully deleted {len(deleted)} message(s)'
+                await ctx.channel.send(succ, delete_after=9)
 
-                if limit < 99:
-                    await ctx.message.delete()
-                    deleted = await ctx.channel.purge(limit=limit)
-                    succ = f'₍₍◝(°꒳°)◜₎₎ Successfully deleted {len(deleted)} message(s)'
-                    await ctx.channel.send(succ, delete_after=9)
-
-                else:    await ctx.send(f'Cannot delete `{limit}`, try less than 100.', delete_after=23)
+            else:
+                await ctx.send(f'Cannot delete `{limit}`, try less than 100.', delete_after=23)
                  
-            except discord.Forbidden:    pass
+        except discord.Forbidden:
+            pass
 
 
 async def setup(bot):
