@@ -140,7 +140,7 @@ class Misc(commands.Cog):
     # +------------------------------------------------------------+
     # |                     NAME                                   |
     # +------------------------------------------------------------+
-    @commands.command(no_pm=True, hidden=True)
+    @commands.command(description='Use only to rename the bot from a text channel', no_pm=True)
     @commands.has_permissions(administrator=True)
     async def name(self, ctx, text: str = None):
         """ Change Bot's name """
@@ -160,7 +160,8 @@ class Misc(commands.Cog):
     # +------------------------------------------------------------+
     # |                       LOGO                                 |
     # +------------------------------------------------------------+
-    @commands.command(no_pm=True, hidden=True)
+    # @commands.command(no_pm=True, hidden=True)
+    @commands.command(description= 'Use to replace the AVY for the bot', no_pm=True)
     @commands.has_permissions(administrator=True)
     async def logo(self, ctx, link: str = None):
         """ Change Bot's avatar img """
