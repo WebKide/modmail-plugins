@@ -1,4 +1,5 @@
-""" # v1.03
+"""
+# v1.04
 MIT License
 Copyright (c) 2020-2025 WebKide [d.id @323578534763298816]
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -385,12 +386,22 @@ class RemindMe(commands.Cog):
                 )
                 embed.set_footer(text=f'ID: {reminder["_id"]}')
                 
+                # Send to original channel if it still exists
                 if channel:
                     await channel.send(f'<@{reminder["user_id"]}>', embed=embed)
-                else:
+
+                # Always try to send DM as well, if the user allows DMs
+                try:
                     user = await self.bot.get_or_fetch_user(reminder["user_id"])
                     if user:
-                        await user.send(embed=embed)
+                        dm_embed = embed.copy()
+                        if channel:
+                            dm_embed.add_field(name="Channel", value=f"<#{reminder['channel_id']}>", inline=False)
+                        await user.send(embed=dm_embed)
+                except discord.Forbidden:
+                    log.debug(f"Could not send DM to user {reminder['user_id']} (DMs closed)")
+                except Exception as e:
+                    log.error(f"Failed to send DM for reminder {reminder['_id']}: {e}")
                 
                 await self.db.delete_one({"_id": reminder["_id"]})
                 
