@@ -1,4 +1,4 @@
-""" # v1.02
+""" # v1.03
 MIT License
 Copyright (c) 2020-2025 WebKide [d.id @323578534763298816]
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -425,7 +425,8 @@ class RemindMe(commands.Cog):
                 
             try:
                 user = await self.bot.get_or_fetch_user(reminder["user_id"])
-                name = str(user)
+                member = ctx.guild.get_member(user.id)  # Get member object for display name
+                name = member.display_name if member else user.name
                 avatar = user.avatar.url if user.avatar else None
             except:
                 name = f"Unknown User ({reminder['user_id']})"
@@ -436,7 +437,7 @@ class RemindMe(commands.Cog):
                 continue
                 
             embed = discord.Embed(
-                title=f"Reminder for {display_name}",
+                title=f"Reminder for {name}",
                 description=f"**Due:** {utils.format_dt(reminder['due'], 'f')}\n"
                            f"**Content:** {reminder['text'][:200]}",
                 color=self.bot.main_color
