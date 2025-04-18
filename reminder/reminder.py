@@ -301,6 +301,26 @@ class Reminder(commands.Cog):
                 log.error(f"Failed to send reminder {reminder['_id']}: {e}")
                 continue
 
+    @reminders_admin.command(name="cleanup")
+    @commands.has_permissions(administrator=True)
+    async def cleanup_reminders(self, ctx: commands.Context):
+        """Clean up invalid reminders"""
+        # Delete reminders missing required fields
+        result = await self.db.delete_many({
+            "$or": [
+                {"user_id": {"$exists": False}},
+                {"due": {"$exists": False}},
+                {"text": {"$exists": False}}
+            ]
+        })
+        
+        embed = discord.Embed(
+            title="Database Cleanup",
+            description=f"Removed {result.deleted_count} invalid reminders",
+            color=self.bot.main_color
+        )
+        await ctx.send(embed=embed)
+    
     @commands.group(name="remindersadmin", aliases=["ra"], invoke_without_command=True)
     @commands.has_permissions(administrator=True)
     async def reminders_admin(self, ctx: commands.Context):
@@ -311,7 +331,7 @@ class Reminder(commands.Cog):
     @commands.has_permissions(administrator=True)
     async def admin_all_reminders(self, ctx: commands.Context):
         """View all active reminders (paginated with delete options)"""
-        reminders = await self.db.find().sort([("user_id", 1), ("due", 1)]).to_list(None)
+        reminders = await self.db.find().sort("due", 1).to_list(None)
         
         if not reminders:
             embed = discord.Embed(
@@ -322,6 +342,10 @@ class Reminder(commands.Cog):
         
         embeds = []
         for reminder in reminders:
+            # Skip invalid reminders missing required fields
+            if "user_id" not in reminder:
+                continue
+                
             try:
                 user = await self.bot.get_or_fetch_user(reminder["user_id"])
                 name = str(user)
@@ -330,6 +354,10 @@ class Reminder(commands.Cog):
                 name = f"Unknown User ({reminder['user_id']})"
                 avatar = None
             
+            # Skip reminders missing required fields
+            if "due" not in reminder or "text" not in reminder:
+                continue
+                
             embed = discord.Embed(
                 title=f"Reminder for {name}",
                 description=f"**Due:** {utils.format_dt(reminder['due'], 'f')}\n"
@@ -344,15 +372,22 @@ class Reminder(commands.Cog):
                 name="Info",
                 value=f"User ID: `{reminder['user_id']}`\n"
                      f"Channel: <#{reminder.get('channel_id', 'DM')}>\n"
-                     f"Created: {utils.format_dt(reminder['created_at'], 'R')}",
+                     f"Created: {utils.format_dt(reminder.get('created_at', datetime.now(UTC)), 'R')}",
                 inline=False
             )
             
             embed.set_footer(text=f"Reminder ID: {reminder['_id']}")
             embeds.append(embed)
         
+        if not embeds:
+            embed = discord.Embed(
+                title='No valid reminders found',
+                description='All reminders in database were invalid',
+                color=self.bot.error_color
+            )
+            return await ctx.send(embed=embed)
+        
         paginator = EmbedPaginatorSession(ctx, *embeds)
-        paginator.customize_button('🚮', style=discord.ButtonStyle.danger)
         await paginator.run()
         
         # Add delete reaction to each page
