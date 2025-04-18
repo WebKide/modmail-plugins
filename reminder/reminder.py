@@ -91,21 +91,45 @@ class Reminder(commands.Cog):
         return None
 
     @commands.command(name='remind', aliases=['remindme'], no_pm=True)
-    async def remind(self, ctx: commands.Context, duration: str, channel: Optional[Union[discord.TextChannel, discord.VoiceChannel, discord.Thread, discord.ForumChannel]] = None, *, text: str):
+    async def remind(self, ctx: commands.Context, *, time_and_text: str):
         """Create a reminder
         Usage:
         {prefix}remind 1h30m Do the thing
         {prefix}remind May 17 Birthday party!
         {prefix}remind 18 of April Pay rent
+        {prefix}remind 30 days to renew subscription
         """
+        # Split the input into duration and reminder text
+        parts = time_and_text.split(maxsplit=1)
+        if len(parts) < 2:
+            embed = discord.Embed(
+                title="Invalid format",
+                description="Please provide both a time and reminder text.\n"
+                           f"Example: `{ctx.prefix}remind 30 days to renew subscription`",
+                color=self.bot.error_color
+            )
+            return await ctx.send(embed=embed)
+        
+        duration_part = parts[0]
+        text = parts[1]
+        
+        # Check for multi-word durations (like "30 days")
+        time_units = ["days", "day", "hours", "hour", "minutes", "minute", "weeks", "week", "months", "month"]
+        if len(duration_part.split()) == 1 and any(unit in parts[1].lower().split() for unit in time_units):
+            # Handle cases like "30 days to renew"
+            next_word = parts[1].split()[0]
+            if next_word.lower() in time_units:
+                duration_part = f"{duration_part} {next_word}"
+                text = ' '.join(parts[1].split()[1:])
+        
         # First try natural date parsing
-        dt = self.parse_natural_date(duration)
+        dt = self.parse_natural_date(duration_part)
         
         # If natural parsing fails, use the time converter
         if dt is None:
             try:
                 timeconverter = UserFriendlyTime()
-                converted = await timeconverter.convert(ctx=ctx, argument=duration, now=datetime.now())
+                converted = await timeconverter.convert(ctx=ctx, argument=duration_part, now=datetime.now())
                 dt = converted.dt
             except commands.BadArgument as e:
                 embed = discord.Embed(
@@ -115,17 +139,11 @@ class Reminder(commands.Cog):
                 )
                 return await ctx.send(embed=embed)
         
-        channel_option = None
-        notify_txt = "Direct Message"
-        if channel:
-            channel_option = channel.id
-            notify_txt = f"<#{channel.id}>"
-            
         reminder_id = await self.get_insert_userdata(ctx)
         
         reminder_data = {
             "end": dt,
-            "channel_id": channel_option,
+            "channel_id": None,  # Default to DM
             "text": text
         }
         
@@ -138,8 +156,7 @@ class Reminder(commands.Cog):
             title='Reminder created',
             description=f'Your reminder has been created successfully!\n\n'
                        f'**Reminder:** {text}\n'
-                       f'**Due:** {timestamp} ({relative})\n'
-                       f'**Channel:** {notify_txt}',
+                       f'**Due:** {timestamp} ({relative})',
             color=discord.Color.green()
         )
         embed.set_footer(text=f'Reminder ID: {reminder_id}')
