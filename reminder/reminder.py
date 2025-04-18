@@ -154,7 +154,7 @@ class RemindMe(commands.Cog):
 
     def parse_with_separator(self, text: str) -> tuple:
         """Parse reminder text using separators"""
-        separators = [',', '-', '|', '>', ':']
+        separators = ['<', '-', '|', '>', ':', '—']
         for sep in separators:
             if sep in text:
                 parts = text.split(sep, 1)
@@ -203,14 +203,16 @@ class RemindMe(commands.Cog):
     @commands.command(name='remind', aliases=['remindme'], no_pm=True)
     async def remind(self, ctx: commands.Context, *, text: str):
         """Create a reminder using separators:
-        - , comma
+        - < lower than
         - - hyphen
         - | bar
         - > greater than
+        - : colon
+        - — em dash
         Examples:
-        !remind May 20, camping trip
+        !remind May 20: camping trip
         !remind 20 May - birthday party
-        !remind in 2 hours | remember the meeting
+        !remind in 2 hours | remember the staff meeting
         """
         # First try to split by separator
         date_part, reminder_text = self.parse_with_separator(text)
@@ -318,7 +320,7 @@ class RemindMe(commands.Cog):
         )
         await ctx.send(embed=embed)
             
-    @commands.command(name='reminders', aliases=['listreminders','lreminders'], no_pm=True)
+    @commands.command(name='reminders', aliases=['listreminders','lr'], no_pm=True)
     async def reminders(self, ctx: commands.Context):
         """List your active reminders"""
         reminders = await self.db.find({"user_id": ctx.author.id}).sort("due", 1).to_list(None)
@@ -498,4 +500,3 @@ class RemindMe(commands.Cog):
 
 async def setup(bot):
     await bot.add_cog(RemindMe(bot))
-    
