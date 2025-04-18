@@ -301,26 +301,6 @@ class Reminder(commands.Cog):
                 log.error(f"Failed to send reminder {reminder['_id']}: {e}")
                 continue
 
-    @reminders_admin.command(name="cleanup")
-    @commands.has_permissions(administrator=True)
-    async def cleanup_reminders(self, ctx: commands.Context):
-        """Clean up invalid reminders"""
-        # Delete reminders missing required fields
-        result = await self.db.delete_many({
-            "$or": [
-                {"user_id": {"$exists": False}},
-                {"due": {"$exists": False}},
-                {"text": {"$exists": False}}
-            ]
-        })
-        
-        embed = discord.Embed(
-            title="Database Cleanup",
-            description=f"Removed {result.deleted_count} invalid reminders",
-            color=self.bot.main_color
-        )
-        await ctx.send(embed=embed)
-    
     @commands.group(name="remindersadmin", aliases=["ra"], invoke_without_command=True)
     @commands.has_permissions(administrator=True)
     async def reminders_admin(self, ctx: commands.Context):
@@ -394,5 +374,25 @@ class Reminder(commands.Cog):
         for msg in paginator.pages:
             await msg.add_reaction('🚮')
 
+    @reminders_admin.command(name="cleanup")
+    @commands.has_permissions(administrator=True)
+    async def cleanup_reminders(self, ctx: commands.Context):
+        """Clean up invalid reminders"""
+        # Delete reminders missing required fields
+        result = await self.db.delete_many({
+            "$or": [
+                {"user_id": {"$exists": False}},
+                {"due": {"$exists": False}},
+                {"text": {"$exists": False}}
+            ]
+        })
+        
+        embed = discord.Embed(
+            title="Database Cleanup",
+            description=f"Removed {result.deleted_count} invalid reminders",
+            color=self.bot.main_color
+        )
+        await ctx.send(embed=embed)
+        
 async def setup(bot):
     await bot.add_cog(Reminder(bot))
