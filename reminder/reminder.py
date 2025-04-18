@@ -27,6 +27,7 @@ import logging
 import discord
 from discord.ext import commands, tasks
 from discord import utils
+from discord.ui import Button, View
 from bson import ObjectId
 
 from core import checks
@@ -37,7 +38,107 @@ from core.paginator import EmbedPaginatorSession, MessagePaginatorSession
 UTC = timezone.utc
 log = logging.getLogger(__name__)
 
-class Reminder(commands.Cog):
+class ReminderPaginator(View):
+    """Custom paginator with delete button for reminders"""
+    def __init__(self, embeds, db, user_id=None, is_admin=False):
+        super().__init__(timeout=60)
+        self.embeds = embeds
+        self.current_page = 0
+        self.db = db
+        self.user_id = user_id
+        self.is_admin = is_admin
+        self.message = None
+        
+        # Update buttons on initialization
+        self.update_buttons()
+    
+    def update_buttons(self):
+        """Update button states based on current page"""
+        self.clear_items()
+        
+        # Previous button
+        prev_button = Button(emoji="⬅️", style=discord.ButtonStyle.blurple, disabled=self.current_page == 0)
+        prev_button.callback = self.previous_page
+        self.add_item(prev_button)
+        
+        # Delete button (only if user is owner or admin)
+        if self.user_id is not None or self.is_admin:
+            delete_button = Button(emoji="🗑️", style=discord.ButtonStyle.red)
+            delete_button.callback = self.delete_reminder
+            self.add_item(delete_button)
+        
+        # Next button
+        next_button = Button(emoji="➡️", style=discord.ButtonStyle.blurple, disabled=self.current_page == len(self.embeds) - 1)
+        next_button.callback = self.next_page
+        self.add_item(next_button)
+    
+    async def previous_page(self, interaction: discord.Interaction):
+        """Go to previous page"""
+        if self.current_page > 0:
+            self.current_page -= 1
+            self.update_buttons()
+            await interaction.response.edit_message(embed=self.embeds[self.current_page], view=self)
+        else:
+            await interaction.response.defer()
+    
+    async def next_page(self, interaction: discord.Interaction):
+        """Go to next page"""
+        if self.current_page < len(self.embeds) - 1:
+            self.current_page += 1
+            self.update_buttons()
+            await interaction.response.edit_message(embed=self.embeds[self.current_page], view=self)
+        else:
+            await interaction.response.defer()
+    
+    async def delete_reminder(self, interaction: discord.Interaction):
+        """Delete current reminder"""
+        embed = self.embeds[self.current_page]
+        if not embed.footer.text:
+            await interaction.response.send_message("Could not find reminder ID.", ephemeral=True)
+            return
+            
+        # Extract reminder ID from footer
+        footer = embed.footer.text
+        if not footer.startswith('Reminder ID: '):
+            await interaction.response.send_message("Invalid reminder format.", ephemeral=True)
+            return
+            
+        reminder_id = footer[13:]
+        
+        try:
+            # Check permissions
+            reminder = await self.db.find_one({"_id": ObjectId(reminder_id)})
+            if not reminder:
+                await interaction.response.send_message("Reminder not found.", ephemeral=True)
+                return
+                
+            if not self.is_admin and (self.user_id is None or reminder["user_id"] != self.user_id):
+                await interaction.response.send_message("You don't have permission to delete this reminder.", ephemeral=True)
+                return
+                
+            # Delete the reminder
+            await self.db.delete_one({"_id": ObjectId(reminder_id)})
+            
+            # Update the embed
+            embed.title = '🗑️ Reminder Deleted'
+            embed.color = discord.Color.red()
+            self.update_buttons()
+            
+            await interaction.response.edit_message(embed=embed, view=self)
+        except Exception as e:
+            log.error(f"Error deleting reminder: {e}")
+            await interaction.response.send_message("An error occurred while deleting the reminder.", ephemeral=True)
+    
+    async def on_timeout(self):
+        """Disable all buttons when view times out"""
+        for item in self.children:
+            item.disabled = True
+        try:
+            await self.message.edit(view=self)
+        except:
+            pass
+
+class RemindMe(commands.Cog):
     """Improved Reminder Plugin with separator parsing and admin tools"""
     def __init__(self, bot):
         self.bot = bot
@@ -101,11 +202,15 @@ class Reminder(commands.Cog):
 
     @commands.command(name='remind', aliases=['remindme'], no_pm=True)
     async def remind(self, ctx: commands.Context, *, text: str):
-        """Create a reminder using separators: , - | > :
+        """Create a reminder using separators:
+        - , comma
+        - - hyphen
+        - | bar
+        - > greater than
         Examples:
         !remind May 20, camping trip
         !remind 20 May - birthday party
-        !remind in 2 hours | don't forget the meeting
+        !remind in 2 hours | remember the meeting
         """
         # First try to split by separator
         date_part, reminder_text = self.parse_with_separator(text)
@@ -162,45 +267,27 @@ class Reminder(commands.Cog):
             color=discord.Color.green()
         )
         embed.set_footer(text=f'ID: {reminder_id}')
-        msg = await ctx.send(embed=embed)
-        await msg.add_reaction('🚮')  # Add delete reaction
-
-    @commands.Cog.listener()
-    async def on_reaction_add(self, reaction, user):
-        """Handle reminder deletion via reaction"""
-        if user.bot or reaction.emoji != '🚮':
-            return
         
-        msg = reaction.message
-        if not msg.embeds or not msg.embeds[0].footer.text:
-            return
-            
-        # Extract reminder ID from footer
-        footer = msg.embeds[0].footer.text
-        if not footer.startswith('ID: '):
-            return
-            
-        reminder_id = footer[4:]
+        # Add delete button
+        view = View(timeout=60)
+        delete_button = Button(emoji="🗑️", style=discord.ButtonStyle.red)
         
-        try:
-            reminder = await self.db.find_one({"_id": ObjectId(reminder_id)})
-            if not reminder:
-                return
-                
-            # Check if user is admin or reminder owner
-            if (user.id != reminder["user_id"] and 
-                not reaction.message.channel.permissions_for(user).administrator):
+        async def delete_callback(interaction):
+            if interaction.user.id != ctx.author.id and not interaction.channel.permissions_for(interaction.user).administrator:
+                await interaction.response.send_message("You don't have permission to delete this reminder.", ephemeral=True)
                 return
                 
             await self.db.delete_one({"_id": ObjectId(reminder_id)})
-            embed = msg.embeds[0].copy()
             embed.title = '🗑️ Reminder Deleted'
             embed.color = discord.Color.red()
-            await msg.edit(embed=embed)
-            await msg.clear_reaction('🚮')
-            
-        except Exception as e:
-            log.error(f"Error deleting reminder: {e}")
+            for item in view.children:
+                item.disabled = True
+            await interaction.response.edit_message(embed=embed, view=view)
+        
+        delete_button.callback = delete_callback
+        view.add_item(delete_button)
+        
+        await ctx.send(embed=embed, view=view)
 
     @commands.command(name='delreminder', aliases=['forgetreminder'], no_pm=True)
     async def delreminder(self, ctx: commands.Context, reminder_id: str):
@@ -246,26 +333,34 @@ class Reminder(commands.Cog):
             
         embeds = []
         
-        for i in range(0, len(reminders), 5):
-            current = reminders[i:i+5]
+        for reminder in reminders:
+            truncated = (reminder["text"][:100] + '...') if len(reminder["text"]) > 100 else reminder["text"]
             embed = discord.Embed(
-                title=f'Your Reminders ({len(reminders)} total)',
+                title=f"⏰ Reminder for {utils.format_dt(reminder['due'], 'f')}",
+                description=truncated,
                 color=self.bot.main_color
             )
-            
-            for reminder in current:
-                truncated = (reminder["text"][:100] + '...') if len(reminder["text"]) > 100 else reminder["text"]
-                embed.add_field(
-                    name=f"⏰ {utils.format_dt(reminder['due'], 'f')} (ID: {reminder['_id']})",
-                    value=truncated,
-                    inline=False
-                )
-            
-            embed.set_footer(text=f"Page {i//5 + 1}/{(len(reminders)-1)//5 + 1}")
+            embed.add_field(
+                name="Details",
+                value=f"Created: {utils.format_dt(reminder['created_at'], 'R')}\n"
+                      f"Channel: <#{reminder.get('channel_id', 'DM')}>",
+                inline=False
+            )
+            embed.set_footer(text=f"Reminder ID: {reminder['_id']}")
             embeds.append(embed)
         
-        paginator = EmbedPaginatorSession(ctx, *embeds)
-        await paginator.run()
+        if len(embeds) == 1:
+            # Single reminder - show with delete button
+            view = ReminderPaginator(embeds, self.db, ctx.author.id)
+            view.current_page = 0
+            view.update_buttons()
+            message = await ctx.send(embed=embeds[0], view=view)
+            view.message = message
+        else:
+            # Multiple reminders - paginate
+            paginator = ReminderPaginator(embeds, self.db, ctx.author.id)
+            message = await ctx.send(embed=embeds[0], view=paginator)
+            paginator.message = message
             
     @tasks.loop(seconds=30)
     async def reminder_task(self):
@@ -367,12 +462,18 @@ class Reminder(commands.Cog):
             )
             return await ctx.send(embed=embed)
         
-        paginator = EmbedPaginatorSession(ctx, *embeds)
-        await paginator.run()
-        
-        # Add delete reaction to each page
-        for msg in paginator.pages:
-            await msg.add_reaction('🚮')
+        if len(embeds) == 1:
+            # Single reminder - show with delete button
+            view = ReminderPaginator(embeds, self.db, is_admin=True)
+            view.current_page = 0
+            view.update_buttons()
+            message = await ctx.send(embed=embeds[0], view=view)
+            view.message = message
+        else:
+            # Multiple reminders - paginate
+            paginator = ReminderPaginator(embeds, self.db, is_admin=True)
+            message = await ctx.send(embed=embeds[0], view=paginator)
+            paginator.message = message
 
     @reminders_admin.command(name="cleanup")
     @commands.has_permissions(administrator=True)
@@ -394,5 +495,7 @@ class Reminder(commands.Cog):
         )
         await ctx.send(embed=embed)
         
+
 async def setup(bot):
-    await bot.add_cog(Reminder(bot))
+    await bot.add_cog(RemindMe(bot))
+    
