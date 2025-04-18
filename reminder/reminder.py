@@ -1,4 +1,4 @@
-"""
+""" # v1.02
 MIT License
 Copyright (c) 2020-2025 WebKide [d.id @323578534763298816]
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -436,7 +436,7 @@ class RemindMe(commands.Cog):
                 continue
                 
             embed = discord.Embed(
-                title=f"Reminder for {name}",
+                title=f"Reminder for {display_name}",
                 description=f"**Due:** {utils.format_dt(reminder['due'], 'f')}\n"
                            f"**Content:** {reminder['text'][:200]}",
                 color=self.bot.main_color
