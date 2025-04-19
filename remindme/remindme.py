@@ -1,5 +1,5 @@
 """
-v2.03
+v2.04
 !plugin update WebKide/modmail-plugins/remindme@master
 MIT License
 Copyright (c) 2020-2025 WebKide [d.id @323578534763298816]
@@ -45,15 +45,69 @@ class RemindMe(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.db = bot.plugin_db.get_partition(self)
-        self.reminder_task.start()
         self.editing_users = {}  # {user_id: reminder_id}
+        self.reminder_task = self._create_reminder_task()  # Initialize the task here
     
+    def _create_reminder_task(self):
+        """Create and return the reminder task"""
+        @tasks.loop(seconds=30)
+        async def reminder_task():
+            """Check and send due reminders"""
+            await self.bot.wait_until_ready()
+            now = datetime.now(UTC)
+            
+            reminders = await self.db.find({"due": {"$lte": now}}).to_list(None)
+            log.debug(f"Processing {len(reminders)} due reminders")
+            
+            for reminder in reminders:
+                success = False
+                try:
+                    # Try channel message
+                    if reminder.get("channel_id"):
+                        channel = self.bot.get_channel(reminder["channel_id"])
+                        if channel and not isinstance(channel, discord.Thread):
+                            try:
+                                msg = await channel.send(
+                                    f'<@{reminder["user_id"]}>',
+                                    embed=self.create_reminder_embed(reminder, is_dm=False)
+                                )
+                                await msg.add_reaction('🔁')  # Repeat button
+                                await msg.add_reaction('❎')  # Close button
+                                success = True
+                            except discord.HTTPException as e:
+                                log.warning(f"Failed to send channel reminder: {e}")
+
+                    # Try DM
+                    try:
+                        user = await self.bot.get_or_fetch_user(reminder["user_id"])
+                        if user:
+                            dm_msg = await user.send(embed=self.create_reminder_embed(reminder, is_dm=True))
+                            await dm_msg.add_reaction('🔁')
+                            await dm_msg.add_reaction('🗑️')
+                            success = True
+                    except discord.Forbidden:
+                        log.debug(f"User {reminder['user_id']} has DMs disabled")
+                    except Exception as e:
+                        log.error(f"Failed to send DM reminder: {e}")
+
+                    # Only delete if successfully delivered
+                    if success:
+                        await self.db.delete_one({"_id": reminder["_id"]})
+                    else:
+                        log.warning(f"Failed to deliver reminder {reminder['_id']}, keeping in database")
+
+                except Exception as e:
+                    log.error(f"Error processing reminder {reminder.get('_id')}: {e}")
+
+        return reminder_task
+
     async def cog_load(self):
         await self.db.create_index([("due", 1)])
         await self.db.create_index([("user_id", 1)])
-        
+        self.reminder_task.start()  # Start the task when cog loads
+    
     async def cog_unload(self):
-        self.reminder_task.cancel()
+        self.reminder_task.cancel()  # Cancel the task when cog unloads
 
     def parse_natural_date(self, text: str) -> Optional[datetime]:
         """Parse natural language dates with improved handling"""
