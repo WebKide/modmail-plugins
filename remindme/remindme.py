@@ -1,5 +1,5 @@
 """
-v2.02
+v2.03
 !plugin update WebKide/modmail-plugins/remindme@master
 MIT License
 Copyright (c) 2020-2025 WebKide [d.id @323578534763298816]
@@ -29,7 +29,7 @@ import asyncio
 import discord
 from discord.ext import commands, tasks
 from discord import utils
-from discord.ui import Button, View  # Added missing import
+from discord.ui import Button, View
 from bson import ObjectId
 
 from core import checks
@@ -51,7 +51,7 @@ class RemindMe(commands.Cog):
     async def cog_load(self):
         await self.db.create_index([("due", 1)])
         await self.db.create_index([("user_id", 1)])
-    
+        
     async def cog_unload(self):
         self.reminder_task.cancel()
 
@@ -259,90 +259,9 @@ class RemindMe(commands.Cog):
             embed.set_footer(text=f"Reminder ID: {reminder['_id']}")
             embeds.append(embed)
         
-        if len(embeds) == 1:
-            # Single reminder - show with delete button
-            view = ReminderPaginator(embeds, self.db, is_admin=True if ctx.command.name == "admin_all_reminders" else False)
-            view.current_page = 0
-            view.timeout = 90  # 90-second timeout
-            view.update_buttons()
-            message = await ctx.send(embed=embeds[0], view=view)
-            view.message = message
-            # Start auto-delete timer
-            asyncio.create_task(self.auto_delete_message(message))
-        else:
-            # Multiple reminders - paginate
-            paginator = ReminderPaginator(self.bot, embeds, self.db, is_admin=True)
-            message = await ctx.send(embed=embeds[0], view=paginator)
-            paginator.message = message
-            # Start auto-delete timer
-            asyncio.create_task(self.auto_delete_message(message))
-            
-    @tasks.loop(seconds=30)
-    async def reminder_task(self):
-        await self.bot.wait_until_ready()
-        now = datetime.now(UTC)
-        
-        reminders = await self.db.find({"due": {"$lte": now}}).to_list(None)
-        log.debug(f"Found {len(reminders)} due reminders at {now.isoformat()}")
-        
-        for reminder in reminders:
-            try:
-                channel = None
-                if reminder.get("channel_id"):
-                    channel = self.bot.get_channel(reminder["channel_id"])
-                
-                # Format the reminder text with first letter uppercase
-                formatted_text = reminder["text"][0].upper() + reminder["text"][1:]
-
-                # Calculate time since reminder was created
-                created_at = reminder.get("created_at", datetime.now(UTC))
-                time_elapsed = utils.format_dt(created_at, "R")  # "5 minutes ago" format
-
-                embed = discord.Embed(
-                    title='⏰ Reminder',
-                    description=f"```css\n{formatted_text}\n```",
-                    color=self.bot.main_color
-                )
-                embed.add_field(
-                    name="Created",
-                    value=f"{utils.format_dt(created_at, 'f')} ({time_elapsed})",
-                    inline=False
-                )
-                embed.set_footer(text=f'ID: {reminder["_id"]}')
-                
-                # Send to original channel if it still exists
-                if channel:
-                    msg = await channel.send(f'<@{reminder["user_id"]}>', embed=embed)
-                    await msg.add_reaction('❎')  # Add close button to channel message
-
-                # Always try to send DM as well, if the user allows DMs
-                try:
-                    user = await self.bot.get_or_fetch_user(reminder["user_id"])
-                    if user:
-                        dm_embed = discord.Embed(
-                            title='⏰ Reminder (DM)',
-                            description=f"```css\n{formatted_text}\n```",
-                            color=self.bot.main_color
-                        )
-                        dm_embed.add_field(
-                            name="Created",
-                            value=f"{utils.format_dt(created_at, 'f')} ({time_elapsed})",
-                            inline=False
-                        )
-                        if channel:
-                            dm_embed.add_field(name="Channel", value=f"<#{reminder['channel_id']}>", inline=False)
-                        dm_msg = await user.send(embed=dm_embed)
-                        await dm_msg.add_reaction('🗑️')
-                except discord.Forbidden:
-                    log.debug(f"Could not send DM to user {reminder['user_id']} (DMs closed)")
-                except Exception as e:
-                    log.error(f"Failed to send DM for reminder {reminder['_id']}: {e}")
-                
-                await self.db.delete_one({"_id": reminder["_id"]})
-                
-            except Exception as e:
-                log.error(f"Failed to send reminder {reminder['_id']}: {e}")
-                continue
+        paginator = ReminderPaginator(self.bot, embeds, self.db, user_id=ctx.author.id)
+        message = await ctx.send(embed=embeds[0], view=paginator)
+        paginator.message = message
 
     @commands.group(name="remindersadmin", aliases=["ra"], invoke_without_command=True)
     @commands.has_permissions(administrator=True)
@@ -365,20 +284,18 @@ class RemindMe(commands.Cog):
         
         embeds = []
         for reminder in reminders:
-            # Skip invalid reminders missing required fields
             if "user_id" not in reminder:
                 continue
                 
             try:
                 user = await self.bot.get_or_fetch_user(reminder["user_id"])
-                member = ctx.guild.get_member(user.id)  # Get member object for display name
+                member = ctx.guild.get_member(user.id) if ctx.guild else None
                 name = member.display_name if member else user.name
                 avatar = user.avatar.url if user.avatar else None
             except:
                 name = f"Unknown User ({reminder['user_id']})"
                 avatar = None
             
-            # Skip reminders missing required fields
             if "due" not in reminder or "text" not in reminder:
                 continue
                 
@@ -410,6 +327,10 @@ class RemindMe(commands.Cog):
                 color=self.bot.error_color
             )
             return await ctx.send(embed=embed)
+        
+        paginator = ReminderPaginator(self.bot, embeds, self.db, is_admin=True)
+        message = await ctx.send(embed=embeds[0], view=paginator)
+        paginator.message = message
         
         if len(embeds) == 1:
             # Single reminder - show with delete button
