@@ -1,5 +1,5 @@
 """
-v2.00
+v2.01
 !plugin update WebKide/modmail-plugins/remindme@master
 MIT License
 Copyright (c) 2020-2025 WebKide [d.id @323578534763298816]
@@ -54,6 +54,44 @@ class RemindMe(commands.Cog):
     async def cog_unload(self):
         self.reminder_task.cancel()
 
+    def parse_natural_date(self, text: str) -> Optional[datetime]:
+        """Parse natural language dates with improved handling"""
+        now = datetime.now(UTC)
+        text = text.lower().replace('of ', '').replace(' at ', ' ').replace(' on ', ' ')
+        
+        patterns = [
+            # Month Day Year
+            (r"(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]* \d{1,2}(?: \d{4})?", "%b %d %Y"),
+            # Day Month Year
+            (r"\d{1,2} (?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*(?: \d{4})?", "%d %b %Y"),
+            # Full month names
+            (r"(?:january|february|march|april|may|june|july|august|september|october|november|december) \d{1,2}(?: \d{4})?", "%B %d %Y"),
+            (r"\d{1,2} (?:january|february|march|april|may|june|july|august|september|october|november|december)(?: \d{4})?", "%d %B %Y"),
+            # With time
+            (r".* at \d{1,2}:\d{2}(?: ?[ap]m)?", ""),  # Handled by timeconverter
+        ]
+        
+        for pattern, date_format in patterns:
+            match = re.match(pattern, text, re.IGNORECASE)
+            if match:
+                try:
+                    date_str = match.group()
+                    if not any(c.isdigit() for c in date_str[-4:]):  # No year provided
+                        date_str += f" {now.year}"
+                    
+                    dt = datetime.strptime(date_str, date_format)
+                    if dt.tzinfo is None:
+                        dt = dt.replace(tzinfo=UTC)
+                    
+                    if dt < now and not any(c.isdigit() for c in date_str[-4:]):
+                        dt = dt.replace(year=dt.year + 1)
+                    
+                    return dt
+                except ValueError:
+                    continue
+        
+        return None
+
     def parse_with_separator(self, text: str) -> tuple:
         """Parse reminder text using separators with word support"""
         text_lower = text.lower()
@@ -82,22 +120,9 @@ class RemindMe(commands.Cog):
         
         return None, text
 
-    @commands.command(name='remind', aliases=['remindme', 'rm'], no_pm=True)
+    @commands.command(name='remind', aliases=['remindme', 'rm'])
     async def remind(self, ctx: commands.Context, *, text: str):
-        """Create a reminder using separators between When and What
-
-        - hyphen           -
-        - bar                   |
-        - colon               :
-        - em dash        —
-        - lower than    <
-        - greater than >
-        
-        Examples:
-        !remind May 20: camping trip
-        !remind 20 May - birthday party
-        !remind in 2 hours | remember the staff meeting
-        """
+        """Create a reminder with flexible time parsing"""
         # Parse input
         date_part, reminder_text = self.parse_with_separator(text)
         
@@ -108,8 +133,10 @@ class RemindMe(commands.Cog):
                 color=self.bot.error_color
             ))
         
+        # Try natural date parsing first
         dt = self.parse_natural_date(date_part)
         
+        # Fallback to time converter
         if dt is None:
             try:
                 timeconverter = UserFriendlyTime()
@@ -118,24 +145,23 @@ class RemindMe(commands.Cog):
                 if dt.tzinfo is None:
                     dt = dt.replace(tzinfo=UTC)
             except commands.BadArgument as e:
-                embed = discord.Embed(
+                return await ctx.send(embed=discord.Embed(
                     title="Invalid time format",
                     description=str(e),
                     color=self.bot.error_color
-                )
-                return await ctx.send(embed=embed)
+                ))
         
         if dt <= datetime.now(UTC):
-            embed = discord.Embed(
+            return await ctx.send(embed=discord.Embed(
                 title="Invalid time",
                 description="Reminder time must be in the future",
                 color=self.bot.error_color
-            )
-            return await ctx.send(embed=embed)
+            ))
         
+        # Create and store reminder
         reminder = {
             "user_id": ctx.author.id,
-            "channel_id": ctx.channel.id,  # Remember channel for context
+            "channel_id": ctx.channel.id,
             "text": reminder_text,
             "due": dt,
             "created_at": datetime.now(UTC)
@@ -152,7 +178,6 @@ class RemindMe(commands.Cog):
         )
         embed.set_footer(text=f'ID: {reminder_id}')
         
-        # Add delete button
         view = View(timeout=60)
         delete_button = Button(emoji="🗑️", style=discord.ButtonStyle.red)
         
@@ -250,74 +275,73 @@ class RemindMe(commands.Cog):
             paginator.message = message
             # Start auto-delete timer
             asyncio.create_task(self.auto_delete_message(message))
-
+            
     @tasks.loop(seconds=30)
     async def reminder_task(self):
-        """Check and send due reminders"""
         await self.bot.wait_until_ready()
         now = datetime.now(UTC)
         
         reminders = await self.db.find({"due": {"$lte": now}}).to_list(None)
-        log.debug(f"Processing {len(reminders)} due reminders")
+        log.debug(f"Found {len(reminders)} due reminders at {now.isoformat()}")
         
         for reminder in reminders:
-            success = False
             try:
-                # Try channel message
+                channel = None
                 if reminder.get("channel_id"):
                     channel = self.bot.get_channel(reminder["channel_id"])
-                    if channel and not isinstance(channel, discord.Thread):
-                        try:
-                            msg = await channel.send(
-                                f'<@{reminder["user_id"]}>',
-                                embed=self.create_reminder_embed(reminder, is_dm=False)
-                            )
-                            await msg.add_reaction('🔁')  # Repeat button
-                            await msg.add_reaction('❎')  # Close button
-                            success = True
-                        except discord.HTTPException as e:
-                            log.warning(f"Failed to send channel reminder: {e}")
+                
+                # Format the reminder text with first letter uppercase
+                formatted_text = reminder["text"][0].upper() + reminder["text"][1:]
 
-                # Try DM
+                # Calculate time since reminder was created
+                created_at = reminder.get("created_at", datetime.now(UTC))
+                time_elapsed = utils.format_dt(created_at, "R")  # "5 minutes ago" format
+
+                embed = discord.Embed(
+                    title='⏰ Reminder',
+                    description=f"```css\n{formatted_text}\n```",
+                    color=self.bot.main_color
+                )
+                embed.add_field(
+                    name="Created",
+                    value=f"{utils.format_dt(created_at, 'f')} ({time_elapsed})",
+                    inline=False
+                )
+                embed.set_footer(text=f'ID: {reminder["_id"]}')
+                
+                # Send to original channel if it still exists
+                if channel:
+                    msg = await channel.send(f'<@{reminder["user_id"]}>', embed=embed)
+                    await msg.add_reaction('❎')  # Add close button to channel message
+
+                # Always try to send DM as well, if the user allows DMs
                 try:
                     user = await self.bot.get_or_fetch_user(reminder["user_id"])
                     if user:
-                        dm_msg = await user.send(embed=self.create_reminder_embed(reminder, is_dm=True))
-                        await dm_msg.add_reaction('🔁')
+                        dm_embed = discord.Embed(
+                            title='⏰ Reminder (DM)',
+                            description=f"```css\n{formatted_text}\n```",
+                            color=self.bot.main_color
+                        )
+                        dm_embed.add_field(
+                            name="Created",
+                            value=f"{utils.format_dt(created_at, 'f')} ({time_elapsed})",
+                            inline=False
+                        )
+                        if channel:
+                            dm_embed.add_field(name="Channel", value=f"<#{reminder['channel_id']}>", inline=False)
+                        dm_msg = await user.send(embed=dm_embed)
                         await dm_msg.add_reaction('🗑️')
-                        success = True
                 except discord.Forbidden:
-                    log.debug(f"User {reminder['user_id']} has DMs disabled")
+                    log.debug(f"Could not send DM to user {reminder['user_id']} (DMs closed)")
                 except Exception as e:
-                    log.error(f"Failed to send DM reminder: {e}")
-
-                # Only delete if successfully delivered
-                if success:
-                    await self.db.delete_one({"_id": reminder["_id"]})
-                else:
-                    log.warning(f"Failed to deliver reminder {reminder['_id']}, keeping in database")
-
+                    log.error(f"Failed to send DM for reminder {reminder['_id']}: {e}")
+                
+                await self.db.delete_one({"_id": reminder["_id"]})
+                
             except Exception as e:
-                log.error(f"Error processing reminder {reminder.get('_id')}: {e}")
-
-    def create_reminder_embed(self, reminder: dict, is_dm: bool) -> discord.Embed:
-        """Create consistent reminder embed"""
-        embed = discord.Embed(
-            title=f"⏰ {'Reminder' if not is_dm else 'Reminder (DM)'}",
-            description=f"```css\n{reminder['text'].capitalize()}\n```",
-            color=self.bot.main_color
-        )
-        embed.add_field(
-            name="Created",
-            value=f"{utils.format_dt(reminder.get('created_at', datetime.now(UTC)), 'f')} "
-                  f"({utils.format_dt(reminder.get('created_at', datetime.now(UTC)), 'R')})",
-            inline=False
-        )
-        if reminder.get("channel_id") and not is_dm:
-            embed.add_field(name="Channel", value=f"<#{reminder['channel_id']}>", inline=False)
-        embed.set_footer(text=f"Reminder ID: {reminder['_id']}")
-        return embed
-
+                log.error(f"Failed to send reminder {reminder['_id']}: {e}")
+                continue
 
     @commands.group(name="remindersadmin", aliases=["ra"], invoke_without_command=True)
     @commands.has_permissions(administrator=True)
@@ -325,7 +349,7 @@ class RemindMe(commands.Cog):
         """Admin reminder management"""
         await ctx.send_help(ctx.command)
 
-    @reminders_admin.command(name="all", no_pm=True)
+    @reminders_admin.command(name="all")
     @commands.has_permissions(administrator=True)
     async def admin_all_reminders(self, ctx: commands.Context):
         """View all active reminders (paginated with delete options)"""
@@ -404,7 +428,7 @@ class RemindMe(commands.Cog):
             # Start auto-delete timer
             asyncio.create_task(self.auto_delete_message(message))
 
-    @reminders_admin.command(name="cleanup", no_pm=True)
+    @reminders_admin.command(name="cleanup")
     @commands.has_permissions(administrator=True)
     async def cleanup_reminders(self, ctx: commands.Context):
         """Clean up invalid reminders"""
@@ -427,4 +451,3 @@ class RemindMe(commands.Cog):
 
 async def setup(bot):
     await bot.add_cog(RemindMe(bot))
-    
