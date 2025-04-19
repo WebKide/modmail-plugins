@@ -62,10 +62,16 @@ class ReminderPaginator(View):
     def update_buttons(self):
         self.clear_items()
         
-        # Page navigation
-        prev_button = Button(emoji="⬅️", style=discord.ButtonStyle.blurple, disabled=self.current_page == 0)
-        prev_button.callback = self.previous_page
-        self.add_item(prev_button)
+        # Always show page navigation if multiple pages
+        if len(self.embeds) > 1:
+            prev_button = Button(emoji="⬅️", style=discord.ButtonStyle.blurple, disabled=self.current_page == 0)
+            prev_button.callback = self.previous_page
+            self.add_item(prev_button)
+            
+            next_button = Button(emoji="➡️", style=discord.ButtonStyle.blurple, 
+                               disabled=self.current_page == len(self.embeds) - 1)
+            next_button.callback = self.next_page
+            self.add_item(next_button)
         
         # Edit button (owner only)
         if self.user_id is not None:
@@ -79,27 +85,21 @@ class ReminderPaginator(View):
             delete_button.callback = self.delete_reminder
             self.add_item(delete_button)
         
-        # Snooze button
-        snooze_button = Button(emoji="⏳", style=discord.ButtonStyle.green)
-        snooze_button.callback = self.snooze_reminder
-        self.add_item(snooze_button)
+        # Snooze and recurring buttons only for active reminders
+        if hasattr(self, 'is_active_reminder') and self.is_active_reminder:
+            snooze_button = Button(emoji="⏳", style=discord.ButtonStyle.green)
+            snooze_button.callback = self.snooze_reminder
+            self.add_item(snooze_button)
+            
+            daily_button = Button(emoji="🔁", style=discord.ButtonStyle.green)
+            daily_button.callback = self.set_daily
+            self.add_item(daily_button)
+            
+            weekly_button = Button(emoji="📆", style=discord.ButtonStyle.green)
+            weekly_button.callback = self.set_weekly
+            self.add_item(weekly_button)
         
-        # Recurring buttons
-        daily_button = Button(emoji="🔁", style=discord.ButtonStyle.green)
-        daily_button.callback = self.set_daily
-        self.add_item(daily_button)
-        
-        weekly_button = Button(emoji="📆", style=discord.ButtonStyle.green)
-        weekly_button.callback = self.set_weekly
-        self.add_item(weekly_button)
-        
-        # Next button
-        next_button = Button(emoji="➡️", style=discord.ButtonStyle.blurple, 
-                            disabled=self.current_page == len(self.embeds) - 1)
-        next_button.callback = self.next_page
-        self.add_item(next_button)
-        
-        # Close button
+        # Always show close button
         close_button = Button(emoji="❎", style=discord.ButtonStyle.grey)
         close_button.callback = self.close_message
         self.add_item(close_button)
@@ -245,6 +245,15 @@ class EditReminderModal(discord.ui.Modal):
         self.new_time = self.children[0].value
         await interaction.response.defer()
 
+# ======================================================
+#
+#
+#
+#               REMIND ME PRO CLASS
+#
+#
+#
+# ======================================================
 class RemindMePro(commands.Cog):
     """Advanced Reminder System with Timezone Support"""
     def __init__(self, bot):
@@ -275,12 +284,21 @@ class RemindMePro(commands.Cog):
         except discord.Forbidden:
             return "❎ Disabled"
 
+    # ======================================================
+    #
+    #
+    #
+    #               TIMEZONE GROUP COMMANDS
+    #
+    #
+    #
+    # ======================================================
     @commands.group(name="timezone", aliases=["tz"], invoke_without_command=True)
     async def timezone(self, ctx):
         """Manage your timezone settings"""
         await ctx.send_help(ctx.command)
 
-    @timezone.command(name="set")
+    @timezone.command(name="set", no_pm=True)
     async def set_timezone(self, ctx, timezone: str):
         """Set your timezone (e.g. EST, PST, UTC+3)"""
         try:
@@ -296,27 +314,66 @@ class RemindMePro(commands.Cog):
         except pytz.UnknownTimeZoneError:
             await ctx.send("Unknown timezone. Please use formats like EST, PST, or UTC+3")
 
-    @timezone.command(name="view")
+    @timezone.command(name="view", no_pm=True)
     async def view_timezone(self, ctx):
         """View your current timezone setting"""
         tz = self.user_timezones.get(ctx.author.id, "UTC")
         await ctx.send(f"Your current timezone is set to: {tz}")
 
-    @commands.command(name="remind", aliases=["remindme", "rm"])
+    # ======================================================
+    #
+    #
+    #
+    #               USER COMMANDS START HERE
+    #
+    #
+    #
+    # ======================================================
+    @commands.command(name="remind", aliases=["remindme", "rm"], no_pm=True)
     async def remind(self, ctx, *, text: str):
-        """Set a reminder using natural language"""
         dm_status = await self.check_dm_status(ctx.author)
         
         try:
-            # Parse with timezone if user has one set
+            # Get user's default timezone (if set)
             user_tz = await self.get_user_timezone(ctx.author.id)
-            dt = parse(text, fuzzy=True, default=datetime.now(user_tz))
-            dt = dt.astimezone(UTC)
+
+            # Extract timezone abbreviations from text (e.g., "9pm EST")
+            tz_pattern = r"\b([A-Z]{3,4})\b"
+            if matches := re.findall(tz_pattern, text):
+                try:
+                    user_tz = pytz.timezone(matches[-1])  # Use the last matched timezone
+                    text = re.sub(tz_pattern, "", text).strip()  # Remove timezone from text
+                except pytz.UnknownTimeZoneError:
+                    pass  # Fall back to user's default timezone
+
+            # Parse with both fuzzy and tokens
+            dt, tokens = parse(text, fuzzy_with_tokens=True, default=datetime.now(user_tz))
             
-            # Extract reminder text
-            reminder_text = text.replace(str(dt), "").strip()
-            if not reminder_text:
-                reminder_text = text  # Fallback if parsing failed to extract text
+            # Extract reminder text from unused tokens
+            reminder_text = " ".join(tokens).strip()
+            
+            # Convert to UTC if naive
+            if dt.tzinfo is None:
+                dt = dt.replace(tzinfo=UTC)
+            else:
+                dt = dt.astimezone(UTC)
+            
+            # Handle relative times (e.g., "tomorrow", "next week")
+            if dt <= datetime.now(UTC):
+                if "tomorrow" in text.lower():
+                    dt += timedelta(days=1)
+                elif "next week" in text.lower():
+                    dt += timedelta(weeks=1)
+
+            # Handle pure duration formats
+            if not reminder_text and "in " in text.lower():
+                reminder_text = text.split("in ", 1)[-1].split(" ", 1)[-1]
+                
+            # Handle "noon"/"midnight" special cases
+            if "noon" in text.lower() and not reminder_text:
+                reminder_text = text.replace("noon", "").strip()
+            elif "midnight" in text.lower() and not reminder_text:
+                reminder_text = text.replace("midnight", "").strip()
                 
         except Exception as e:
             embed = discord.Embed(
@@ -325,16 +382,16 @@ class RemindMePro(commands.Cog):
                 color=self.bot.error_color
             )
             embed.add_field(name="📩 Direct Messages", value=dm_status, inline=False)
-            return await ctx.send(embed=embed)
+            return await ctx.send(embed=embed, delete_after=260)
         
-        if dt <= datetime.now(UTC) - timedelta(seconds=5):
+        if dt <= datetime.now(UTC):
             embed = discord.Embed(
                 title="Invalid Time",
                 description="Reminder time must be in the future",
                 color=self.bot.error_color
             )
             embed.add_field(name="📩 Direct Messages", value=dm_status, inline=False)
-            return await ctx.send(embed=embed)
+            return await ctx.send(embed=embed, delete_after=260)
         
         reminder = {
             "user_id": ctx.author.id,
@@ -351,16 +408,16 @@ class RemindMePro(commands.Cog):
         
         embed = discord.Embed(
             title='✅ Reminder Created',
-            description=f'**When:** {utils.format_dt(dt, "f")} ({utils.format_dt(dt, "R")})\n'
-                       f'**What:** {reminder_text}',
+            description=f'**When:**\n{utils.format_dt(dt, "f")} ({utils.format_dt(dt, "R")})\n'
+                       f'**What:**\n```css\n{reminder_text}\n```',
             color=discord.Color.green()
         )
         embed.set_footer(text=f"Reminder ID: {reminder_id}")
         embed.add_field(name="📩 Direct Messages", value=dm_status, inline=False)
         
-        await ctx.send(embed=embed)
+        await ctx.send(embed=embed, delete_after=260)
 
-    @commands.command(name="reminders", aliases=["listreminders", "lr"])
+    @commands.command(name="reminders", aliases=["listreminders", "lr"], no_pm=True)
     async def reminders(self, ctx):
         """List your active reminders"""
         reminders = await self.db.find({"user_id": ctx.author.id}).sort("due", 1).to_list(None)
@@ -368,18 +425,18 @@ class RemindMePro(commands.Cog):
         if not reminders:
             embed = discord.Embed(
                 title='No reminders found',
-                description='You don\'t have any active reminders!',
+                description="You don't have any active reminders!",
                 color=self.bot.error_color
             )
-            return await ctx.send(embed=embed)
+            return await ctx.send(embed=embed, delete_after=260)
             
         embeds = []
         for idx, reminder in enumerate(reminders):
             truncated = (reminder["text"][:100] + '...') if len(reminder["text"]) > 100 else reminder["text"]
             embed = discord.Embed(
                 title=f"⏰ Reminder {idx+1}/{len(reminders)}",
-                description=f"**Due:** {utils.format_dt(reminder['due'], 'f')} ({utils.format_dt(reminder['due'], 'R')})\n"
-                           f"**Content:** {truncated}",
+                description=f"**Due:**\n{utils.format_dt(reminder['due'], 'f')} ({utils.format_dt(reminder['due'], 'R')})\n"
+                           f"**Content:**\n```css\n{truncated}\n```",
                 color=self.bot.main_color
             )
             embed.add_field(
@@ -397,6 +454,15 @@ class RemindMePro(commands.Cog):
         message = await ctx.send(embed=embeds[0], view=paginator)
         paginator.message = message
 
+    # ======================================================
+    #
+    #
+    #
+    #                     TASK LOOP
+    #
+    #
+    #
+    # ======================================================
     @tasks.loop(seconds=30)
     async def reminder_task(self):
         await self.bot.wait_until_ready()
@@ -432,7 +498,7 @@ class RemindMePro(commands.Cog):
                 time_elapsed = utils.format_dt(reminder.get("created_at", datetime.now(UTC)), "R")
 
                 embed = discord.Embed(
-                    title='⏰ Reminder',
+                    title='⏰ Reminder:',
                     description=f"```css\n{formatted_text}\n```",
                     color=self.bot.main_color
                 )
@@ -448,11 +514,9 @@ class RemindMePro(commands.Cog):
                 # Send to original channel if possible
                 if channel:
                     try:
-                        msg = await channel.send(f'<@{reminder["user_id"]}>', embed=embed)
-                        await msg.add_reaction('⏳')  # Snooze
-                        await msg.add_reaction('🔁')  # Daily
-                        await msg.add_reaction('📆')  # Weekly
-                        await msg.add_reaction('🗑️')  # Delete
+                        view = ReminderPaginator(self.bot, [embed], self.db, user_id=reminder["user_id"])
+                        view.is_active_reminder = True  # <-- Add this line
+                        msg = await channel.send(f'<@{reminder["user_id"]}>', embed=embed, view=view)
                     except discord.Forbidden:
                         log.warning(f"Missing permissions to send reminder in {reminder['channel_id']}")
 
@@ -460,21 +524,9 @@ class RemindMePro(commands.Cog):
                 try:
                     user = await self.bot.get_or_fetch_user(reminder["user_id"])
                     if user:
-                        dm_embed = discord.Embed(
-                            title='⏰ Reminder (DM)',
-                            description=f"```css\n{formatted_text}\n```",
-                            color=self.bot.main_color
-                        )
-                        dm_embed.add_field(
-                            name="Created",
-                            value=f"{utils.format_dt(reminder['created_at'], 'f')} ({time_elapsed})",
-                            inline=False
-                        )
-                        if reminder.get("channel_id"):
-                            dm_embed.add_field(name="Channel", value=f"<#{reminder['channel_id']}>", inline=False)
-                        dm_msg = await user.send(embed=dm_embed)
-                        await dm_msg.add_reaction('⏳')
-                        await dm_msg.add_reaction('🗑️')
+                        view = ReminderPaginator(self.bot, [embed], self.db, user_id=reminder["user_id"])
+                        view.is_active_reminder = True  # <-- Add this line
+                        dm_msg = await user.send(embed=embed, view=view)
                 except discord.Forbidden:
                     log.debug(f"Could not send DM to user {reminder['user_id']}")
                 except Exception as e:
@@ -488,13 +540,22 @@ class RemindMePro(commands.Cog):
                 log.error(f"Failed to process reminder {reminder['_id']}: {e}")
                 continue
 
+    # ======================================================
+    #
+    #
+    #
+    #               ADMIN COMMANDS START HERE
+    #
+    #
+    #
+    # ======================================================
     @commands.group(name="remindersadmin", aliases=["ra"], invoke_without_command=True)
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
     async def reminders_admin(self, ctx):
         """Admin reminder management"""
         await ctx.send_help(ctx.command)
 
-    @reminders_admin.command(name="all")
+    @reminders_admin.command(name="all", no_pm=True)
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
     async def admin_all_reminders(self, ctx):
         """View all active reminders"""
@@ -505,7 +566,7 @@ class RemindMePro(commands.Cog):
                 title='No reminders found',
                 color=self.bot.error_color
             )
-            return await ctx.send(embed=embed)
+            return await ctx.send(embed=embed, delete_after=260)
         
         embeds = []
         for idx, reminder in enumerate(reminders):
@@ -519,9 +580,9 @@ class RemindMePro(commands.Cog):
             
             truncated = (reminder["text"][:100] + '...') if len(reminder["text"]) > 100 else reminder["text"]
             embed = discord.Embed(
-                title=f"⏰ Reminder {idx+1}/{len(reminders)} for {username}",
-                description=f"**Due:** {utils.format_dt(reminder['due'], 'f')}\n"
-                           f"**Content:** {truncated}",
+                title=f"⏰ Reminder {idx+1}/{len(reminders)} for {username}:",
+                description=f"**Due:**\n{utils.format_dt(reminder['due'], 'f')}\n\n"
+                           f"**Content:**\n```css\n{truncated}\n```",
                 color=self.bot.main_color
             )
             
