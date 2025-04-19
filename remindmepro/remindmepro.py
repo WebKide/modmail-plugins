@@ -355,7 +355,7 @@ class RemindMePro(commands.Cog):
                        f'**What:** {reminder_text}',
             color=discord.Color.green()
         )
-        embed.set_footer(text=f'Reminder ID: {reminder_id}")
+        embed.set_footer(text=f"Reminder ID: {reminder_id}")
         embed.add_field(name="📩 Direct Messages", value=dm_status, inline=False)
         
         await ctx.send(embed=embed)
