@@ -1,5 +1,6 @@
 """
-# v1.04
+# v1.05
+!plugin update WebKide/modmail-plugins/reminder@master
 MIT License
 Copyright (c) 2020-2025 WebKide [d.id @323578534763298816]
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -379,10 +380,22 @@ class RemindMe(commands.Cog):
                 if reminder.get("channel_id"):
                     channel = self.bot.get_channel(reminder["channel_id"])
                 
+                # Format the reminder text with first letter uppercase
+                formatted_text = reminder["text"][0].upper() + reminder["text"][1:]
+
+                # Calculate time since reminder was created
+                created_at = reminder.get("created_at", datetime.now(UTC))
+                time_elapsed = utils.format_dt(created_at, "R")  # "5 minutes ago" format
+
                 embed = discord.Embed(
                     title='⏰ Reminder',
-                    description=reminder["text"],
+                    description=f"```css\n{formatted_text}\n```",
                     color=self.bot.main_color
+                )
+                embed.add_field(
+                    name="Created",
+                    value=f"{utils.format_dt(created_at, 'f')} ({time_elapsed})",
+                    inline=False
                 )
                 embed.set_footer(text=f'ID: {reminder["_id"]}')
                 
@@ -394,7 +407,18 @@ class RemindMe(commands.Cog):
                 try:
                     user = await self.bot.get_or_fetch_user(reminder["user_id"])
                     if user:
-                        dm_embed = embed.copy()
+                        dm_embed = discord.Embed(
+                            title='⏰ Reminder (DM)',
+                            description=f"```css\n{formatted_text}\n```",
+                            color=self.bot.main_color
+                        )
+                        dm_embed.add_field(
+                            name="Created",
+                            value=f"{utils.format_dt(created_at, 'f')} ({time_elapsed})",
+                            inline=False
+                        )
+                        if channel:
+                            dm_embed.add_field(name="Channel", value=f"<#{reminder['channel_id']}>", inline=False)
                         if channel:
                             dm_embed.add_field(name="Channel", value=f"<#{reminder['channel_id']}>", inline=False)
                         await user.send(embed=dm_embed)
