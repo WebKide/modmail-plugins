@@ -1,5 +1,5 @@
 """
-v2.00
+v2.01
 !plugin update WebKide/modmail-plugins/remindme@master
 MIT License
 Copyright (c) 2020-2025 WebKide [d.id @323578534763298816]
@@ -36,7 +36,7 @@ log = logging.getLogger(__name__)
 class ReminderPaginator(View):
     """Custom paginator with edit/delete/repeat buttons for reminders"""
     def __init__(self, bot, embeds, db, user_id: int = None, is_admin: bool = False):
-        super().__init__(timeout=180)
+        super().__init__(timeout=60)  # 60 seconds for button timeout
         self.bot = bot
         self.embeds = embeds
         self.current_page = 0
@@ -48,13 +48,16 @@ class ReminderPaginator(View):
         self.update_buttons()
 
     async def on_timeout(self) -> None:
-        """Handle timeout by disabling buttons"""
+        """Disable buttons after timeout"""
         try:
             for item in self.children:
                 item.disabled = True
             await self.message.edit(view=self)
+            # Schedule message deletion after additional 30 seconds (90 total)
+            await asyncio.sleep(30)
+            await self.message.delete()
         except Exception as e:
-            log.debug(f"Failed to disable buttons on timeout: {e}")
+            log.debug(f"Failed to handle timeout: {e}")
 
     def update_buttons(self) -> None:
         """Update button states based on current page and permissions"""
