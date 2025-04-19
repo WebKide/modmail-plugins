@@ -1,5 +1,5 @@
 """
-v1.08
+v1.09
 !plugin update WebKide/modmail-plugins/remindme@master
 MIT License
 Copyright (c) 2020-2025 WebKide [d.id @323578534763298816]
@@ -25,6 +25,7 @@ from typing import Optional, Union
 import os
 import re
 import logging
+import asyncio
 
 import discord
 from discord.ext import commands, tasks
@@ -53,6 +54,8 @@ class ReminderPaginator(View):
         
         # Update buttons on initialization
         self.update_buttons()
+        self.last_interaction = datetime.now(UTC)
+        self.cleanup_task = self.bot.loop.create_task(self.cleanup_after_timeout())
 
     async def close_message(self, interaction):
         """Delete the reminder message"""
@@ -152,6 +155,25 @@ class ReminderPaginator(View):
         except:
             pass
 
+    async def cleanup_after_timeout(self):
+        """Delete the message after 90 seconds of inactivity"""
+        await asyncio.sleep(90)
+        if not self.is_finished():
+            try:
+                await self.message.delete()
+            except:
+                pass
+            self.stop()
+
+    async def on_interaction(self, interaction: discord.Interaction):
+        """Reset timer on any interaction"""
+        self.last_interaction = datetime.now(UTC)
+        # Restart the cleanup task
+        if hasattr(self, 'cleanup_task'):
+            self.cleanup_task.cancel()
+        self.cleanup_task = self.bot.loop.create_task(self.cleanup_after_timeout())
+        await super().on_interaction(interaction)
+
 class RemindMe(commands.Cog):
     """Improved Reminder Plugin with separator parsing and admin tools"""
     def __init__(self, bot):
@@ -165,6 +187,18 @@ class RemindMe(commands.Cog):
     
     async def cog_unload(self):
         self.reminder_task.cancel()
+
+    async def auto_delete_message(self, message):
+        """Delete the message after 90 seconds of inactivity"""
+        await asyncio.sleep(90)
+        try:
+            await message.delete()
+        except discord.NotFound:
+            pass
+        except discord.Forbidden:
+            log.warning(f"Missing permissions to delete message in {message.channel.id}")
+        except Exception as e:
+            log.error(f"Error deleting reminder message: {e}")
 
     @commands.Cog.listener()
     async def on_reaction_add(self, reaction, user):
@@ -401,16 +435,22 @@ class RemindMe(commands.Cog):
         
         if len(embeds) == 1:
             # Single reminder - show with delete button
-            view = ReminderPaginator(embeds, self.db, ctx.author.id)
+            view = ReminderPaginator(embeds, self.db, is_admin=True if ctx.command.name == "admin_all_reminders" else False)
             view.current_page = 0
+            view.timeout = 90  # 90-second timeout
             view.update_buttons()
             message = await ctx.send(embed=embeds[0], view=view)
             view.message = message
+            # Start auto-delete timer
+            asyncio.create_task(self.auto_delete_message(message))
         else:
             # Multiple reminders - paginate
-            paginator = ReminderPaginator(embeds, self.db, ctx.author.id)
+            paginator = ReminderPaginator(embeds, self.db, is_admin=True if ctx.command.name == "admin_all_reminders" else False)
+            paginator.timeout = 90  # 90-second timeout
             message = await ctx.send(embed=embeds[0], view=paginator)
             paginator.message = message
+            # Start auto-delete timer
+            asyncio.create_task(self.auto_delete_message(message))
             
     @tasks.loop(seconds=30)
     async def reminder_task(self):
@@ -548,16 +588,22 @@ class RemindMe(commands.Cog):
         
         if len(embeds) == 1:
             # Single reminder - show with delete button
-            view = ReminderPaginator(embeds, self.db, is_admin=True)
+            view = ReminderPaginator(embeds, self.db, is_admin=True if ctx.command.name == "admin_all_reminders" else False)
             view.current_page = 0
+            view.timeout = 90  # 90-second timeout
             view.update_buttons()
             message = await ctx.send(embed=embeds[0], view=view)
             view.message = message
+            # Start auto-delete timer
+            asyncio.create_task(self.auto_delete_message(message))
         else:
             # Multiple reminders - paginate
-            paginator = ReminderPaginator(embeds, self.db, is_admin=True)
+            paginator = ReminderPaginator(embeds, self.db, is_admin=True if ctx.command.name == "admin_all_reminders" else False)
+            paginator.timeout = 90  # 90-second timeout
             message = await ctx.send(embed=embeds[0], view=paginator)
             paginator.message = message
+            # Start auto-delete timer
+            asyncio.create_task(self.auto_delete_message(message))
 
     @reminders_admin.command(name="cleanup")
     @commands.has_permissions(administrator=True)
