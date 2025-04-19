@@ -270,7 +270,7 @@ class RemindMePro(commands.Cog):
 
     async def check_dm_status(self, user):
         try:
-            await user.send("Testing DM access")
+            await user.send("Testing DM access", delete_after=23)
             return "✅ Enabled"
         except discord.Forbidden:
             return "❎ Disabled"
