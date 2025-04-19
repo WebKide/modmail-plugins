@@ -1,6 +1,6 @@
 """
-# v1.05
-!plugin update WebKide/modmail-plugins/reminder@master
+v1.07
+!plugin update WebKide/modmail-plugins/remindme@master
 MIT License
 Copyright (c) 2020-2025 WebKide [d.id @323578534763298816]
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -53,6 +53,18 @@ class ReminderPaginator(View):
         
         # Update buttons on initialization
         self.update_buttons()
+
+        # Add close button
+        close_button = Button(emoji="❎", style=discord.ButtonStyle.grey)
+        close_button.callback = self.close_message
+        self.add_item(close_button)
+
+    async def close_message(self, interaction):
+        """Delete the reminder message"""
+        if interaction.user.guild_permissions.manage_messages:
+            await interaction.message.delete()
+        else:
+            await interaction.response.send_message("You don't have permission to close this.", ephemeral=True)
     
     def update_buttons(self):
         """Update button states based on current page"""
@@ -154,6 +166,38 @@ class RemindMe(commands.Cog):
     async def cog_unload(self):
         self.reminder_task.cancel()
 
+    @commands.Cog.listener()
+    async def on_reaction_add(self, reaction, user):
+        """Handle reminder reaction buttons"""
+        # Ignore bot reactions and invalid users
+        if user.bot or reaction.message.author != self.bot.user:
+            return
+
+        # Check if message has embeds and is a reminder
+        if not reaction.message.embeds:
+            return
+            
+        embed = reaction.message.embeds[0]
+        if not embed.title or ('⏰ Reminder' not in embed.title and '⏰ Reminder (DM)' not in embed.title):
+            return
+
+        # Handle channel message close (❎)
+        if str(reaction.emoji) == '❎' and '⏰ Reminder' in embed.title:
+            if user.id == self.bot.user.id or user.guild_permissions.manage_messages:
+                await reaction.message.delete()
+        
+        # Handle DM delete (🗑️)
+        elif str(reaction.emoji) == '🗑️' and '⏰ Reminder (DM)' in embed.title:
+            if user.id == self.bot.user.id:  # Only allow the recipient to delete
+                await reaction.message.delete()
+                
+                # Extract reminder ID from embed footer if you want to delete from DB too
+                if embed.footer.text and embed.footer.text.startswith('ID: '):
+                    try:
+                        reminder_id = ObjectId(embed.footer.text[4:])
+                        await self.db.delete_one({"_id": reminder_id})
+                    except:
+                        pass
     def parse_with_separator(self, text: str) -> tuple:
         """Parse reminder text using separators"""
         separators = ['<', '-', '|', '>', ':', '—']
@@ -202,15 +246,16 @@ class RemindMe(commands.Cog):
         
         return None
 
-    @commands.command(name='remind', aliases=['remindme'], no_pm=True)
+    @commands.command(name='remind', aliases=['remindme', 'rm'], no_pm=True)
     async def remind(self, ctx: commands.Context, *, text: str):
-        """Create a reminder using separators:
-        - < lower than
-        - - hyphen
-        - | bar
-        - > greater than
-        - : colon
-        - — em dash
+        """Create a reminder using separators between When and What
+        - hyphen       -
+        - bar          |
+        - colon        :
+        - em dash      —
+        - lower than   <
+        - greater than >
+        
         Examples:
         !remind May 20: camping trip
         !remind 20 May - birthday party
@@ -222,8 +267,8 @@ class RemindMe(commands.Cog):
         if not reminder_text:
             embed = discord.Embed(
                 title="Invalid format",
-                description="Please include reminder text after the date.\n"
-                           f"Example: `{ctx.prefix}remind May 20, camping trip`",
+                description='Please include reminder text "What" after the date "When".\n'
+                           f'Example: `{ctx.prefix}remind April 11 — camping trip`',
                 color=self.bot.error_color
             )
             return await ctx.send(embed=embed)
@@ -401,7 +446,8 @@ class RemindMe(commands.Cog):
                 
                 # Send to original channel if it still exists
                 if channel:
-                    await channel.send(f'<@{reminder["user_id"]}>', embed=embed)
+                    msg = await channel.send(f'<@{reminder["user_id"]}>', embed=embed)
+                    await msg.add_reaction('❎')  # Add close button to channel message
 
                 # Always try to send DM as well, if the user allows DMs
                 try:
@@ -417,8 +463,6 @@ class RemindMe(commands.Cog):
                             value=f"{utils.format_dt(created_at, 'f')} ({time_elapsed})",
                             inline=False
                         )
-                        if channel:
-                            dm_embed.add_field(name="Channel", value=f"<#{reminder['channel_id']}>", inline=False)
                         if channel:
                             dm_embed.add_field(name="Channel", value=f"<#{reminder['channel_id']}>", inline=False)
                         await user.send(embed=dm_embed)
