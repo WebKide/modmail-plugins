@@ -1,5 +1,5 @@
 """
-v2.01
+v2.02
 !plugin update WebKide/modmail-plugins/remindme@master
 MIT License
 Copyright (c) 2020-2025 WebKide [d.id @323578534763298816]
@@ -29,6 +29,7 @@ import asyncio
 import discord
 from discord.ext import commands, tasks
 from discord import utils
+from discord.ui import Button, View  # Added missing import
 from bson import ObjectId
 
 from core import checks
