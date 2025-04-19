@@ -1,5 +1,5 @@
 """
-v1.07
+v1.08
 !plugin update WebKide/modmail-plugins/remindme@master
 MIT License
 Copyright (c) 2020-2025 WebKide [d.id @323578534763298816]
@@ -54,11 +54,6 @@ class ReminderPaginator(View):
         # Update buttons on initialization
         self.update_buttons()
 
-        # Add close button
-        close_button = Button(emoji="❎", style=discord.ButtonStyle.grey)
-        close_button.callback = self.close_message
-        self.add_item(close_button)
-
     async def close_message(self, interaction):
         """Delete the reminder message"""
         if interaction.user.guild_permissions.manage_messages:
@@ -80,6 +75,11 @@ class ReminderPaginator(View):
             delete_button = Button(emoji="🗑️", style=discord.ButtonStyle.red)
             delete_button.callback = self.delete_reminder
             self.add_item(delete_button)
+        
+        # Close button (always visible)
+        close_button = Button(emoji="❎", style=discord.ButtonStyle.grey)
+        close_button.callback = self.close_message
+        self.add_item(close_button)
         
         # Next button
         next_button = Button(emoji="➡️", style=discord.ButtonStyle.blurple, disabled=self.current_page == len(self.embeds) - 1)
@@ -249,11 +249,12 @@ class RemindMe(commands.Cog):
     @commands.command(name='remind', aliases=['remindme', 'rm'], no_pm=True)
     async def remind(self, ctx: commands.Context, *, text: str):
         """Create a reminder using separators between When and What
-        - hyphen       -
-        - bar          |
-        - colon        :
-        - em dash      —
-        - lower than   <
+
+        - hyphen           -
+        - bar                   |
+        - colon               :
+        - em dash        —
+        - lower than    <
         - greater than >
         
         Examples:
@@ -465,7 +466,8 @@ class RemindMe(commands.Cog):
                         )
                         if channel:
                             dm_embed.add_field(name="Channel", value=f"<#{reminder['channel_id']}>", inline=False)
-                        await user.send(embed=dm_embed)
+                        dm_msg = await user.send(embed=dm_embed)
+                        await dm_msg.add_reaction('🗑️')
                 except discord.Forbidden:
                     log.debug(f"Could not send DM to user {reminder['user_id']} (DMs closed)")
                 except Exception as e:
