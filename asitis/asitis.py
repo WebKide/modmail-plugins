@@ -175,9 +175,9 @@ class NavigationButtons(discord.ui.View):
             await interaction.followup.send(f"Error navigating to next verse: {str(e)}", ephemeral=True)
 
 class AsItIs(commands.Cog):
-    """(∩｀-´)⊃━☆ﾟ.*･｡ﾟ Bhagavad Gītā As It Is (Original 1972 Macmillan edition)
+    """Bhagavad Gītā As It Is (Original 1972 Macmillan edition)
 
-    Free Plugin to print Gītā verses inside a Discord’s text-channel. Full embed support.
+    Free Plugin to print Gītā verses inside a Discord’s text-channel. (∩｀-´)⊃━☆ﾟ.*･｡ﾟ Full embed support and śloka Navigation.
 
     Śrīla Prabhupāda’s original 1972 Macmillan Bhagavad-gītā As It Is with elaborate commentary [not available here, yet], original Sanskrit and English word meanings. It is a first-class EXACT reproduction of the original hard cover book.
 
