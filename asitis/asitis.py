@@ -20,13 +20,12 @@ SOFTWARE.
 
 import discord
 import json
-
 from pathlib import Path
 from discord.ext import commands
-from typing import List, Tuple, Dict
-from datetime import datetime
+from typing import List, Tuple, Dict, Optional
+from datetime import datetime, timedelta
 
-# v1.17
+# v2.00 - Added navigation buttons
 BG_CHAPTER_INFO = {
     1: {'total_verses': 46, 'grouped_ranges': [(16, 18), (21, 22), (32, 35), (37, 38)], 'chapter_title': '1. Observing the Armies on the Battlefield of Kurukṣetra'},
     2: {'total_verses': 72, 'grouped_ranges': [(42, 43)], 'chapter_title': '2. Contents of the Gītā Summarized'},
@@ -44,17 +43,143 @@ BG_CHAPTER_INFO = {
     14: {'total_verses': 27, 'grouped_ranges': [(22, 25)], 'chapter_title': '14. The Three Modes of Material Nature'},
     15: {'total_verses': 20, 'grouped_ranges': [(3, 4)], 'chapter_title': '15. The Yoga of the Supreme Person'},
     16: {'total_verses': 24, 'grouped_ranges': [(1, 3), (11, 12), (13, 15)], 'chapter_title': '16. The Divine and Demoniac Natures'},
-    17: {'total_verses': 28, 'grouped_ranges': [(5, 6), (26, 27)], 'chapter_title': '17. The Divisions of Faith'},
+    17: {'total_verses': 28, 'grouped_ranges': [(5, 6), (8-10), (26, 27)], 'chapter_title': '17. The Divisions of Faith'},
     18: {'total_verses': 78, 'grouped_ranges': [(13, 14), (36, 37), (51, 53)], 'chapter_title': '18. Conclusion-The Perfection of Renunciation'}
 }
 
+class NavigationButtons(discord.ui.View):
+    """View for handling verse navigation buttons"""
+    def __init__(self, cog, chapter: int, verse_ref: str, timeout: float = 1800.0):
+        super().__init__(timeout=timeout)
+        self.cog = cog
+        self.chapter = chapter
+        self.verse_ref = verse_ref
+        self.ctx = None
+        self.message = None
+        
+        # Parse current verse reference
+        self.current_start, self.current_end = self._parse_verse_ref(verse_ref)
+        
+        # Calculate previous and next verses
+        self.prev_chapter, self.prev_verse = self._get_previous_verse()
+        self.next_chapter, self.next_verse = self._get_next_verse()
+        
+        # Disable buttons if at boundaries
+        if self.prev_chapter is None:
+            self.children[0].disabled = True
+        if self.next_chapter is None:
+            self.children[1].disabled = True
+    
+    def _parse_verse_ref(self, verse_ref: str) -> Tuple[int, int]:
+        """Parse verse reference into start and end numbers"""
+        if '-' in verse_ref:
+            start, end = map(int, verse_ref.split('-'))
+            return start, end
+        return int(verse_ref), int(verse_ref)
+    
+    def _get_previous_verse(self) -> Tuple[Optional[int], Optional[str]]:
+        """Get the previous verse reference"""
+        # Check if we're at the beginning of the Gita
+        if self.chapter == 1 and self.current_start == 1:
+            return None, None
+        
+        # Check if we need to go to previous chapter
+        if self.current_start == 1:
+            prev_chapter = self.chapter - 1
+            prev_verse = str(BG_CHAPTER_INFO[prev_chapter]['total_verses'])
+            return prev_chapter, prev_verse
+        
+        # Get previous verse in same chapter
+        prev_verse_num = self.current_start - 1
+        
+        # Check if previous verse is part of a grouped range
+        for start, end in BG_CHAPTER_INFO[self.chapter]['grouped_ranges']:
+            if start <= prev_verse_num <= end:
+                return self.chapter, f"{start}-{end}"
+        
+        return self.chapter, str(prev_verse_num)
+    
+    def _get_next_verse(self) -> Tuple[Optional[int], Optional[str]]:
+        """Get the next verse reference"""
+        # Check if we're at the end of the Gita
+        if self.chapter == 18 and self.current_end == BG_CHAPTER_INFO[18]['total_verses']:
+            return None, None
+        
+        # Check if we need to go to next chapter
+        if self.current_end == BG_CHAPTER_INFO[self.chapter]['total_verses']:
+            next_chapter = self.chapter + 1
+            return next_chapter, "1"
+        
+        # Get next verse in same chapter
+        next_verse_num = self.current_end + 1
+        
+        # Check if next verse is part of a grouped range
+        for start, end in BG_CHAPTER_INFO[self.chapter]['grouped_ranges']:
+            if start <= next_verse_num <= end:
+                return self.chapter, f"{start}-{end}"
+        
+        return self.chapter, str(next_verse_num)
+    
+    async def on_timeout(self):
+        """Disable buttons when view times out"""
+        for item in self.children:
+            item.disabled = True
+        if self.message:
+            try:
+                await self.message.edit(view=self)
+            except discord.NotFound:
+                pass
+    
+    @discord.ui.button(label="◀ 𝖯𝗋𝖾𝗏𝗂𝗈𝗎𝗌 𝗌́𝗅𝗈𝗄𝖺", style=discord.ButtonStyle.grey, custom_id="prev_verse")
+    async def previous_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        """Button to navigate to previous verse"""
+        if self.prev_chapter is None:
+            await interaction.response.send_message("This is the first verse of the Bhagavad Gītā", ephemeral=True)
+            return
+        
+        # Defer the interaction first
+        await interaction.response.defer()
+        
+        # Get the previous verse
+        try:
+            new_embed = await self.cog._create_verse_embed(self.prev_chapter, self.prev_verse)
+            new_view = NavigationButtons(self.cog, self.prev_chapter, self.prev_verse)
+            new_view.ctx = self.ctx
+            
+            # Edit the original message
+            await interaction.message.edit(embed=new_embed, view=new_view)
+            new_view.message = interaction.message
+        except Exception as e:
+            await interaction.followup.send(f"Error navigating to previous verse: {str(e)}", ephemeral=True)
+    
+    @discord.ui.button(label="𝖭𝖾𝗑𝗍 𝗌́𝗅𝗈𝗄𝖺 ▶", style=discord.ButtonStyle.grey, custom_id="next_verse")
+    async def next_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        """Button to navigate to next verse"""
+        if self.next_chapter is None:
+            await interaction.response.send_message("This is the last verse of the Bhagavad Gītā", ephemeral=True)
+            return
+        
+        # Defer the interaction first
+        await interaction.response.defer()
+        
+        # Get the next verse
+        try:
+            new_embed = await self.cog._create_verse_embed(self.next_chapter, self.next_verse)
+            new_view = NavigationButtons(self.cog, self.next_chapter, self.next_verse)
+            new_view.ctx = self.ctx
+            
+            # Edit the original message
+            await interaction.message.edit(embed=new_embed, view=new_view)
+            new_view.message = interaction.message
+        except Exception as e:
+            await interaction.followup.send(f"Error navigating to next verse: {str(e)}", ephemeral=True)
 
 class AsItIs(commands.Cog):
-    """ (∩｀-´)⊃━☆ﾟ.*･｡ﾟ Bhagavad Gītā As It Is (Original 1972 Macmillan edition)
+    """(∩｀-´)⊃━☆ﾟ.*･｡ﾟ Bhagavad Gītā As It Is (Original 1972 Macmillan edition)
 
-    Free Plugin to print Gītā verses inside a Discord text-channel. Full embed support.
+    Free Plugin to print Gītā verses inside a Discord’s text-channel. Full embed support.
 
-    Śrīla Prabhupāda's original 1972 Macmillan Bhagavad-gītā As It Is with elaborate commentary [not available here, yet], original Sanskrit and English word meanings. It is a first-class EXACT reproduction of the original hard cover book.
+    Śrīla Prabhupāda’s original 1972 Macmillan Bhagavad-gītā As It Is with elaborate commentary [not available here, yet], original Sanskrit and English word meanings. It is a first-class EXACT reproduction of the original hard cover book.
 
     No other philosophical or religious work reveals, in such a lucid and profound way, the nature of consciousness, the self, the universe and the Supreme.
 
@@ -210,7 +335,7 @@ class AsItIs(commands.Cog):
             if '—' in item:
                 word, meaning = item.split('—', 1)
                 formatted_items.append(f"_**{word.strip()}**_ — {meaning.strip()}")
-            elif '-' in item and not any(c in item for c in ['ā', 'ī', 'ū', 'ṁ', 'ṣ', 'ṭ', 'ḥ']):
+            elif '-' in item and not any(c in item for c in ['ā', 'ī', 'ū', 'ṁ', 'ṣ', 'ṭ', 'ḥ', 'ś', 'ḍ']):
                 parts = item.split('-', 1)
                 formatted_items.append(f"_**{parts[0].strip()}**_ - {parts[1].strip()}")
             else:
@@ -295,9 +420,64 @@ class AsItIs(commands.Cog):
         for chunk in chunks[1:]:
             embed.add_field(name="\u200b", value=chunk, inline=inline)
 
-    # +------------------------------------------------------------+
-    # |         Bhagavad Gītā As It Is (1972) Macmillan            |
-    # +------------------------------------------------------------+
+    async def _create_verse_embed(self, chapter: int, verse_ref: str) -> discord.Embed:
+        """Create embed for a specific verse (used for navigation)"""
+        chapter_data = self._load_chapter_data(chapter)
+        verse_data = self._find_verse_data(chapter_data, verse_ref)
+        
+        # Create embed: Orange border-left
+        embed = discord.Embed(
+            color=discord.Color(0xF5A623),
+            description=f"**𝖠𝖽𝗁𝗒𝖺𝗒𝖺 {BG_CHAPTER_INFO[chapter]['chapter_title']}**"
+        )
+        
+        # Add verse text field
+        verse_text = self._format_verse_text(verse_data)
+        self._safe_add_field(
+            embed,
+            name=f"📜 ᴛᴇxᴛ {verse_ref}:",
+            value=verse_text,
+            inline=False
+        )
+
+        # Add Thumbnail with original artwork from BBT
+        embed.set_author(
+            name="Bhagavad Gītā — As It Is (Original 1972 edition)",
+            icon_url="https://i.imgur.com/iZ6CHAz.png"
+        )
+        
+        # Add synonyms (split into multiple fields if needed)
+        synonyms = verse_data.get('Word-for-Word', '')
+        synonyms_chunks = self._format_synonyms(synonyms)
+        for i, chunk in enumerate(synonyms_chunks):
+            self._safe_add_field(
+                embed,
+                name="📖 ꜱʏɴᴏɴʏᴍꜱ:" if i == 0 else "\u200b",
+                value=chunk,
+                inline=False
+            )
+        
+        # Add Translation (split into multiple fields if needed)
+        translation = verse_data.get('Translation-En', '')
+        translation_chunks = self._format_translation(translation)
+        for i, chunk in enumerate(translation_chunks):
+            self._safe_add_field(
+                embed,
+                name="🗒️ ᴛʀᴀɴꜱʟᴀᴛɪᴏɴ:" if i == 0 else "\u200b",
+                value=f"> **{chunk}**",
+                inline=False
+            )
+        
+        # Add Footer with verse info
+        v_text = f"𝗌́𝗅𝗈𝗄𝖺 {verse_ref}" if '-' not in str(verse_ref) else f"𝗌́𝗅𝗈𝗄𝖺𝗌 {verse_ref}"
+        total_v = BG_CHAPTER_INFO[chapter]['total_verses']
+        embed.set_footer(
+            text=f"𝖠𝖽𝗁𝗒𝖺𝗒𝖺 {chapter}, {v_text} 𝗈𝖿 {total_v}",
+            icon_url="https://i.imgur.com/10jxmCh.png"
+        )
+        
+        return embed
+
     @commands.command(name='asitis', aliases=['1972', 'bg'], no_pm=True)
     async def gita_verse(self, ctx, chapter: int, verse: str):
         """Retrieve a śloka from the Bhagavad Gītā — As It Is (Original 1972 Macmillan edition)
@@ -307,6 +487,7 @@ class AsItIs(commands.Cog):
         - Supports Synonyms
         - Supports English Translation
         - Supports multiple verses
+        - Navigation to previous and next śloka
         - No-support for elaborate commentaries, yet
         """
         start_time = datetime.now()
@@ -314,74 +495,32 @@ class AsItIs(commands.Cog):
         # Validate input
         is_valid, verse_ref = self._validate_verse(chapter, verse)
         if not is_valid:
-            return await ctx.send(f"🚫 {verse_ref}")
+            return await ctx.send(f"🚫 {verse_ref}", delete_after=9)
         
         try:
-            # Load data
-            chapter_data = self._load_chapter_data(chapter)
-            verse_data = self._find_verse_data(chapter_data, verse_ref)
+            # Create embed
+            embed = await self._create_verse_embed(chapter, verse_ref)
             
-            # Create embed: Orange border-left
-            embed = discord.Embed(
-                color=discord.Color(0xF5A623),
-                description=f"**𝖢𝗁𝖺𝗉𝗍𝖾𝗋 {BG_CHAPTER_INFO[chapter]['chapter_title']}**"
-            )
-            
-            # Add verse text field
-            verse_text = self._format_verse_text(verse_data)
-            self._safe_add_field(
-                embed,
-                name=f"📜 ᴛᴇxᴛ {verse_ref}:",
-                value=verse_text,
-                inline=False
-            )
-
-            # Add Thumbnail with original artwork from BBT
-            # embed.set_thumbnail(url="https://i.imgur.com/wGEGAiw.png")
-            embed.set_author(
-                name="Bhagavad Gītā — As It Is (Original 1972 edition)",
-                icon_url="https://i.imgur.com/iZ6CHAz.png"
-            )
-            
-            # Add synonyms (split into multiple fields if needed)
-            synonyms = verse_data.get('Word-for-Word', '')
-            synonyms_chunks = self._format_synonyms(synonyms)
-            for i, chunk in enumerate(synonyms_chunks):
-                self._safe_add_field(
-                    embed,
-                    name="📖 ꜱʏɴᴏɴʏᴍꜱ:" if i == 0 else "\u200b",
-                    value=chunk,
-                    inline=False
-                )
-            
-            # Add Translation (split into multiple fields if needed)
-            translation = verse_data.get('Translation-En', '')
-            translation_chunks = self._format_translation(translation)
-            for i, chunk in enumerate(translation_chunks):
-                self._safe_add_field(
-                    embed,
-                    name="🗒️ ᴛʀᴀɴꜱʟᴀᴛɪᴏɴ:" if i == 0 else "\u200b",
-                    value=f"> **{chunk}**",
-                    inline=False
-                )
-            
-            # Add Footer with time duration latency and IMG
+            # Add latency to footer
             latency = (datetime.now() - start_time).total_seconds() * 1000
-            v_text = f"𝗌́𝗅𝗈𝗄𝖺 {verse_ref}" if '-' not in str(verse_ref) else f"𝗌́𝗅𝗈𝗄𝖺𝗌 {verse_ref}"
-            total_v = BG_CHAPTER_INFO[chapter]['total_verses']
-            embed.set_footer(
-                text=f"𝖠𝖽𝗁𝗒𝖺𝗒𝖺 {chapter}, {v_text} 𝗈𝖿 {total_v} ➜ 𝗋𝖾𝗍𝗋𝗂𝖾𝗏𝖾𝖽 𝗂𝗇 {latency:.2f} 𝗆𝗌",
-                icon_url="https://i.imgur.com/10jxmCh.png"
-            )
+            embed.set_footer(text=embed.footer.text + f" ➜ 𝗋𝖾𝗍𝗋𝗂𝖾𝗏𝖾𝖽 𝗂𝗇 {latency:.2f} 𝗆𝗌", 
+                           icon_url=embed.footer.icon_url)
             
-            await ctx.send(embed=embed)
+            # Create view with navigation buttons
+            view = NavigationButtons(self, chapter, verse_ref)
+            view.ctx = ctx
+            
+            # Send message
+            message = await ctx.send(embed=embed, view=view)
+            view.message = message
         
         except FileNotFoundError as e:
-            await ctx.send(f"🚫 {str(e)}")
+            await ctx.send(f"🚫 {str(e)}", delete_after=90)
         except ValueError as e:
-            await ctx.send(f"🚫 Error in verse data:\n\n{str(e)}")
+            await ctx.send(f"🚫 Error in verse data:\n\n{str(e)}", delete_after=90)
         except Exception as e:
-            await ctx.send(f"🚫 Unexpected error retrieving verse:\n\n{str(e)}")
+            await ctx.send(f"🚫 Unexpected error retrieving verse:\n\n{str(e)}", delete_after=90)
 
 async def setup(bot):
     await bot.add_cog(AsItIs(bot))
+    
