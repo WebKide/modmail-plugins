@@ -80,12 +80,12 @@ class AsItIs(commands.Cog):
                 self._chapter_cache[chapter] = data
                 return data
         except json.JSONDecodeError as e:
-            raise ValueError(f"Invalid JSON in chapter {chapter} file: {str(e)}")
+            raise ValueError(f"Invalid JSON in **bg_ch{chapter}.json** file: {str(e)}")
 
     def _validate_verse(self, chapter: int, verse: str) -> Tuple[bool, str]:
         """Validate chapter and verse input"""
         if chapter not in BG_CHAPTER_INFO:
-            return False, f"Invalid chapter entry. Bhagavad Gītā has 18 chapters (requested {chapter})."
+            return False, f"Invalid chapter entry. The Bhagavad Gītā As It Is only has 18 chapters and you requested **{chapter}**."
         
         chapter_info = BG_CHAPTER_INFO[chapter]
         
@@ -105,17 +105,17 @@ class AsItIs(commands.Cog):
                 if end > chapter_info['total_verses']:
                     return False, f"Chapter {chapter} only has {chapter_info['total_verses']} verses."
                 if start < 1:
-                    return False, "Verse numbers start at 1"
+                    return False, "Verse numbers start at 1, there is no verse 0"
                 
                 return True, f"{start}-{end}"
             except ValueError:
-                return False, "Invalid verse range format. Use like '16-18'"
+                return False, "Invalid verse range format. Use like **17-18** or just the single verse to find the group."
         
         # Handle single verse
         try:
             verse_num = int(verse)
             if verse_num < 1 or verse_num > chapter_info['total_verses']:
-                return False, f"Chapter {chapter} has verses 1-{chapter_info['total_verses']}"
+                return False, f"Chapter {chapter} only has {chapter_info['total_verses']} ślokas, double check and try again."
             
             # Check if part of grouped range
             for r_start, r_end in chapter_info['grouped_ranges']:
@@ -124,7 +124,7 @@ class AsItIs(commands.Cog):
             
             return True, verse
         except ValueError:
-            return False, f"Invalid verse number: {verse}"
+            return False, f"**{verse}** is an invalid śloka number, double check and try again."
 
     def _find_verse_data(self, chapter_data: dict, verse_ref: str) -> dict:
         """Find verse data handling TEXT/TEXTS formats"""
@@ -300,7 +300,7 @@ class AsItIs(commands.Cog):
     # +------------------------------------------------------------+
     @commands.command(name='asitis', aliases=['1972', 'bg'], no_pm=True)
     async def gita_verse(self, ctx, chapter: int, verse: str):
-        """Retrieve a śloka from the Bhagavad Gītā As It Is (Original 1972 Macmillan edition):
+        """Retrieve a śloka from the Bhagavad Gītā — As It Is (Original 1972 Macmillan edition)
 
         - Supports Chapter Title
         - Supports Sanskrit Text
@@ -324,14 +324,14 @@ class AsItIs(commands.Cog):
             # Create embed: Orange border-left
             embed = discord.Embed(
                 color=discord.Color(0xF5A623),
-                description=f"**Chapter {BG_CHAPTER_INFO[chapter]['chapter_title']}**"
+                description=f"**𝖢𝗁𝖺𝗉𝗍𝖾𝗋 {BG_CHAPTER_INFO[chapter]['chapter_title']}**"
             )
             
             # Add verse text field
             verse_text = self._format_verse_text(verse_data)
             self._safe_add_field(
                 embed,
-                name=f"ＴＥＸＴ {verse_ref}:",
+                name=f"📜 ᴛᴇxᴛ {verse_ref}:",
                 value=verse_text,
                 inline=False
             )
@@ -349,7 +349,7 @@ class AsItIs(commands.Cog):
             for i, chunk in enumerate(synonyms_chunks):
                 self._safe_add_field(
                     embed,
-                    name="ＳＹＮＯＮＹＭＳ:" if i == 0 else "↳",
+                    name="📖 ꜱʏɴᴏɴʏᴍꜱ:" if i == 0 else "↳",
                     value=chunk,
                     inline=False
                 )
@@ -360,7 +360,7 @@ class AsItIs(commands.Cog):
             for i, chunk in enumerate(translation_chunks):
                 self._safe_add_field(
                     embed,
-                    name="ＴＲＡＮＳＬＡＴＩＯＮ:" if i == 0 else "↳",
+                    name="🗒️ ᴛʀᴀɴꜱʟᴀᴛɪᴏɴ:" if i == 0 else "↳",
                     value=f"> **{chunk}**",
                     inline=False
                 )
@@ -370,7 +370,7 @@ class AsItIs(commands.Cog):
             v_text = f"𝗌́𝗅𝗈𝗄𝖺 {verse_ref}" if '-' not in str(verse_ref) else f"𝗌́𝗅𝗈𝗄𝖺𝗌 {verse_ref}"
             total_v = BG_CHAPTER_INFO[chapter]['total_verses']
             embed.set_footer(
-                text=f"𝖠𝖽𝗁𝗒𝖺𝗒𝖺 {chapter}, {v_text} 𝗈𝖿 {total_v} ➜ retrieved in {latency:.2f} ms",
+                text=f"𝖠𝖽𝗁𝗒𝖺𝗒𝖺 {chapter}, {v_text} 𝗈𝖿 {total_v} ➜ 𝗋𝖾𝗍𝗋𝗂𝖾𝗏𝖾𝖽 𝗂𝗇 {latency:.2f} 𝗆𝗌",
                 icon_url="https://i.imgur.com/10jxmCh.png"
             )
             
