@@ -293,7 +293,7 @@ class AsItIs(commands.Cog):
         chunks = self._split_long_text(str(value))
         embed.add_field(name=name, value=chunks[0], inline=inline)
         for chunk in chunks[1:]:
-            embed.add_field(name="↳", value=chunk, inline=inline)
+            embed.add_field(name="\u200b", value=chunk, inline=inline)
 
     # +------------------------------------------------------------+
     # |         Bhagavad Gītā As It Is (1972) Macmillan            |
@@ -349,7 +349,7 @@ class AsItIs(commands.Cog):
             for i, chunk in enumerate(synonyms_chunks):
                 self._safe_add_field(
                     embed,
-                    name="📖 ꜱʏɴᴏɴʏᴍꜱ:" if i == 0 else "↳",
+                    name="📖 ꜱʏɴᴏɴʏᴍꜱ:" if i == 0 else "\u200b",
                     value=chunk,
                     inline=False
                 )
@@ -360,7 +360,7 @@ class AsItIs(commands.Cog):
             for i, chunk in enumerate(translation_chunks):
                 self._safe_add_field(
                     embed,
-                    name="🗒️ ᴛʀᴀɴꜱʟᴀᴛɪᴏɴ:" if i == 0 else "↳",
+                    name="🗒️ ᴛʀᴀɴꜱʟᴀᴛɪᴏɴ:" if i == 0 else "\u200b",
                     value=f"> **{chunk}**",
                     inline=False
                 )
