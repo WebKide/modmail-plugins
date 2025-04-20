@@ -446,7 +446,11 @@ class RemindMePro(commands.Cog):
                 inline=False
             )
             if reminder.get("recurring"):
-                embed.add_field(name="Recurring", value=reminder["recurring"].capitalize(), inline=False)
+                embed.add_field(
+                    name="Recurring",
+                    value=f"every {reminder['recurring'].capitalize()}",
+                    inline=False
+                )
             embed.set_footer(text=f"Reminder ID: {reminder['_id']}")
             embeds.append(embed)
         
@@ -507,6 +511,13 @@ class RemindMePro(commands.Cog):
                     value=f"{utils.format_dt(reminder['created_at'], 'f')} ({time_elapsed})",
                     inline=False
                 )
+                # Add new field if reminder is recurring
+                if reminder.get("recurring"):
+                    embed.add_field(
+                        name="Recurring:",
+                        value=f"every {reminder['recurring']}",
+                        inline=False
+                    )
                 if reminder.get("channel_id"):
                     embed.add_field(name="Channel", value=f"<#{reminder['channel_id']}>", inline=False)
                 embed.set_footer(text=f'ID: {reminder["_id"]}')
@@ -596,10 +607,12 @@ class RemindMePro(commands.Cog):
                      f"Created: {utils.format_dt(reminder.get('created_at', datetime.now(UTC)), 'R')}",
                 inline=False
             )
-            
             if reminder.get("recurring"):
-                embed.add_field(name="Recurring", value=reminder["recurring"].capitalize(), inline=False)
-                
+                embed.add_field(
+                    name="Recurring",
+                    value=f"every {reminder['recurring'].capitalize()}",
+                    inline=False
+                )
             embed.set_footer(text=f"Reminder ID: {reminder['_id']}")
             embeds.append(embed)
         
