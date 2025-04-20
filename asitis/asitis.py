@@ -368,7 +368,7 @@ class AsItIs(commands.Cog):
             # Add Footer with time duration latency and IMG
             latency = (datetime.now() - start_time).total_seconds() * 1000
             embed.set_footer(
-                text=f"Śloka: {chapter}.{verse_ref} | retrieved in {latency:.2f} ms",
+                text=f"Skanda {chapter}, śloka {verse_ref} ➜ retrieved in {latency:.2f} ms",
                 icon_url="https://imgur.com/iZ6CHAz.png"
             )
             
