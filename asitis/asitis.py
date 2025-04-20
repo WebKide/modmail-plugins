@@ -331,16 +331,16 @@ class AsItIs(commands.Cog):
             verse_text = self._format_verse_text(verse_data)
             self._safe_add_field(
                 embed,
-                name=f"TEXT {verse_ref}:",
+                name=f"ＴＥＸＴ {verse_ref}:",
                 value=verse_text,
                 inline=False
             )
 
             # Add Thumbnail with original artwork from BBT
-            # embed.set_thumbnail(url="https://imgur.com/wGEGAiw.png")
+            # embed.set_thumbnail(url="https://i.imgur.com/wGEGAiw.png")
             embed.set_author(
                 name="Bhagavad Gītā — As It Is (Original 1972 edition)",
-                icon_url="https://imgur.com/iZ6CHAz.png"
+                icon_url="https://i.imgur.com/iZ6CHAz.png"
             )
             
             # Add synonyms (split into multiple fields if needed)
@@ -349,7 +349,7 @@ class AsItIs(commands.Cog):
             for i, chunk in enumerate(synonyms_chunks):
                 self._safe_add_field(
                     embed,
-                    name="SYNONYMS:" if i == 0 else "↳",
+                    name="ＳＹＮＯＮＹＭＳ:" if i == 0 else "↳",
                     value=chunk,
                     inline=False
                 )
@@ -360,16 +360,17 @@ class AsItIs(commands.Cog):
             for i, chunk in enumerate(translation_chunks):
                 self._safe_add_field(
                     embed,
-                    name="TRANSLATION:" if i == 0 else "↳",
+                    name="ＴＲＡＮＳＬＡＴＩＯＮ:" if i == 0 else "↳",
                     value=f"> **{chunk}**",
                     inline=False
                 )
             
             # Add Footer with time duration latency and IMG
             latency = (datetime.now() - start_time).total_seconds() * 1000
+            v_text = "𝗌́𝗅𝗈𝗄𝖺" if verse_ref == 1 else "𝗌́𝗅𝗈𝗄𝖺𝗌"
             embed.set_footer(
-                text=f"Skanda {chapter}, śloka {verse_ref} ➜ retrieved in {latency:.2f} ms",
-                icon_url="https://imgur.com/10jxmCh.png"
+                text=f"𝖠𝖽𝗁𝗒𝖺𝗒𝖺 {chapter}, {v_text} {verse_ref} 𝗈𝖿 {total_verses} ➜ retrieved in {latency:.2f} ms",
+                icon_url="https://i.imgur.com/10jxmCh.png"
             )
             
             await ctx.send(embed=embed)
