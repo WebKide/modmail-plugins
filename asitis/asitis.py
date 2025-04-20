@@ -340,7 +340,7 @@ class AsItIs(commands.Cog):
             # embed.set_thumbnail(url="https://imgur.com/wGEGAiw.png")
             embed.set_author(
                 name="Bhagavad Gītā — As It Is (Original 1972 edition)",
-                icon_url="https://imgur.com/10jxmCh.png"
+                icon_url="https://imgur.com/iZ6CHAz.png"
             )
             
             # Add synonyms (split into multiple fields if needed)
@@ -369,7 +369,7 @@ class AsItIs(commands.Cog):
             latency = (datetime.now() - start_time).total_seconds() * 1000
             embed.set_footer(
                 text=f"Skanda {chapter}, śloka {verse_ref} ➜ retrieved in {latency:.2f} ms",
-                icon_url="https://imgur.com/iZ6CHAz.png"
+                icon_url="https://imgur.com/10jxmCh.png"
             )
             
             await ctx.send(embed=embed)
