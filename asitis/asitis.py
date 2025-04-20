@@ -367,9 +367,10 @@ class AsItIs(commands.Cog):
             
             # Add Footer with time duration latency and IMG
             latency = (datetime.now() - start_time).total_seconds() * 1000
-            v_text = "𝗌́𝗅𝗈𝗄𝖺" if verse_ref == 1 else "𝗌́𝗅𝗈𝗄𝖺𝗌"
+            v_text = "𝗌́𝗅𝗈𝗄𝖺𝗌" if '-' in str(verse_ref) else ("𝗌́𝗅𝗈𝗄𝖺" if int(verse_ref) == 1 else "𝗌́𝗅𝗈𝗄𝖺𝗌")
+            total_v = BG_CHAPTER_INFO[chapter]['total_verses']
             embed.set_footer(
-                text=f"𝖠𝖽𝗁𝗒𝖺𝗒𝖺 {chapter}, {v_text} {verse_ref} 𝗈𝖿 {total_verses} ➜ retrieved in {latency:.2f} ms",
+                text=f"𝖠𝖽𝗁𝗒𝖺𝗒𝖺 {chapter}, {v_text} {verse_ref} 𝗈𝖿 {total_v} ➜ retrieved in {latency:.2f} ms",
                 icon_url="https://i.imgur.com/10jxmCh.png"
             )
             
