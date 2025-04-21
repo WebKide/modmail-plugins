@@ -21,6 +21,7 @@ SOFTWARE.
 import asyncio, io, random, textwrap, traceback, inspect2
 
 import aiohttp, discord
+from aiohttp import ClientSession, ClientResponseError
 from discord import File
 from discord.ext import commands
 
