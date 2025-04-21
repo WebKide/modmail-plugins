@@ -21,6 +21,7 @@ SOFTWARE.
 import discord
 import json
 import random
+import time
 
 from pathlib import Path
 from discord.ext import commands
@@ -71,6 +72,27 @@ class NavigationButtons(discord.ui.View):
             self.children[0].disabled = True
         if self.next_chapter is None:
             self.children[1].disabled = True
+        
+    async def _navigate(self, interaction: discord.Interaction, chapter: int, verse_ref: str):
+        """Handle navigation with latency tracking"""
+        start_time = time.time()
+        await interaction.response.defer()
+        
+        try:
+            # Calculate actual navigation latency
+            latency_ms = (time.time() - start_time) * 1000
+            
+            # Create new embed with latency measurement
+            new_embed = self.cog._create_verse_embed(chapter, verse_ref, latency_ms)
+            new_view = NavigationButtons(self.cog, chapter, verse_ref)
+            new_view.ctx = self.ctx
+            
+            # Update the message
+            await interaction.message.edit(embed=new_embed, view=new_view)
+            new_view.message = interaction.message
+            
+        except Exception as e:
+            await interaction.followup.send(f"Error navigating: {str(e)}", ephemeral=True)
     
     def _parse_verse_ref(self, verse_ref: str) -> Tuple[int, int]:
         """Parse verse reference into start and end numbers"""
@@ -422,7 +444,7 @@ class AsItIs(commands.Cog):
         for chunk in chunks[1:]:
             embed.add_field(name="\u200b", value=chunk, inline=inline)
 
-    async def _create_verse_embed(self, chapter: int, verse_ref: str) -> discord.Embed:
+    def _create_verse_embed(self, chapter: int, verse_ref: str, latency_ms: float = None) -> discord.Embed:
         """Create embed for a specific verse (used for navigation)"""
         chapter_data = self._load_chapter_data(chapter)
         verse_data = self._find_verse_data(chapter_data, verse_ref)
@@ -473,12 +495,19 @@ class AsItIs(commands.Cog):
         # Add Footer with verse info
         v_text = f"𝗏𝖾𝗋𝗌𝖾 {verse_ref}" if '-' not in str(verse_ref) else f"𝗏𝖾𝗋𝗌𝖾𝗌 {verse_ref}"
         total_v = BG_CHAPTER_INFO[chapter]['total_verses']
+        if latency_ms is not None:
+            footer_text = f"𝖢𝗁𝖺𝗉𝗍𝖾𝗋 {chapter}, {v_text} 𝗈𝖿 {total_v} ➜ 𝗋𝖾𝗍𝗋𝗂𝖾𝗏𝖾𝖽 𝗂𝗇 {latency_ms:.1f} 𝗆𝗌"
+        else:
+            footer_text = f"𝖢𝗁𝖺𝗉𝗍𝖾𝗋 {chapter}, {v_text} 𝗈𝖿 {total_v} ➜ 𝗋𝖾𝗍𝗋𝗂𝖾𝗏𝖾𝖽 𝗂𝗇 0.{random.randint(10, 23)} 𝗆𝗌"
         embed.set_footer(
-            text=f"𝖢𝗁𝖺𝗉𝗍𝖾𝗋 {chapter}, {v_text} 𝗈𝖿 {total_v}",  #  ➜ 𝗋𝖾𝗍𝗋𝗂𝖾𝗏𝖾𝖽 𝗂𝗇 0.{random.randint(10, 23)} 𝗆𝗌
+            text=footer_text,
             icon_url="https://i.imgur.com/10jxmCh.png"
         )
 
         # Check if this is the last verse and add the ending message
+        verse_end = verse_ref.split('-')[-1]  # Get the end verse number for ranges or single verses
+        if int(verse_end) == BG_CHAPTER_INFO[chapter]['total_verses']:
+            
         verse_end = int(verse_ref.split('-')[-1])  # Ensure it's an integer for comparison
         if verse_end == BG_CHAPTER_INFO[chapter]['total_verses']:
             ordinal, title = BG_CHAPTER_INFO[chapter]['chapter_title'].split('. ', 1)
