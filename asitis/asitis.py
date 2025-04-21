@@ -28,7 +28,7 @@ from discord.ext import commands
 from typing import List, Tuple, Dict, Optional
 from datetime import datetime, timedelta
 
-# v2.21 - added close button
+# v2.22 - added close button
 BG_CHAPTER_INFO = {
     1: {'total_verses': 46, 'grouped_ranges': [(16, 18), (21, 22), (32, 35), (37, 38)], 'chapter_title': 'First. Observing the Armies on the Battlefield of Kurukṣetra'},
     2: {'total_verses': 72, 'grouped_ranges': [(42, 43)], 'chapter_title': 'Second. Contents of the Gītā Summarized'},
@@ -180,11 +180,9 @@ class NavigationButtons(discord.ui.View):
         
         await self._navigate(interaction, self.next_chapter, self.next_verse)
 
-class CloseButton(discord.ui.Button):
-    def __init__(self):
-        super().__init__(label="🗙 Close", style=discord.ButtonStyle.red, custom_id="close_button")
-
-    async def callback(self, interaction: discord.Interaction):
+    @discord.ui.button(label="🗙 𝖢𝗅𝗈𝗌𝖾", style=discord.ButtonStyle.red, custom_id="close_button")
+    async def close_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        """Button to close and delete embed"""
         # Check if the user who pressed the button is the one who invoked the command
         if interaction.user == self.view.ctx.author:
             # Delete the embed message
