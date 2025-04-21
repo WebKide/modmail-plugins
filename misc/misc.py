@@ -270,9 +270,9 @@ class Misc(commands.Cog):
                 # with urllib.request.urlopen(link) as response:
                     #img = response.read()
                     #await ctx.bot.edit_profile(avatar=img)
-                async with bot.session.get(link) as r:
+                async with self.bot.session.get(link) as r:
                     img = await r.read()
-                    await bot.user.edit(avatar=img)
+                    await self.bot.user.edit(avatar=img)
                     return await ctx.send('New logo added successfully!')
                     
             except Exception as e:
