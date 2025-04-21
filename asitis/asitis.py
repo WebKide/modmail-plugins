@@ -166,7 +166,7 @@ class NavigationButtons(discord.ui.View):
         
         # Get the previous verse
         try:
-            new_embed = await self.cog._create_verse_embed(self.prev_chapter, self.prev_verse)
+            new_embed = self.cog._create_verse_embed(self.prev_chapter, self.prev_verse)
             new_view = NavigationButtons(self.cog, self.prev_chapter, self.prev_verse)
             new_view.ctx = self.ctx
             
@@ -188,7 +188,7 @@ class NavigationButtons(discord.ui.View):
         
         # Get the next verse
         try:
-            new_embed = await self.cog._create_verse_embed(self.next_chapter, self.next_verse)
+            new_embed = self.cog._create_verse_embed(self.next_chapter, self.next_verse)
             new_view = NavigationButtons(self.cog, self.next_chapter, self.next_verse)
             new_view.ctx = self.ctx
             
@@ -505,6 +505,10 @@ class AsItIs(commands.Cog):
         )
 
         # Check if this is the last verse and add the ending message
+        
+        verse_end = verse_ref.split('-')[-1]  # Get the end verse number for ranges or single verses
+        if int(verse_end) == BG_CHAPTER_INFO[chapter]['total_verses']:
+            
         verse_end = int(verse_ref.split('-')[-1])  # Ensure it's an integer for comparison
         if verse_end == BG_CHAPTER_INFO[chapter]['total_verses']:
             ordinal, title = BG_CHAPTER_INFO[chapter]['chapter_title'].split('. ', 1)
@@ -537,8 +541,8 @@ class AsItIs(commands.Cog):
             return await ctx.send(f"🚫 {verse_ref}", delete_after=9)
         
         try:
-            # Create embed
-            embed = await self._create_verse_embed(chapter, verse_ref)
+            # Create embed -> embed = await self._create_verse_embed(chapter, verse_ref)
+            embed = self._create_verse_embed(chapter, verse_ref)
             
             # Add latency to footer
             latency = (datetime.now() - start_time).total_seconds() * 1000
