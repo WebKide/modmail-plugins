@@ -495,10 +495,9 @@ class AsItIs(commands.Cog):
         # Add Footer with verse info
         v_text = f"𝗏𝖾𝗋𝗌𝖾 {verse_ref}" if '-' not in str(verse_ref) else f"𝗏𝖾𝗋𝗌𝖾𝗌 {verse_ref}"
         total_v = BG_CHAPTER_INFO[chapter]['total_verses']
+        footer_text = f"𝖢𝗁𝖺𝗉𝗍𝖾𝗋 {chapter}, {v_text} 𝗈𝖿 {total_v}"
         if latency_ms is not None:
-            footer_text = f"𝖢𝗁𝖺𝗉𝗍𝖾𝗋 {chapter}, {v_text} 𝗈𝖿 {total_v} ➜ 𝗋𝖾𝗍𝗋𝗂𝖾𝗏𝖾𝖽 𝗂𝗇 {latency_ms:.1f} 𝗆𝗌"
-        else:
-            footer_text = f"𝖢𝗁𝖺𝗉𝗍𝖾𝗋 {chapter}, {v_text} 𝗈𝖿 {total_v} ➜ 𝗋𝖾𝗍𝗋𝗂𝖾𝗏𝖾𝖽 𝗂𝗇 0.{random.randint(10, 23)} 𝗆𝗌"
+            footer_text += f" ➜ 𝗇𝖺𝗏𝗂𝗀𝖺𝗍𝖾𝖽 𝗂𝗇 {latency_ms:.1f} 𝗆𝗌"
         embed.set_footer(
             text=footer_text,
             icon_url="https://i.imgur.com/10jxmCh.png"
@@ -542,8 +541,8 @@ class AsItIs(commands.Cog):
             
             # Add latency to footer
             latency = (datetime.now() - start_time).total_seconds() * 1000
-            embed.set_footer(text=embed.footer.text + f" ➜ 𝗋𝖾𝗍𝗋𝗂𝖾𝗏𝖾𝖽 𝗂𝗇 {latency:.2f} 𝗆𝗌", 
-                           icon_url=embed.footer.icon_url)
+            embed.set_footer(text=f"{embed.footer.text} ➜ 𝗋𝖾𝗍𝗋𝗂𝖾𝗏𝖾𝖽 𝗂𝗇 {latency:.1f} 𝗆𝗌",
+                             icon_url=embed.footer.icon_url)
             
             # Create view with navigation buttons
             view = NavigationButtons(self, chapter, verse_ref)
