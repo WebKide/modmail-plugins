@@ -28,7 +28,7 @@ from discord.ext import commands
 from typing import List, Tuple, Dict, Optional
 from datetime import datetime, timedelta
 
-# v2.17 - fixed SyntaxError: invalid non-printable character U+00A0
+# v2.18 - fixed SyntaxError: invalid non-printable character U+00A0
 BG_CHAPTER_INFO = {
     1: {'total_verses': 46, 'grouped_ranges': [(16, 18), (21, 22), (32, 35), (37, 38)], 'chapter_title': 'First. Observing the Armies on the Battlefield of Kurukṣetra'},
     2: {'total_verses': 72, 'grouped_ranges': [(42, 43)], 'chapter_title': 'Second. Contents of the Gītā Summarized'},
@@ -501,16 +501,16 @@ class AsItIs(commands.Cog):
     @commands.command(name='asitis', aliases=['1972', 'bg'], no_pm=True)
     async def gita_verse(self, ctx, chapter: int, verse: str):
         """Retrieve a śloka from the Bhagavad Gītā — As It Is (Original 1972 Macmillan edition)
-        To ŚRĪLA BALADEVA VIDYĀBHŪṢAṆA who presented so nicely the "Govinda-bhāṣya" commentary on Vedānta philosophy.
+          To ŚRĪLA BALADEVA VIDYĀBHŪṢAṆA who presented so nicely the "Govinda-bhāṣya" commentary on Vedānta philosophy.
 
-        - Supports Chapter Title
-        - Supports Sanskrit Text
-        - Supports Synonyms
-        - Supports English Translation
-        - Supports multiple verses
-        - Navigation to previous and next śloka
-        - No-support for elaborate commentaries, yet
-        """
+        - Supports Chapter Title
+        - Supports Sanskrit Text
+        - Supports Synonyms
+        - Supports English Translation
+        - Supports multiple verses
+        - Navigation to previous and next śloka
+        - No-support for elaborate commentaries, yet
+        """
         start_time = datetime.now()
         
         # Validate input
