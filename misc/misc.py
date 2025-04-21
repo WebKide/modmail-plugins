@@ -254,45 +254,58 @@ class Misc(commands.Cog):
     # +------------------------------------------------------------+
     # |                       LOGO                                 |
     # +------------------------------------------------------------+
-    @commands.command(description='Use to replace the AVY for the bot', no_pm=True)
+    @commands.command(description='Change the bot’s avatar', no_pm=True)
     @commands.has_permissions(administrator=True)
     async def logo(self, ctx, link: str = None):
-        """ Change Bot’s avatar img """
+        """ Change the Bot’s avatar (admins only) """
         if ctx.author.id not in dev_list:
-            return await ctx.send("You don't have permission to use this command.", delete_after=23)
-            
+            return await ctx.send("❌ You don't have permission to use this command.", delete_after=23)
+        
         if not link:
-            return await ctx.send('Please provide an image URL.', delete_after=23)
+            return await ctx.send("❌ Please provide a direct image URL (e.g., `https://i.imgur.com/abc123.png`)", delete_after=23)
+
+        # Ensure it's a direct image URL (not an Imgur page)
+        if "imgur.com" in link and not link.endswith(('.png', '.jpg', '.jpeg', '.gif')):
+            link = f"https://i.imgur.com/{link.split('/')[-1]}.png"  # Convert to direct URL
+
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+        }
 
         try:
-            async with self.bot.session.get(link) as response:
-                # Check if request was successful
-                if response.status != 200:
-                    return await ctx.send(f'Failed to download image (HTTP {response.status})', delete_after=23)
+            for attempt in range(3):  # Retry up to 3 times if rate-limited
+                try:
+                    async with self.bot.session.get(link, headers=headers) as response:
+                        if response.status == 429:  # Rate-limited
+                            retry_after = int(response.headers.get('Retry-After', 5))
+                            await ctx.send(f"⚠️ Rate-limited. Retrying in {retry_after} seconds...", delete_after=23)
+                            await asyncio.sleep(retry_after)
+                            continue
 
-                # Check content type to ensure it's an image
-                content_type = response.headers.get('Content-Type', '').lower()
-                if not content_type.startswith('image/'):
-                    return await ctx.send(f'URL does not point to an image (Content-Type: {content_type})', delete_after=23)
+                        if response.status != 200:
+                            return await ctx.send(f"❌ Failed to download image (HTTP {response.status})", delete_after=23)
 
-                # Read image data
-                image_data = await response.read()
+                        content_type = response.headers.get('Content-Type', '').lower()
+                        if not content_type.startswith('image/'):
+                            return await ctx.send(f"❌ URL does not point to an image (Content-Type: {content_type})", delete_after=23)
 
-                # Check image size (Discord limit is 10MB for avatars)
-                if len(image_data) > 10 * 1024 * 1024:
-                    return await ctx.send('Image is too large (max 10MB)', delete_after=23)
+                        image_data = await response.read()
 
-                # Update avatar
-                await self.bot.user.edit(avatar=image_data)
-                await ctx.send('✅ Avatar updated successfully!')
+                        if len(image_data) > 10 * 1024 * 1024:  # 10MB limit
+                            return await ctx.send("❌ Image is too large (max 10MB).", delete_after=23)
 
-        except aiohttp.ClientError as e:
-            await ctx.send(f'Failed to download image: {str(e)}', delete_after=23)
-        except discord.HTTPException as e:
-            await ctx.send(f'Discord rejected the avatar change: {str(e)}', delete_after=23)
+                        await self.bot.user.edit(avatar=image_data)
+                        return await ctx.send("✅ Avatar updated successfully!")
+
+                except ClientResponseError as e:
+                    if e.status == 429 and attempt < 2:  # Retry on rate limit
+                        await asyncio.sleep(5)
+                        continue
+                    raise
+
         except Exception as e:
-            await ctx.send(f'An unexpected error occurred: {str(e)}', delete_after=23)
-            traceback.print_exc()  # Print full traceback to console for debugging
+            await ctx.send(f"❌ Failed to update avatar: `{str(e)}`", delete_after=23)
+            traceback.print_exc()
 
     # +------------------------------------------------------------+
     # |                     SAUCE                                  |
@@ -311,14 +324,14 @@ class Misc(commands.Cog):
 
             if len(i) < 1980:
                 source_full = i.replace('```', '`\u200b`\u200b`')
-                await ctx.send('```py\n' + source_full + '```')
+                await ctx.send('```py\n' + source_full + '```', delete_after=23)
 
             if len(i) > 1981:
                 source_trim = i.replace('```', '`\u200b`\u200b`')[:1980]
-                await ctx.send('```py\n' + source_trim + '```')
+                await ctx.send('```py\n' + source_trim + '```', delete_after=23)
 
         else:
-            await ctx.send(f"Tell me what cmd's source code you want to see.")
+            await ctx.send(f"Tell me what cmd's source code you want to see.", delete_after=23)
 
     # +------------------------------------------------------------+
     # |                          SAY                               |
