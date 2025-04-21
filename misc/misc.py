@@ -18,10 +18,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-import discord, aiohttp, io, asyncio, random, textwrap, traceback, inspect2
+import asyncio, io, random, textwrap, traceback, inspect2
 
-from discord.ext import commands
+import aiohttp, discord
 from discord import File
+from discord.ext import commands
 
 dev_list = [1094090021914554510, 323578534763298816]
 
@@ -52,7 +53,83 @@ class Misc(commands.Cog):
 
         return emb
 
-    
+
+    # +------------------------------------------------------------+
+    # |                        DM-CLEAR                            |
+    # +------------------------------------------------------------+
+    @commands.command(name='dmclear', no_pm=True)
+    async def dm_clear(self, ctx, limit: int):
+        """WARNING! Deletes the bot's own messages in your DMs.
+        Can be invoked from any text-channel. Limit applies to checked messages.
+        """
+
+        if limit <= 0:
+            return await ctx.send('Please provide a positive number of messages to check, between 1 and 99.', delete_after=6)
+
+        # Add a reasonable upper limit to prevent excessive API calls/time
+        if limit > 100:
+             await ctx.send('Checking up to 100 messages in DMs.', delete_after=15)
+             limit = 100
+
+        # Get the DM channel with the user who invoked the command
+        try:
+            # Use existing DM channel or create one if it doesn't exist
+            dm_channel = ctx.author.dm_channel or await ctx.author.create_dm()
+        except discord.Forbidden:
+             # This can happen if the user has DMs disabled for non-friends/server members
+             return await ctx.send("I can’t create or access a DM channel with you. Please check your privacy settings.", delete_after=23)
+        except discord.HTTPException as e:
+             return await ctx.send(f"Failed to get DM channel due to an API error:\n{e}", delete_after=40)
+
+        feedback_msg = await ctx.send(f"Attempting to delete my last {limit} applicable messages in my DM with you...", delete_after=10)
+
+        deleted_count = 0
+        checked_count = 0
+        try:
+            # Fetch message history from the DM channel
+            async for message in dm_channel.history(limit=limit):
+                checked_count += 1
+                # Check if the message was sent by the bot
+                if message.author.id == self.bot.user.id:
+                    try:
+                        await message.delete()
+                        deleted_count += 1
+                        # Avoid hitting rate limits
+                        await asyncio.sleep(random.randint(2, 11))
+                    except discord.Forbidden:
+                        print(f"Permission error deleting message {message.id} in DM with {ctx.author.id}")
+                        # Stop if permission is denied for one, likely denied for all in the DM
+                        await dm_channel.send("Stopped deleting: I lack permissions to delete my messages in this DM.", delete_after=15)
+                        break
+                    except discord.NotFound:
+                        # Message was already deleted somehow, ignore
+                        pass
+                    except discord.HTTPException as e:
+                        print(f"HTTP error deleting message {message.id}: {e}")
+                        # Handle potential rate limits (status code 429)
+                        if e.status == 429:
+                            await dm_channel.send("Rate limited. Please wait before trying again.", delete_after=15)
+                            await asyncio.sleep(random.randint(5, 11))
+                        # Stop on other HTTP errors
+                        else:
+                             await dm_channel.send(f"An API error occurred while deleting:\n{e}", delete_after=15)
+                             break
+
+            # Send confirmation to the DM channel
+            await dm_channel.send(f'Successfully deleted {deleted_count} of my messages in your DMs (checked last {checked_count} messages).', delete_after=60)
+
+            # Optionally try to delete the initial feedback message
+            try:
+                await feedback_msg.delete()
+            except (discord.NotFound, discord.Forbidden):
+                pass
+
+        except discord.Forbidden:
+            # This might happen if the bot cannot read history in the DM (unlikely but possible)
+             await ctx.send("I don’t have permission to read message history in our DM.", delete_after=23)
+        except discord.HTTPException as e:
+             await ctx.send(f"An API error occurred while fetching history:\n{e}", delete_after=23)
+
     # +------------------------------------------------------------+
     # |                        HACKBAN                             |
     # +------------------------------------------------------------+
