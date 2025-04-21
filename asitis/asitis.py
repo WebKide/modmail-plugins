@@ -28,7 +28,7 @@ from discord.ext import commands
 from typing import List, Tuple, Dict, Optional
 from datetime import datetime, timedelta
 
-# v2.24 - fixed indent
+# v2.25 - fixed interaction view
 BG_CHAPTER_INFO = {
     1: {'total_verses': 46, 'grouped_ranges': [(16, 18), (21, 22), (32, 35), (37, 38)], 'chapter_title': 'First. Observing the Armies on the Battlefield of Kurukṣetra'},
     2: {'total_verses': 72, 'grouped_ranges': [(42, 43)], 'chapter_title': 'Second. Contents of the Gītā Summarized'},
@@ -193,12 +193,12 @@ class NavigationButtons(discord.ui.View):
     async def close_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         """Button to close and delete embed"""
         # Check if the user who pressed the button is the one who invoked the command
-        if interaction.user == self.view.ctx.author:
+        if interaction.user == interaction.message.view.ctx.author:
             # Delete the embed message
             await interaction.message.delete()
             # Try to delete the invoking command message (might fail if it's too old)
             try:
-                await self.view.ctx.message.delete()
+                await interaction.message.view.ctx.message.delete()
             except discord.NotFound:
                 pass  # Message was already deleted
             except discord.Forbidden:
