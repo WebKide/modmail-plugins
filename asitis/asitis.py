@@ -505,9 +505,6 @@ class AsItIs(commands.Cog):
         )
 
         # Check if this is the last verse and add the ending message
-        verse_end = verse_ref.split('-')[-1]  # Get the end verse number for ranges or single verses
-        if int(verse_end) == BG_CHAPTER_INFO[chapter]['total_verses']:
-            
         verse_end = int(verse_ref.split('-')[-1])  # Ensure it's an integer for comparison
         if verse_end == BG_CHAPTER_INFO[chapter]['total_verses']:
             ordinal, title = BG_CHAPTER_INFO[chapter]['chapter_title'].split('. ', 1)
