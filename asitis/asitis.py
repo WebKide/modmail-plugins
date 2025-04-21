@@ -28,7 +28,7 @@ from discord.ext import commands
 from typing import List, Tuple, Dict, Optional
 from datetime import datetime, timedelta
 
-# v2.26 - fixed ctx view
+# v2.27 - pass the context
 BG_CHAPTER_INFO = {
     1: {'total_verses': 46, 'grouped_ranges': [(16, 18), (21, 22), (32, 35), (37, 38)], 'chapter_title': 'First. Observing the Armies on the Battlefield of Kurukṣetra'},
     2: {'total_verses': 72, 'grouped_ranges': [(42, 43)], 'chapter_title': 'Second. Contents of the Gītā Summarized'},
@@ -94,12 +94,11 @@ class NavigationButtons(discord.ui.View):
             
             # Create new embed with latency measurement
             new_embed = self.cog._create_verse_embed(chapter, verse_ref, latency_ms)
-            new_view = NavigationButtons(self.cog, chapter, verse_ref)
-            new_view.ctx = self.ctx
+            new_view = NavigationButtons(self.cog, chapter, verse_ref, self.ctx)
+            new_view.message = interaction.message
             
             # Update the message
             await interaction.message.edit(embed=new_embed, view=new_view)
-            new_view.message = interaction.message
             
         except Exception as e:
             await interaction.followup.send(f"Error navigating: {str(e)}", ephemeral=True)
@@ -562,7 +561,6 @@ class AsItIs(commands.Cog):
             
             # Create view with navigation buttons
             view = NavigationButtons(self, chapter, verse_ref, ctx)
-            view.ctx = ctx
             
             # Send message
             message = await ctx.send(embed=embed, view=view)
