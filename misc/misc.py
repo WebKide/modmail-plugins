@@ -28,9 +28,10 @@ dev_list = [1094090021914554510, 323578534763298816]
 
 
 class Misc(commands.Cog):
-    """(∩｀-´)⊃━☆ﾟ.*･｡ﾟ Useful commands to make your life easier
-    Only works with Admin perms, and a few commands require dev_list to be modified
-     - This cog was made to keep a few commands that went out of fashion but are useful to run a server"""
+    """Useful commands to make your life easier
+    - *Only works with Admin perms, and a few commands require dev_list to be modified if you wish to use
+    - This cog was made to keep a few commands that are no longer common but are useful to run a server
+    """
     def __init__(self, bot):
         self.bot = bot
         self.mod_color = discord.Colour(0x7289da)  # Blurple
@@ -55,16 +56,20 @@ class Misc(commands.Cog):
 
 
     # +------------------------------------------------------------+
-    # |                        DM-CLEAR                            |
+    # |                     CLEAR BOT DMs                          |
     # +------------------------------------------------------------+
-    @commands.command(name='dmclear', no_pm=True)
-    async def dm_clear(self, ctx, limit: int):
-        """WARNING! Deletes the bot's own messages in your DMs.
-        Can be invoked from any text-channel. Limit applies to checked messages.
+    @commands.command(description='WARNING! advanced command', name='clear_bot_dms', no_pm=True)
+    async def _clear_bot_dms(self, ctx, limit: int):
+        """WARNING!! Deletes the bot’s own messages in your DMs.
+        - Can be invoked from any text-channel. Limit applies to checked messages.
         """
+        try:
+            await ctx.message.delete()
+        except discord.Forbidden:
+            pass
 
         if limit <= 0:
-            return await ctx.send('Please provide a positive number of messages to check, between 1 and 99.', delete_after=6)
+            return await ctx.send('Please provide a positive number of messages to check: between 1 and 99.', delete_after=6)
 
         # Add a reasonable upper limit to prevent excessive API calls/time
         if limit > 100:
@@ -73,7 +78,7 @@ class Misc(commands.Cog):
 
         # Get the DM channel with the user who invoked the command
         try:
-            # Use existing DM channel or create one if it doesn't exist
+            # Use existing DM channel or create one if it doesn’t exist
             dm_channel = ctx.author.dm_channel or await ctx.author.create_dm()
         except discord.Forbidden:
              # This can happen if the user has DMs disabled for non-friends/server members
@@ -140,21 +145,29 @@ class Misc(commands.Cog):
         if ctx.author.id not in dev_list:
             return
 
-        try:    userid = int(userid)
-        except:    await ctx.send('Invalid ID!', delete_after=3)
+        try:
+            userid = int(userid)
+        except:
+            await ctx.send('Invalid ID!', delete_after=3)
 
-        try:    await ctx.guild.ban(discord.Object(userid), reason=reason)
-        except:   success = False
-        else:    success = True
+        try:
+            await ctx.guild.ban(discord.Object(userid), reason=reason)
+        except:
+            success = False
+        else:
+            success = True
 
         if success:
             async for entry in ctx.guild.audit_logs(limit=1, user=ctx.guild.me, action=discord.AuditLogAction.ban):
                 emb = await self.format_mod_embed(ctx, entry.target, success, 'hackban')
-        else:    emb = await self.format_mod_embed(ctx, userid, success, 'hackban')
-        try:    return await ctx.send(embed=emb)
+        else:
+            emb = await self.format_mod_embed(ctx, userid, success, 'hackban')
+        try:
+            return await ctx.send(embed=emb)
         except discord.HTTPException as e:
             if ctx.author.id == 323578534763298816:    return await ctx.error(f'​`​`​`py\n{e}​`​`​`')
-            else:    pass
+            else:
+                pass
 
     # +------------------------------------------------------------+
     # |                ADD/REMOVE ROLE GROUP                       |
@@ -189,7 +202,7 @@ class Misc(commands.Cog):
                 await ctx.message.delete()
                 await ctx.send(f'Added: **`{role.name}`** role to *{member.display_name}*')
             except:
-                await ctx.send("I don't have the perms to add that role. ╰(⇀ᗣ↼‶)╯", delete_after=23)
+                await ctx.send("I don’t have the perms to add that role. ╰(⇀ᗣ↼‶)╯", delete_after=23)
 
         else:
             return await ctx.send('Please mention the member and role you want me to give them. ╰(⇀ᗣ↼‶)╯', delete_after=23)
@@ -214,18 +227,20 @@ class Misc(commands.Cog):
             await ctx.message.delete()
             await ctx.send(f'Removed: `{role.name}` role from *{member.display_name}*')
         except:
-            await ctx.send("I don't have the perms to remove that role. ╰(⇀ᗣ↼‶)╯", delete_after=23)
+            await ctx.send("I don’t have the perms to remove that role. ╰(⇀ᗣ↼‶)╯", delete_after=23)
 
     # +------------------------------------------------------------+
     # |                     NAME                                   |
     # +------------------------------------------------------------+
-    @commands.command(description='Use only to rename the bot from a text channel', no_pm=True)
+    @commands.command(description='Use only to rename the bot from a text-channel', no_pm=True)
     @commands.has_permissions(administrator=True)
     async def name(self, ctx, text: str = None):
-        """ Change Bot's name """
-        if ctx.author.id not in dev_list:    return
+        """ Change Bot’s name """
+        if ctx.author.id not in dev_list:
+            return
 
-        if text is None:    return await ctx.send("What's my new name going to be?")
+        if text is None:
+            return await ctx.send("What’s my new name going to be?")
 
         if text is not None:
             try:
@@ -243,7 +258,7 @@ class Misc(commands.Cog):
     @commands.command(description= 'Use to replace the AVY for the bot', no_pm=True)
     @commands.has_permissions(administrator=True)
     async def logo(self, ctx, link: str = None):
-        """ Change Bot's avatar img """
+        """ Change Bot’s avatar img """
         if ctx.author.id not in dev_list:
             return
             
@@ -270,6 +285,11 @@ class Misc(commands.Cog):
     @commands.has_permissions(administrator=True)
     async def sauce(self, ctx, *, command: str = None):
         """ Show source code for any command """
+        try:
+            await ctx.message.delete()
+        except discord.Forbidden:
+            pass
+
         if command is not None:
             i = str(inspect2.getsource(self.bot.get_command(command).callback))
 
@@ -281,7 +301,8 @@ class Misc(commands.Cog):
                 source_trim = i.replace('```', '`\u200b`\u200b`')[:1980]
                 await ctx.send('```py\n' + source_trim + '```')
 
-        else:    await ctx.send(f"Tell me what cmd's source code you want to see.")
+        else:
+            await ctx.send(f"Tell me what cmd's source code you want to see.")
 
     # +------------------------------------------------------------+
     # |                          SAY                               |
@@ -289,11 +310,12 @@ class Misc(commands.Cog):
     @commands.command(no_pm=True)
     @commands.has_permissions(administrator=True)
     async def say(self, ctx, *, msg=''):
-        """ Bot sends message """
+        """ Bot repeats message """
         if f'{ctx.prefix}{ctx.invoked_with}' in msg:
-            return await ctx.send("Don't ya dare spam. ( ᗒᗣᗕ)", delete_after=23)
+            return await ctx.send("Don’t ya dare spam. ( ᗒᗣᗕ)", delete_after=23)
 
-        if not msg:    return await ctx.send('Nice try. (｡◝‿◜｡)', delete_after=23)
+        if not msg:
+            return await ctx.send('Nice try. (｡◝‿◜｡)', delete_after=23)
 
         else:
             msg = ctx.message.content
@@ -306,9 +328,9 @@ class Misc(commands.Cog):
     @commands.command(no_pm=True)
     @commands.has_permissions(administrator=True)
     async def sayd(self, ctx, *, msg=''):
-        """ Sends message and delete original """
+        """ Bot sends message and deletes original """
         if f'{ctx.prefix}{ctx.invoked_with}' in msg:
-            return await ctx.send("Don't ya dare spam. ( ᗒᗣᗕ)", delete_after=23)
+            return await ctx.send("Don’t ya dare spam. ( ᗒᗣᗕ)", delete_after=23)
 
         if not msg:
             return await ctx.send('Nice try. (｡◝‿◜｡)')
@@ -317,9 +339,12 @@ class Misc(commands.Cog):
             msg = ctx.message.content
             said = ' '.join(msg.split("sayd ")[1:])
 
-            try:    await ctx.message.delete()
-            except discord.Forbidden:    pass
-            finally:    return await ctx.send(said)  # Now it works!
+            try:
+                await ctx.message.delete()
+            except discord.Forbidden:
+                pass
+            finally:
+                return await ctx.send(said)  # Now it works!
 
     # +------------------------------------------------------------+
     # |                      GEN                                   |
@@ -363,7 +388,7 @@ class Misc(commands.Cog):
     @commands.command(aliases=['del', 'p', 'prune'], bulk=True, no_pm=True)
     @commands.has_permissions(administrator=True)
     async def purge(self, ctx, limit: int):
-        """ Delete x number of messages """
+        """ Delete x number of messages in text-channel """
         try:
             if not limit:
                 return await ctx.send('Enter the number of messages you want me to delete.', delete_after=23)
