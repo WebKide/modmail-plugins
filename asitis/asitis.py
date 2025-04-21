@@ -28,7 +28,7 @@ from discord.ext import commands
 from typing import List, Tuple, Dict, Optional
 from datetime import datetime, timedelta
 
-# v2.16 - fixed SyntaxError: invalid non-printable character U+00A0
+# v2.17 - fixed SyntaxError: invalid non-printable character U+00A0
 BG_CHAPTER_INFO = {
     1: {'total_verses': 46, 'grouped_ranges': [(16, 18), (21, 22), (32, 35), (37, 38)], 'chapter_title': 'First. Observing the Armies on the Battlefield of Kurukṣetra'},
     2: {'total_verses': 72, 'grouped_ranges': [(42, 43)], 'chapter_title': 'Second. Contents of the Gītā Summarized'},
@@ -514,34 +514,33 @@ class AsItIs(commands.Cog):
         start_time = datetime.now()
         
         # Validate input
-        is_valid, verse_ref = self._validate_verse(chapter, verse)
-        if not is_valid:
-            return await ctx.send(f"🚫 {verse_ref}", delete_after=9)
-        
-        try:
-            # Create embed
-            embed = self._create_verse_embed(chapter, verse_ref)
-            
-            # Add latency to footer
-            latency = (datetime.now() - start_time).total_seconds() * 1000
-            embed.set_footer(text=f"{embed.footer.text} ➜ 𝗋𝖾𝗍𝗋𝗂𝖾𝗏𝖾𝖽 𝗂𝗇 {latency:.1f} 𝗆𝗌",
-                             icon_url=embed.footer.icon_url)
-            
-            # Create view with navigation buttons
-            view = NavigationButtons(self, chapter, verse_ref)
-            view.ctx = ctx
+        is_valid, verse_ref = self._validate_verse(chapter, verse)
+        if not is_valid:
+            return await ctx.send(f"🚫 {verse_ref}", delete_after=9)
+        
+        try:
+            # Create embed
+            embed = self._create_verse_embed(chapter, verse_ref)
+            
+            # Add latency to footer
+            latency = (datetime.now() - start_time).total_seconds() * 1000
+            embed.set_footer(text=f"{embed.footer.text} ➜ 𝗋𝖾𝗍𝗋𝗂𝖾𝗏𝖾𝖽 𝗂𝗇 {latency:.1f} 𝗆𝗌",
+                             icon_url=embed.footer.icon_url)
+            
+            # Create view with navigation buttons
+            view = NavigationButtons(self, chapter, verse_ref)
+            view.ctx = ctx
+            
+            # Send message
+            message = await ctx.send(embed=embed, view=view)
+            view.message = message
 
-            # Send message
-            message = await ctx.send(embed=embed, view=view)
-            view.message = message
-        
-        except FileNotFoundError as e:
-            await ctx.send(f"🚫 {str(e)}", delete_after=90)
-        except ValueError as e:
-            await ctx.send(f"🚫 Error in verse data:\n\n{str(e)}", delete_after=90)
-        except Exception as e:
-            await ctx.send(f"🚫 Unexpected error retrieving verse:\n\n{str(e)}", delete_after=90)
-
+        except FileNotFoundError as e:
+            await ctx.send(f"🚫 {str(e)}", delete_after=90)
+        except ValueError as e:
+            await ctx.send(f"🚫 Error in verse data:\n\n{str(e)}", delete_after=90)
+        except Exception as e:
+            await ctx.send(f"🚫 Unexpected error retrieving verse:\n\n{str(e)}", delete_after=90)
+            
 async def setup(bot):
     await bot.add_cog(AsItIs(bot))
-    
