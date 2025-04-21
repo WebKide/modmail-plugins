@@ -28,7 +28,7 @@ from discord.ext import commands
 from typing import List, Tuple, Dict, Optional
 from datetime import datetime, timedelta
 
-# v2.19 - dedicatory
+# v2.20 - fixed chapter numeral
 BG_CHAPTER_INFO = {
     1: {'total_verses': 46, 'grouped_ranges': [(16, 18), (21, 22), (32, 35), (37, 38)], 'chapter_title': 'First. Observing the Armies on the Battlefield of Kurukṣetra'},
     2: {'total_verses': 72, 'grouped_ranges': [(42, 43)], 'chapter_title': 'Second. Contents of the Gītā Summarized'},
@@ -434,7 +434,7 @@ class AsItIs(commands.Cog):
         # Create embed: Orange border-left
         embed = discord.Embed(
             color=discord.Color(0xF5A623),
-            description=f"**𝖢𝗁𝖺𝗉𝗍𝖾𝗋 {BG_CHAPTER_INFO[chapter]['chapter_title']}**"
+            description=f"**𝖢𝗁𝖺𝗉𝗍𝖾𝗋 {chapter}. {BG_CHAPTER_INFO[chapter]['chapter_title'].split('. ', 1)[-1]}**"
         )
 
         # Add verse text field
@@ -501,6 +501,7 @@ class AsItIs(commands.Cog):
     @commands.command(name='asitis', aliases=['1972', 'bg'], no_pm=True)
     async def gita_verse(self, ctx, chapter: int, verse: str):
         """Retrieve a śloka from the Bhagavad Gītā — As It Is (Original 1972 Macmillan edition)
+          To ŚRĪLA BALADEVA VIDYĀBHŪṢAṆA who presented so nicely the "Govinda-bhāṣya" commentary on Vedānta philosophy.
 
         - Supports Chapter Title
         - Supports Sanskrit Text
@@ -509,8 +510,6 @@ class AsItIs(commands.Cog):
         - Supports multiple verses
         - Navigation to previous and next śloka
         - No-support for elaborate commentaries, yet
-
-        Śrīla Prabhupāda: To ŚRĪLA BALADEVA VIDYĀBHŪṢAṆA who presented so nicely the "Govinda-bhāṣya" commentary on Vedānta philosophy.
         """
         start_time = datetime.now()
         
