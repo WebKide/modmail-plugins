@@ -254,29 +254,34 @@ class Misc(commands.Cog):
     # +------------------------------------------------------------+
     # |                       LOGO                                 |
     # +------------------------------------------------------------+
-    # @commands.command(no_pm=True, hidden=True)
     @commands.command(description= 'Use to replace the AVY for the bot', no_pm=True)
     @commands.has_permissions(administrator=True)
     async def logo(self, ctx, link: str = None):
-        """ Change Bot’s avatar img """
+        """ Change Bot's avatar img """
         if ctx.author.id not in dev_list:
             return
             
         if link is None:
-            return await ctx.send('You need to use an image URL as a link.')
+            return await ctx.send('You need to use an image URL as a link. Try <https://imgur.com/>')
 
-        else:
-            try:
-                # with urllib.request.urlopen(link) as response:
-                    #img = response.read()
-                    #await ctx.bot.edit_profile(avatar=img)
-                async with self.bot.session.get(link) as r:
-                    img = await r.read()
-                    await self.bot.user.edit(avatar=img)
-                    return await ctx.send('New logo added successfully!')
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(link) as response:
+                    # Check if the response is successful and the content type is an image
+                    if response.status != 200:
+                        return await ctx.send('Failed to download the image.')
                     
-            except Exception as e:
-                return await ctx.send(f'Failed to update logo image!\n```{e}```')
+                    # Read the image data
+                    image_data = await response.read()
+                    
+                    # Try to edit the bot's avatar
+                    await self.bot.user.edit(avatar=image_data)
+                    await ctx.send('Avatar updated successfully!')
+                    
+        except discord.HTTPException as e:
+            await ctx.send(f'Failed to update avatar:\n{e}')
+        except Exception as e:
+            await ctx.send(f'An error occurred:\n{e}')
 
     # +------------------------------------------------------------+
     # |                     SAUCE                                  |
