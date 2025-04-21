@@ -28,7 +28,7 @@ from discord.ext import commands
 from typing import List, Tuple, Dict, Optional
 from datetime import datetime, timedelta
 
-# v2.02 - Added random import
+# v2.10 - footer fix
 BG_CHAPTER_INFO = {
     1: {'total_verses': 46, 'grouped_ranges': [(16, 18), (21, 22), (32, 35), (37, 38)], 'chapter_title': 'First. Observing the Armies on the Battlefield of Kurukṣetra'},
     2: {'total_verses': 72, 'grouped_ranges': [(42, 43)], 'chapter_title': 'Second. Contents of the Gītā Summarized'},
@@ -161,21 +161,8 @@ class NavigationButtons(discord.ui.View):
             await interaction.response.send_message("This is the first verse of the Bhagavad Gītā", ephemeral=True)
             return
         
-        # Defer the interaction first
-        await interaction.response.defer()
-        
-        # Get the previous verse
-        try:
-            new_embed = self.cog._create_verse_embed(self.prev_chapter, self.prev_verse)
-            new_view = NavigationButtons(self.cog, self.prev_chapter, self.prev_verse)
-            new_view.ctx = self.ctx
-            
-            # Edit the original message
-            await interaction.message.edit(embed=new_embed, view=new_view)
-            new_view.message = interaction.message
-        except Exception as e:
-            await interaction.followup.send(f"Error navigating to previous verse: {str(e)}", ephemeral=True)
-    
+        await self._navigate(interaction, self.prev_chapter, self.prev_verse)
+
     @discord.ui.button(label="𝖭𝖾𝗑𝗍 𝗌́𝗅𝗈𝗄𝖺 ▶", style=discord.ButtonStyle.grey, custom_id="next_verse")
     async def next_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         """Button to navigate to next verse"""
@@ -183,20 +170,7 @@ class NavigationButtons(discord.ui.View):
             await interaction.response.send_message("This is the last verse of the Bhagavad Gītā", ephemeral=True)
             return
         
-        # Defer the interaction first
-        await interaction.response.defer()
-        
-        # Get the next verse
-        try:
-            new_embed = self.cog._create_verse_embed(self.next_chapter, self.next_verse)
-            new_view = NavigationButtons(self.cog, self.next_chapter, self.next_verse)
-            new_view.ctx = self.ctx
-            
-            # Edit the original message
-            await interaction.message.edit(embed=new_embed, view=new_view)
-            new_view.message = interaction.message
-        except Exception as e:
-            await interaction.followup.send(f"Error navigating to next verse: {str(e)}", ephemeral=True)
+        await self._navigate(interaction, self.next_chapter, self.next_verse)
 
 class AsItIs(commands.Cog):
     """Bhagavad Gītā As It Is (Original 1972 Macmillan edition)
@@ -498,6 +472,7 @@ class AsItIs(commands.Cog):
         footer_text = f"𝖢𝗁𝖺𝗉𝗍𝖾𝗋 {chapter}, {v_text} 𝗈𝖿 {total_v}"
         if latency_ms is not None:
             footer_text += f" ➜ 𝗇𝖺𝗏𝗂𝗀𝖺𝗍𝖾𝖽 𝗂𝗇 {latency_ms:.1f} 𝗆𝗌"
+        
         embed.set_footer(
             text=footer_text,
             icon_url="https://i.imgur.com/10jxmCh.png"
