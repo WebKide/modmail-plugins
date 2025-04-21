@@ -254,34 +254,45 @@ class Misc(commands.Cog):
     # +------------------------------------------------------------+
     # |                       LOGO                                 |
     # +------------------------------------------------------------+
-    @commands.command(description= 'Use to replace the AVY for the bot', no_pm=True)
+    @commands.command(description='Use to replace the AVY for the bot', no_pm=True)
     @commands.has_permissions(administrator=True)
     async def logo(self, ctx, link: str = None):
-        """ Change Bot's avatar img """
+        """ Change Bot’s avatar img """
         if ctx.author.id not in dev_list:
-            return
+            return await ctx.send("You don't have permission to use this command.", delete_after=23)
             
-        if link is None:
-            return await ctx.send('You need to use an image URL as a link. Try <https://imgur.com/>')
+        if not link:
+            return await ctx.send('Please provide an image URL.', delete_after=23)
 
         try:
-            async with aiohttp.ClientSession() as session:
-                async with session.get(link) as response:
-                    # Check if the response is successful and the content type is an image
-                    if response.status != 200:
-                        return await ctx.send('Failed to download the image.')
-                    
-                    # Read the image data
-                    image_data = await response.read()
-                    
-                    # Try to edit the bot's avatar
-                    await self.bot.user.edit(avatar=image_data)
-                    await ctx.send('Avatar updated successfully!')
-                    
+            async with self.bot.session.get(link) as response:
+                # Check if request was successful
+                if response.status != 200:
+                    return await ctx.send(f'Failed to download image (HTTP {response.status})', delete_after=23)
+
+                # Check content type to ensure it's an image
+                content_type = response.headers.get('Content-Type', '').lower()
+                if not content_type.startswith('image/'):
+                    return await ctx.send(f'URL does not point to an image (Content-Type: {content_type})', delete_after=23)
+
+                # Read image data
+                image_data = await response.read()
+
+                # Check image size (Discord limit is 10MB for avatars)
+                if len(image_data) > 10 * 1024 * 1024:
+                    return await ctx.send('Image is too large (max 10MB)', delete_after=23)
+
+                # Update avatar
+                await self.bot.user.edit(avatar=image_data)
+                await ctx.send('✅ Avatar updated successfully!')
+
+        except aiohttp.ClientError as e:
+            await ctx.send(f'Failed to download image: {str(e)}', delete_after=23)
         except discord.HTTPException as e:
-            await ctx.send(f'Failed to update avatar:\n{e}')
+            await ctx.send(f'Discord rejected the avatar change: {str(e)}', delete_after=23)
         except Exception as e:
-            await ctx.send(f'An error occurred:\n{e}')
+            await ctx.send(f'An unexpected error occurred: {str(e)}', delete_after=23)
+            traceback.print_exc()  # Print full traceback to console for debugging
 
     # +------------------------------------------------------------+
     # |                     SAUCE                                  |
