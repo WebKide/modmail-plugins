@@ -29,7 +29,7 @@ dev_list = [1094090021914554510, 323578534763298816]
 
 class Misc(commands.Cog):
     """Useful commands to make your life easier
-    - *Only works with Admin perms, and a few commands require dev_list to be modified if you wish to use
+    - Only works with Admin perms, and a few commands require dev_list to be modified if you wish to use
     - This cog was made to keep a few commands that are no longer common but are useful to run a server
     """
     def __init__(self, bot):
@@ -60,7 +60,7 @@ class Misc(commands.Cog):
     # +------------------------------------------------------------+
     @commands.command(description='WARNING! advanced command', name='clear_bot_dms', no_pm=True)
     async def _clear_bot_dms(self, ctx, limit: int):
-        """WARNING!! Deletes the bot’s own messages in your DMs.
+        """WARNING!! Deletes the bot’s own messages in your DMs
         - Can be invoked from any text-channel. Limit applies to checked messages.
         """
         try:
