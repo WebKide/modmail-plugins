@@ -20,31 +20,33 @@ SOFTWARE.
 
 import discord
 import json
+import random
+
 from pathlib import Path
 from discord.ext import commands
 from typing import List, Tuple, Dict, Optional
 from datetime import datetime, timedelta
 
-# v2.00 - Added navigation buttons
+# v2.02 - Added random import
 BG_CHAPTER_INFO = {
-    1: {'total_verses': 46, 'grouped_ranges': [(16, 18), (21, 22), (32, 35), (37, 38)], 'chapter_title': '1. Observing the Armies on the Battlefield of Kurukṣetra'},
-    2: {'total_verses': 72, 'grouped_ranges': [(42, 43)], 'chapter_title': '2. Contents of the Gītā Summarized'},
-    3: {'total_verses': 43, 'grouped_ranges': [], 'chapter_title': '3. Karma-yoga'},
-    4: {'total_verses': 42, 'grouped_ranges': [], 'chapter_title': '4. Transcendental Knowledge'},
-    5: {'total_verses': 29, 'grouped_ranges': [(8, 9), (27, 28)], 'chapter_title': '5. Karma-yoga — Action in Kṛṣṇa Consciousness'},
-    6: {'total_verses': 47, 'grouped_ranges': [(11, 12), (13, 14), (20, 23)], 'chapter_title': '6. Sāṅkhya-yoga'},
-    7: {'total_verses': 30, 'grouped_ranges': [], 'chapter_title': '7. Knowledge of the Absolute'},
-    8: {'total_verses': 28, 'grouped_ranges': [], 'chapter_title': '8. Attaining the Supreme'},
-    9: {'total_verses': 34, 'grouped_ranges': [], 'chapter_title': '9. The Most Confidential Knowledge'},
-    10: {'total_verses': 42, 'grouped_ranges': [(4, 5), (12, 13)], 'chapter_title': '10. The Opulence of the Absolute'},
-    11: {'total_verses': 55, 'grouped_ranges': [(10, 11), (26, 27), (41, 42)], 'chapter_title': '11. The Universal Form'},
-    12: {'total_verses': 20, 'grouped_ranges': [(3, 4), (6, 7), (13, 14), (18, 19)], 'chapter_title': '12. Devotional Service'},
-    13: {'total_verses': 35, 'grouped_ranges': [(1, 2), (6, 7), (8, 12)], 'chapter_title': '13. Nature, the Enjoyer, and Consciousness'},
-    14: {'total_verses': 27, 'grouped_ranges': [(22, 25)], 'chapter_title': '14. The Three Modes of Material Nature'},
-    15: {'total_verses': 20, 'grouped_ranges': [(3, 4)], 'chapter_title': '15. The Yoga of the Supreme Person'},
-    16: {'total_verses': 24, 'grouped_ranges': [(1, 3), (11, 12), (13, 15)], 'chapter_title': '16. The Divine and Demoniac Natures'},
-    17: {'total_verses': 28, 'grouped_ranges': [(5, 6), (8-10), (26, 27)], 'chapter_title': '17. The Divisions of Faith'},
-    18: {'total_verses': 78, 'grouped_ranges': [(13, 14), (36, 37), (51, 53)], 'chapter_title': '18. Conclusion-The Perfection of Renunciation'}
+    1: {'total_verses': 46, 'grouped_ranges': [(16, 18), (21, 22), (32, 35), (37, 38)], 'chapter_title': 'First. Observing the Armies on the Battlefield of Kurukṣetra'},
+    2: {'total_verses': 72, 'grouped_ranges': [(42, 43)], 'chapter_title': 'Second. Contents of the Gītā Summarized'},
+    3: {'total_verses': 43, 'grouped_ranges': [], 'chapter_title': 'Third. Karma-yoga'},
+    4: {'total_verses': 42, 'grouped_ranges': [], 'chapter_title': 'Fourth. Transcendental Knowledge'},
+    5: {'total_verses': 29, 'grouped_ranges': [(8, 9), (27, 28)], 'chapter_title': 'Fifth. Karma-yoga — Action in Kṛṣṇa Consciousness'},
+    6: {'total_verses': 47, 'grouped_ranges': [(11, 12), (13, 14), (20, 23)], 'chapter_title': 'Sixth. Sāṅkhya-yoga'},
+    7: {'total_verses': 30, 'grouped_ranges': [], 'chapter_title': 'Seventh. Knowledge of the Absolute'},
+    8: {'total_verses': 28, 'grouped_ranges': [], 'chapter_title': 'Eighth. Attaining the Supreme'},
+    9: {'total_verses': 34, 'grouped_ranges': [], 'chapter_title': 'Ninth. The Most Confidential Knowledge'},
+    10: {'total_verses': 42, 'grouped_ranges': [(4, 5), (12, 13)], 'chapter_title': 'Tenth. The Opulence of the Absolute'},
+    11: {'total_verses': 55, 'grouped_ranges': [(10, 11), (26, 27), (41, 42)], 'chapter_title': 'Eleventh. The Universal Form'},
+    12: {'total_verses': 20, 'grouped_ranges': [(3, 4), (6, 7), (13, 14), (18, 19)], 'chapter_title': 'Twelfth. Devotional Service'},
+    13: {'total_verses': 35, 'grouped_ranges': [(1, 2), (6, 7), (8, 12)], 'chapter_title': 'Thirteenth. Nature, the Enjoyer, and Consciousness'},
+    14: {'total_verses': 27, 'grouped_ranges': [(22, 25)], 'chapter_title': 'Fourteenth. The Three Modes of Material Nature'},
+    15: {'total_verses': 20, 'grouped_ranges': [(3, 4)], 'chapter_title': 'Fifteenth. The Yoga of the Supreme Person'},
+    16: {'total_verses': 24, 'grouped_ranges': [(1, 3), (11, 12), (13, 15)], 'chapter_title': 'Sixteenth. The Divine and Demoniac Natures'},
+    17: {'total_verses': 28, 'grouped_ranges': [(5, 6), (8-10), (26, 27)], 'chapter_title': 'Seventeenth. The Divisions of Faith'},
+    18: {'total_verses': 78, 'grouped_ranges': [(13, 14), (36, 37), (51, 53)], 'chapter_title': 'Eighteenth. Conclusion-The Perfection of Renunciation'}
 }
 
 class NavigationButtons(discord.ui.View):
@@ -424,13 +426,13 @@ class AsItIs(commands.Cog):
         """Create embed for a specific verse (used for navigation)"""
         chapter_data = self._load_chapter_data(chapter)
         verse_data = self._find_verse_data(chapter_data, verse_ref)
-        
+
         # Create embed: Orange border-left
         embed = discord.Embed(
             color=discord.Color(0xF5A623),
-            description=f"**𝖠𝖽𝗁𝗒𝖺𝗒𝖺 {BG_CHAPTER_INFO[chapter]['chapter_title']}**"
+            description=f"**𝖢𝗁𝖺𝗉𝗍𝖾𝗋 {BG_CHAPTER_INFO[chapter]['chapter_title']}**"
         )
-        
+
         # Add verse text field
         verse_text = self._format_verse_text(verse_data)
         self._safe_add_field(
@@ -445,7 +447,7 @@ class AsItIs(commands.Cog):
             name="Bhagavad Gītā — As It Is (Original 1972 edition)",
             icon_url="https://i.imgur.com/iZ6CHAz.png"
         )
-        
+
         # Add synonyms (split into multiple fields if needed)
         synonyms = verse_data.get('Word-for-Word', '')
         synonyms_chunks = self._format_synonyms(synonyms)
@@ -456,7 +458,7 @@ class AsItIs(commands.Cog):
                 value=chunk,
                 inline=False
             )
-        
+
         # Add Translation (split into multiple fields if needed)
         translation = verse_data.get('Translation-En', '')
         translation_chunks = self._format_translation(translation)
@@ -467,20 +469,31 @@ class AsItIs(commands.Cog):
                 value=f"> **{chunk}**",
                 inline=False
             )
-        
+
         # Add Footer with verse info
-        v_text = f"𝗌́𝗅𝗈𝗄𝖺 {verse_ref}" if '-' not in str(verse_ref) else f"𝗌́𝗅𝗈𝗄𝖺𝗌 {verse_ref}"
+        v_text = f"𝗏𝖾𝗋𝗌𝖾 {verse_ref}" if '-' not in str(verse_ref) else f"𝗏𝖾𝗋𝗌𝖾𝗌 {verse_ref}"
         total_v = BG_CHAPTER_INFO[chapter]['total_verses']
         embed.set_footer(
-            text=f"𝖠𝖽𝗁𝗒𝖺𝗒𝖺 {chapter}, {v_text} 𝗈𝖿 {total_v}",
+            text=f"𝖢𝗁𝖺𝗉𝗍𝖾𝗋 {chapter}, {v_text} 𝗈𝖿 {total_v}",  #  ➜ 𝗋𝖾𝗍𝗋𝗂𝖾𝗏𝖾𝖽 𝗂𝗇 0.{random.randint(10, 23)} 𝗆𝗌
             icon_url="https://i.imgur.com/10jxmCh.png"
         )
-        
+
+        # Check if this is the last verse and add the ending message
+        verse_end = int(verse_ref.split('-')[-1])  # Ensure it's an integer for comparison
+        if verse_end == BG_CHAPTER_INFO[chapter]['total_verses']:
+            ordinal, title = BG_CHAPTER_INFO[chapter]['chapter_title'].split('. ', 1)
+            embed.add_field(
+                name="\u200b",
+                value=f"Thus end the Bhaktivedanta Purports to the {ordinal} Chapter of the Śrīmad Bhagavad-gītā in the matter of {title}.",
+                inline=False
+            )
+
         return embed
 
     @commands.command(name='asitis', aliases=['1972', 'bg'], no_pm=True)
     async def gita_verse(self, ctx, chapter: int, verse: str):
         """Retrieve a śloka from the Bhagavad Gītā — As It Is (Original 1972 Macmillan edition)
+            To ŚRĪLA BALADEVA VIDYĀBHŪṢAṆA who presented so nicely the “Govinda-bhāṣya” commentary on Vedānta philosophy.
 
         - Supports Chapter Title
         - Supports Sanskrit Text
@@ -509,6 +522,17 @@ class AsItIs(commands.Cog):
             # Create view with navigation buttons
             view = NavigationButtons(self, chapter, verse_ref)
             view.ctx = ctx
+
+            # Check if this is the last verse of the chapter
+            if int(verse_ref) == BG_CHAPTER_INFO[chapter]['total_verses']:
+                # Extract ordinal and title from "First. Observing the Armies..."
+                ordinal, title = BG_CHAPTER_INFO[chapter]['chapter_title'].split('. ', 1)
+                
+                embed.add_field(
+                    name="\u200b",
+                    value=f"*Thus end the Bhaktivedanta Purports to the {ordinal} Chapter of the Śrīmad Bhagavad-gītā in the matter of {title}.*",
+                    inline=False
+                )
             
             # Send message
             message = await ctx.send(embed=embed, view=view)
