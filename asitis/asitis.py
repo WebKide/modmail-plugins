@@ -28,7 +28,7 @@ from discord.ext import commands
 from typing import List, Tuple, Dict, Optional
 from datetime import datetime, timedelta
 
-# v2.10 - footer fix
+# v2.11 - fixed verse navigation and parsing issues
 BG_CHAPTER_INFO = {
     1: {'total_verses': 46, 'grouped_ranges': [(16, 18), (21, 22), (32, 35), (37, 38)], 'chapter_title': 'First. Observing the Armies on the Battlefield of Kurukṣetra'},
     2: {'total_verses': 72, 'grouped_ranges': [(42, 43)], 'chapter_title': 'Second. Contents of the Gītā Summarized'},
@@ -46,7 +46,7 @@ BG_CHAPTER_INFO = {
     14: {'total_verses': 27, 'grouped_ranges': [(22, 25)], 'chapter_title': 'Fourteenth. The Three Modes of Material Nature'},
     15: {'total_verses': 20, 'grouped_ranges': [(3, 4)], 'chapter_title': 'Fifteenth. The Yoga of the Supreme Person'},
     16: {'total_verses': 24, 'grouped_ranges': [(1, 3), (11, 12), (13, 15)], 'chapter_title': 'Sixteenth. The Divine and Demoniac Natures'},
-    17: {'total_verses': 28, 'grouped_ranges': [(5, 6), (8-10), (26, 27)], 'chapter_title': 'Seventeenth. The Divisions of Faith'},
+    17: {'total_verses': 28, 'grouped_ranges': [(5, 6), (8, 10), (26, 27)], 'chapter_title': 'Seventeenth. The Divisions of Faith'},
     18: {'total_verses': 78, 'grouped_ranges': [(13, 14), (36, 37), (51, 53)], 'chapter_title': 'Eighteenth. Conclusion-The Perfection of Renunciation'}
 }
 
@@ -96,8 +96,12 @@ class NavigationButtons(discord.ui.View):
     
     def _parse_verse_ref(self, verse_ref: str) -> Tuple[int, int]:
         """Parse verse reference into start and end numbers"""
-        if '-' in verse_ref:
-            start, end = map(int, verse_ref.split('-'))
+        if isinstance(verse_ref, int):
+            return verse_ref, verse_ref
+        if '-' in str(verse_ref):
+            parts = str(verse_ref).split('-')
+            start = int(parts[0])
+            end = int(parts[-1])  # Handles cases with multiple hyphens
             return start, end
         return int(verse_ref), int(verse_ref)
     
@@ -110,6 +114,8 @@ class NavigationButtons(discord.ui.View):
         # Check if we need to go to previous chapter
         if self.current_start == 1:
             prev_chapter = self.chapter - 1
+            if prev_chapter not in BG_CHAPTER_INFO:
+                return None, None
             prev_verse = str(BG_CHAPTER_INFO[prev_chapter]['total_verses'])
             return prev_chapter, prev_verse
         
@@ -132,6 +138,8 @@ class NavigationButtons(discord.ui.View):
         # Check if we need to go to next chapter
         if self.current_end == BG_CHAPTER_INFO[self.chapter]['total_verses']:
             next_chapter = self.chapter + 1
+            if next_chapter not in BG_CHAPTER_INFO:
+                return None, None
             return next_chapter, "1"
         
         # Get next verse in same chapter
@@ -175,9 +183,9 @@ class NavigationButtons(discord.ui.View):
 class AsItIs(commands.Cog):
     """Bhagavad Gītā As It Is (Original 1972 Macmillan edition)
 
-    Free Plugin to print Gītā verses inside a Discord’s text-channel. (∩｀-´)⊃━☆ﾟ.*･｡ﾟ Full embed support and śloka Navigation.
+    Free Plugin to print Gītā verses inside a Discord's text-channel. (∩｀-´)⊃━☆ﾟ.*･｡ﾟ Full embed support and śloka Navigation.
 
-    Śrīla Prabhupāda’s original 1972 Macmillan Bhagavad-gītā As It Is with elaborate commentary [not available here, yet], original Sanskrit and English word meanings. It is a first-class EXACT reproduction of the original hard cover book.
+    Śrīla Prabhupāda's original 1972 Macmillan Bhagavad-gītā As It Is with elaborate commentary [not available here, yet], original Sanskrit and English word meanings. It is a first-class EXACT reproduction of the original hard cover book.
 
     No other philosophical or religious work reveals, in such a lucid and profound way, the nature of consciousness, the self, the universe and the Supreme.
 
@@ -251,29 +259,29 @@ class AsItIs(commands.Cog):
 
     def _find_verse_data(self, chapter_data: dict, verse_ref: str) -> dict:
         """Find verse data handling TEXT/TEXTS formats"""
-        possible_keys = []
+        verse_ref = str(verse_ref)
         base_ref = verse_ref.replace('-', '-')
         
-        # Generate possible key variations
-        for prefix in ['TEXT', 'TEXTS']:
-            possible_keys.append(f"{prefix} {base_ref}")
-            if '-' in base_ref:
-                start = base_ref.split('-')[0]
-                possible_keys.append(f"{prefix} {start}")
-                possible_keys.append(f"{prefix} {base_ref.replace('-', '–')}")
-        
-        # Check each possible key
+        # First try exact match
         for verse_data in chapter_data.get("Verses", []):
-            if verse_data.get("Text-num", "") in possible_keys:
+            text_num = verse_data.get("Text-num", "")
+            if f"TEXT {base_ref}" == text_num or f"TEXTS {base_ref}" == text_num:
                 return verse_data
         
-        # Fallback search
-        search_num = base_ref.split('-')[0] if '-' in base_ref else base_ref
+        # Then try partial match (for ranges)
         for verse_data in chapter_data.get("Verses", []):
-            if search_num in verse_data.get("Text-num", ""):
+            text_num = verse_data.get("Text-num", "")
+            if base_ref in text_num:
                 return verse_data
         
-        raise ValueError(f"Verse {verse_ref} not found")
+        # Finally try just the starting verse
+        start_verse = base_ref.split('-')[0]
+        for verse_data in chapter_data.get("Verses", []):
+            text_num = verse_data.get("Text-num", "")
+            if start_verse in text_num:
+                return verse_data
+        
+        raise ValueError(f"Verse {verse_ref} not found in chapter data")
 
     def _format_verse_text(self, verse_data: dict) -> str:
         """Format verse text preserving line breaks and bold sections"""
@@ -493,7 +501,7 @@ class AsItIs(commands.Cog):
     @commands.command(name='asitis', aliases=['1972', 'bg'], no_pm=True)
     async def gita_verse(self, ctx, chapter: int, verse: str):
         """Retrieve a śloka from the Bhagavad Gītā — As It Is (Original 1972 Macmillan edition)
-            To ŚRĪLA BALADEVA VIDYĀBHŪṢAṆA who presented so nicely the “Govinda-bhāṣya” commentary on Vedānta philosophy.
+            To ŚRĪLA BALADEVA VIDYĀBHŪṢAṆA who presented so nicely the "Govinda-bhāṣya" commentary on Vedānta philosophy.
 
         - Supports Chapter Title
         - Supports Sanskrit Text
@@ -511,7 +519,7 @@ class AsItIs(commands.Cog):
             return await ctx.send(f"🚫 {verse_ref}", delete_after=9)
         
         try:
-            # Create embed -> embed = await self._create_verse_embed(chapter, verse_ref)
+            # Create embed
             embed = self._create_verse_embed(chapter, verse_ref)
             
             # Add latency to footer
@@ -524,7 +532,8 @@ class AsItIs(commands.Cog):
             view.ctx = ctx
 
             # Check if this is the last verse of the chapter
-            if int(verse_ref) == BG_CHAPTER_INFO[chapter]['total_verses']:
+            verse_end = int(verse_ref.split('-')[-1]) if '-' in verse_ref else int(verse_ref)
+            if verse_end == BG_CHAPTER_INFO[chapter]['total_verses']:
                 # Extract ordinal and title from "First. Observing the Armies..."
                 ordinal, title = BG_CHAPTER_INFO[chapter]['chapter_title'].split('. ', 1)
                 
