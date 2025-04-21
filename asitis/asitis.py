@@ -28,7 +28,7 @@ from discord.ext import commands
 from typing import List, Tuple, Dict, Optional
 from datetime import datetime, timedelta
 
-# v2.22 - added close button
+# v2.23 - fixed close button
 BG_CHAPTER_INFO = {
     1: {'total_verses': 46, 'grouped_ranges': [(16, 18), (21, 22), (32, 35), (37, 38)], 'chapter_title': 'First. Observing the Armies on the Battlefield of Kurukṣetra'},
     2: {'total_verses': 72, 'grouped_ranges': [(42, 43)], 'chapter_title': 'Second. Contents of the Gītā Summarized'},
@@ -72,7 +72,16 @@ class NavigationButtons(discord.ui.View):
             self.children[0].disabled = True
         if self.next_chapter is None:
             self.children[1].disabled = True
-        
+
+        '''
+        # Add the navigation buttons
+        self.add_item(discord.ui.Button(label="◀ 𝖯𝗋𝖾𝗏𝗂𝗈𝗎𝗌 𝗌́𝗅𝗈𝗄𝖺", style=discord.ButtonStyle.grey, custom_id="prev_verse"))
+        self.add_item(discord.ui.Button(label="𝖭𝖾𝗑𝗍 𝗌́𝗅𝗈𝗄𝖺 ▶", style=discord.ButtonStyle.grey, custom_id="next_verse"))
+
+        # Add the close button
+        self.add_item(discord.ui.Button(label="🗙 𝖢𝗅𝗈𝗌𝖾", style=discord.ButtonStyle.red, custom_id="close_button"))
+        '''
+
     async def _navigate(self, interaction: discord.Interaction, chapter: int, verse_ref: str):
         """Handle navigation with latency tracking"""
         start_time = time.time()
@@ -181,21 +190,21 @@ class NavigationButtons(discord.ui.View):
         await self._navigate(interaction, self.next_chapter, self.next_verse)
 
     @discord.ui.button(label="🗙 𝖢𝗅𝗈𝗌𝖾", style=discord.ButtonStyle.red, custom_id="close_button")
-    async def close_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        """Button to close and delete embed"""
-        # Check if the user who pressed the button is the one who invoked the command
-        if interaction.user == self.view.ctx.author:
-            # Delete the embed message
-            await interaction.message.delete()
-            # Try to delete the invoking command message (might fail if it's too old)
-            try:
-                await self.view.ctx.message.delete()
-            except discord.NotFound:
-                pass  # Message was already deleted
-            except discord.Forbidden:
-                await interaction.response.send_message("I do not have permissions to delete the invoking command message.", ephemeral=True)
-        else:
-            await interaction.response.send_message("Only the person who invoked this command can close it.", ephemeral=True)
+        async def close_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+            """Button to close and delete embed"""
+            # Check if the user who pressed the button is the one who invoked the command
+            if interaction.user == self.view.ctx.author:
+                # Delete the embed message
+                await interaction.message.delete()
+                # Try to delete the invoking command message (might fail if it's too old)
+                try:
+                    await self.view.ctx.message.delete()
+                except discord.NotFound:
+                    pass  # Message was already deleted
+                except discord.Forbidden:
+                    await interaction.response.send_message("I do not have permissions to delete the invoking command message.", ephemeral=True)
+            else:
+                await interaction.response.send_message("Only the person who invoked this command can close it.", ephemeral=True)
 
 class AsItIs(commands.Cog):
     """Bhagavad Gītā As It Is (Original 1972 Macmillan edition)
