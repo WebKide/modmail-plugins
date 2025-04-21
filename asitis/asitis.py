@@ -28,7 +28,7 @@ from discord.ext import commands
 from typing import List, Tuple, Dict, Optional
 from datetime import datetime, timedelta
 
-# v2.11 - fixed verse navigation and parsing issues
+# v2.12 - fixed last chapter verse
 BG_CHAPTER_INFO = {
     1: {'total_verses': 46, 'grouped_ranges': [(16, 18), (21, 22), (32, 35), (37, 38)], 'chapter_title': 'First. Observing the Armies on the Battlefield of Kurukṣetra'},
     2: {'total_verses': 72, 'grouped_ranges': [(42, 43)], 'chapter_title': 'Second. Contents of the Gītā Summarized'},
@@ -499,60 +499,48 @@ class AsItIs(commands.Cog):
         return embed
 
     @commands.command(name='asitis', aliases=['1972', 'bg'], no_pm=True)
-    async def gita_verse(self, ctx, chapter: int, verse: str):
-        """Retrieve a śloka from the Bhagavad Gītā — As It Is (Original 1972 Macmillan edition)
-            To ŚRĪLA BALADEVA VIDYĀBHŪṢAṆA who presented so nicely the "Govinda-bhāṣya" commentary on Vedānta philosophy.
+    async def gita_verse(self, ctx, chapter: int, verse: str):
+        """Retrieve a śloka from the Bhagavad Gītā — As It Is (Original 1972 Macmillan edition)
+            To ŚRĪLA BALADEVA VIDYĀBHŪṢAṆA who presented so nicely the "Govinda-bhāṣya" commentary on Vedānta philosophy.
 
-        - Supports Chapter Title
-        - Supports Sanskrit Text
-        - Supports Synonyms
-        - Supports English Translation
-        - Supports multiple verses
-        - Navigation to previous and next śloka
-        - No-support for elaborate commentaries, yet
-        """
-        start_time = datetime.now()
-        
-        # Validate input
-        is_valid, verse_ref = self._validate_verse(chapter, verse)
-        if not is_valid:
-            return await ctx.send(f"🚫 {verse_ref}", delete_after=9)
-        
-        try:
-            # Create embed
-            embed = self._create_verse_embed(chapter, verse_ref)
-            
-            # Add latency to footer
-            latency = (datetime.now() - start_time).total_seconds() * 1000
-            embed.set_footer(text=f"{embed.footer.text} ➜ 𝗋𝖾𝗍𝗋𝗂𝖾𝗏𝖾𝖽 𝗂𝗇 {latency:.1f} 𝗆𝗌",
-                             icon_url=embed.footer.icon_url)
-            
-            # Create view with navigation buttons
-            view = NavigationButtons(self, chapter, verse_ref)
-            view.ctx = ctx
+        - Supports Chapter Title
+        - Supports Sanskrit Text
+        - Supports Synonyms
+        - Supports English Translation
+        - Supports multiple verses
+        - Navigation to previous and next śloka
+        - No-support for elaborate commentaries, yet
+        """
+        start_time = datetime.now()
+        
+        # Validate input
+        is_valid, verse_ref = self._validate_verse(chapter, verse)
+        if not is_valid:
+            return await ctx.send(f"🚫 {verse_ref}", delete_after=9)
+        
+        try:
+            # Create embed
+            embed = self._create_verse_embed(chapter, verse_ref)
+            
+            # Add latency to footer
+            latency = (datetime.now() - start_time).total_seconds() * 1000
+            embed.set_footer(text=f"{embed.footer.text} ➜ 𝗋𝖾𝗍𝗋𝗂𝖾𝗏𝖾𝖽 𝗂𝗇 {latency:.1f} 𝗆𝗌",
+                             icon_url=embed.footer.icon_url)
+            
+            # Create view with navigation buttons
+            view = NavigationButtons(self, chapter, verse_ref)
+            view.ctx = ctx
 
-            # Check if this is the last verse of the chapter
-            verse_end = int(verse_ref.split('-')[-1]) if '-' in verse_ref else int(verse_ref)
-            if verse_end == BG_CHAPTER_INFO[chapter]['total_verses']:
-                # Extract ordinal and title from "First. Observing the Armies..."
-                ordinal, title = BG_CHAPTER_INFO[chapter]['chapter_title'].split('. ', 1)
-                
-                embed.add_field(
-                    name="\u200b",
-                    value=f"*Thus end the Bhaktivedanta Purports to the {ordinal} Chapter of the Śrīmad Bhagavad-gītā in the matter of {title}.*",
-                    inline=False
-                )
-            
-            # Send message
-            message = await ctx.send(embed=embed, view=view)
-            view.message = message
-        
-        except FileNotFoundError as e:
-            await ctx.send(f"🚫 {str(e)}", delete_after=90)
-        except ValueError as e:
-            await ctx.send(f"🚫 Error in verse data:\n\n{str(e)}", delete_after=90)
-        except Exception as e:
-            await ctx.send(f"🚫 Unexpected error retrieving verse:\n\n{str(e)}", delete_after=90)
+            # Send message
+            message = await ctx.send(embed=embed, view=view)
+            view.message = message
+        
+        except FileNotFoundError as e:
+            await ctx.send(f"🚫 {str(e)}", delete_after=90)
+        except ValueError as e:
+            await ctx.send(f"🚫 Error in verse data:\n\n{str(e)}", delete_after=90)
+        except Exception as e:
+            await ctx.send(f"🚫 Unexpected error retrieving verse:\n\n{str(e)}", delete_after=90)
 
 async def setup(bot):
     await bot.add_cog(AsItIs(bot))
