@@ -28,7 +28,7 @@ from discord.ext import commands
 from typing import List, Tuple, Dict, Optional
 from datetime import datetime, timedelta
 
-# v2.15 - fixed SyntaxError: invalid non-printable character U+00A0
+# v2.16 - fixed SyntaxError: invalid non-printable character U+00A0
 BG_CHAPTER_INFO = {
     1: {'total_verses': 46, 'grouped_ranges': [(16, 18), (21, 22), (32, 35), (37, 38)], 'chapter_title': 'First. Observing the Armies on the Battlefield of Kurukṣetra'},
     2: {'total_verses': 72, 'grouped_ranges': [(42, 43)], 'chapter_title': 'Second. Contents of the Gītā Summarized'},
@@ -511,9 +511,9 @@ class AsItIs(commands.Cog):
         - Navigation to previous and next śloka
         - No-support for elaborate commentaries, yet
         """
-        start_time = datetime.now()
-        
-        # Validate input
+        start_time = datetime.now()
+        
+        # Validate input
         is_valid, verse_ref = self._validate_verse(chapter, verse)
         if not is_valid:
             return await ctx.send(f"🚫 {verse_ref}", delete_after=9)
