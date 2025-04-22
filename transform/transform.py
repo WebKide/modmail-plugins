@@ -144,9 +144,11 @@ class Transform(commands.Cog):
     @commands.command(description="Generate 3-line ASCII banners", name="banner2", no_pm=True)
     async def _banner(self, ctx, *, text: str):
         """Convert text to 3-line ASCII banners:
-        ┌┐ ┌─┐┌┐┌┌┐┌┌─┐┬─┐
-        ├┴┐├─┤││││││├┤ ├┬┘
-        └─┘┴ ┴┘└┘┘└┘└─┘┴└─
+        ```
+        ╔╗  ╔═╗ ╔╗╦ ╔╗╦ ╔═╗ ╔═╗     ╔═╗ 
+        ╠╩╗ ╠═╣ ║║║ ║║║ ╠═  ╠═╣     ╔═╝ 
+        ╚═╝ ╩ ╩ ╝╚╩ ╝╚╩ ╚═╝ ╩ ╩     ╚═╝ 
+        ```
         """
         if not text:
             return await ctx.send("Please provide text to bannerize!", delete_after=23)
