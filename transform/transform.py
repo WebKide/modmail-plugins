@@ -138,6 +138,81 @@ class Transform(commands.Cog):
         
         return word
 
+@commands.command(description="Generate 3-line ASCII banners", name="banner2", no_pm=True)
+async def _banner(self, ctx, *, text: str):
+    """Convert text to 3-line ASCII banners:
+    ┌┐ ┌─┐┌┐┌┌┐┌┌─┐┬─┐
+    ├┴┐├─┤││││││├┤ ├┬┘
+    └─┘┴ ┴┘└┘┘└┘└─┘┴└─
+    """
+    if not text:
+        return await ctx.send("Please provide text to bannerize!", delete_after=23)
+
+    # Define the 3-line font (uppercase only)
+    font = {
+        'A': ['╔═╗', '╠═╣', '╩ ╩'],
+        'B': ['╔╗ ', '╠╩╗', '╚═╝'],
+        'C': ['╔═╗', '║  ', '╚═╝'],
+        'D': ['╔╗ ', '╚═╗', '╚═╝'],
+        'E': ['╔═╗', '╠═ ', '╚═╝'],
+        'F': ['╔═╗', '╠═ ', '╩  '],
+        'G': ['╔═╗', '║ ╦', '╚═╝'],
+        'H': ['╦ ╦', '╠═╣', '╩ ╩'],
+        'I': [' ╦ ', ' ║ ', ' ╩ '],
+        'J': [' ╦ ', ' ║ ', '╚╝ '],
+        'K': ['╦╔═', '╠╩╗', '╩ ╩'],
+        'L': ['╦  ', '║  ', '╩═╝'],
+        'M': ['╔╦╗', '║║║', '╩ ╩'],
+        'N': ['╔╗╦', '║║║', '╝╚╩'],
+        'O': ['╔═╗', '║ ║', '╚═╝'],
+        'P': ['╔═╗', '╠═╝', '╩  '],
+        'Q': ['╔═╗', '║║║', '╚╩╝'],
+        'R': ['╔═╗', '╠═╣', '╩ ╩'],
+        'S': ['╔═╗', '╚═╗', '╚═╝'],
+        'T': ['╔╦╗', ' ║ ', ' ╩ '],
+        'U': ['╦ ╦', '║ ║', '╚═╝'],
+        'V': ['╦ ╦', '╚╗║', ' ╚╝'],
+        'W': ['╦ ╦', '║║║', '╚╩╝'],
+        'X': ['╦ ╦', '╚╦╝', '╔╩╗'],
+        'Y': ['╦ ╦', '╚╦╝', ' ╩ '],
+        'Z': ['╔═╗', '╔═╝', '╚═╝'],
+        '0': ['╔═╗', '║/║', '╚═╝'],
+        '1': [' ╔╗', '  ║', '  ╩'],
+        '2': ['╔═╗', '╔═╝', '╚═╝'],
+        '3': ['╔═╗', ' ═╣', '╚═╝'],
+        '4': ['╦ ╦', '╚═╣', '  ╩'],
+        '5': ['╔═╗', '╚═╗', '╚═╝'],
+        '6': ['╔══', '╠═╗', '╚═╝'],
+        '7': ['══╗', '  ║', '  ╩'],
+        '8': ['╔═╗', '╠═╣', '╚═╝'],
+        '9': ['╔═╗', '╚═╣', '══╝'],
+        '!': ['╦', '║', '╩'],
+        '?': ['╔═╗', ' ╔╝', ' ╩ '],
+        ' ': ['   ', '   ', '   '],
+        '-': ['   ', ' ═ ', '   '],
+        '_': ['   ', '   ', '═══'],
+        '+': ['   ', '╠═╣', '   '],
+        '=': ['   ', '═══', '═══'],
+    }
+
+    # Convert text to uppercase and limit length
+    text = text.upper()[:20]  # Prevent abuse with long text
+    banner_lines = ['', '', '']  # Initialize 3 empty lines
+
+    for char in text:
+        # Get the character's ASCII art or default to space
+        char_art = font.get(char, font[' '])
+        for i in range(3):
+            banner_lines[i] += char_art[i] + ' '  # Add spacing between chars
+
+    # Combine into a single string
+    banner = '\n'.join(banner_lines)
+    
+    em = discord.Embed(color=self.user_color)
+    em.add_field(name="Input:", value=f'```\n{text}```', inline=False)
+    em.add_field(name="3-Line Banner:", value=f'```\n{banner}```', inline=False)
+    await ctx.send(embed=em)
+
     # +------------------------------------------------------------+
     # |                     CHARINFO                               |
     # +------------------------------------------------------------+
@@ -325,6 +400,54 @@ class Transform(commands.Cog):
         em = discord.Embed(color=self.user_color)
         em.add_field(name='Input:', value=f'```\n{text}```', inline=False)
         em.add_field(name='Result:', value=f'```\n{result}```', inline=False)
+        em = await self._add_footer(em)
+        await ctx.send(embed=em, allowed_mentions=discord.AllowedMentions.none())
+
+    # +------------------------------------------------------------+
+    # |                  DOUBLE-STRUCK (BLACKBOARD BOLD) FONT      |
+    # +------------------------------------------------------------+
+    @commands.command(description='Text transformer command', no_pm=True)
+    async def double(self, ctx, *, text: str):
+        """Convert text to 𝕕𝕠𝕦𝕓𝕝𝕖-𝕤𝕥𝕣𝕦𝕔𝕜"""
+        start_time = time.time()
+
+        if not text:
+            return await ctx.send("Please provide some text.", delete_after=23)
+
+        # Create translation tables for lowercase and uppercase
+        lower_char = "abcdefghijklmnopqrstuvwxyz0123456789"
+        lower_tran = "𝕒𝕓𝕔𝕕𝕖𝕗𝕘𝕙𝕚𝕛𝕜𝕝𝕞𝕟𝕠𝕡𝕢𝕣𝕤𝕥𝕦𝕧𝕨𝕩𝕪𝕫𝟘𝟙𝟚𝟛𝟜𝟝𝟞𝟟𝟠𝟡"
+        
+        upper_char = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        upper_tran = "𝔸𝔹ℂ𝔻𝔼𝔽𝔾ℍ𝕀𝕁𝕂𝕃𝕄ℕ𝕆ℙℚℝ𝕊𝕋𝕌𝕍𝕎𝕏𝕐ℤ"
+        
+        # Create combined translation table
+        combined_char = lower_char + upper_char
+        combined_tran = lower_tran + upper_tran
+        
+        # Handle brackets separately since they appear in both cases
+        bracket_map = {
+            '[': '〚',
+            ']': '〛',
+            '(': '〘',
+            ')': '〙',
+            '<': '《',
+            '>': '》'
+        }
+        
+        # Translate character by character to handle case properly
+        result = []
+        for char in text:
+            if char in bracket_map:
+                result.append(bracket_map[char])
+            elif char in combined_char:
+                result.append(combined_tran[combined_char.index(char)])
+            else:
+                result.append(char)
+        
+        em = discord.Embed(color=self.user_color)
+        em.add_field(name='Input:', value=f'```\n{text}```', inline=False)
+        em.add_field(name='Result:', value=f'```\n{"".join(result)}```', inline=False)
         em = await self._add_footer(em)
         await ctx.send(embed=em, allowed_mentions=discord.AllowedMentions.none())
 
