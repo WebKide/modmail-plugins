@@ -163,8 +163,8 @@ class Transform(commands.Cog):
             'F': ['┌─┐', '├┤ ', '└  '],
             'G': ['┌─┐', '│ ┬', '└─┘'],
             'H': ['┬ ┬', '├─┤', '┴ ┴'],
-            'I': [' ┬ ', ' │ ', ' ┴ '],
-            'J': [' ┬ ', ' │ ', '└┘ '],
+            'I': ['┬', '│', '┴'],
+            'J': [' ┬', '│', '└┘'],
             'K': ['┬┌─', '├┴┐', '┴ ┴'],
             'L': ['┬  ', '│  ', '┴─┘'],
             'M': ['┌┬┐', '│││', '┴ ┴'],
@@ -209,7 +209,7 @@ class Transform(commands.Cog):
             # Get the character's ASCII art or default to space
             char_art = font.get(char, font[' '])
             for i in range(3):
-                banner_lines[i] += char_art[i] + ' '  # Add spacing between chars
+                banner_lines[i] += char_art[i] #+ ' '  # Add spacing between chars
 
         # Combine into a single string
         banner = '\n'.join(banner_lines)
