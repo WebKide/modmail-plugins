@@ -309,6 +309,74 @@ class Misc(commands.Cog):
             traceback.print_exc()
 
     # +------------------------------------------------------------+
+    # |                       BANNER                               |
+    # +------------------------------------------------------------+
+    @commands.command(description='Change the bot’s banner', no_pm=True)
+    @commands.has_permissions(administrator=True)
+    async def banner(self, ctx, link: str = None):
+        """ Change the Bot’s banner (admins only) """
+        if ctx.author.id not in dev_list:
+            return await ctx.send("❌ You don’t have permission to use this command.", delete_after=23)
+        
+        if not link:
+            return await ctx.send(
+                "❌ Please provide a direct image URL (e.g., `https://i.imgur.com/abc123.png`)\n"
+                "ℹ️ Recommended dimensions: 960×540 pixels (16:9 ratio)",
+                delete_after=23
+            )
+
+        # Ensure it's a direct image URL (not an Imgur page)
+        if "imgur.com" in link and not link.endswith(('.png', '.jpg', '.jpeg', '.gif')):
+            link = f"https://i.imgur.com/{link.split('/')[-1]}.png"  # Convert to direct URL
+
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+        }
+
+        try:
+            for attempt in range(3):  # Retry up to 3 times if rate-limited
+                try:
+                    async with self.bot.session.get(link, headers=headers) as response:
+                        if response.status == 429:  # Rate-limited
+                            retry_after = int(response.headers.get('Retry-After', 5))
+                            await ctx.send(f"⚠️ Rate-limited. Retrying in {retry_after} seconds...", delete_after=23)
+                            await asyncio.sleep(retry_after)
+                            continue
+
+                        if response.status != 200:
+                            return await ctx.send(f"❌ Failed to download image (HTTP {response.status})", delete_after=23)
+
+                        content_type = response.headers.get('Content-Type', '').lower()
+                        if not content_type.startswith('image/'):
+                            return await ctx.send(f"❌ URL does not point to an image (Content-Type: {content_type})", delete_after=23)
+
+                        image_data = await response.read()
+
+                        # Discord banner requirements:
+                        # - Max 10MB for Nitro bots (6MB for non-Nitro)
+                        # - Recommended: 960×540 (16:9 ratio)
+                        if len(image_data) > 10 * 1024 * 1024:
+                            return await ctx.send("❌ Image is too large (max 10MB).", delete_after=23)
+
+                        try:
+                            await self.bot.user.edit(banner=image_data)
+                            return await ctx.send("✅ Banner updated successfully!")
+                        except discord.HTTPException as e:
+                            if "Nitro" in str(e):
+                                return await ctx.send("❌ This bot account needs Nitro to have a banner!", delete_after=23)
+                            raise
+
+                except ClientResponseError as e:
+                    if e.status == 429 and attempt < 2:  # Retry on rate limit
+                        await asyncio.sleep(5)
+                        continue
+                    raise
+
+        except Exception as e:
+            await ctx.send(f"❌ Failed to update banner: `{str(e)}`", delete_after=23)
+            traceback.print_exc()
+
+    # +------------------------------------------------------------+
     # |                     SAUCE                                  |
     # +------------------------------------------------------------+
     @commands.command(no_pm=True)
