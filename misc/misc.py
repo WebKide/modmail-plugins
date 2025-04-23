@@ -236,7 +236,7 @@ class Misc(commands.Cog):
     # +------------------------------------------------------------+
     @commands.command(description='Use only to rename the bot from a text-channel', no_pm=True)
     @commands.has_permissions(administrator=True)
-    async def name(self, ctx, text: str = None):
+    async def botname(self, ctx, text: str = None):
         """ Change Bot’s name """
         if ctx.author.id not in dev_list:
             return
@@ -260,7 +260,7 @@ class Misc(commands.Cog):
     # +------------------------------------------------------------+
     @commands.command(description='Change the bot’s avatar', no_pm=True)
     @commands.has_permissions(administrator=True)
-    async def logo(self, ctx, link: str = None):
+    async def botlogo(self, ctx, link: str = None):
         """ Change the Bot’s avatar (admins only) """
         if ctx.author.id not in dev_list:
             return await ctx.send("❌ You don't have permission to use this command.", delete_after=23)
@@ -317,7 +317,7 @@ class Misc(commands.Cog):
     # +------------------------------------------------------------+
     @commands.command(description='Change the bot’s banner', no_pm=True)
     @commands.has_permissions(administrator=True)
-    async def banner(self, ctx, link: str = None):
+    async def botbanner(self, ctx, link: str = None):
         """ Change the Bot’s banner (admins only) """
         if ctx.author.id not in dev_list:
             return await ctx.send("❌ You don’t have permission to use this command.", delete_after=23)
