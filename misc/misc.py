@@ -79,6 +79,7 @@ class Misc(commands.Cog):
 
         # Get the DM channel with the user who invoked the command
         try:
+            await ctx.channel.typing()
             # Use existing DM channel or create one if it doesn’t exist
             dm_channel = ctx.author.dm_channel or await ctx.author.create_dm()
         except discord.Forbidden:
@@ -245,6 +246,8 @@ class Misc(commands.Cog):
 
         if text is not None:
             try:
+                await ctx.channel.typing()
+                await asyncio.sleep(6)
                 await ctx.bot.edit_profile(username=str(text[6:]))
                 await ctx.send(f'Thanks for renaming me: {text}')
                 await ctx.message.delete()
@@ -274,6 +277,7 @@ class Misc(commands.Cog):
         }
 
         try:
+            await ctx.channel.typing()
             for attempt in range(3):  # Retry up to 3 times if rate-limited
                 try:
                     async with self.bot.session.get(link, headers=headers) as response:
@@ -334,6 +338,7 @@ class Misc(commands.Cog):
         }
 
         try:
+            await ctx.channel.typing()
             for attempt in range(3):  # Retry up to 3 times if rate-limited
                 try:
                     async with self.bot.session.get(link, headers=headers) as response:
@@ -385,6 +390,7 @@ class Misc(commands.Cog):
         """ Show source code for any command """
         try:
             await ctx.message.delete()
+            await ctx.channel.typing()
         except discord.Forbidden:
             pass
 
@@ -434,6 +440,8 @@ class Misc(commands.Cog):
             return await ctx.send('Nice try. (｡◝‿◜｡)')
 
         else:
+            await ctx.channel.typing()
+            await asyncio.sleep(random.randint(3, 11))
             msg = ctx.message.content
             said = ' '.join(msg.split("sayd ")[1:])
 
