@@ -17,7 +17,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
-# v0.04 — genres data
+# v0.05 — genres info
 
 import discord, traceback, asyncio, datetime, json, re, aiohttp
 from discord.ext import commands
@@ -42,8 +42,16 @@ query ($id: Int, $page: Int, $search: String, $type: MediaType) {
             meanScore
             status
             episodes
-            genres
             chapters
+            duration
+            genres
+            studios(isMain: true) {
+                nodes {
+                    name
+                }
+            }
+            season
+            seasonYear
             externalLinks {
                 url
                 site
@@ -110,7 +118,6 @@ query ($id: Int, $page: Int, $search: String) {
                   romaji
                   english
                   native
-                  genre
                   userPreferred
                 }
               }
@@ -132,7 +139,6 @@ query ($id: Int, $page: Int, $search: String) {
                   romaji
                   english
                   native
-                  genre
                   userPreferred
                 }
               }
@@ -234,6 +240,13 @@ class Ani(commands.Cog):
             "CANCELLED": "Cancelled",
         }
 
+        SeasonToString = {
+            "WINTER": "Winter",
+            "SPRING": "Spring",
+            "SUMMER": "Summer",
+            "FALL": "Fall"
+        }
+
         variables = {"search": entered_title, "page": 1, "type": cmd}
         data = (await self._request(SEARCH_ANIME_MANGA_QUERY, variables))["data"]["Page"]["media"]
 
@@ -244,12 +257,26 @@ class Ani(commands.Cog):
                 link = f"https://anilist.co/{cmd.lower()}/{anime_manga['id']}"
                 description = anime_manga["description"]
                 title = anime_manga["title"]["english"] or anime_manga["title"]["romaji"]
+                
                 if anime_manga.get("nextAiringEpisode"):
                     seconds = anime_manga["nextAiringEpisode"]["timeUntilAiring"]
                     time_left = str(datetime.timedelta(seconds=seconds))
                 else:
                     time_left = "Never"
 
+                # Format genres
+                genres = ", ".join(anime_manga.get("genres", [])) or "N/A"
+                
+                # Format studios (only main studios)
+                studios = ", ".join([studio["name"] for studio in anime_manga.get("studios", {}).get("nodes", [])]) or "N/A"
+                
+                # Format season info
+                season_info = ""
+                if anime_manga.get("season") and anime_manga.get("seasonYear"):
+                    season_info = f"{SeasonToString.get(anime_manga['season'], anime_manga['season'])} {anime_manga['seasonYear']}"
+                elif anime_manga.get("seasonYear"):
+                    season_info = str(anime_manga["seasonYear"])
+                
                 external_links = ""
                 for i in range(0, len(anime_manga["externalLinks"])):
                     ext_link = anime_manga["externalLinks"][i]
@@ -262,18 +289,39 @@ class Ani(commands.Cog):
                 embed.color = 3447003
                 embed.description = self.description_parser(description)
                 embed.set_thumbnail(url=anime_manga["coverImage"]["medium"])
-                embed.add_field(name="Score", value=anime_manga.get("averageScore", "N/A"))
+                
                 if cmd == "ANIME":
+                    embed.add_field(name="Score", value=anime_manga.get("averageScore", "N/A"))
                     embed.add_field(name="Episodes", value=anime_manga.get("episodes", "N/A"))
-                    embed.set_footer(text="Status : " + MediaStatusToString[anime_manga["status"]] + ", Next episode : " + time_left + ", Powered by Anilist")
+                    embed.add_field(name="Duration", value=f"{anime_manga.get('duration', 'N/A')} mins")
+                    embed.add_field(name="Genres", value=genres, inline=False)
+                    embed.add_field(name="Studios", value=studios)
+                    if season_info:
+                        embed.add_field(name="Season", value=season_info)
+                    
+                    embed.set_footer(text="Status : " + MediaStatusToString[anime_manga["status"]] + 
+                                    ", Next episode : " + time_left + 
+                                    ", Powered by Anilist")
                 else:
+                    embed.add_field(name="Score", value=anime_manga.get("averageScore", "N/A"))
                     embed.add_field(name="Chapters", value=anime_manga.get("chapters", "N/A"))
-                    embed.set_footer(text="Status : " + MediaStatusToString.get(anime_manga.get("status"), "N/A") + ", Powered by Anilist")
+                    embed.add_field(name="Genres", value=genres, inline=False)
+                    if season_info:
+                        embed.add_field(name="Published", value=season_info)
+                    
+                    embed.set_footer(text="Status : " + MediaStatusToString.get(anime_manga.get("status"), "N/A") + 
+                                    ", Powered by Anilist")
+                
                 if external_links:
-                    embed.add_field(name="Streaming and/or Info sites", value=external_links)
+                    embed.add_field(name="Streaming/Info", value=external_links, inline=False)
+                
                 if anime_manga["bannerImage"]:
                     embed.set_image(url=anime_manga["bannerImage"])
-                embed.add_field(name="You can find out more", value=f"[Anilist]({link}), [MAL](https://myanimelist.net/{cmd.lower()}/{anime_manga['idMal']}), Kitsu (Soon™)")
+                
+                embed.add_field(name="More Info", 
+                               value=f"[Anilist]({link}), [MAL](https://myanimelist.net/{cmd.lower()}/{anime_manga['idMal']})", 
+                               inline=False)
+                
                 embeds.append(embed)
 
             return embeds, data
