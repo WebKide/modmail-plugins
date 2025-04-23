@@ -17,7 +17,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
-# v0.05 — genres info
+# v0.06 — emojis for fields
 
 import discord, traceback, asyncio, datetime, json, re, aiohttp
 from discord.ext import commands
@@ -177,7 +177,7 @@ class PaginatorView(View):
         self.stop()
 
 class Ani(commands.Cog):
-    """(∩｀-´)⊃━☆ﾟ.*･｡ﾟ Anisearch kawaii commands, uwu """
+    """(∩｀-´)⊃━☆ﾟ.*･｡ﾟ Kawaii Anirisuto (AniList) sagashi komando, uwu """
     def __init__(self, bot):
         self.bot = bot
         self.url = "https://graphql.anilist.co"
@@ -210,8 +210,8 @@ class Ani(commands.Cog):
         description = self.clean_spoilers(description)
         description = self.clean_html(description)
         description = "\n".join(description.split("\n")[:5])
-        if len(description) > 400:
-            return description[:400] + "..."
+        if len(description) > 1080:
+            return description[:1080] + "..."
         else:
             return description
 
@@ -280,7 +280,7 @@ class Ani(commands.Cog):
                 external_links = ""
                 for i in range(0, len(anime_manga["externalLinks"])):
                     ext_link = anime_manga["externalLinks"][i]
-                    external_links += f"[{ext_link['site']}]({ext_link['url']}), "
+                    external_links += f"🔗 [{ext_link['site']}]({ext_link['url']}), "
                     if i + 1 == len(anime_manga["externalLinks"]):
                         external_links = external_links[:-2]
 
@@ -291,35 +291,35 @@ class Ani(commands.Cog):
                 embed.set_thumbnail(url=anime_manga["coverImage"]["medium"])
                 
                 if cmd == "ANIME":
-                    embed.add_field(name="Score", value=anime_manga.get("averageScore", "N/A"))
-                    embed.add_field(name="Episodes", value=anime_manga.get("episodes", "N/A"))
-                    embed.add_field(name="Duration", value=f"{anime_manga.get('duration', 'N/A')} mins")
-                    embed.add_field(name="Genres", value=genres, inline=False)
-                    embed.add_field(name="Studios", value=studios)
+                    embed.add_field(name="⭐ Score", value=anime_manga.get("averageScore", "N/A"))
+                    embed.add_field(name="🎬 Episodes", value=anime_manga.get("episodes", "N/A"))
+                    embed.add_field(name="⏳ Duration", value=f"{anime_manga.get('duration', 'N/A')} mins")
+                    embed.add_field(name="🏷️ Genres", value=f"```fix\n{genres}```", inline=False)
+                    embed.add_field(name="🎥 Studios", value=studios)
                     if season_info:
                         embed.add_field(name="Season", value=season_info)
                     
-                    embed.set_footer(text="Status : " + MediaStatusToString[anime_manga["status"]] + 
-                                    ", Next episode : " + time_left + 
-                                    ", Powered by Anilist")
+                    embed.set_footer(text="Status: " + MediaStatusToString[anime_manga["status"]] + 
+                                    ", Next episode: " + time_left + 
+                                    "⇀ Powered by AniList.co")
                 else:
-                    embed.add_field(name="Score", value=anime_manga.get("averageScore", "N/A"))
-                    embed.add_field(name="Chapters", value=anime_manga.get("chapters", "N/A"))
-                    embed.add_field(name="Genres", value=genres, inline=False)
+                    embed.add_field(name="⭐ Score", value=anime_manga.get("averageScore", "N/A"))
+                    embed.add_field(name="📖 Chapters", value=anime_manga.get("chapters", "N/A"))
+                    embed.add_field(name="🏷️ Genres", value=f"```fix\n{genres}```", inline=False)
                     if season_info:
                         embed.add_field(name="Published", value=season_info)
                     
-                    embed.set_footer(text="Status : " + MediaStatusToString.get(anime_manga.get("status"), "N/A") + 
-                                    ", Powered by Anilist")
+                    embed.set_footer(text="🎞️ Status: " + MediaStatusToString.get(anime_manga.get("status"), "N/A") + 
+                                    "⇀ Powered by AniList.co")
                 
                 if external_links:
-                    embed.add_field(name="Streaming/Info", value=external_links, inline=False)
+                    embed.add_field(name="🔍 Streaming/Info", value=external_links, inline=False)
                 
                 if anime_manga["bannerImage"]:
                     embed.set_image(url=anime_manga["bannerImage"])
                 
-                embed.add_field(name="More Info", 
-                               value=f"[Anilist]({link}), [MAL](https://myanimelist.net/{cmd.lower()}/{anime_manga['idMal']})", 
+                embed.add_field(name="🔍 More Info", 
+                               value=f"🌐 [AniList]({link}), 🌐 [MAL](https://myanimelist.net/{cmd.lower()}/{anime_manga['idMal']})", 
                                inline=False)
                 
                 embeds.append(embed)
@@ -348,7 +348,7 @@ class Ani(commands.Cog):
                     embed.add_field(name="Anime", value="\n".join(self.list_maximum(character_anime)))
                 if len(character_manga) > 0:
                     embed.add_field(name="Manga", value="\n".join(self.list_maximum(character_manga)))
-                embed.set_footer(text="Powered by Anilist")
+                embed.set_footer(text="Powered by AniList.co")
                 embeds.append(embed)
 
             return embeds, data
@@ -384,10 +384,10 @@ class Ani(commands.Cog):
                         else:
                             title = node["title"]["userPreferred"]
 
-                        fav.append(f'[{title}](https://anilist.co/{url_path}/{node["id"]})')
+                        fav.append(f'🌐 [{title}](https://anilist.co/{url_path}/{node["id"]})')
 
                     if fav:
-                        embed.add_field(name=f"Favorite {category}", value="\n".join(self.list_maximum(fav)))
+                        embed.add_field(name=f"🎯 Favorite {category}", value="\n".join(self.list_maximum(fav)))
                 embed.set_footer(text="Powered by Anilist")
                 embeds.append(embed)
 
@@ -398,12 +398,13 @@ class Ani(commands.Cog):
     @commands.group(invoke_without_command=True)
     async def ani(self, ctx):
         """Group command"""
-        await ctx.send("Search for Anime, Manga, or Character", delete_after=69)
+        await ctx.send("Search for Anime, Manga, or Character:\n**Sub-commands**\n├─ anime - Search anime using Anilist├─ character - Search characters using Anilist\n└─ manga - Search manga using Anilist", delete_after=69)
 
     @ani.command()
     async def anime(self, ctx, *, entered_title):
         """Search anime using Anilist"""
         try:
+            await ctx.channel.typing()
             cmd = "ANIME"
             embeds, data = await self._search_anime_manga(ctx, cmd, entered_title)
 
@@ -419,6 +420,7 @@ class Ani(commands.Cog):
     async def manga(self, ctx, *, entered_title):
         """Search manga using Anilist"""
         try:
+            await ctx.channel.typing()
             cmd = "MANGA"
             embeds, data = await self._search_anime_manga(ctx, cmd, entered_title)
 
@@ -434,6 +436,7 @@ class Ani(commands.Cog):
     async def character(self, ctx, *, entered_title):
         """Search characters using Anilist"""
         try:
+            await ctx.channel.typing()
             embeds, data = await self._search_character(ctx, entered_title)
 
             if embeds is not None:
