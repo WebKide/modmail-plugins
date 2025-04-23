@@ -72,15 +72,6 @@ class NavigationButtons(discord.ui.View):
         if self.next_chapter is None:
             self.children[1].disabled = True
 
-        '''
-        # Add the navigation buttons
-        self.add_item(discord.ui.Button(label="◀ 𝖯𝗋𝖾𝗏𝗂𝗈𝗎𝗌 𝗌́𝗅𝗈𝗄𝖺", style=discord.ButtonStyle.grey, custom_id="prev_verse"))
-        self.add_item(discord.ui.Button(label="𝖭𝖾𝗑𝗍 𝗌́𝗅𝗈𝗄𝖺 ▶", style=discord.ButtonStyle.grey, custom_id="next_verse"))
-
-        # Add the close button
-        self.add_item(discord.ui.Button(label="🗙 𝖢𝗅𝗈𝗌𝖾", style=discord.ButtonStyle.red, custom_id="close_button"))
-        '''
-
     async def _navigate(self, interaction: discord.Interaction, chapter: int, verse_ref: str):
         """Handle navigation with latency tracking"""
         start_time = time.time()
@@ -169,7 +160,7 @@ class NavigationButtons(discord.ui.View):
             except discord.NotFound:
                 pass
     
-    @discord.ui.button(label="◀ 𝖯𝗋𝖾𝗏𝗂𝗈𝗎𝗌", style=discord.ButtonStyle.grey, custom_id="prev_verse")
+    @discord.ui.button(label="◀ 𝖯𝗋𝖾𝗏", style=discord.ButtonStyle.grey, custom_id="prev_verse")
     async def previous_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         """Button to navigate to previous verse"""
         if self.prev_chapter is None:
@@ -213,13 +204,13 @@ class NavigationButtons(discord.ui.View):
 class AsItIs(commands.Cog):
     """Bhagavad Gītā As It Is (Original 1972 Macmillan edition)
 
-    Free Plugin to print Gītā verses inside a Discord's text-channel. (∩｀-´)⊃━☆ﾟ.*･｡ﾟ Full embed support and śloka Navigation.
+    - Free Plugin to print Gītā verses inside a Discord's text-channel. Full embed support and śloka Navigation.
 
-    Śrīla Prabhupāda's original 1972 Macmillan Bhagavad-gītā As It Is with elaborate commentary [not available here, yet], original Sanskrit and English word meanings. It is a first-class EXACT reproduction of the original hard cover book.
+    - Śrīla Prabhupāda's original 1972 Macmillan Bhagavad-gītā As It Is with elaborate commentary [not available here, yet], original Sanskrit and English word meanings. It is a first-class EXACT reproduction of the original hard cover book.
 
-    No other philosophical or religious work reveals, in such a lucid and profound way, the nature of consciousness, the self, the universe and the Supreme.
+    - No other philosophical or religious work reveals, in such a lucid and profound way, the nature of consciousness, the self, the universe and the Supreme.
 
-    Bhagavad Gītā As It Is is the largest-selling, most widely used edition of the Gītā in the world.
+    - Bhagavad Gītā As It Is is the largest-selling, most widely used edition of the Gītā in the world.
     """
     def __init__(self, bot):
         self.bot = bot
@@ -471,7 +462,7 @@ class AsItIs(commands.Cog):
         verse_text = self._format_verse_text(verse_data)
         self._safe_add_field(
             embed,
-            name=f"𝗧𝗘𝗫𝗧 {verse_ref}:",
+            name=f"𝐓𝐄𝐗𝐓 {verse_ref}:",
             value=verse_text,
             inline=False
         )
@@ -488,7 +479,7 @@ class AsItIs(commands.Cog):
         for i, chunk in enumerate(synonyms_chunks):
             self._safe_add_field(
                 embed,
-                name="📖 ＳＹＮＯＮＹＭＳ:" if i == 0 else "\u200b",
+                name="📖 𝐒𝐘𝐍𝐎𝐍𝐘𝐌𝐒:" if i == 0 else "\u200b",
                 value=chunk,
                 inline=False
             )
@@ -499,7 +490,7 @@ class AsItIs(commands.Cog):
         for i, chunk in enumerate(translation_chunks):
             self._safe_add_field(
                 embed,
-                name="🗒️ ＴＲＡＮＳＬＡＴＩＯＮ:" if i == 0 else "\u200b",
+                name="🗒️ 𝐓𝐑𝐀𝐍𝐒𝐋𝐀𝐓𝐈𝐎𝐍:" if i == 0 else "\u200b",
                 value=f"> **{chunk}**",
                 inline=False
             )
