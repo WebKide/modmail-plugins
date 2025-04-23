@@ -17,7 +17,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
-# v0.06 — emojis for fields
+# v0.07 — emojis for names
 
 import discord, traceback, asyncio, datetime, json, re, aiohttp
 from discord.ext import commands
@@ -297,11 +297,11 @@ class Ani(commands.Cog):
                     embed.add_field(name="🏷️ Genres", value=f"```fix\n{genres}```", inline=False)
                     embed.add_field(name="🎥 Studios", value=studios)
                     if season_info:
-                        embed.add_field(name="Season", value=season_info)
+                        embed.add_field(name="📅 Season", value=season_info)
                     
                     embed.set_footer(text="Status: " + MediaStatusToString[anime_manga["status"]] + 
                                     ", Next episode: " + time_left + 
-                                    "⇀ Powered by AniList.co")
+                                    " (ﾉ^ヮ^)ﾉ Powered by AniList.co")
                 else:
                     embed.add_field(name="⭐ Score", value=anime_manga.get("averageScore", "N/A"))
                     embed.add_field(name="📖 Chapters", value=anime_manga.get("chapters", "N/A"))
@@ -310,7 +310,7 @@ class Ani(commands.Cog):
                         embed.add_field(name="Published", value=season_info)
                     
                     embed.set_footer(text="🎞️ Status: " + MediaStatusToString.get(anime_manga.get("status"), "N/A") + 
-                                    "⇀ Powered by AniList.co")
+                                    " (ﾉ^ヮ^)ﾉ Powered by AniList.co")
                 
                 if external_links:
                     embed.add_field(name="🔍 Streaming/Info", value=external_links, inline=False)
@@ -345,9 +345,9 @@ class Ani(commands.Cog):
                 embed.description = self.description_parser(character["description"])
                 embed.set_thumbnail(url=character["image"]["large"])
                 if len(character_anime) > 0:
-                    embed.add_field(name="Anime", value="\n".join(self.list_maximum(character_anime)))
+                    embed.add_field(name="🎦 Anime", value="\n".join(self.list_maximum(character_anime)))
                 if len(character_manga) > 0:
-                    embed.add_field(name="Manga", value="\n".join(self.list_maximum(character_manga)))
+                    embed.add_field(name="📚 Manga", value="\n".join(self.list_maximum(character_manga)))
                 embed.set_footer(text="Powered by AniList.co")
                 embeds.append(embed)
 
@@ -371,8 +371,8 @@ class Ani(commands.Cog):
                 embed.color = 3447003
                 embed.description = self.description_parser(user["about"])
                 embed.set_thumbnail(url=user["avatar"]["large"])
-                embed.add_field(name="Watched time", value=datetime.timedelta(minutes=int(user["stats"]["watchedTime"])))
-                embed.add_field(name="Chapters read", value=user["stats"].get("chaptersRead", "N/A"))
+                embed.add_field(name="📺 Watched time", value=datetime.timedelta(minutes=int(user["stats"]["watchedTime"])))
+                embed.add_field(name="📒 Chapters read", value=user["stats"].get("chaptersRead", "N/A"))
                 for category in "anime", "manga", "characters":
                     fav = []
                     for node in user["favourites"][category]["nodes"]:
