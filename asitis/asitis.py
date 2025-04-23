@@ -18,17 +18,15 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-import discord
-import json
-import random
-import time
-
-from pathlib import Path
-from discord.ext import commands
-from typing import List, Tuple, Dict, Optional
+import json, time
 from datetime import datetime, timedelta
+from pathlib import Path
+from typing import List, Tuple, Dict, Optional
 
-# v2.32 - emoji="✖️", removed
+import discord
+from discord.ext import commands
+
+# v2.33 ➜ fixed imports
 BG_CHAPTER_INFO = {
     1: {'total_verses': 46, 'grouped_ranges': [(16, 18), (21, 22), (32, 35), (37, 38)], 'chapter_title': 'First. Observing the Armies on the Battlefield of Kurukṣetra'},
     2: {'total_verses': 72, 'grouped_ranges': [(42, 43)], 'chapter_title': 'Second. Contents of the Gītā Summarized'},
@@ -466,14 +464,14 @@ class AsItIs(commands.Cog):
         # Create embed: Orange border-left
         embed = discord.Embed(
             color=discord.Color(0xF5A623),
-            description=f"**𝖢𝗁𝖺𝗉𝗍𝖾𝗋 {chapter}. {BG_CHAPTER_INFO[chapter]['chapter_title'].split('. ', 1)[-1]}**"
+            description=f"📜 **𝖢𝗁𝖺𝗉𝗍𝖾𝗋 {chapter}. {BG_CHAPTER_INFO[chapter]['chapter_title'].split('. ', 1)[-1]}**"
         )
 
         # Add verse text field
         verse_text = self._format_verse_text(verse_data)
         self._safe_add_field(
             embed,
-            name=f"📜 ＴＥＸＴ {verse_ref}:",
+            name=f"𝗧𝗘𝗫𝗧 {verse_ref}:",
             value=verse_text,
             inline=False
         )
