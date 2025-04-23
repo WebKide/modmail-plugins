@@ -26,7 +26,7 @@ from typing import List, Tuple, Dict, Optional
 import discord
 from discord.ext import commands
 
-# v2.38 ➜ updated dedicatory
+# v2.39 ➜ updated dedicatory
 BG_CHAPTER_INFO = {
     1: {'total_verses': 46, 'grouped_ranges': [(16, 18), (21, 22), (32, 35), (37, 38)], 'chapter_title': 'First. Observing the Armies on the Battlefield of Kurukṣetra'},
     2: {'total_verses': 72, 'grouped_ranges': [(42, 43)], 'chapter_title': 'Second. Contents of the Gītā Summarized'},
@@ -449,10 +449,10 @@ class AsItIs(commands.Cog):
         verse_data = self._find_verse_data(chapter_data, verse_ref)
 
         # Create embed: Orange border-left
-        dedicatory = "```fix\nTo ŚRĪLA BALADEVA VIDYĀBHŪṢAṆA who presented so nicely the “Govinda-bhāṣya” commentary on Vedānta philosophy.```\n    *oṁ namo bhagavate vāsudevāya*"
+        dedicatory = "```fix\nTo ŚRĪLA BALADEVA VIDYĀBHŪṢAṆA who presented so nicely the “Govinda-bhāṣya” commentary on Vedānta philosophy.```    *oṁ namo bhagavate vāsudevāya*"
         embed = discord.Embed(
             color=discord.Color(0xF5A623),
-            description=f"{dedicatory}📜 **𝖢𝗁𝖺𝗉𝗍𝖾𝗋 {chapter}. {BG_CHAPTER_INFO[chapter]['chapter_title'].split('. ', 1)[-1]}**"
+            description=f"{dedicatory}\n\n📜 **𝖢𝗁𝖺𝗉𝗍𝖾𝗋 {chapter}. {BG_CHAPTER_INFO[chapter]['chapter_title'].split('. ', 1)[-1]}**"
         )
 
         # Add verse text field
