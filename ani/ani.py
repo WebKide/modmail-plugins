@@ -19,8 +19,8 @@ SOFTWARE.
 """
 
 import discord, traceback, asyncio, datetime, json, re, aiohttp
-
 from discord.ext import commands
+from discord.ext import menus
 
 SEARCH_ANIME_MANGA_QUERY = """
 query ($id: Int, $page: Int, $search: String, $type: MediaType) {
@@ -139,6 +139,13 @@ query ($id: Int, $page: Int, $search: String) {
 }
 """
 
+class AniListPaginator(menus.ListPageSource):
+    def __init__(self, data, embed_list):
+        self.embed_list = embed_list
+        super().__init__(data, per_page=1)
+
+    async def format_page(self, menu, entry):
+        return self.embed_list[menu.current_page]
 
 class Ani(commands.Cog):
     """(∩｀-´)⊃━☆ﾟ.*･｡ﾟ Anisearch kawaii commands, uwu """
@@ -186,12 +193,10 @@ class Ani(commands.Cog):
             return items
 
     async def _request(self, query, variables=None):
-
         if variables is None:
             variables = {}
 
         request_json = {"query": query, "variables": variables}
-
         headers = {"content-type": "application/json"}
 
         async with aiohttp.ClientSession() as session:
@@ -199,7 +204,6 @@ class Ani(commands.Cog):
                 return await response.json()
 
     async def _search_anime_manga(self, ctx, cmd, entered_title):
-
         # Outputs MediaStatuses to strings
         MediaStatusToString = {
             # Has completed and is no longer being released
@@ -213,11 +217,9 @@ class Ani(commands.Cog):
         }
 
         variables = {"search": entered_title, "page": 1, "type": cmd}
-
         data = (await self._request(SEARCH_ANIME_MANGA_QUERY, variables))["data"]["Page"]["media"]
 
         if data is not None and len(data) > 0:
-
             # a list of embeds
             embeds = []
 
@@ -259,18 +261,14 @@ class Ani(commands.Cog):
                 embeds.append(embed)
 
             return embeds, data
-
         else:
             return None
 
     async def _search_character(self, ctx, entered_title):
-
         variables = {"search": entered_title, "page": 1}
-
         data = (await self._request(SEARCH_CHARACTER_QUERY, variables))["data"]["Page"]["characters"]
 
         if data is not None and len(data) > 0:
-
             # a list of embeds
             embeds = []
 
@@ -292,25 +290,20 @@ class Ani(commands.Cog):
                 embeds.append(embed)
 
             return embeds, data
-
         else:
             return None
 
     async def _search_user(self, ctx, entered_title):
-
         variables = {"search": entered_title, "page": 1}
-
         data = (await self._request(SEARCH_USER_QUERY, variables))["data"]["Page"]["users"]
 
         if data is not None and len(data) > 0:
-
             # a list of embeds
             embeds = []
 
             for user in data:
                 # Sets up various variables for Embed
                 link = f"https://anilist.co/user/{user['id']}"
-                title = f"[{user['name']}]({link})"
                 title = user["name"]
 
                 embed = discord.Embed(title=title)
@@ -339,7 +332,6 @@ class Ani(commands.Cog):
                 embeds.append(embed)
 
             return embeds, data
-
         else:
             return None
 
@@ -349,7 +341,7 @@ class Ani(commands.Cog):
     @commands.group(invoke_without_command=True, no_pm=True)
     async def ani(self, ctx):
         """ Group command """
-        return await ctx.send("Search for Anime, Manga, or Character", delete_after=69)
+        await ctx.send("Search for Anime, Manga, or Character", delete_after=69)
 
     # +------------------------------------------------------------+
     # |                        ANI ANIME                           |
@@ -357,16 +349,15 @@ class Ani(commands.Cog):
     @ani.command(no_pm=True)
     async def anime(self, ctx, *, entered_title):
         """Search anime using Anilist"""
-
         try:
             cmd = "ANIME"
             embeds, data = await self._search_anime_manga(ctx, cmd, entered_title)
 
             if embeds is not None:
-                await ctx.send(ctx, pages=embeds, controls=DEFAULT_CONTROLS, message=None, page=0, timeout=30)
+                pages = menus.MenuPages(source=AniListPaginator(data, embeds), clear_reactions_after=True)
+                await pages.start(ctx)
             else:
                 await ctx.send("No anime was found or there was an error in the process")
-
         except TypeError:
             await ctx.send("No anime was found or there was an error in the process")
 
@@ -376,16 +367,15 @@ class Ani(commands.Cog):
     @ani.command(no_pm=True)
     async def manga(self, ctx, *, entered_title):
         """ Search manga using Anilist """
-
         try:
             cmd = "MANGA"
             embeds, data = await self._search_anime_manga(ctx, cmd, entered_title)
 
             if embeds is not None:
-                await ctx.send(ctx, pages=embeds, controls=DEFAULT_CONTROLS, message=None, page=0, timeout=30)
+                pages = menus.MenuPages(source=AniListPaginator(data, embeds), clear_reactions_after=True)
+                await pages.start(ctx)
             else:
                 await ctx.send("No mangas were found or there was an error in the process")
-
         except TypeError:
             await ctx.send("No mangas were found or there was an error in the process")
 
@@ -399,22 +389,13 @@ class Ani(commands.Cog):
             embeds, data = await self._search_character(ctx, entered_title)
 
             if embeds is not None:
-                await ctx.send(ctx, pages=embeds, controls=DEFAULT_CONTROLS, message=None, page=0, timeout=30)
+                pages = menus.MenuPages(source=AniListPaginator(data, embeds), clear_reactions_after=True)
+                await pages.start(ctx)
             else:
                 await ctx.send("No characters were found or there was an error in the process")
-
         except TypeError:
             await ctx.send("No characters were found or there was an error in the process")
 
-
-        """
-        try:
-            await ctx.send()
-            
-        except Exception as e:
-            await ctx.send(f'```py\n{e}```')
-        """
-
-def setup(bot):
-    bot.add_cog(Ani(bot))
+async def setup(bot):
+    await bot.add_cog(Ani(bot))
     
