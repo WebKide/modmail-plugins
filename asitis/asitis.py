@@ -26,7 +26,7 @@ from typing import List, Tuple, Dict, Optional
 import discord
 from discord.ext import commands
 
-# v2.35 ➜ 𝚃𝙴𝚇𝚃 𝚂𝚈𝙽𝙾𝙽𝚈𝙼𝚂 𝚃𝚁𝙰𝙽𝚂𝙻𝙰𝚃𝙸𝙾𝙽
+# v2.36 ➜ buttons
 BG_CHAPTER_INFO = {
     1: {'total_verses': 46, 'grouped_ranges': [(16, 18), (21, 22), (32, 35), (37, 38)], 'chapter_title': 'First. Observing the Armies on the Battlefield of Kurukṣetra'},
     2: {'total_verses': 72, 'grouped_ranges': [(42, 43)], 'chapter_title': 'Second. Contents of the Gītā Summarized'},
@@ -45,7 +45,7 @@ BG_CHAPTER_INFO = {
     15: {'total_verses': 20, 'grouped_ranges': [(3, 4)], 'chapter_title': 'Fifteenth. The Yoga of the Supreme Person'},
     16: {'total_verses': 24, 'grouped_ranges': [(1, 3), (11, 12), (13, 15)], 'chapter_title': 'Sixteenth. The Divine and Demoniac Natures'},
     17: {'total_verses': 28, 'grouped_ranges': [(5, 6), (8, 10), (26, 27)], 'chapter_title': 'Seventeenth. The Divisions of Faith'},
-    18: {'total_verses': 78, 'grouped_ranges': [(13, 14), (36, 37), (51, 53)], 'chapter_title': 'Eighteenth. Conclusion-The Perfection of Renunciation'}
+    18: {'total_verses': 78, 'grouped_ranges': [(13, 14), (36, 37), (51, 53)], 'chapter_title': 'Eighteenth. Conclusion — The Perfection of Renunciation'}
 }
 
 class NavigationButtons(discord.ui.View):
@@ -205,11 +205,8 @@ class AsItIs(commands.Cog):
     """Bhagavad Gītā As It Is (Original 1972 Macmillan edition)
 
     - Free Plugin to print Gītā verses inside a Discord's text-channel. Full embed support and śloka Navigation.
-
     - Śrīla Prabhupāda's original 1972 Macmillan Bhagavad-gītā As It Is with elaborate commentary [not available here, yet], original Sanskrit and English word meanings. It is a first-class EXACT reproduction of the original hard cover book.
-
     - No other philosophical or religious work reveals, in such a lucid and profound way, the nature of consciousness, the self, the universe and the Supreme.
-
     - Bhagavad Gītā As It Is is the largest-selling, most widely used edition of the Gītā in the world.
     """
     def __init__(self, bot):
@@ -453,9 +450,10 @@ class AsItIs(commands.Cog):
         verse_data = self._find_verse_data(chapter_data, verse_ref)
 
         # Create embed: Orange border-left
+        dedicatory = "\n\nTo ŚRĪLA BALADEVA VIDYĀBHŪṢAṆA who presented so nicely the “Govinda-bhāṣya” commentary on Vedānta philosophy."
         embed = discord.Embed(
             color=discord.Color(0xF5A623),
-            description=f"📜 **𝖢𝗁𝖺𝗉𝗍𝖾𝗋 {chapter}. {BG_CHAPTER_INFO[chapter]['chapter_title'].split('. ', 1)[-1]}**"
+            description=f"📜 **𝖢𝗁𝖺𝗉𝗍𝖾𝗋 {chapter}. {BG_CHAPTER_INFO[chapter]['chapter_title'].split('. ', 1)[-1]}**{dedicatory}"
         )
 
         # Add verse text field
@@ -521,8 +519,8 @@ class AsItIs(commands.Cog):
 
     @commands.command(name='asitis', aliases=['1972', 'bg'], no_pm=True)
     async def gita_verse(self, ctx, chapter: int, verse: str):
-        """Retrieve a śloka from the Bhagavad Gītā — As It Is (Original 1972 Macmillan edition)
-          To ŚRĪLA BALADEVA VIDYĀBHŪṢAṆA who presented so nicely the "Govinda-bhāṣya" commentary on Vedānta philosophy.
+        """Bhagavad Gītā — As It Is (Original 1972 Macmillan edition)
+        To ŚRĪLA BALADEVA VIDYĀBHŪṢAṆA who presented so nicely the “Govinda-bhāṣya” commentary on Vedānta philosophy.
 
         - Supports Chapter Title
         - Supports Sanskrit Text
