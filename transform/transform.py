@@ -28,13 +28,19 @@ from discord.ext import commands
 from collections import defaultdict
 
 class Transform(commands.Cog):
-    """(∩｀-´)⊃━☆ﾟ.*･｡ﾟ this Discord.py Plugin provides various text transformation utilities.
+    """░ (∩｀-´)⊃━☆ﾟ.*･｡ﾟ this Discord.py Plugin provides various text transformation utilities
 
     Key Features:
     - AI-powered word generation using Markov chains
-    - Text transformers (ᵗⁱⁿʸ, 𝒸𝓊𝓇𝓈𝒾𝓋ℯ, 𝕓𝕠𝕝𝕕, sᴍᴀʟʟ ᴄᴀᴘs, 1337 5P34K, MoCkInG CaSe, ＶＡＰＯＲ, 𝖲𝖺𝗇𝗌-𝗌𝖾𝗋𝗂𝖿, Z͌͆a͠l̓g͊ő)
+    - ASCII Banners:
+      - 2-line block banners
+      - 3-line single and double lines
+    - Text transformers:
+      - ᵗⁱⁿʸ, 𝒸𝓊𝓇𝓈𝒾𝓋ℯ, 𝕕𝕠𝕦𝕓𝕝𝕖-𝕤𝕥𝕣𝕦𝕔𝕜
+      - sᴍᴀʟʟ ᴄᴀᴘs, 1337 5P34K, MoCkInG CaSe
+      - ＶＡＰＯＲ, 𝖲𝖺𝗇𝗌-𝗌𝖾𝗋𝗂𝖿, Z͌͆a͠l̓g͊ő
     - UNICODE character information display
-    - Caesar cipher with optional rotation (default: 3)
+    - Caesar cipher with optional rotation `(default: 3)`
     - Smart binary converter with encoder and decoder
     - Fun text modifiers (👏, 🙏)
     """
@@ -139,87 +145,6 @@ class Transform(commands.Cog):
         return word
 
     # +------------------------------------------------------------+
-    # |                     BANNER 1                               |
-    # +------------------------------------------------------------+
-    @commands.command(description="Generate 3-single-line ASCII banners", name="banner1", no_pm=True)
-    async def _banner_one(self, ctx, *, text: str):
-        """Convert text to 3-single-line ASCII banners
-        ```
-        ┌┐ ╭─╮┌┐┌┌┐┌┌─┐┬─╮  ┌┐
-        ├┴┐├─┤││││││├┤ ├┬┘   │
-        └─┘┴ ┴┘└┘┘└┘└─┘┴╰─  ─┴─
-        ```
-        """
-        if not text:
-            return await ctx.send("Please provide text to bannerize!", delete_after=23)
-
-        # Define the 3-line font (uppercase only)
-        font = {
-            'A': ['╭─╮', '├─┤', '┴ ┴'],
-            'B': ['┌┐ ', '├┴┐', '└─┘'],
-            'C': ['┌─┐', '│  ', '└─┘'],
-            'D': ['┌─╮', '│ │', '┴─┘'],
-            'E': ['┌─┐', '├┤ ', '└─┘'],
-            'F': ['┌─┐', '├┤ ', '└  '],
-            'G': ['┌─┐', '│ ┬', '└─┘'],
-            'H': ['┬ ┬', '├─┤', '┴ ┴'],
-            'I': ['┬', '│', '┴'],
-            'J': [' ┬', '  ', ' └┘'],
-            'K': ['┬┌─', '├┴┐', '┴ ┴'],
-            'L': ['┬  ', '│  ', '┴─┘'],
-            'M': ['┌┬┐', '│││', '┴ ┴'],
-            'N': ['┌╮┌', '│││', '┘└┘'],
-            'O': ['┌─┐', '│ │', '└─┘'],
-            'P': ['┌─┐', '├─┘', '┴  '],
-            'Q': ['┌─╮', '│╮│', '└┼┘'],
-            'R': ['┬─╮', '├┬┘', '┴╰─'],
-            'S': ['╭─┐', '╰─╮', '└─╯'],
-            'T': ['┌┬┐', ' │ ', ' ┴ '],
-            'U': ['┬ ┬', '│ │', '╰─╯'],
-            'V': ['┬ ┬', '└╮│', ' └┘'],
-            'W': ['┬ ┬', '│││', '└┴┘'],
-            'X': ['┬ ┬', ' ╳ ', '┴ ┴'],
-            'Y': ['┬ ┬', '└┬┘', ' ┴ '],
-            'Z': ['──┐', '┌─┘', '└─┘'],
-            '0': ['┌─┐', '│╱│', '└─┘'],
-            '1': ['┌┐ ', ' │ ', '─┴─'],
-            '2': ['┌─┐', '╭─┘', '└──'],
-            '3': ['┌─┐', ' ─┤', '└─┘'],
-            '4': ['┬ ┬', '└─┤', '  ┴'],
-            '5': ['┌─┐', '└─╮', '└─┘'],
-            '6': ['╭──', '├─┐', '└─┘'],
-            '7': ['──┐', '  │', '  ┴'],
-            '8': ['┌─┐', '├─┤', '└─┘'],
-            '9': ['┌─┐', '└─┤', '──┘'],
-            '!': ['┬', '│', '￮'],
-            '?': ['┌─╮', ' ┌┘', ' ￮ '],
-            ' ': ['   ', '   ', '   '],
-            '-': ['   ', ' ─ ', '   '],
-            '_': ['   ', '   ', '───'],
-            '+': ['   ', '─┼─', '   '],
-            '=': ['   ', '───', '───'],
-            '=': ['  ', '  ', '￮ '],
-        }
-
-        # Convert text to uppercase and limit length
-        text = text.upper()[:20]  # Prevent abuse with long text
-        banner_lines = ['', '', '']  # Initialize 3 empty lines
-
-        for char in text:
-            # Get the character's ASCII art or default to space
-            char_art = font.get(char, font[' '])
-            for i in range(3):
-                banner_lines[i] += char_art[i] #+ ' '  # Add spacing between chars
-
-        # Combine into a single string
-        banner = '\n'.join(banner_lines)
-        
-        em = discord.Embed(color=self.user_color)
-        em.add_field(name="Input:", value=f'```\n{text}```', inline=False)
-        em.add_field(name="3-Line Banner:", value=f'```\n{banner}```', inline=False)
-        await ctx.send(embed=em)
-
-    # +------------------------------------------------------------+
     # |                     BANNER 0                               |
     # +------------------------------------------------------------+
     @commands.command(description="Generate 2-line ASCII banners", name="banner", no_pm=True)
@@ -273,7 +198,7 @@ class Transform(commands.Cog):
             '9': ['█▀█', '▀▀█'],
             '!': ['█░', '▄░'],
             '?': ['▀▀█', '░▄░'],
-            ' ': ['░░', '░░'],
+            ' ': [' ', ' '],
             '.': ['░░', '▄░'],
             '_': ['░░░░', '▄▄▄▄'],
             '+': ['░▄░', '▀█▀'],
@@ -282,8 +207,8 @@ class Transform(commands.Cog):
             }
 
         # Convert text to uppercase and limit length
-        text = text.upper()[:30]  # Prevent abuse with long text
-        banner_lines = ['', '']  # Initialize 3 empty lines
+        text = text.upper()[:16]  # Prevent abuse with long text
+        banner_lines = ['', '']  # Initialize 2 empty lines
 
         for char in text:
             # Get the character's ASCII art or default to space
@@ -297,7 +222,88 @@ class Transform(commands.Cog):
         em = discord.Embed(color=self.user_color)
         em.add_field(name="Input:", value=f'```\n{text}```', inline=False)
         em.add_field(name="2-Line Banner:", value=f'```\n{banner}```', inline=False)
-        await ctx.send(embed=em)
+        await ctx.send(embed=em, allowed_mentions=discord.AllowedMentions.none())
+
+    # +------------------------------------------------------------+
+    # |                     BANNER 1                               |
+    # +------------------------------------------------------------+
+    @commands.command(description="Generate 3-single-line ASCII banners", name="banner1", no_pm=True)
+    async def _banner_one(self, ctx, *, text: str):
+        """Convert text to 3-single-line ASCII banners
+        ```
+        ┌┐ ╭─╮┌┐┌┌┐┌┌─┐┬─╮  ┌┐
+        ├┴┐├─┤││││││├┤ ├┬┘   │
+        └─┘┴ ┴┘└┘┘└┘└─┘┴╰─  ─┴─
+        ```
+        """
+        if not text:
+            return await ctx.send("Please provide text to bannerize!", delete_after=23)
+
+        # Define the 3-line font (uppercase only)
+        font = {
+            'A': ['╭─╮', '├─┤', '┴ ┴'],
+            'B': ['┌┐ ', '├┴┐', '└─┘'],
+            'C': ['┌─┐', '│  ', '└─┘'],
+            'D': ['┌─╮', '│ │', '┴─┘'],
+            'E': ['┌─┐', '├┤ ', '└─┘'],
+            'F': ['┌─┐', '├┤ ', '└  '],
+            'G': ['┌─┐', '│ ┬', '└─┘'],
+            'H': ['┬ ┬', '├─┤', '┴ ┴'],
+            'I': ['┬', '│', '┴'],
+            'J': [' ┬', '  ', ' └┘'],
+            'K': ['┬┌─', '├┴┐', '┴ ┴'],
+            'L': ['┬  ', '│  ', '┴─┘'],
+            'M': ['┌┬┐', '│││', '┴ ┴'],
+            'N': ['┌╮┌', '│││', '┘└┘'],
+            'O': ['┌─┐', '│ │', '└─┘'],
+            'P': ['┌─┐', '├─┘', '┴  '],
+            'Q': ['┌─╮', '│╮│', '└┼┘'],
+            'R': ['┬─╮', '├┬┘', '┴╰─'],
+            'S': ['╭─┐', '╰─╮', '└─╯'],
+            'T': ['┌┬┐', ' │ ', ' ┴ '],
+            'U': ['┬ ┬', '│ │', '╰─╯'],
+            'V': ['┬ ┬', '└┐│', ' └┘'],
+            'W': ['┬ ┬', '│││', '└┴┘'],
+            'X': ['┬ ┬', ' ╳ ', '┴ ┴'],
+            'Y': ['┬ ┬', '└┬┘', ' ┴ '],
+            'Z': ['──┐', '┌─┘', '└─┘'],
+            '0': ['┌─┐', '│╱│', '└─┘'],
+            '1': ['┌┐ ', ' │ ', '─┴─'],
+            '2': ['┌─┐', '╭─┘', '└──'],
+            '3': ['┌─┐', ' ─┤', '└─┘'],
+            '4': ['┬ ┬', '└─┤', '  ┴'],
+            '5': ['┌─┐', '└─╮', '└─┘'],
+            '6': ['╭──', '├─┐', '└─┘'],
+            '7': ['──┐', '  │', '  ┴'],
+            '8': ['┌─┐', '├─┤', '└─┘'],
+            '9': ['┌─┐', '└─┤', '──┘'],
+            '!': ['┬', '│', '￮'],
+            '?': ['┌─╮', ' ┌┘', ' ￮ '],
+            ' ': ['   ', '   ', '   '],
+            '-': ['   ', ' ─ ', '   '],
+            '_': ['   ', '   ', '───'],
+            '+': ['   ', '─┼─', '   '],
+            '=': ['   ', '───', '───'],
+            '=': ['  ', '  ', '￮ '],
+        }
+
+        # Convert text to uppercase and limit length
+        text = text.upper()[:20]  # Prevent abuse with long text
+        banner_lines = ['', '', '']  # Initialize 3 empty lines
+
+        for char in text:
+            # Get the character's ASCII art or default to space
+            char_art = font.get(char, font[' '])
+            for i in range(3):
+                banner_lines[i] += char_art[i] #+ ' '  # Add spacing between chars
+
+        # Combine into a single string
+        banner = '\n'.join(banner_lines)
+        
+        em = discord.Embed(color=self.user_color)
+        em.add_field(name="Input:", value=f'```\n{text}```', inline=False)
+        em.add_field(name="3-Line Banner:", value=f'```\n{banner}```', inline=False)
+        await ctx.send(embed=em, allowed_mentions=discord.AllowedMentions.none())
 
     # +------------------------------------------------------------+
     # |                     BANNER 2                               |
@@ -325,7 +331,7 @@ class Transform(commands.Cog):
             'G': ['┌─┐', '╽ ┰', '┗━┛'],
             'H': ['┬ ┬', '┟─┧', '┻ ┻'],
             'I': ['┬', '╽', '┻'],
-            'J': [' ┬', '  ', ' ┗┛'],
+            'J': [' ┬', '  ', '┗┛'],
             'K': ['┬┌─', '┟┴┒', '┻ ┻'],
             'L': ['┬  ', '╽  ', '┻━┛'],
             'M': ['┌┬┐', '╽╽╽', '┻ ┻'],
@@ -378,7 +384,7 @@ class Transform(commands.Cog):
         em = discord.Embed(color=self.user_color)
         em.add_field(name="Input:", value=f'```\n{text}```', inline=False)
         em.add_field(name="3-Single-Line Banner:", value=f'```\n{banner}```', inline=False)
-        await ctx.send(embed=em)
+        await ctx.send(embed=em, allowed_mentions=discord.AllowedMentions.none())
 
     # +------------------------------------------------------------+
     # |                     BANNER 3                               |
@@ -459,7 +465,7 @@ class Transform(commands.Cog):
         em = discord.Embed(color=self.user_color)
         em.add_field(name="Input:", value=f'```\n{text}```', inline=False)
         em.add_field(name="3-Double-Line Banner:", value=f'```\n{banner}```', inline=False)
-        await ctx.send(embed=em)
+        await ctx.send(embed=em, allowed_mentions=discord.AllowedMentions.none())
 
     # +------------------------------------------------------------+
     # |                     CHARINFO                               |
@@ -482,7 +488,7 @@ class Transform(commands.Cog):
         em = discord.Embed(color=self.user_color)
         em.description = '\n'.join(map(to_string, characters))
         em = await self._add_footer(em)
-        await ctx.send(embed=em)
+        await ctx.send(embed=em, allowed_mentions=discord.AllowedMentions.none())
 
     # +------------------------------------------------------------+
     # |                     TEXT TRANSFORMERS                      |
@@ -518,28 +524,6 @@ class Transform(commands.Cog):
 
         char = "abcdefghijklmnopqrstuvwxyz0123456789+-+()."
         tran = "𝒶𝒷𝒸𝒹𝑒𝒻𝑔𝒽𝒾𝒿𝓀𝓁𝓂𝓃𝑜𝓅𝓆𝓇𝓈𝓉𝓊𝓋𝓌𝓍𝓎𝓏𝟢𝟣𝟤𝟥𝟦𝟧𝟨𝟩𝟪𝟫+-+()."
-        result = text.translate(str.maketrans(char, tran))
-        
-        em = discord.Embed(color=self.user_color)
-        em.add_field(name='Input:', value=f'```\n{text}```', inline=False)
-        em.add_field(name='Result:', value=f'```\n{result}```', inline=False)
-        em = await self._add_footer(em)
-        await ctx.send(embed=em, allowed_mentions=discord.AllowedMentions.none())
-
-    # +------------------------------------------------------------+
-    # |                    BOLD FONT                               |
-    # +------------------------------------------------------------+
-    @commands.command(description='Text transformer command', no_pm=True)
-    async def bold(self, ctx, *, text: str):
-        """Convert text to 𝕓𝕠𝕝𝕕"""
-        start_time = time.time()
-
-        if not text:
-            return await ctx.send("Please provide some text.", delete_after=23)
-
-        char = "aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrRsStTuUvVwWxXyYzZ0123456789-+()[]."
-        tran = "𝕒𝔸𝕓𝔹𝕔ℂ𝕕𝔻𝕖𝔼𝕗𝔽𝕘𝔾𝕙ℍ𝕚𝕀𝕛𝕁𝕜𝕂𝕝𝕃𝕞𝕄𝕟ℕ𝕠𝕆𝕡ℙ𝕢ℚ𝕣ℝ𝕤𝕊𝕥𝕋𝕦𝕌𝕧𝕍𝕨𝕎𝕩𝕏𝕪𝕐𝕫ℤ𝟘𝟙𝟚𝟛𝟜𝟝𝟞𝟟𝟠𝟡-+《》〚〛●"
-
         result = text.translate(str.maketrans(char, tran))
         
         em = discord.Embed(color=self.user_color)
