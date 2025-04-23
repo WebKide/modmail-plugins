@@ -26,7 +26,7 @@ from typing import List, Tuple, Dict, Optional
 import discord
 from discord.ext import commands
 
-# v2.33 ➜ fixed imports
+# v2.35 ➜ 𝚃𝙴𝚇𝚃 𝚂𝚈𝙽𝙾𝙽𝚈𝙼𝚂 𝚃𝚁𝙰𝙽𝚂𝙻𝙰𝚃𝙸𝙾𝙽
 BG_CHAPTER_INFO = {
     1: {'total_verses': 46, 'grouped_ranges': [(16, 18), (21, 22), (32, 35), (37, 38)], 'chapter_title': 'First. Observing the Armies on the Battlefield of Kurukṣetra'},
     2: {'total_verses': 72, 'grouped_ranges': [(42, 43)], 'chapter_title': 'Second. Contents of the Gītā Summarized'},
@@ -462,7 +462,7 @@ class AsItIs(commands.Cog):
         verse_text = self._format_verse_text(verse_data)
         self._safe_add_field(
             embed,
-            name=f"𝐓𝐄𝐗𝐓 {verse_ref}:",
+            name=f"𝚃𝙴𝚇𝚃 {verse_ref}:",
             value=verse_text,
             inline=False
         )
@@ -479,7 +479,7 @@ class AsItIs(commands.Cog):
         for i, chunk in enumerate(synonyms_chunks):
             self._safe_add_field(
                 embed,
-                name="📖 𝐒𝐘𝐍𝐎𝐍𝐘𝐌𝐒:" if i == 0 else "\u200b",
+                name="📖 𝚂𝚈𝙽𝙾𝙽𝚈𝙼𝚂:" if i == 0 else "\u200b",
                 value=chunk,
                 inline=False
             )
@@ -490,7 +490,7 @@ class AsItIs(commands.Cog):
         for i, chunk in enumerate(translation_chunks):
             self._safe_add_field(
                 embed,
-                name="🗒️ 𝐓𝐑𝐀𝐍𝐒𝐋𝐀𝐓𝐈𝐎𝐍:" if i == 0 else "\u200b",
+                name="🗒️ 𝚃𝚁𝙰𝙽𝚂𝙻𝙰𝚃𝙸𝙾𝙽:" if i == 0 else "\u200b",
                 value=f"> **{chunk}**",
                 inline=False
             )
