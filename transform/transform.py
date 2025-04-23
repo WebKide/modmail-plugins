@@ -175,7 +175,7 @@ class Transform(commands.Cog):
             'R': ['┬─╮', '├┬┘', '┴╰─'],
             'S': ['╭─┐', '╰─╮', '└─╯'],
             'T': ['┌┬┐', ' │ ', ' ┴ '],
-            'U': ['┬ ┬', '│ │', '└─┘'],
+            'U': ['┬ ┬', '│ │', '╰─╯'],
             'V': ['┬ ┬', '└┐│', ' └┘'],
             'W': ['┬ ┬', '│││', '└┴┘'],
             'X': ['┬ ┬', '└┬┘', '┌┴┐'],
@@ -183,11 +183,11 @@ class Transform(commands.Cog):
             'Z': ['──┐', '┌─┘', '└─┘'],
             '0': ['┌─┐', '│╱│', '└─┘'],
             '1': [' ┌┐', '  │', '  ┴'],
-            '2': ['┌─┐', '┌─┘', '└─┘'],
+            '2': ['┌─┐', '╭─┘', '└──'],
             '3': ['┌─┐', ' ─┤', '└─┘'],
             '4': ['┬ ┬', '└─┤', '  ┴'],
-            '5': ['┌─┐', '└─┐', '└─┘'],
-            '6': ['┌──', '├─┐', '└─┘'],
+            '5': ['┌─┐', '└─╮', '└─┘'],
+            '6': ['╭──', '├─┐', '└─┘'],
             '7': ['──┐', '  │', '  ┴'],
             '8': ['┌─┐', '├─┤', '└─┘'],
             '9': ['┌─┐', '└─┤', '──┘'],
@@ -226,9 +226,9 @@ class Transform(commands.Cog):
     async def _banner_three(self, ctx, *, text: str):
         """Convert text to 3-double-line ASCII banners:
         ```
-        ╔╗  ╔═╗ ╔╗╦ ╔╗╦ ╔═╗ ╔═╗     ╔═╗ 
-        ╠╩╗ ╠═╣ ║║║ ║║║ ╠═  ╠╔╝      ═╣ 
-        ╚═╝ ╩ ╩ ╝╚╝ ╝╚╝ ╚═╝ ╩ ╚     ╚═╝  
+        ╔╗ ╔═╗╔╗╦╔╗╦╔═╗╔═╗ ╔═╗ 
+        ╠╩╗╠═╣║║║║║║╠═ ╠╔╝  ═╣ 
+        ╚═╝╩ ╩╝╚╝╝╚╝╚═╝╩ ╚ ╚═╝  
         ```
         """
         if not text:
@@ -252,7 +252,7 @@ class Transform(commands.Cog):
             'N': ['╔╗╦', '║║║', '╝╚╝'],
             'O': ['╔═╗', '║ ║', '╚═╝'],
             'P': ['╔═╗', '╠═╝', '╩  '],
-            'Q': ['╔═╗', '║║║', '╚╩╝'],
+            'Q': ['╔═╗', '║║║', '╚╬╝'],
             'R': ['╔═╗', '╠《 ', '╩ ╚'],
             'S': ['╔═╗', '╚═╗', '╚═╝'],
             'T': ['╔╦╗', ' ║ ', ' ╩ '],
@@ -290,7 +290,7 @@ class Transform(commands.Cog):
             # Get the character's ASCII art or default to space
             char_art = font.get(char, font[' '])
             for i in range(3):
-                banner_lines[i] += char_art[i] + ' '  # Add spacing between chars
+                banner_lines[i] += char_art[i] #+ ' '  # Add spacing between chars
 
         # Combine into a single string
         banner = '\n'.join(banner_lines)
