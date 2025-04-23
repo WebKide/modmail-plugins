@@ -20,7 +20,7 @@ SOFTWARE.
 
 import discord, traceback, asyncio, datetime, json, re, aiohttp
 from discord.ext import commands
-from discord.ext import menus
+from discord.ui import Button, View
 
 SEARCH_ANIME_MANGA_QUERY = """
 query ($id: Int, $page: Int, $search: String, $type: MediaType) {
@@ -34,7 +34,7 @@ query ($id: Int, $page: Int, $search: String, $type: MediaType) {
                 romaji
             }
             coverImage {
-            		medium
+                    medium
             }
             bannerImage
             averageScore
@@ -139,13 +139,32 @@ query ($id: Int, $page: Int, $search: String) {
 }
 """
 
-class AniListPaginator(menus.ListPageSource):
-    def __init__(self, data, embed_list):
-        self.embed_list = embed_list
-        super().__init__(data, per_page=1)
-
-    async def format_page(self, menu, entry):
-        return self.embed_list[menu.current_page]
+class PaginatorView(View):
+    def __init__(self, embeds):
+        super().__init__(timeout=60)
+        self.embeds = embeds
+        self.current_page = 0
+        self.message = None
+        
+    async def update_embed(self, interaction):
+        await interaction.response.edit_message(embed=self.embeds[self.current_page], view=self)
+        
+    @discord.ui.button(label="Previous", style=discord.ButtonStyle.grey)
+    async def previous_button(self, interaction: discord.Interaction, button: Button):
+        if self.current_page > 0:
+            self.current_page -= 1
+            await self.update_embed(interaction)
+        
+    @discord.ui.button(label="Next", style=discord.ButtonStyle.grey)
+    async def next_button(self, interaction: discord.Interaction, button: Button):
+        if self.current_page < len(self.embeds) - 1:
+            self.current_page += 1
+            await self.update_embed(interaction)
+            
+    @discord.ui.button(label="Close", style=discord.ButtonStyle.red)
+    async def close_button(self, interaction: discord.Interaction, button: Button):
+        await interaction.message.delete()
+        self.stop()
 
 class Ani(commands.Cog):
     """(∩｀-´)⊃━☆ﾟ.*･｡ﾟ Anisearch kawaii commands, uwu """
@@ -153,7 +172,7 @@ class Ani(commands.Cog):
         self.bot = bot
         self.url = "https://graphql.anilist.co"
 
-    def format_name(self, first_name, last_name):  # Combines first_name and last_name and/or shows either of the two
+    def format_name(self, first_name, last_name):
         if first_name and last_name:
             return first_name + " " + last_name
         elif first_name:
@@ -163,21 +182,21 @@ class Ani(commands.Cog):
         else:
             return "No name"
 
-    def clean_html(self, description):  # Removes html tags
+    def clean_html(self, description):
         if not description:
             return ""
         cleanr = re.compile("<.*?>")
         cleantext = re.sub(cleanr, "", description)
         return cleantext
 
-    def clean_spoilers(self, description):  # Removes spoilers using the html tag given by AniList
+    def clean_spoilers(self, description):
         if not description:
             return ""
         cleanr = re.compile("/<span[^>]*>.*</span>/g")
         cleantext = re.sub(cleanr, "", description)
         return cleantext
 
-    def description_parser(self, description):  # Limits text to 400characters and 5 lines and adds "..." at the end
+    def description_parser(self, description):
         description = self.clean_spoilers(description)
         description = self.clean_html(description)
         description = "\n".join(description.split("\n")[:5])
@@ -186,7 +205,7 @@ class Ani(commands.Cog):
         else:
             return description
 
-    def list_maximum(self, items):  # Limits to 5 strings than adds "+X more"
+    def list_maximum(self, items):
         if len(items) > 5:
             return items[:5] + ["+ " + str(len(items) - 5) + " more"]
         else:
@@ -204,15 +223,10 @@ class Ani(commands.Cog):
                 return await response.json()
 
     async def _search_anime_manga(self, ctx, cmd, entered_title):
-        # Outputs MediaStatuses to strings
         MediaStatusToString = {
-            # Has completed and is no longer being released
             "FINISHED": "Finished",
-            # Currently releasing
             "RELEASING": "Releasing",
-            # To be released at a later date
             "NOT_YET_RELEASED": "Not yet released",
-            # Ended before the work could be finished
             "CANCELLED": "Cancelled",
         }
 
@@ -220,11 +234,9 @@ class Ani(commands.Cog):
         data = (await self._request(SEARCH_ANIME_MANGA_QUERY, variables))["data"]["Page"]["media"]
 
         if data is not None and len(data) > 0:
-            # a list of embeds
             embeds = []
 
             for anime_manga in data:
-                # Sets up various variables for Embed
                 link = f"https://anilist.co/{cmd.lower()}/{anime_manga['id']}"
                 description = anime_manga["description"]
                 title = anime_manga["title"]["english"] or anime_manga["title"]["romaji"]
@@ -269,11 +281,9 @@ class Ani(commands.Cog):
         data = (await self._request(SEARCH_CHARACTER_QUERY, variables))["data"]["Page"]["characters"]
 
         if data is not None and len(data) > 0:
-            # a list of embeds
             embeds = []
 
             for character in data:
-                # Sets up various variables for Embed
                 link = f"https://anilist.co/character/{character['id']}"
                 character_anime = [f'[{anime["title"]["userPreferred"]}]({"https://anilist.co/anime/" + str(anime["id"])})' for anime in character["media"]["nodes"] if anime["type"] == "ANIME"]
                 character_manga = [f'[{manga["title"]["userPreferred"]}]({"https://anilist.co/manga/" + str(manga["id"])})' for manga in character["media"]["nodes"] if manga["type"] == "MANGA"]
@@ -298,11 +308,9 @@ class Ani(commands.Cog):
         data = (await self._request(SEARCH_USER_QUERY, variables))["data"]["Page"]["users"]
 
         if data is not None and len(data) > 0:
-            # a list of embeds
             embeds = []
 
             for user in data:
-                # Sets up various variables for Embed
                 link = f"https://anilist.co/user/{user['id']}"
                 title = user["name"]
 
@@ -320,7 +328,7 @@ class Ani(commands.Cog):
                         if category == "characters":
                             name = node["name"]
                             title = self.format_name(name["first"], name["last"])
-                            url_path = "character"  # without the s
+                            url_path = "character"
                         else:
                             title = node["title"]["userPreferred"]
 
@@ -335,18 +343,12 @@ class Ani(commands.Cog):
         else:
             return None
 
-    # +------------------------------------------------------------+
-    # |                        ANI GROUP                           |
-    # +------------------------------------------------------------+
-    @commands.group(invoke_without_command=True, no_pm=True)
+    @commands.group(invoke_without_command=True)
     async def ani(self, ctx):
-        """ Group command """
+        """Group command"""
         await ctx.send("Search for Anime, Manga, or Character", delete_after=69)
 
-    # +------------------------------------------------------------+
-    # |                        ANI ANIME                           |
-    # +------------------------------------------------------------+
-    @ani.command(no_pm=True)
+    @ani.command()
     async def anime(self, ctx, *, entered_title):
         """Search anime using Anilist"""
         try:
@@ -354,43 +356,37 @@ class Ani(commands.Cog):
             embeds, data = await self._search_anime_manga(ctx, cmd, entered_title)
 
             if embeds is not None:
-                pages = menus.MenuPages(source=AniListPaginator(data, embeds), clear_reactions_after=True)
-                await pages.start(ctx)
+                view = PaginatorView(embeds)
+                view.message = await ctx.send(embed=embeds[0], view=view)
             else:
                 await ctx.send("No anime was found or there was an error in the process")
         except TypeError:
             await ctx.send("No anime was found or there was an error in the process")
 
-    # +------------------------------------------------------------+
-    # |                        ANI MANGA                           |
-    # +------------------------------------------------------------+
-    @ani.command(no_pm=True)
+    @ani.command()
     async def manga(self, ctx, *, entered_title):
-        """ Search manga using Anilist """
+        """Search manga using Anilist"""
         try:
             cmd = "MANGA"
             embeds, data = await self._search_anime_manga(ctx, cmd, entered_title)
 
             if embeds is not None:
-                pages = menus.MenuPages(source=AniListPaginator(data, embeds), clear_reactions_after=True)
-                await pages.start(ctx)
+                view = PaginatorView(embeds)
+                view.message = await ctx.send(embed=embeds[0], view=view)
             else:
                 await ctx.send("No mangas were found or there was an error in the process")
         except TypeError:
             await ctx.send("No mangas were found or there was an error in the process")
 
-    # +------------------------------------------------------------+
-    # |                     ANI CHARACTER                          |
-    # +------------------------------------------------------------+
-    @ani.command(no_pm=True)
+    @ani.command()
     async def character(self, ctx, *, entered_title):
-        """ Search characters using Anilist """
+        """Search characters using Anilist"""
         try:
             embeds, data = await self._search_character(ctx, entered_title)
 
             if embeds is not None:
-                pages = menus.MenuPages(source=AniListPaginator(data, embeds), clear_reactions_after=True)
-                await pages.start(ctx)
+                view = PaginatorView(embeds)
+                view.message = await ctx.send(embed=embeds[0], view=view)
             else:
                 await ctx.send("No characters were found or there was an error in the process")
         except TypeError:
