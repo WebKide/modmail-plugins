@@ -65,28 +65,26 @@ class Transform(commands.Cog):
     # +------------------------------------------------------------+
     def build_transitions(self):
         """Build Markov chain transitions for word generation"""
-        # More balanced vowel set with reduced frequency of empty strings
-        vow = [
-            'a', 'e', 'i', 'o', 'u', 'a', 'e', 'i', 'o', 'u', 
-            'a', 'e', 'i', 'o', 'a', 'e', 'i', 'a', 'e', 'a'
-        ]
+        # Vowel set with weights
+        vow = ['a']*5 + ['e']*5 + ['i']*4 + ['o']*4 + ['u']*3 + ['y']*2
         
-        # More carefully selected consonants with better weightings
+        # Consonant set with weights
         con = [
             'b', 'br', 'c', 'ch', 'd', 'dr', 'f', 'fr', 'g', 'gr',
-            'h', 'j', 'k', 'kr', 'l', 'm', 'n', 'p', 'ph', 'qu',
-            'r', 's', 'sh', 't', 'th', 'tr', 'v', 'w', 'wh', 'y',
-            'z', '', '', '', ''
+            'h', 'j', 'k', 'kr', 'l', 'll', 'm', 'n', 'p', 'ph', 
+            'qu', 'r', 's', 'sh', 't', 'th', 'tr', 'v', 'w', 'wh',
+            'y', 'z', '', '', ''
         ]
         
-        # Special vowel combinations that sound good
+        # Common vowel combinations
         vow_combos = [
             'ai', 'au', 'ea', 'ei', 'eo', 'ia', 'ie', 'io', 'iu',
             'oa', 'oe', 'oi', 'ou', 'ua', 'ue', 'ui', 'uo'
         ]
         
+        # Generate training data
         for _ in range(999):
-            # More structured syllable patterns
+            # Syllable patterns
             patterns = [
                 f'{random.choice(con)}{random.choice(vow)}',
                 f'{random.choice(con)}{random.choice(vow_combos)}',
@@ -98,85 +96,107 @@ class Transform(commands.Cog):
             syllables = random.randint(2, 3)
             word = ''.join([random.choice(patterns) for _ in range(syllables)])
             
-            # Ensure proper length
+            # Add to transitions if valid length
             if 3 <= len(word) <= 15:
                 for i in range(len(word) - 2):
                     pair = word[i:i+2]
                     next_letter = word[i+2]
                     self.transitions[pair][next_letter] += 1
         
+        # Fallback transitions if empty
         if not self.transitions:
-            # Fallback transitions
-            self.transitions['aa']['a'] = 1
-            self.transitions['ab']['b'] = 1
-            self.transitions['ba']['a'] = 1
-            self.transitions['ar']['r'] = 1
-            self.transitions['el']['l'] = 1
+            for pair in ['ar', 'el', 'is', 'th', 'qu']:
+                self.transitions[pair]['a'] = 1
 
-    @commands.command(description='Command to generate random names', aliases=['markov', 'fantasynames'], no_pm=True)
-    async def aiword(self, ctx, count: int = 10, min_length: int = 4, max_length: int = 12):
-        """Generate realistic-sounding artificial words
+    def clean_name(self, name):
+        """Clean up generated names to be more pronounceable"""
+        # Remove triple letters
+        for letter in 'aeiouybcdfghjklmnpqrstvwxyz':
+            while letter*3 in name:
+                name = name.replace(letter*3, letter*2)
         
-        Parameters:
-        - count:      Number of words to generate (1-25)
-        - min_length: Minimum word length (3-15)
-        - max_length: Maximum word length (3-20)
-        """
-        start_time = time.time()
+        # Fix specific awkward clusters
+        awkward = ['hfh', 'jc', 'zq', 'yy', 'ww', 'jh', 'uu', 'aa', 'zz', 'ii']
+        for cluster in awkward:
+            name = name.replace(cluster, cluster[0])
+        
+        # Remove double consonants at start
+        if len(name) > 2 and name[0] == name[1] and name[0] in 'bcdfghjklmnpqrstvwxyz':
+            name = name[1:]
+        
+        return name
+
+    def generate_word(self, min_len=4, max_len=12):
+        """Generate a single fantasy name using Markov chain"""
+        word = ''
+        # Start with a vowel or common starting pair
+        starters = [p for p in self.transitions.keys() if p[0] in 'aeiouy' or p in ['th', 'sh', 'ch', 'qu']]
+        pair = random.choice(starters or list(self.transitions.keys()))
+        word += pair
+        
+        while len(word) < max_len:
+            try:
+                next_letters = list(self.transitions[pair].keys())
+                weights = list(self.transitions[pair].values())
+                next_letter = random.choices(next_letters, weights=weights)[0]
+                word += next_letter
+                pair = pair[1] + next_letter
+                
+                # Random chance to stop if we've reached min length
+                if len(word) >= min_len and random.random() < 0.3:
+                    break
+            except:
+                break
+        
+        # Ensure minimum length
+        while len(word) < min_len:
+            word += random.choice('aeiouy')
+        
+        return self.clean_name(word)
+
+    async def generate_names(self, count=10, min_length=4, max_length=12):
+        """Generate multiple fantasy names with optional endings"""
+        # Validate parameters
         count = max(1, min(25, count))
         min_length = max(3, min(15, min_length))
         max_length = max(min_length, min(20, max_length))
         
-        if not self.transitions:
-            self.build_transitions()
-            if not self.transitions:
-                return await ctx.send("Failed to generate word patterns. Please try again later.")
-
-        fantasy_endings = ['ion', 'ar', 'is', 'an', 'us', 'or', 'en', 'ith', 'ath', 'as', 'on', 'il', 'in', 'ol', 'ir']
-        words = []
-        for _ in range(count):
-            word = self._generate_word(min_length, max_length)
-            
-            # Clean the name first
-            word = self.clean_name(word)
-            
-            # Sometimes add a fantasy ending (about 30% chance)
-            if random.random() < 0.3 and len(word) < max_length - 2:
-                ending = random.choice(fantasy_endings)
-                # Only add if it won't make the word too long
-                if len(word) + len(ending) <= max_length:
-                    word += ending
-            
-            words.append(word.title())
+        # Common fantasy suffixes
+        suffixes = ['ion', 'ar', 'is', 'an', 'us', 'or', 'en', 'ith', 'ath', 'as', 'on']
         
-        result_ai_words = ', '.join(words)
-        # Additional cleaning passes
-        ai_words = result_ai_words.replace('ii', 'i').replace('yy', 'y').replace('ss', 's')
-        em = discord.Embed(
-            title="AI-Generated Words:",
-            description=f'```\n{ai_words}```',
+        names = []
+        for _ in range(count):
+            name = self.generate_word(min_length, max_length)
+            
+            # 40% chance to add suffix if it fits
+            if random.random() < 0.4 and len(name) < max_length - 2:
+                suffix = random.choice(suffixes)
+                if len(name) + len(suffix) <= max_length:
+                    name += suffix
+            
+            names.append(name.title())
+        
+        return names
+
+    @commands.command(description='Generate fantasy character names', aliases=['aiword', 'fantasynames'], no_pm=True)
+    async def ainame(self, ctx, count: int = 10, min_length: int = 4, max_length: int = 12):
+        """Generate fantasy names that sound authentic
+        
+        Parameters:
+        - count: Number of names to generate (1-25)
+        - min_length: Minimum name length (3-15)
+        - max_length: Maximum name length (3-20)
+        """
+        start_time = time.time()
+        names = await self.generate_names(count, min_length, max_length)
+        
+        embed = discord.Embed(
+            title="Fantasy Name Generator",
+            description=f'```\n{", ".join(names)}```',
             color=self.user_color
         )
-        em.set_footer(text=f"Generated {len(words)} words in {(time.time() - start_time) * 1000:.2f} ms")
-        await ctx.send(embed=em)
-
-    def clean_name(self, name):
-        """Clean up generated names to be more pronounceable"""
-        # Remove triple vowels
-        for v in 'aeiouy':
-            name = name.replace(v*3, v*2)
-        
-        # Fix awkward consonant clusters
-        awkward_clusters = ['hfh', 'jc', 'zq', 'yy', 'ww', 'jh', 'uu', 'aa', 'zz']
-        for cluster in awkward_clusters:
-            if cluster in name:
-                name = name.replace(cluster, cluster[0])
-        
-        # Fix awkward endings
-        if name.endswith(('ii', 'uu', 'yy')):
-            name = name[:-1]
-        
-        return name
+        embed.set_footer(text=f"Generated {len(names)} names in {(time.time() - start_time)*1000:.2f}ms")
+        await ctx.send(embed=embed)
 
     # +------------------------------------------------------------+
     # |                   REGION COMMANDS                          |
