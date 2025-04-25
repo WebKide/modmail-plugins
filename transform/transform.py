@@ -486,7 +486,7 @@ class Transform(commands.Cog):
         if not text:
             return await ctx.send("Please provide text to bannerize!", delete_after=23)
 
-        # Define the 3-line font (uppercase only)
+        # Define the 3-line font (uppercase only)  # 'N': ['█▀▀▄', '█░░█', '▀░░▀'],
         font = {
             'A': ['█▀▀█', '█▄▄█', '▀░░▀'],
             'B': ['█▀▀▄', '█▀▀▄', '▀▀▀░'],
@@ -501,7 +501,7 @@ class Transform(commands.Cog):
             'K': ['█░▄▀', '█▀▄ ', '▀░▀▀'],
             'L': ['█░░░', '█░░░', '▀▀▀▀'],
             'M': ['█▀▄▀█', '█░▀░█', '▀░░░▀'],
-            'N': ['█▄░█', '█▒▀█', '▀░░▀'],  # 'N': ['█▀▀▄', '█░░█', '▀░░▀'],
+            'N': ['█▄░█', '█▒▀█', '▀░░▀'],
             'O': ['█▀▀█', '█░░█', '▀▀▀▀'],
             'P': ['█▀▀█', '█░░█', '█▀▀▀'],
             'Q': ['█▀▀█', '█░░█', '▀▀█▄'],
