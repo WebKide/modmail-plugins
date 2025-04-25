@@ -39,6 +39,7 @@ from core.time import UserFriendlyTime
 
 UTC = timezone.utc
 log = logging.getLogger(__name__)
+supp_loc = "Full list of supported locations: https://gist.github.com/mjrulesamrat/0c1f7de951d3c508fb3a20b4b0b33a98"
 
 class ReminderPaginator(View):
     """Custom paginator with enhanced controls"""
@@ -312,7 +313,7 @@ class RemindMePro(commands.Cog):
             )
             await ctx.send(f"Your timezone has been set to {timezone}")
         except pytz.UnknownTimeZoneError:
-            await ctx.send("Unknown timezone. Please use formats like EST, PST, or UTC+3")
+            await ctx.send(f"Unknown timezone. Please use formats like EST, PST, or UTC+3\n{supp_loc}")
 
     @timezone.command(name="view", no_pm=True)
     async def view_timezone(self, ctx):
@@ -329,65 +330,71 @@ class RemindMePro(commands.Cog):
     #
     #
     # ======================================================
-    @commands.command(name="remind", aliases=["remindme", "rm"], no_pm=True)
+    @commands.command(name="remind", description="RemindMePro uses ", aliases=["remindme", "rm"], no_pm=True)
     async def remind(self, ctx, *, text: str):
+        """Create a reminder with time and event
+        - When: set the time in the future for the reminder
+        - What: write the message for the reminder
+        - Where: it sends the message in the channel you set it and in DMs
+        EXAMPLE:
+        ?remindme in 5 days to pay the subscription
+
+        Full list of supported locations: https://gist.github.com/mjrulesamrat/0c1f7de951d3c508fb3a20b4b0b33a98
+        """
         dm_status = await self.check_dm_status(ctx.author)
         
         try:
-            # Get user's default timezone (if set)
             user_tz = await self.get_user_timezone(ctx.author.id)
-
-            # Extract timezone abbreviations from text (e.g., "9pm EST")
-            tz_pattern = r"\b([A-Z]{3,4})\b"
-            if matches := re.findall(tz_pattern, text):
+            now = datetime.now(user_tz)
+            
+            # First, try to parse as "in X minutes/hours/days"
+            if text.lower().startswith("in "):
+                time_part, _, reminder_text = text.partition(" to ")
+                if not reminder_text:
+                    reminder_text = "Reminder"
+                    
                 try:
-                    user_tz = pytz.timezone(matches[-1])  # Use the last matched timezone
-                    text = re.sub(tz_pattern, "", text).strip()  # Remove timezone from text
-                except pytz.UnknownTimeZoneError:
-                    pass  # Fall back to user's default timezone
-
-            # Parse with both fuzzy and tokens
-            dt, tokens = parse(text, fuzzy_with_tokens=True, default=datetime.now(user_tz))
+                    # Parse relative time (e.g., "in 5 minutes")
+                    time_amount = time_part[3:]  # Remove "in "
+                    delta = parse(time_amount, fuzzy=True, default=now) - now
+                    dt = datetime.now(UTC) + delta
+                    reminder_text = text[len(time_part):].strip()
+                except:
+                    raise commands.BadArgument("Couldn't parse relative time")
             
-            # Extract reminder text from unused tokens
-            reminder_text = " ".join(tokens).strip()
+            # Then try to parse as "at [time]"
+            elif text.lower().startswith("at "):
+                time_part, _, reminder_text = text.partition(" to ")
+                if not reminder_text:
+                    reminder_text = "Reminder"
+                    
+                try:
+                    # Parse absolute time (e.g., "at 10 am")
+                    time_str = time_part[3:]  # Remove "at "
+                    dt = parse(time_str, fuzzy=True, default=now)
+                    if dt.tzinfo is None:
+                        dt = user_tz.localize(dt)
+                    dt = dt.astimezone(UTC)
+                except:
+                    raise commands.BadArgument("Couldn't parse absolute time")
             
-            # Convert to UTC if naive
-            if dt.tzinfo is None:
-                dt = dt.replace(tzinfo=UTC)
+            # Fall back to general parsing
             else:
-                dt = dt.astimezone(UTC)
-            
-            # Handle relative times (e.g., "tomorrow", "next week")
-            if dt <= datetime.now(UTC):
-                if "tomorrow" in text.lower():
-                    dt += timedelta(days=1)
-                elif "next week" in text.lower():
-                    dt += timedelta(weeks=1)
-
-            # Handle pure duration formats
-            if not reminder_text and "in " in text.lower():
-                reminder_text = text.split("in ", 1)[-1].split(" ", 1)[-1]
+                dt, tokens = parse(text, fuzzy_with_tokens=True, default=now)
+                reminder_text = " ".join(tokens).strip()
                 
-            # Handle "noon"/"midnight" special cases
-            if "noon" in text.lower() and not reminder_text:
-                reminder_text = text.replace("noon", "").strip()
-            elif "midnight" in text.lower() and not reminder_text:
-                reminder_text = text.replace("midnight", "").strip()
+                if dt.tzinfo is None:
+                    dt = user_tz.localize(dt)
+                dt = dt.astimezone(UTC)
+
+            # Validate the time is in the future
+            if dt <= datetime.now(UTC):
+                raise commands.BadArgument("Reminder time must be in the future")
                 
         except Exception as e:
             embed = discord.Embed(
                 title="Invalid Format",
-                description=f"Could not parse time from your reminder.\nExample: `{ctx.prefix}remind May 20 at 3pm camping trip`",
-                color=self.bot.error_color
-            )
-            embed.add_field(name="📩 Direct Messages", value=dm_status, inline=False)
-            return await ctx.send(embed=embed, delete_after=260)
-        
-        if dt <= datetime.now(UTC):
-            embed = discord.Embed(
-                title="Invalid Time",
-                description="Reminder time must be in the future",
+                description=f"Could not parse time from your reminder.\nExample: `{ctx.prefix}remind in 5 minutes to eat`\n`{ctx.prefix}remind at 10am to meditate`",
                 color=self.bot.error_color
             )
             embed.add_field(name="📩 Direct Messages", value=dm_status, inline=False)
