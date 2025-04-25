@@ -32,15 +32,18 @@ class Transform(commands.Cog):
 
     Key Features:
     - AI-powered word generation using Markov chains
-    - ASCII Banners:
-      - 2-line block banners
-      - 3-line single and double lines
+    - ASCII Banners group-command:
+      - 2linesthick 
+      - 3linedouble 
+      - 3linesingle 
+      - 3linethick 
+      - 3linethin 
     - Text transformers:
       - ᵗⁱⁿʸ, 𝒸𝓊𝓇𝓈𝒾𝓋ℯ, 𝕕𝕠𝕦𝕓𝕝𝕖-𝕤𝕥𝕣𝕦𝕔𝕜
       - sᴍᴀʟʟ ᴄᴀᴘs, 1337 5P34K, MoCkInG CaSe
       - ＶＡＰＯＲ, 𝖲𝖺𝗇𝗌-𝗌𝖾𝗋𝗂𝖿, Z͌͆a͠l̓g͊ő
     - UNICODE character information display
-    - Caesar cipher with optional rotation `(default: 3)`
+    - Caesar cipher with optional rotation `(default:13)`
     - Smart binary converter with encoder and decoder
     - Fun text modifiers (👏, 🙏)
     """
@@ -62,10 +65,14 @@ class Transform(commands.Cog):
     # +------------------------------------------------------------+
     def build_transitions(self):
         """Build Markov chain transitions for word generation"""
-        vow = ['a', 'i', 'u', 'e', 'o', 'y', '', 'a', 'i', 'u', 'e', 'o', '']
+        vow = [
+            'a', 'i', 'u', 'e', 'o', 'y', '', 'a', 'i', 'u', 'e', 'o', 'a'
+        ]
         con = [
             'qu', 'w', 'wh', 'r', 't', 'th', 'y', 'p', 'mp', 's', 'ss', 'd', 
             'f', 'g', 'gü', 'ß', 'h', 'j', 'ji', 'k', '', 'l', 'z', 'x', 'c', 
+            'qu', 'w', 'wh', 'r', 't', 'fh', 'y', 'p', 'm', 's', 'ss', 'd', 
+            'f', 'g', 's', 'fi', 'h', 'j', 'ji', 'k', 'h', 'l', 'z', 'x', 'c', 
             'v', 'b', 'n', 'm', ''
         ]
         
@@ -853,8 +860,8 @@ class Transform(commands.Cog):
     # |                  CAESAR ROTATE CIPHER                      |
     # +------------------------------------------------------------+
     @commands.command(description='Text transformer command', no_pm=True)
-    async def caesar(self, ctx, rot: int = 3, *, text: str):
-        """Apply Caesar cipher with optional rot (default: 3)"""
+    async def caesar(self, ctx, rot: int = 13, *, text: str):
+        """Apply Caesar cipher with optional rot (default: 13)"""
         start_time = time.time()
 
         if not text:
@@ -905,7 +912,10 @@ class Transform(commands.Cog):
     async def clap(self, ctx, *, text: str = None):
         """Add 👏 between 👏 words 👏"""
         if text and len(text.split()) > 1:
-            await ctx.send(text.replace(' ', ' 👏 '))
+            await ctx.send(
+                text.replace(' ', ' 👏 '),
+                allowed_mentions=discord.AllowedMentions.none()
+            )
         else:
             await ctx.send('👏')
 
