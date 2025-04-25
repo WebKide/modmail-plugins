@@ -70,7 +70,7 @@ class Transform(commands.Cog):
         ]
         con = [
             'qu', 'w', 'wh', 'r', 't', 'th', 'y', 'p', 'mp', 's', 'ss', 'd', 
-            'f', 'g', 'gü', 'ß', 'h', 'j', 'ji', 'k', '', 'l', 'z', 'x', 'c', 
+            'f', 'g', 'gü', '', 'h', 'j', 'ji', 'k', '', 'l', 'z', 'x', 'c', 
             'qu', 'w', 'wh', 'r', 't', 'fh', 'y', 'p', 'm', 's', 'ss', 'd', 
             'f', 'g', 's', 'fi', 'h', 'j', 'ji', 'k', 'h', 'l', 'z', 'x', 'c', 
             'v', 'b', 'n', 'm', ''
@@ -118,9 +118,10 @@ class Transform(commands.Cog):
             words.append(word.title())
         
         result_ai_words = ', '.join(words)
+        ai_words = result_ai_words.replace('ii', 'i').replace('yy', '').replace('ss', 's').replace('hf', 'h').replace('ck', 'q')
         em = discord.Embed(
             title="AI-Generated Words:",
-            description=f'```\n{result_ai_words}```',
+            description=f'```\n{ai_words}```',
             color=self.user_color
         )
         em.set_footer(text=f"Generated {len(words)} words in {(time.time() - start_time) * 1000:.2f} ms")
