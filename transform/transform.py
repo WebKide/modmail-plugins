@@ -152,7 +152,7 @@ class Transform(commands.Cog):
         """Convert text to 3-line ASCII banners"""
         await ctx.send_help(ctx.command)
 
-    @statsboard_group.command(description="Generate 2-line-thick ASCII banners", name="2linesthick", no_pm=True)
+    @banner_group.command(description="Generate 2-line-thick ASCII banners", name="2linesthick", no_pm=True)
     async def _banner_zero(self, ctx, *, text: str):
         """Convert text to 2-line ASCII banners
         ```
@@ -231,7 +231,7 @@ class Transform(commands.Cog):
     # +------------------------------------------------------------+
     # |                     BANNER 1                               |
     # +------------------------------------------------------------+
-    @statsboard_group.command(description="Generate 3-single-line ASCII banners", name="3linesingle", no_pm=True)
+    @banner_group.command(description="Generate 3-single-line ASCII banners", name="3linesingle", no_pm=True)
     async def _banner_one(self, ctx, *, text: str):
         """Convert text to 3-single-line ASCII banners
         ```
@@ -312,7 +312,7 @@ class Transform(commands.Cog):
     # +------------------------------------------------------------+
     # |                     BANNER 2                               |
     # +------------------------------------------------------------+
-    @statsboard_group.command(description="Generate 3-line-thin ASCII banners", name="3linethin", no_pm=True)
+    @banner_group.command(description="Generate 3-line-thin ASCII banners", name="3linethin", no_pm=True)
     async def _banner_two(self, ctx, *, text: str):
         """Convert text to 3-single-line ASCII banners
         ```
@@ -393,7 +393,7 @@ class Transform(commands.Cog):
     # +------------------------------------------------------------+
     # |                     BANNER 3                               |
     # +------------------------------------------------------------+
-    @statsboard_group.command(description="Generate 3-double-line ASCII banners", name="3linedouble", no_pm=True)
+    @banner_group.command(description="Generate 3-double-line ASCII banners", name="3linedouble", no_pm=True)
     async def _banner_three(self, ctx, *, text: str):
         """Convert text to 3-double-line ASCII banners
         ```
@@ -474,7 +474,7 @@ class Transform(commands.Cog):
     # +------------------------------------------------------------+
     # |                     BANNER 4                               |
     # +------------------------------------------------------------+
-    @statsboard_group.command(description="Generate 3-line-thick ASCII banners", name="3linethick", no_pm=True)
+    @banner_group.command(description="Generate 3-line-thick ASCII banners", name="3linethick", no_pm=True)
     async def _banner_four(self, ctx, *, text: str):
         """Convert text to 3-double-line ASCII banners
         ```
