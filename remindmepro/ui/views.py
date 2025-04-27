@@ -3,8 +3,8 @@ from discord.ui import View, Button
 import discord
 from typing import Optional
 
-from core.models import Reminder
-from core.storage import ReminderStorage
+from .core.models import Reminder
+from .core.storage import ReminderStorage
 
 class ReminderControlsView(View):
     """View for managing individual reminders"""
