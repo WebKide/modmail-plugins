@@ -7,11 +7,11 @@ from datetime import datetime
 import pytz
 from typing import Optional
 
-from core.models import Reminder
-from core.storage import ReminderStorage
-from core.utilities import parse_user_time, validate_future_time
-from core.user_settings import UserSettings
-from handlers.timezones_config import TIMEZONE_ALIASES
+from .core.models import Reminder
+from .core.storage import ReminderStorage
+from .core.utilities import parse_user_time, validate_future_time
+from .core.user_settings import UserSettings
+from .handlers.timezones_config import TIMEZONE_ALIASES
 
 log = logging.getLogger(__name__)
 
