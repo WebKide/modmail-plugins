@@ -3,8 +3,8 @@ from discord.ext import commands
 import discord
 import pytz
 
-from core.user_settings import UserSettings
-from core.utilities import SUPPORTED_LOCATIONS_URL
+from .core.user_settings import UserSettings
+from .core.utilities import SUPPORTED_LOCATIONS_URL
 
 class TimezoneCommands(commands.Cog):
     """Handles timezone-related commands"""
