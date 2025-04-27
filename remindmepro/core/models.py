@@ -2,8 +2,12 @@
 from datetime import datetime
 from typing import Optional, Literal
 from pydantic import BaseModel, Field, validator
+
 import pytz
-from bson import ObjectId
+from pymongo import MongoClient
+from pymongo.collection import Collection
+from pymongo.database import Database
+from pymongo.errors import PyMongoError
 
 class Reminder(BaseModel):
     """Data model for reminder objects"""
