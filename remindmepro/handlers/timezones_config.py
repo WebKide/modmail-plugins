@@ -69,3 +69,13 @@ TIMEZONE_ALIASES = {
     '+81': 'Asia/Tokyo',       # Japan
     '+52': 'America/Mexico_City',  #Mexico
 }
+
+"""
+# Optional: Validation
+try:
+    import pytz
+    for tz in TIMEZONE_ALIASES.values():
+        pytz.timezone(tz)  # Will raise UnknownTimeZoneError if invalid
+except ImportError:
+    pass
+"""
