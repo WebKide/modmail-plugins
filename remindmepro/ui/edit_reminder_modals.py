@@ -4,8 +4,8 @@ import discord
 from datetime import datetime
 from dateutil.parser import parse
 
-from core.models import Reminder
-from core.utilities import validate_future_time
+from .core.models import Reminder
+from .core.utilities import validate_future_time
 
 class EditReminderModal(Modal):
     """Modal for editing reminder details"""
