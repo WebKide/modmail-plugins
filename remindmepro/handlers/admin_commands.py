@@ -204,3 +204,10 @@ class AdminCommands(commands.Cog):
         else:
             await ctx.send("Cleanup cancelled.", delete_after=10)
     
+    @reminders_admin.command(name="cleanall")
+    async def admin_clean_all(self, ctx):
+        """Clean all completed reminders (admin only)"""
+        if await ctx.prompt("This will delete ALL completed reminders. Continue?"):
+            count = await self.storage.clean_all_completed()
+            await ctx.send(f"Deleted {count} completed reminders")
+            
