@@ -4,9 +4,9 @@ from discord.ext import commands
 
 from .core.storage import ReminderStorage
 from .core.user_settings import UserSettings
-from handlers import UserCommands, AdminCommands, TimezoneCommands
-from tasks.service_task import ReminderServiceTask
-from exceptions import ReminderError
+from .handlers import UserCommands, AdminCommands, TimezoneCommands
+from .tasks.service_task import ReminderServiceTask
+from .exceptions import ReminderError
 
 log = logging.getLogger(__name__)
 
