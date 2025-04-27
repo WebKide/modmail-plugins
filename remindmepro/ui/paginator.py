@@ -3,8 +3,8 @@ from discord.ui import View, Button
 import discord
 from typing import List
 
-from core.models import Reminder
-from core.storage import ReminderStorage
+from .core.models import Reminder
+from .core.storage import ReminderStorage
 
 class ReminderPaginator(View):
     """Custom paginator with enhanced controls for reminders"""
