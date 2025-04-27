@@ -72,12 +72,20 @@ class ReminderPaginator(View):
 
     async def get_current_reminder(self) -> Optional[Reminder]:
         """Extract reminder from current embed footer"""
-        if not self.embeds or self.current_page >= len(self.embeds):
-            return None
+        try:
+            if not self.embeds or self.current_page >= len(self.embeds):
+                return None
+                
+            embed = self.embeds[self.current_page]
+            if not embed.footer or not embed.footer.text.startswith('Reminder ID: '):
+                return None
+                
+            reminder_id = embed.footer.text[13:]
+            if not reminder_id.strip():
+                return None
+                
+            return await self.storage.get_reminder(reminder_id)
             
-        embed = self.embeds[self.current_page]
-        if not embed.footer or not embed.footer.text.startswith('Reminder ID: '):
+        except Exception as e:
+            log.error(f"Error getting current reminder: {str(e)}", exc_info=True)
             return None
-            
-        reminder_id = embed.footer.text[13:]
-        return await self.storage.get_reminder(reminder_id)  # Would need this method in Storage
