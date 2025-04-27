@@ -25,6 +25,15 @@ class ReminderStorage:
         result = await self.collection.insert_one(reminder.dict())
         return str(result.inserted_id)
 
+    async def get_reminder(self, reminder_id: str) -> Optional[Reminder]:
+        """Get a single reminder by its ID"""
+        try:
+            doc = await self.collection.find_one({"_id": ObjectId(reminder_id)})
+            return Reminder(**doc) if doc else None
+        except Exception as e:
+            log.error(f"Error fetching reminder {reminder_id}: {str(e)}")
+            return None
+
     async def get_user_reminders(self, user_id: int, limit: int = 50) -> List[Reminder]:
         """Get active reminders for a user, sorted by due date"""
         cursor = self.collection.find({
@@ -63,4 +72,4 @@ class ReminderStorage:
             "status": "completed",
             "completed_at": {"$lte": cutoff}
         })
-        
+    
