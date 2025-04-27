@@ -76,3 +76,13 @@ class ReminderStorage:
             "completed_at": {"$lte": cutoff}
         })
     
+    # Prevent duplicates
+    async def check_reminder_conflict(self, user_id: int, due: datetime) -> Optional[Reminder]:
+        """Check if user already has a reminder at similar time"""
+        window_start = due - timedelta(minutes=5)
+        window_end = due + timedelta(minutes=5)
+        return await self.collection.find_one({
+            "user_id": user_id,
+            "due": {"$gte": window_start, "$lte": window_end},
+            "status": "active"
+        })
