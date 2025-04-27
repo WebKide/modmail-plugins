@@ -1,7 +1,7 @@
 # modmail-plugins/RemindMePro/core/storage.py
 from typing import List, Optional
 from datetime import datetime, timedelta
-from bson import ObjectId
+from pymongo import ReturnDocument
 import pytz
 import logging
 from motor.motor_asyncio import AsyncIOMotorCollection
