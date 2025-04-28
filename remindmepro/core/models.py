@@ -1,4 +1,5 @@
 # modmail-plugins/RemindMePro/core/models.py
+from bson import ObjectId
 from datetime import datetime
 from typing import Optional, Literal
 from pydantic import BaseModel, Field, validator
