@@ -27,7 +27,7 @@ class Reminder(BaseModel):
         sanitized = re.sub(r'-{3,}', '--', sanitized)
         return sanitized.strip()
 
-    @validator('timezone', allow_reuse=True)  # Add allow_reuse=True here
+    @validator('timezone', allow_reuse=True)
     def validate_timezone(cls, v):
         """Validate timezone string"""
         if v not in pytz.all_timezones:
