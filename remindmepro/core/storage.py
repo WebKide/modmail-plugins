@@ -6,7 +6,7 @@ import pytz
 import logging
 from motor.motor_asyncio import AsyncIOMotorCollection
 
-from core.models import Reminder
+from .models import Reminder  # relative import
 
 log = logging.getLogger(__name__)
 
