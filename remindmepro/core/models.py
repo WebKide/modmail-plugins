@@ -1,5 +1,47 @@
 # modmail-plugins/RemindMePro/core/models.py
 from bson import ObjectId
+from pydantic import BaseModel, Field, validator
+import pytz
+import re
+from typing import Optional, Literal
+from datetime import datetime
+
+class Reminder(BaseModel):
+    """Data model for reminder objects"""
+    user_id: int
+    channel_id: Optional[int] = None
+    text: str = Field(..., max_length=400)
+    due: datetime
+    created_at: datetime = Field(default_factory=lambda: datetime.now(pytz.UTC))
+    recurring: Optional[Literal["daily", "weekly"]] = None
+    timezone: str = "UTC"
+    status: Literal["active", "completed", "paused"] = "active"
+    undelivered: bool = False
+
+    @validator('text', allow_reuse=True)
+    def sanitize_text(cls, v):
+        """Sanitize reminder text"""
+        # Replace non-alphanumeric chars (except basic punctuation) with placeholder
+        sanitized = re.sub(r'[^a-zA-Z0-9\s.,!?-]', '␀', v)
+        # Limit consecutive special chars
+        sanitized = re.sub(r'-{3,}', '--', sanitized)
+        return sanitized.strip()
+
+    @validator('timezone', allow_reuse=True)  # Add allow_reuse=True here
+    def validate_timezone(cls, v):
+        """Validate timezone string"""
+        if v not in pytz.all_timezones:
+            raise ValueError(f"Invalid timezone. Must be one of: {pytz.all_timezones}")
+        return v
+
+    class Config:
+        json_encoders = {
+            datetime: lambda dt: dt.isoformat(),
+            ObjectId: lambda oid: str(oid)
+        }
+
+"""
+from bson import ObjectId
 from datetime import datetime
 from typing import Optional, Literal
 from pydantic import BaseModel, Field, validator
@@ -44,4 +86,4 @@ class Reminder(BaseModel):
             datetime: lambda dt: dt.isoformat(),
             ObjectId: lambda oid: str(oid)
         }
-        
+"""
