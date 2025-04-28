@@ -11,7 +11,7 @@ from ..core.models import Reminder  # Go up one level then into core
 from ..core.storage import ReminderStorage
 from ..core.utilities import parse_user_time, validate_future_time
 from ..core.user_settings import UserSettings
-from .handlers.timezones_config import TIMEZONE_ALIASES
+from .timezones_config import TIMEZONE_ALIASES  # from .handlers.timezones_config import TIMEZONE_ALIASES
 
 log = logging.getLogger(__name__)
 
