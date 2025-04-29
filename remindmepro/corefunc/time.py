@@ -1,4 +1,4 @@
-# modmail-plugins/RemindMePro/core/time.py
+# modmail-plugins/remindmepro/corefunc/time.py
 from datetime import datetime
 from typing import Optional, Union
 import pytz
