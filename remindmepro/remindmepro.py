@@ -14,7 +14,7 @@ class RemindMePro(commands.Cog):
     """RemindMePro plugin by Webkide
     
     A Discord reminder bot with timezone support, customizable reminders, and admin controls.
-    Users can set reminders in natural language (e.g., "in 2 hours"), manage timezones, and view/edit reminders via interactive menus.
+    Users can set reminders in natural language (e.g., in 2 hours), manage timezones, and view/edit reminders via interactive menus.
     """
     
     def __init__(self, bot):
