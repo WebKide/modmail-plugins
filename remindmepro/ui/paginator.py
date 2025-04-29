@@ -1,10 +1,10 @@
-# modmail-plugins/RemindMePro/ui/paginator.py
+# modmail-plugins/remindmepro/ui/paginator.py
 from discord.ui import View, Button
 import discord
 from typing import List
 
-from .core.models import Reminder
-from .core.storage import ReminderStorage
+from ..corefunc.models import Reminder
+from ..corefunc.storage import ReminderStorage
 
 class ReminderPaginator(View):
     """Custom paginator with enhanced controls for reminders"""
