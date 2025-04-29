@@ -8,8 +8,9 @@ from ..corefunc.schemas import Reminder
 from ..corefunc.storage import ReminderStorage
 from ..corefunc.time import UserFriendlyTime
 from ..ui.paginator import ReminderPaginator
-from core import checks
+# from core import checks
 from discord import utils
+from core.checks import PermissionLevel
 
 class AdminCommands(commands.Cog):
     """Handles admin-only reminder commands"""
