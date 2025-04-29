@@ -1,4 +1,4 @@
-# modmail-plugins/RemindMePro/tasks/service_task.py
+# modmail-plugins/remindmepro/tasks/service_task.py
 import asyncio
 import logging
 from datetime import datetime, timedelta
@@ -7,9 +7,9 @@ from typing import List
 import discord
 from discord.ext import tasks
 
-from core.models import Reminder
-from core.storage import ReminderStorage
-from ui.views import ReminderControlsView
+from ..corefunc.models import Reminder
+from ..corefunc.storage import ReminderStorage
+from ..ui.views import ReminderControlsView
 
 log = logging.getLogger(__name__)
 
