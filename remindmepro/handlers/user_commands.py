@@ -7,7 +7,7 @@ from datetime import datetime
 import pytz
 from typing import Optional
 
-from ..corefunc.models import Reminder  # Go up one level then into core
+from ..corefunc.schemas import Reminder
 from ..corefunc.storage import ReminderStorage
 from ..corefunc.utilities import parse_user_time, validate_future_time
 from ..corefunc.user_settings import UserSettings
