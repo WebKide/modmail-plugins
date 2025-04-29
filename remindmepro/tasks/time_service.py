@@ -1,11 +1,11 @@
-# modmail-plugins/RemindMePro/tasks/time_service.py
+# modmail-plugins/remindmepro/tasks/time_service.py
 from datetime import datetime, timedelta
 from typing import Optional, Literal
 import pytz
 from dateutil.parser import parse
 from dateutil.relativedelta import relativedelta
 
-from .core.models import Reminder
+from ..corefunc.models import Reminder
 
 class TimeService:
     """Service for time-related operations"""
