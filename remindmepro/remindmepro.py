@@ -61,3 +61,6 @@ class RemindMePro(commands.Cog):
         """Timezone commands group (delegated to TimezoneCommands)"""
         await self.timezone_commands.timezone(ctx)
         
+async def setup(bot):
+    await bot.add_cog(RemindMePro(bot))
+    
