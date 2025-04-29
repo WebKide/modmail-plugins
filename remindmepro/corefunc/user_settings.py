@@ -1,4 +1,4 @@
-# modmail-plugins/RemindMePro/core/user_settings.py
+# modmail-plugins/remindmepro/corefunc/user_settings.py
 from typing import Dict
 import pytz
 from motor.motor_asyncio import AsyncIOMotorCollection
