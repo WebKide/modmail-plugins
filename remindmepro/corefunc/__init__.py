@@ -1,4 +1,4 @@
-# modmail-plugins/remindmepro/core/__init__.py
+# modmail-plugins/remindmepro/corefunc/__init__.py
 from .time import UserFriendlyTime
 from .schemas import Reminder  # Changed from .models
 from .storage import ReminderStorage
