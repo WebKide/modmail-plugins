@@ -3,7 +3,7 @@ from discord.ui import View, Button
 import discord
 from typing import List
 
-from ..corefunc.models import Reminder
+from ..corefunc.schemas import Reminder
 from ..corefunc.storage import ReminderStorage
 
 class ReminderPaginator(View):
