@@ -1,5 +1,6 @@
 # modmail-plugins/remindmepro/ui/edit_reminder_modals.py
-from discord.ui import Modal, InputText
+from discord.ui import Modal, TextInput
+from discord import TextStyle
 import discord
 from datetime import datetime
 from dateutil.parser import parse
@@ -7,36 +8,37 @@ from dateutil.parser import parse
 from ..corefunc.schemas import Reminder
 from ..corefunc.utilities import validate_future_time
 
-class EditReminderModal(Modal):
+class EditReminderModal(Modal, title="Edit Reminder"):
     """Modal for editing reminder details"""
     
-    def __init__(self, reminder: Reminder):
-        super().__init__(title="Edit Reminder")
-        self.reminder = reminder
-        self.new_time = None
-        self.new_text = None
-        
-        self.add_item(InputText(
-            label="New Reminder Text",
-            placeholder="What would you like to be reminded about?",
-            value=reminder.text,
-            required=False,
-            style=discord.InputTextStyle.long
-        ))
-        
-        self.add_item(InputText(
-            label="New Date/Time",
-            placeholder="e.g. 'tomorrow at 3pm' or 'April 1'",
-            value=discord.utils.format_dt(reminder.due, "f"),
-            required=False
-        ))
+    new_text = TextInput(
+        label="New Reminder Text",
+        placeholder="What would you like to be reminded about?",
+        default="",  # Will be set in __init__
+        style=TextStyle.long,
+        required=False
+    )
+    
+    new_time = TextInput(
+        label="New Date/Time",
+        placeholder="e.g. 'tomorrow at 3pm' or 'April 1'",
+        default="",  # Will be set in __init__
+        style=TextStyle.short,
+        required=False
+    )
 
-    async def callback(self, interaction: discord.Interaction):
+    def __init__(self, reminder: Reminder):
+        super().__init__()
+        self.reminder = reminder
+        self.new_text.default = reminder.text
+        self.new_time.default = discord.utils.format_dt(reminder.due, "f")
+
+    async def on_submit(self, interaction: discord.Interaction):
         """Handle modal submission"""
         try:
             updates = {}
-            text_input = self.children[0].value.strip()
-            time_input = self.children[1].value.strip()
+            text_input = self.new_text.value.strip()
+            time_input = self.new_time.value.strip()
             
             if text_input and text_input != self.reminder.text:
                 updates["text"] = text_input
@@ -50,8 +52,6 @@ class EditReminderModal(Modal):
             
             if updates:
                 await interaction.response.defer()
-                self.new_time = time_input
-                self.new_text = text_input
             else:
                 await interaction.response.send_message(
                     "No changes were made to the reminder.",
@@ -62,4 +62,4 @@ class EditReminderModal(Modal):
                 f"Error updating reminder:\n{str(e)}",
                 ephemeral=True
             )
-            
+    
