@@ -1,6 +1,6 @@
-# modmail-plugins/RemindMePro/core/__init__.py
+# modmail-plugins/remindmepro/core/__init__.py
 from .time import UserFriendlyTime
-from .models import Reminder
+from .schemas import Reminder  # Changed from .models
 from .storage import ReminderStorage
 from .utilities import parse_user_time, validate_future_time
 from .user_settings import UserSettings
