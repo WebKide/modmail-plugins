@@ -4,11 +4,11 @@ import discord
 from typing import List, Optional
 from datetime import datetime
 
-from .core.schemas import Reminder
-from .core.storage import ReminderStorage
-from .core import checks
-from .core.time import UserFriendlyTime
-from .ui.paginator import ReminderPaginator
+from ..core.schemas import Reminder
+from ..core.storage import ReminderStorage
+from ..core import checks
+from ..core.time import UserFriendlyTime
+from ..ui.paginator import ReminderPaginator
 from discord import utils
 
 class AdminCommands(commands.Cog):
