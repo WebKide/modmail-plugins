@@ -6,6 +6,7 @@ from typing import List
 
 import discord
 from discord.ext import tasks
+from discord.ui import View
 
 from ..corefunc.schemas import Reminder
 from ..corefunc.storage import ReminderStorage
