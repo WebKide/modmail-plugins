@@ -1,4 +1,4 @@
-# modmail-plugins/RemindMePro/handlers/user_commands.py
+# modmail-plugins/remindmepro/handlers/user_commands.py
 from discord.ext import commands
 from discord import utils
 import discord
@@ -7,11 +7,11 @@ from datetime import datetime
 import pytz
 from typing import Optional
 
-from ..core.models import Reminder  # Go up one level then into core
-from ..core.storage import ReminderStorage
-from ..core.utilities import parse_user_time, validate_future_time
-from ..core.user_settings import UserSettings
-from .timezones_config import TIMEZONE_ALIASES  # from .handlers.timezones_config import TIMEZONE_ALIASES
+from ..corefunc.models import Reminder  # Go up one level then into core
+from ..corefunc.storage import ReminderStorage
+from ..corefunc.utilities import parse_user_time, validate_future_time
+from ..corefunc.user_settings import UserSettings
+from .timezones_config import TIMEZONE_ALIASES
 
 log = logging.getLogger(__name__)
 
