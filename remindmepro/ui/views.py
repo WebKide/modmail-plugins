@@ -1,10 +1,10 @@
-# modmail-plugins/RemindMePro/ui/views.py
+# modmail-plugins/remindmepro/ui/views.py
 from discord.ui import View, Button
 import discord
 from typing import Optional
 
-from .core.models import Reminder
-from .core.storage import ReminderStorage
+from ..corefunc.models import Reminder
+from ..corefunc.storage import ReminderStorage
 
 class ReminderControlsView(View):
     """View for managing individual reminders"""
