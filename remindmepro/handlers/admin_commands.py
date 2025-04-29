@@ -1,12 +1,12 @@
-# modmail-plugins/RemindMePro/handlers/admin_commands.py
+# modmail-plugins/remindmepro/handlers/admin_commands.py
 from discord.ext import commands
 import discord
 from typing import List, Optional
 from datetime import datetime
 
-from ..core.schemas import Reminder
-from ..core.storage import ReminderStorage
-from ..core.time import UserFriendlyTime
+from ..corefunc.schemas import Reminder
+from ..corefunc.storage import ReminderStorage
+from ..corefunc.time import UserFriendlyTime
 from ..ui.paginator import ReminderPaginator
 from core import checks
 from discord import utils
