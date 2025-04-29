@@ -1,4 +1,4 @@
-# modmail-plugins/RemindMePro/core/utilities.py
+# modmail-plugins/remindmepro/corefunc/utilities.py
 from datetime import datetime
 from dateutil.parser import parse
 from dateutil.relativedelta import relativedelta
