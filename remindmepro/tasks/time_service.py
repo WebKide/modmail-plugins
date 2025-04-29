@@ -5,7 +5,7 @@ import pytz
 from dateutil.parser import parse
 from dateutil.relativedelta import relativedelta
 
-from ..corefunc.models import Reminder
+from ..corefunc.schemas import Reminder
 
 class TimeService:
     """Service for time-related operations"""
