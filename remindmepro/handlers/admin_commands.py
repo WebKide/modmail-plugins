@@ -4,7 +4,7 @@ import discord
 from typing import List, Optional
 from datetime import datetime
 
-from .core.models import Reminder
+from .core.schemas import Reminder
 from .core.storage import ReminderStorage
 from .core import checks
 from .core.time import UserFriendlyTime
