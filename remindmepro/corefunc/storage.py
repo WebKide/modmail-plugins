@@ -1,4 +1,4 @@
-# modmail-plugins/RemindMePro/core/storage.py
+# modmail-plugins/remindmepro/corefunc/storage.py
 from typing import List, Optional
 from datetime import datetime, timedelta
 from pymongo import ReturnDocument
