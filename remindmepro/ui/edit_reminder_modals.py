@@ -1,11 +1,11 @@
-# modmail-plugins/RemindMePro/ui/edit_reminder_modals.py
+# modmail-plugins/remindmepro/ui/edit_reminder_modals.py
 from discord.ui import Modal, InputText
 import discord
 from datetime import datetime
 from dateutil.parser import parse
 
-from .core.models import Reminder
-from .core.utilities import validate_future_time
+from ..corefunc.models import Reminder
+from ..corefunc.utilities import validate_future_time
 
 class EditReminderModal(Modal):
     """Modal for editing reminder details"""
