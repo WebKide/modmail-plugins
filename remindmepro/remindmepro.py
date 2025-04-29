@@ -42,6 +42,12 @@ class RemindMePro(commands.Cog):
         """Called when the cog is loaded"""
         await self.storage.setup_indexes()
         await self.user_settings.load_timezones()
+        
+        # Add commands from Handlers
+        await self.bot.add_cog(self.user_commands)
+        await self.bot.add_cog(self.admin_commands)
+        await self.bot.add_cog(self.timezone_commands)
+        
         log.info("RemindMePro plugin loaded")
         
     async def cog_unload(self):
