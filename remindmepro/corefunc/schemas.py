@@ -1,4 +1,4 @@
-# modmail-plugins/remindmepro/core/schemas.py
+# modmail-plugins/remindmepro/corefunc/schemas.py
 from bson import ObjectId
 from pydantic import BaseModel, Field, validator
 import pytz
