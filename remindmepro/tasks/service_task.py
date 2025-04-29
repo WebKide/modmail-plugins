@@ -7,7 +7,7 @@ from typing import List
 import discord
 from discord.ext import tasks
 
-from ..corefunc.models import Reminder
+from ..corefunc.schemas import Reminder
 from ..corefunc.storage import ReminderStorage
 from ..ui.views import ReminderControlsView
 
