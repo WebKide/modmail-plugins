@@ -1,6 +1,6 @@
 # modmail-plugins/remindmepro/tasks/time_service.py
 from datetime import datetime, timedelta
-from typing import Optional, Literal
+from typing import Optional, Literal, List
 import pytz
 from dateutil.parser import parse
 from dateutil.relativedelta import relativedelta
