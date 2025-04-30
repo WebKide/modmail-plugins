@@ -249,7 +249,10 @@ class Private(commands.Cog):
         # Get ping role if configured
         ping_role = config.get('ping_role')
         _poke = f'<@&{ping_role}> || ℍ𝕒𝕣𝕚 𝕜𝕒𝕥𝕙𝕒̄ 𝖯𝗎𝗌𝗁-𝗇𝗈𝗍𝗂𝖿𝗂𝖼𝖺𝗍𝗂𝗈𝗇 ||' if ping_role else 'ℍ𝕒𝕣𝕚 𝕜𝕒𝕥𝕙𝕒̄ 𝖯𝗎𝗌𝗁-𝗇𝗈𝗍𝗂𝖿𝗂𝖼𝖺𝗍𝗂𝗈𝗇 @here'
-        
+
+        # Get speaker from config
+        _host = config.get('speaker', 'and speaker')
+
         err_m = f"{ctx.author.mention}, update this channel’s **Topic**.\n\n" \
                 f"**Tip:** ask a Mod for help setting up this channel for the commands to work."
 
@@ -285,6 +288,7 @@ class Private(commands.Cog):
             'You’ve been eagerly waiting for this, and so have we. Sit back, relax and, listen attentively'
         ]
 
+        """
         if isinstance(channel, discord.TextChannel):
             if not channel.topic:
                 return await ctx.send(err_m, delete_after=23)
@@ -293,6 +297,7 @@ class Private(commands.Cog):
                 _host = channel.topic.split('—')[-1]
             else:
                 _host = config.get('speaker', 'and speaker')
+        """
 
         def get_ordinal_suffix(num):
             if 11 <= num % 32 <= 13:
