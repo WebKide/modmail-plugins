@@ -44,7 +44,7 @@ class Private(commands.Cog):
                            "BOT": "America/La_Paz"}
         
     async def get_guild_config(self, guild_id):
-        """Retrieve or create guild configuration using Modmail's plugin_db"""
+        """Retrieve or create guild configuration using Modmail’s plugin_db"""
         config = await self.db.find_one({"_id": str(guild_id)})
         
         if not config:
@@ -68,7 +68,7 @@ class Private(commands.Cog):
         return config
 
     async def update_config(self, guild_id, update_data):
-        """Update guild configuration using Modmail's plugin_db"""
+        """Update guild configuration using Modmail’s plugin_db"""
         # Convert datetime to timestamp for storage
         if "last_updater" in update_data and isinstance(update_data["last_updater"], t):
             update_data["last_updater"] = update_data["last_updater"].timestamp()
@@ -230,7 +230,7 @@ class Private(commands.Cog):
         target_channel = self.bot.get_channel(config.get('target_channel', 358429353966698500))
         
         if not target_channel:
-            return await ctx.send("Couldn't find the target channel! Please configure one first.", delete_after=10)
+            return await ctx.send("Couldn’t find the target channel! Please configure one first.", delete_after=10)
         
         await self._send_notification(ctx, target_channel, _event_today, config)
     
@@ -243,7 +243,7 @@ class Private(commands.Cog):
         target_channel = self.bot.get_channel(config.get('target_channel', 358429353966698500))
         
         if not target_channel:
-            return await ctx.respond("Couldn't find the target channel! Please configure one first.", ephemeral=True)
+            return await ctx.respond("Couldn’t find the target channel! Please configure one first.", ephemeral=True)
         
         await self._send_notification(ctx, target_channel, event_today, config)
         await ctx.respond(f"Notification sent to {target_channel.mention}!", ephemeral=True)
@@ -265,14 +265,14 @@ class Private(commands.Cog):
             except discord.Forbidden:
                 pass
         
-        # Get guild name from target channel's guild
+        # Get guild name from target channel’s guild
         guild_name = channel.guild.name
         
         # Get ping role if configured
         ping_role = config.get('ping_role')
         _poke = f'<@&{ping_role}> || ℍ𝕒𝕣𝕚 𝕜𝕒𝕥𝕙𝕒̄ 𝖯𝗎𝗌𝗁-𝗇𝗈𝗍𝗂𝖿𝗂𝖼𝖺𝗍𝗂𝗈𝗇 ||' if ping_role else 'ℍ𝕒𝕣𝕚 𝕜𝕒𝕥𝕙𝕒̄ 𝖯𝗎𝗌𝗁-𝗇𝗈𝗍𝗂𝖿𝗂𝖼𝖺𝗍𝗂𝗈𝗇 @here'
         
-        err_m = f"{ctx.author.mention}, update this channel's **Topic**.\n\n" \
+        err_m = f"{ctx.author.mention}, update this channel’s **Topic**.\n\n" \
                 f"**Tip:** ask a Mod for help setting up this channel for the commands to work."
 
         INTRO = [
@@ -300,10 +300,10 @@ class Private(commands.Cog):
         ]
 
         OUTRO = [
-            'So, let's dive into this valuable study together and learn about this wanderful process',
+            'So, let’s dive into this valuable study together and learn about this wanderful process',
             'So, sit back, relax, and listen attentively as we embark on this spiritual journey together',
             'Without further ado, sit back, relax and, listen attentively',
-            'Hold on to your chairs, and simply "lend us your ears"',
+            'Hold on to your chairs, and simply “lend us your ears”',
             'You've been eagerly waiting for this, and so have we. Sit back, relax and, listen attentively'
         ]
 
