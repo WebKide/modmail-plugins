@@ -42,18 +42,6 @@ class Private(commands.Cog):
             "BOT": "America/La_Paz"
         }
 
-    async def cog_load(self):
-        """Register slash commands when the cog is loaded"""
-        self.bot.tree.add_command(self.setup_notifications)
-        self.bot.tree.add_command(self.reset_timezones)
-        self.bot.tree.add_command(self.set_timezones)
-
-    async def cog_unload(self):
-        """Remove slash commands when the cog is unloaded"""
-        self.bot.tree.remove_command("setup_notifications")
-        self.bot.tree.remove_command("reset_timezones")
-        self.bot.tree.remove_command("set_timezones")
-        
     async def get_guild_config(self, guild_id):
         """Retrieve or create guild configuration using Modmail’s plugin_db"""
         config = await self.db.find_one({"_id": str(guild_id)})
@@ -91,12 +79,12 @@ class Private(commands.Cog):
         )
     
     # +------------------------------------------------------------+
-    # |                     CONFIGURATION COMMANDS                   |
+    # |                   CONFIGURATION COMMANDS                   |
     # +------------------------------------------------------------+
-    @discord.app_commands.command(name="setup_notifications", description="Configure notification settings for this guild")
+    @commands.command(name="setup_notifications", description="Configure notification settings for this guild")
     @commands.has_any_role('Admin', 'Mod', 'Moderator')
     @commands.guild_only()
-    async def setup_notifications(self, ctx):
+    async def _setup_notifications(self, ctx):
         """Interactive setup for notification configuration"""
         # Step 1: Get target channel
         await ctx.respond("Please mention the target channel for notifications:")
@@ -142,7 +130,7 @@ class Private(commands.Cog):
                          f"**Speaker:** {speaker}\n"
                          f"**Ping Role:** {f'<@&{ping_role}>' if ping_role else 'None'}")
     
-    @discord.app_commands.command(name="reset_timezones", description="Reset timezone configurations")
+    @commands.command(name="reset_timezones", description="Reset timezone configurations")
     @commands.has_any_role('Admin', 'Mod', 'Moderator')
     @commands.guild_only()
     async def reset_timezones(self, ctx):
@@ -153,7 +141,7 @@ class Private(commands.Cog):
         })
         await ctx.respond("✅ Timezones reset to defaults!")
     
-    @discord.app_commands.command(name="set_timezones", description="Set timezones using reactions")
+    @commands.command(name="set_timezones", description="Set timezones using reactions")
     @commands.has_any_role('Admin', 'Mod', 'Moderator')
     @commands.guild_only()
     async def set_timezones(self, ctx):
@@ -163,8 +151,9 @@ class Private(commands.Cog):
             description="React with the flags for timezones you want to include:\n"
                         "🇮🇳 - IST (Asia/Kolkata)\n"
                         "🇬🇧 - GMT (Europe/London)\n"
-                        "🇺🇸 - EST (America/New_York)\n"
+                        "🗽 - EST (America/New_York)\n"
                         "🇺🇸 - PST (America/Los_Angeles)\n"
+                        "🇦🇷 - ART (America/Argentina/Buenos_Aires)\n"
                         "🇧🇴 - BOT (America/La_Paz)\n\n"
                         "Click ✅ when done.",
             color=discord.Color.blue()
@@ -175,8 +164,9 @@ class Private(commands.Cog):
         emoji_map = {
             "🇮🇳": ("IST", "Asia/Kolkata"),
             "🇬🇧": ("GMT", "Europe/London"),
-            "🇺🇸": ("EST", "America/New_York"),
+            "🗽": ("EST", "America/New_York"),
             "🇺🇸": ("PST", "America/Los_Angeles"),
+            "🇦🇷": ("ART", "America/Argentina/Buenos_Aires"),
             "🇧🇴": ("BOT", "America/La_Paz"),
             "✅": "done"
         }
@@ -217,8 +207,7 @@ class Private(commands.Cog):
     # +------------------------------------------------------------+
     # |                    NOTIFICATION COMMANDS                   |
     # +------------------------------------------------------------+
-    # Slash command (app command)
-    @discord.app_commands.command(name="radhe", description='Sends notification into same channel')
+    @commands.command(description='Sends notification into same channel', aliases=['poke'], no_pm=True)
     @commands.has_any_role('Admin', 'Mod', 'Moderator')
     async def radhe(self, interaction: discord.Interaction, event_today: str = None):
         """Send a push notification in the current channel"""
@@ -226,14 +215,6 @@ class Private(commands.Cog):
         config = await self.get_guild_config(ctx.guild.id)
         await self._send_notification(ctx, ctx.channel, event_today, config)
 
-    # Regular prefix command (keep as is)
-    @commands.command(aliases=['poke'], no_pm=True)
-    @commands.has_any_role('Admin', 'Mod', 'Moderator')
-    async def radhe_prefix(self, ctx, *, event_today: str = None):
-        """Send a push notification in the current channel"""
-        config = await self.get_guild_config(ctx.guild.id)
-        await self._send_notification(ctx, ctx.channel, event_today, config)
-    
     @commands.command(description='Sends the push notification to the General channel', aliases=['nudge'], no_pm=True)
     @commands.has_any_role('Admin', 'Mod', 'Moderator')
     async def gaura(self, ctx, *, _event_today: str = None):
@@ -257,7 +238,7 @@ class Private(commands.Cog):
         start_time = time.time()
         
         # Delete original message if not in target channel
-        if isinstance(ctx, commands.Context) and channel.id != ctx.channel.id:
+        if channel.id != ctx.channel.id:
             try:
                 await ctx.message.delete()
             except discord.Forbidden:
@@ -277,7 +258,7 @@ class Private(commands.Cog):
             f'*Turn off and tune into* the **{guild_name}** Podcast, ',
             f'Bring auspiciousness to your day with the **{guild_name}** Podcast, ',
             f'Hello and welcome to the **{guild_name}** Podcast, ',
-            f'It is a beautiful day to listen to the **{guild_name}** Podcast, ',
+            f'It’s a beautiful day to listen to the **{guild_name}** Podcast, ',
             f'It is a nice day to listen to the **{guild_name}** Podcast, ',
             f'Make your day succesfull by listening to the **{guild_name}** Podcast, ',
             f'This is the **{guild_name}** Podcast, ',
@@ -307,7 +288,7 @@ class Private(commands.Cog):
 
         if isinstance(channel, discord.TextChannel):
             if not channel.topic:
-                return await ctx.send(err_m, delete_after=23) if isinstance(ctx, commands.Context) else await ctx.respond(err_m, ephemeral=True)
+                return await ctx.send(err_m, delete_after=23)
 
             if '—' in channel.topic:
                 _host = channel.topic.split('—')[-1]
@@ -330,7 +311,7 @@ class Private(commands.Cog):
                     tz = z(tz_name)
                     t_now = t.now(tz)
                     suffix = get_ordinal_suffix(t_now.day)
-                    flag_moji = f":flag_{code.lower().replace('ist', 'in').replace('gmt', 'gb').replace('est', 'us').replace('pst', 'us').replace('bot', 'bo')}:"
+                    flag_moji = f":flag_{code.lower().replace('ist', 'in').replace('gmt', 'gb').replace('est', 'us').replace('pst', 'us').replace('art', 'ar').replace('bot', 'bo')}:"
                     
                     date_str = t_now.strftime('**%H**:%M:%S, %A %b %d, %Y')
                     date_str = date_str.replace(f"{t_now.day},", f"{t_now.day}{suffix},")
@@ -377,7 +358,7 @@ class Private(commands.Cog):
             pass
 
         # Send confirmation to original text channel
-        if isinstance(ctx, commands.Context) and channel.id != ctx.channel.id:
+        if channel.id != ctx.channel.id:
             try:
                 confirmation = await ctx.send(f"ℍ𝕒𝕣𝕚 𝕜𝕒𝕥𝕙𝕒̄ Push-Notification sent to **{channel.mention}**! \nSent in {self.bot.latency*1000:.2f}ms'")
                 await asyncio.sleep(2)
@@ -387,5 +368,3 @@ class Private(commands.Cog):
 
 async def setup(bot):
     await bot.add_cog(Private(bot))
-
-    
