@@ -209,9 +209,8 @@ class Private(commands.Cog):
     # +------------------------------------------------------------+
     @commands.command(description='Sends notification into same channel', aliases=['poke'], no_pm=True)
     @commands.has_any_role('Admin', 'Mod', 'Moderator')
-    async def radhe(self, interaction: discord.Interaction, event_today: str = None):
+    async def radhe(self, ctx: commands.Context, *, event_today: str = None):
         """Send a push notification in the current channel"""
-        ctx = await commands.Context.from_interaction(interaction)
         config = await self.get_guild_config(ctx.guild.id)
         await self._send_notification(ctx, ctx.channel, event_today, config)
 
