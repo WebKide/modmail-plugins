@@ -18,12 +18,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-import discord
-import logging
-import asyncio
-import time
-import re
-import random
+import discord, logging, asyncio, time, re, random
+
 from datetime import datetime as t
 from pytz import timezone as z
 from discord.ext import commands
@@ -35,13 +31,30 @@ logger = logging.getLogger("Modmail")
 
 class Private(commands.Cog):
     """Private Discord.py plugin for managing notifications and announcements regarding Gauḍīya Vaiṣṇava podcasts"""
-    
     def __init__(self, bot):
         self.bot = bot
         self.db = bot.plugin_db.get_partition(self)
-        self.default_tzs = {"IST": "Asia/Kolkata", "GMT": "Europe/London", 
-                           "EST": "America/New_York", "PST": "America/Los_Angeles", 
-                           "BOT": "America/La_Paz"}
+        self.default_tzs = {
+            "IST": "Asia/Kolkata",
+            "GMT": "Europe/London",
+            "EST": "America/New_York",
+            "PST": "America/Los_Angeles",
+            "BOT": "America/La_Paz"
+        }
+
+    async def cog_load(self):
+        """Register slash commands when the cog is loaded"""
+        self.bot.tree.add_command(self.radhe)
+        self.bot.tree.add_command(self.gaura)
+        self.bot.tree.add_command(self.setup_notifications)
+        self.bot.tree.add_command(self.reset_timezones)
+
+    async def cog_unload(self):
+        """Remove slash commands when the cog is unloaded"""
+        self.bot.tree.remove_command(self.radhe)
+        self.bot.tree.remove_command(self.gaura)
+        self.bot.tree.remove_command(self.setup_notifications)
+        self.bot.tree.remove_command(self.reset_timezones)
         
     async def get_guild_config(self, guild_id):
         """Retrieve or create guild configuration using Modmail’s plugin_db"""
@@ -82,7 +95,7 @@ class Private(commands.Cog):
     # +------------------------------------------------------------+
     # |                     CONFIGURATION COMMANDS                   |
     # +------------------------------------------------------------+
-    @commands.slash_command(name="setup_notifications", description="Configure notification settings for this guild")
+    @discord.app_commands.command(name="setup_notifications", description="Configure notification settings for this guild")
     @commands.has_any_role('Admin', 'Mod', 'Moderator')
     @commands.guild_only()
     async def setup_notifications(self, ctx):
@@ -131,7 +144,7 @@ class Private(commands.Cog):
                          f"**Speaker:** {speaker}\n"
                          f"**Ping Role:** {f'<@&{ping_role}>' if ping_role else 'None'}")
     
-    @commands.slash_command(name="reset_timezones", description="Reset timezone configurations")
+    @discord.app_commands.command(name="reset_timezones", description="Reset timezone configurations")
     @commands.has_any_role('Admin', 'Mod', 'Moderator')
     @commands.guild_only()
     async def reset_timezones(self, ctx):
@@ -142,7 +155,7 @@ class Private(commands.Cog):
         })
         await ctx.respond("✅ Timezones reset to defaults!")
     
-    @commands.slash_command(name="set_timezones", description="Set timezones using reactions")
+    @discord.app_commands.command(name="set_timezones", description="Set timezones using reactions")
     @commands.has_any_role('Admin', 'Mod', 'Moderator')
     @commands.guild_only()
     async def set_timezones(self, ctx):
@@ -213,15 +226,6 @@ class Private(commands.Cog):
         config = await self.get_guild_config(ctx.guild.id)
         await self._send_notification(ctx, ctx.channel, _event_today, config)
     
-    @commands.slash_command(name="radhe", description="Sends notification into same channel")
-    @commands.has_any_role('Admin', 'Mod', 'Moderator')
-    @commands.guild_only()
-    async def radhe_slash(self, ctx, event_today: str = None):
-        """Slash command version of radhe"""
-        config = await self.get_guild_config(ctx.guild.id)
-        await self._send_notification(ctx, ctx.channel, event_today, config)
-        await ctx.respond("Notification sent!", ephemeral=True)
-
     @commands.command(description='Sends the push notification to the General channel', aliases=['nudge'], no_pm=True)
     @commands.has_any_role('Admin', 'Mod', 'Moderator')
     async def gaura(self, ctx, *, _event_today: str = None):
@@ -234,20 +238,6 @@ class Private(commands.Cog):
         
         await self._send_notification(ctx, target_channel, _event_today, config)
     
-    @commands.slash_command(name="gaura", description="Sends notification to configured channel")
-    @commands.has_any_role('Admin', 'Mod', 'Moderator')
-    @commands.guild_only()
-    async def gaura_slash(self, ctx, event_today: str = None):
-        """Slash command version of gaura"""
-        config = await self.get_guild_config(ctx.guild.id)
-        target_channel = self.bot.get_channel(config.get('target_channel', 358429353966698500))
-        
-        if not target_channel:
-            return await ctx.respond("Couldn’t find the target channel! Please configure one first.", ephemeral=True)
-        
-        await self._send_notification(ctx, target_channel, event_today, config)
-        await ctx.respond(f"Notification sent to {target_channel.mention}!", ephemeral=True)
-
     # +------------------------------------------------------------+
     # |                    NOTIFICATION LOGIC                      |
     # +------------------------------------------------------------+
