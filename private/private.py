@@ -44,17 +44,15 @@ class Private(commands.Cog):
 
     async def cog_load(self):
         """Register slash commands when the cog is loaded"""
-        self.bot.tree.add_command(self.radhe)
-        self.bot.tree.add_command(self.gaura)
         self.bot.tree.add_command(self.setup_notifications)
         self.bot.tree.add_command(self.reset_timezones)
+        self.bot.tree.add_command(self.set_timezones)
 
     async def cog_unload(self):
         """Remove slash commands when the cog is unloaded"""
-        self.bot.tree.remove_command(self.radhe)
-        self.bot.tree.remove_command(self.gaura)
-        self.bot.tree.remove_command(self.setup_notifications)
-        self.bot.tree.remove_command(self.reset_timezones)
+        self.bot.tree.remove_command("setup_notifications")
+        self.bot.tree.remove_command("reset_timezones")
+        self.bot.tree.remove_command("set_timezones")
         
     async def get_guild_config(self, guild_id):
         """Retrieve or create guild configuration using Modmail’s plugin_db"""
@@ -219,12 +217,22 @@ class Private(commands.Cog):
     # +------------------------------------------------------------+
     # |                    NOTIFICATION COMMANDS                   |
     # +------------------------------------------------------------+
-    @commands.command(description='Sends notification into same channel', aliases=['poke'], no_pm=True)
+    # Slash command (app command)
+    @discord.app_commands.command(name="radhe", description='Sends notification into same channel')
     @commands.has_any_role('Admin', 'Mod', 'Moderator')
-    async def radhe(self, ctx, *, _event_today: str = None):
+    async def radhe(self, interaction: discord.Interaction, event_today: str = None):
+        """Send a push notification in the current channel"""
+        ctx = await commands.Context.from_interaction(interaction)
+        config = await self.get_guild_config(ctx.guild.id)
+        await self._send_notification(ctx, ctx.channel, event_today, config)
+
+    # Regular prefix command (keep as is)
+    @commands.command(aliases=['poke'], no_pm=True)
+    @commands.has_any_role('Admin', 'Mod', 'Moderator')
+    async def radhe_prefix(self, ctx, *, event_today: str = None):
         """Send a push notification in the current channel"""
         config = await self.get_guild_config(ctx.guild.id)
-        await self._send_notification(ctx, ctx.channel, _event_today, config)
+        await self._send_notification(ctx, ctx.channel, event_today, config)
     
     @commands.command(description='Sends the push notification to the General channel', aliases=['nudge'], no_pm=True)
     @commands.has_any_role('Admin', 'Mod', 'Moderator')
@@ -379,4 +387,5 @@ class Private(commands.Cog):
 
 async def setup(bot):
     await bot.add_cog(Private(bot))
+
     
