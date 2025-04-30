@@ -86,9 +86,24 @@ class RoleReact(commands.Cog):
         """Wait until the config is loaded."""
         await self._config_ready.wait()
 
-    @commands.group(aliases=["rr"], invoke_without_command=True)
+    @commands.group(aliases=["rr"], description="Manage reaction roles with 12 sub-commands", invoke_without_command=True)
     async def rolereaction(self, ctx: commands.Context):
-        """Manage reaction roles."""
+        """Manage reaction roles
+        
+        **Sub Commands**
+        ├─ `add` - Add a reaction role
+        ├─ `blacklist` - Add/remove a user from reaction role blacklis
+        ├─ `blacklist_list` - View blacklisted users with pagination
+        ├─ `cleanup` - Remove all reactions from a message
+        ├─ `ignore_role` - Add/remove a role that will be ignored by reaction roles
+        ├─ `ignored_roles` - View ignored roles
+        ├─ `list` - List all configured reaction roles
+        ├─ `pause` - Pause or resume all reaction role functionality
+        ├─ `react` - Add reactions to a message for reaction roles
+        ├─ `remove` - Remove a reaction role
+        ├─ `set_audit_channel` - Set the channel for audit logs
+        └─ `set_channel` - Set the channel for reaction role messages
+        """
         await ctx.send_help(ctx.command)
 
     @rolereaction.command(description='Add reaction to a message using ID', no_pm=True)
