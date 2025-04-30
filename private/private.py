@@ -34,6 +34,7 @@ class Private(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.db = bot.plugin_db.get_partition(self)
+        self._config_cache = {}  # Add simple cache
         self.default_tzs = {
             "IST": "Asia/Kolkata",
             "GMT": "Europe/London",
@@ -43,7 +44,12 @@ class Private(commands.Cog):
         }
 
     async def get_guild_config(self, guild_id):
-        """Retrieve or create guild configuration using Modmail’s plugin_db"""
+        """Retrieve or create guild configuration with caching"""
+        # Check cache first
+        if guild_id in self._config_cache:
+            return self._config_cache[guild_id]
+        
+        # Fetch from database
         config = await self.db.find_one({"_id": str(guild_id)})
         
         if not config:
@@ -58,7 +64,8 @@ class Private(commands.Cog):
                 "last_updater": t.now().timestamp()
             }
             await self.db.insert_one(default_config)
-            return config  # default_config
+            self._config_cache[guild_id] = default_config
+            return default_config
 
         # Ensure all fields exist
         defaults = {
@@ -75,7 +82,12 @@ class Private(commands.Cog):
         if isinstance(config.get("last_updater"), (int, float)):
             config["last_updater"] = t.fromtimestamp(config["last_updater"])
         
+        self._config_cache[guild_id] = config
         return config
+
+    async def clear_config_cache(self, guild_id):
+        """Clear cached config for a guild"""
+        self._config_cache.pop(guild_id, None)
 
     async def update_config(self, guild_id, update_data):
         """Update guild configuration using Modmail’s plugin_db"""
@@ -88,6 +100,7 @@ class Private(commands.Cog):
             {"$set": update_data},
             upsert=True
         )
+        await self.clear_config_cache(guild_id)
     
     # +------------------------------------------------------------+
     # |                   CONFIGURATION COMMANDS                   |
@@ -331,7 +344,7 @@ class Private(commands.Cog):
                 suffix = {1: 'ˢᵗ', 2: 'ⁿᵈ', 3: 'ʳᵈ'}.get(num % 10, 'ᵗʰ')
             return suffix
 
-        print("Stored timezones:", config.get('timezones'))
+        # print("Stored timezones:", config.get('timezones'))
         def get_t_str():
             t_str = []
             # Get the current config
