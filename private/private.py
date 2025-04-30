@@ -304,7 +304,7 @@ class Private(commands.Cog):
             'So, sit back, relax, and listen attentively as we embark on this spiritual journey together',
             'Without further ado, sit back, relax and, listen attentively',
             'Hold on to your chairs, and simply “lend us your ears”',
-            'You've been eagerly waiting for this, and so have we. Sit back, relax and, listen attentively'
+            'You’ve been eagerly waiting for this, and so have we. Sit back, relax and, listen attentively'
         ]
 
         if isinstance(channel, discord.TextChannel):
