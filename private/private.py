@@ -245,6 +245,7 @@ class Private(commands.Cog):
         
         # Get guild name from target channel’s guild
         guild_name = channel.guild.name
+        _avy_img = ctx.guild.icon.url if ctx.guild.icon else ctx.author.avatar.url
         
         # Get ping role if configured
         ping_role = config.get('ping_role')
@@ -306,6 +307,7 @@ class Private(commands.Cog):
                 suffix = {1: 'ˢᵗ', 2: 'ⁿᵈ', 3: 'ʳᵈ'}.get(num % 10, 'ᵗʰ')
             return suffix
 
+        print("Stored timezones:", config.get('timezones'))
         def get_t_str():
             t_str = []
             # Get the current config (make sure this is passed correctly from the calling function)
@@ -335,7 +337,7 @@ class Private(commands.Cog):
                     
                     t_str.append(f"{flag_emoji} {code} — {date_str}")
                 except Exception as e:
-                    print(f"Error processing timezone {code}: {e}")
+                    print(f"Error processing timezone {code}: {str(e)}")
                     continue
             return "\n".join(t_str)
 
@@ -347,7 +349,7 @@ class Private(commands.Cog):
             _what = ' '.join(_event_today.split(' ')[1:])
             _notif = 'https://cdn.discordapp.com/attachments/375179500604096512/1079876674235154442/flyerdesign_27022023_172353.png'
             em = discord.Embed(colour=discord.Colour(0xff7722), description=get_t_str())
-            em.set_author(name='𝖧𝖺𝗋𝗂-𝗄𝖺𝗍𝗁𝖺̄ 𝗋𝖾𝗆𝗂𝗇𝖽𝖾𝗋', icon_url=ctx.author.avatar.url)
+            em.set_author(name='𝖧𝖺𝗋𝗂-𝗄𝖺𝗍𝗁𝖺̄ 𝗋𝖾𝗆𝗂𝗇𝖽𝖾𝗋', icon_url=_avy_img)
             em.add_field(name='Event today:', value=_what, inline=False)
             em.add_field(name='Attentive Listeners', value=_intro(), inline=False)
             em.set_thumbnail(url=_notif)
@@ -360,7 +362,7 @@ class Private(commands.Cog):
 
             try:
                 em = discord.Embed(colour=discord.Colour(0xff7722), description=get_t_str())
-                em.set_author(name='𝖧𝖺𝗋𝗂-𝗄𝖺𝗍𝗁𝖺̄ 𝗋𝖾𝗆𝗂𝗇𝖽𝖾𝗋', icon_url=ctx.author.avatar.url)
+                em.set_author(name='𝖧𝖺𝗋𝗂-𝗄𝖺𝗍𝗁𝖺̄ 𝗋𝖾𝗆𝗂𝗇𝖽𝖾𝗋', icon_url=_avy_img)
                 em.add_field(name='Attentive Listeners', value=_intro(), inline=False)
                 em.set_thumbnail(url='https://i.imgur.com/93A0Kdk.png')
                 em.set_footer(text=f'⇐ Join the Voice Channel NOW! — {self.bot.latency*1000:.2f}ms')
