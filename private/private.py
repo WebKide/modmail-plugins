@@ -87,7 +87,7 @@ class Private(commands.Cog):
     async def _setup_notifications(self, ctx):
         """Interactive setup for notification configuration"""
         # Step 1: Get target channel
-        await ctx.respond("Please mention the target channel for notifications:")
+        await ctx.send("Please mention the target channel for notifications:")
         
         def check(m):
             return m.author == ctx.author and m.channel == ctx.channel and m.channel_mentions
@@ -96,18 +96,18 @@ class Private(commands.Cog):
             msg = await self.bot.wait_for('message', timeout=60.0, check=check)
             target_channel = msg.channel_mentions[0]
         except asyncio.TimeoutError:
-            return await ctx.respond("Setup timed out. Please try again.")
+            return await ctx.send("Setup timed out. Please try again.")
         
         # Step 2: Get speaker name
-        await ctx.respond("Please enter the speaker/host display name:")
+        await ctx.send("Please enter the speaker/host display name:")
         try:
             msg = await self.bot.wait_for('message', timeout=60.0, check=lambda m: m.author == ctx.author)
             speaker = msg.content
         except asyncio.TimeoutError:
-            return await ctx.respond("Setup timed out. Please try again.")
+            return await ctx.send("Setup timed out. Please try again.")
         
         # Step 3: Get ping role
-        await ctx.respond("Please mention the role to ping (or type 'skip' to skip):")
+        await ctx.send("Please mention the role to ping (or type 'skip' to skip):")
         try:
             msg = await self.bot.wait_for('message', timeout=60.0, check=lambda m: m.author == ctx.author)
             if msg.content.lower() != 'skip' and msg.role_mentions:
@@ -115,7 +115,7 @@ class Private(commands.Cog):
             else:
                 ping_role = None
         except asyncio.TimeoutError:
-            return await ctx.respond("Setup timed out. Please try again.")
+            return await ctx.send("Setup timed out. Please try again.")
         
         # Save configuration
         await self.update_config(ctx.guild.id, {
@@ -125,7 +125,7 @@ class Private(commands.Cog):
             "last_updater": t.now()
         })
         
-        await ctx.respond(f"✅ Notification configuration saved!\n"
+        await ctx.send(f"✅ Notification configuration saved!\n"
                          f"**Channel:** {target_channel.mention}\n"
                          f"**Speaker:** {speaker}\n"
                          f"**Ping Role:** {f'<@&{ping_role}>' if ping_role else 'None'}")
@@ -139,7 +139,7 @@ class Private(commands.Cog):
             "timezones": self.default_tzs,
             "last_updater": t.now()
         })
-        await ctx.respond("✅ Timezones reset to defaults!")
+        await ctx.send("✅ Timezones reset to defaults!")
     
     @commands.command(name="set_timezones", description="Set timezones using reactions")
     @commands.has_any_role('Admin', 'Mod', 'Moderator')
@@ -158,7 +158,7 @@ class Private(commands.Cog):
                         "Click ✅ when done.",
             color=discord.Color.blue()
         )
-        msg = await ctx.respond(embed=embed)
+        msg = await ctx.send(embed=embed)
         
         # Add reaction options
         emoji_map = {
@@ -192,7 +192,7 @@ class Private(commands.Cog):
                 await msg.remove_reaction(emoji, user)
                 
             except asyncio.TimeoutError:
-                await ctx.respond("Timezone setup timed out.")
+                await ctx.send("Timezone setup timed out.")
                 return
         
         if selected_tzs:
@@ -200,9 +200,9 @@ class Private(commands.Cog):
                 "timezones": selected_tzs,
                 "last_updater": t.now()
             })
-            await ctx.respond(f"✅ Selected timezones saved: {', '.join(selected_tzs.keys())}")
+            await ctx.send(f"✅ Selected timezones saved: {', '.join(selected_tzs.keys())}")
         else:
-            await ctx.respond("No timezones selected. Using defaults.")
+            await ctx.send("No timezones selected. Using defaults.")
 
     # +------------------------------------------------------------+
     # |                    NOTIFICATION COMMANDS                   |
