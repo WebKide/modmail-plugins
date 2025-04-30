@@ -90,18 +90,40 @@ class Private(commands.Cog):
         self._config_cache.pop(guild_id, None)
 
     async def update_config(self, guild_id, update_data):
-        """Update guild configuration using Modmail’s plugin_db"""
+        """Update guild configuration using Modmail's plugin_db"""
         # Convert datetime to timestamp for storage
-        if "last_updater" in update_data and isinstance(update_data["last_updater"], t):
-            update_data["last_updater"] = update_data["last_updater"].timestamp()
+        if not isinstance(update_data, dict):
+            raise ValueError("update_data must be a dictionary")
+
+        try:
+            # Convert datetime to timestamp for storage
+            if "last_updater" in update_data and isinstance(update_data["last_updater"], t):
+                update_data["last_updater"] = update_data["last_updater"].timestamp()
         
+            # Use proper MongoDB update operator syntax
+            await self.db.update_one(
+                {"_id": str(guild_id)},
+                {"$set": update_data},
+                upsert=True
+            )
+            await self.clear_config_cache(guild_id)
+            return result
+        except Exception as e:
+            logger.error(f"Error updating config for {guild_id}: {str(e)}")
+            raise
+
+    async def partial_update(self, guild_id, update_dict):
+        """Update only specific fields"""
+        if not isinstance(update_dict, dict):
+            raise ValueError("update_dict must be a dictionary")
+    
         await self.db.update_one(
             {"_id": str(guild_id)},
-            {"$set": update_data},
-            upsert=True
+            {"$set": update_dict},
+            upsert=False  # Don't create if doesn't exist
         )
         await self.clear_config_cache(guild_id)
-    
+
     # +------------------------------------------------------------+
     # |                   CONFIGURATION COMMANDS                   |
     # +------------------------------------------------------------+
@@ -143,12 +165,10 @@ class Private(commands.Cog):
         
         # Save configuration
         await self.update_config(ctx.guild.id, {
-            "$set": {
-                "target_channel": target_channel.id,
-                "speaker": speaker,
-                "ping_role": ping_role,
-                "last_updater": t.now().timestamp()
-            }
+            "target_channel": target_channel.id,
+            "speaker": speaker,
+            "ping_role": ping_role,
+            "last_updater": t.now().timestamp()
         })
         
         await ctx.send(f"✅ Notification configuration saved!\n"
