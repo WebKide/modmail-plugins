@@ -18,7 +18,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-import discord, logging, asyncio, time, re, random
+import discord, logging, asyncio, time, re, random, json
 
 from datetime import datetime as t
 from pytz import timezone as z
@@ -143,12 +143,23 @@ class Private(commands.Cog):
                          f"**Speaker:** {speaker}\n"
                          f"**Ping Role:** {f'<@&{ping_role}>' if ping_role else 'None'}")
 
-    @commands.command(name="debug_config", description="View your configurations")
+    @commands.command(name="debug_private_config", description="View your configurations")
     @commands.has_any_role('Admin', 'Mod', 'Moderator')
     @commands.guild_only()
     async def debug_config(self, ctx):
+        """Show the current configuration"""
         config = await self.get_guild_config(ctx.guild.id)
-        await ctx.send(f"Current config:\n```json\n{json.dumps(config, indent=2)}\n```")
+        
+        printable_config = {
+            "_id": config.get("_id"),
+            "target_channel": config.get("target_channel"),
+            "speaker": config.get("speaker"),
+            "ping_role": config.get("ping_role"),
+            "timezones": config.get("timezones", {}),
+            "last_updater": str(config.get("last_updater"))
+        }
+        
+        await ctx.send(f"Current config:\n```json\n{json.dumps(printable_config, indent=2)}\n```")
 
     @commands.command(name="reset_timezones", description="Reset timezone configurations")
     @commands.has_any_role('Admin', 'Mod', 'Moderator')
