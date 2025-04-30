@@ -92,16 +92,12 @@ class Private(commands.Cog):
     async def update_config(self, guild_id, update_data):
         """Update guild configuration using Modmail's plugin_db"""
         # Convert datetime to timestamp for storage
-        if not isinstance(update_data, dict):
-            raise ValueError("update_data must be a dictionary")
-
         try:
-            # Convert datetime to timestamp for storage
             if "last_updater" in update_data and isinstance(update_data["last_updater"], t):
                 update_data["last_updater"] = update_data["last_updater"].timestamp()
         
             # Use proper MongoDB update operator syntax
-            await self.db.update_one(
+            result = await self.db.update_one(
                 {"_id": str(guild_id)},
                 {"$set": update_data},
                 upsert=True
@@ -160,16 +156,18 @@ class Private(commands.Cog):
                 ping_role = msg.role_mentions[0].id
             else:
                 ping_role = None
+
+            # Save configuration
+            await self.update_config(ctx.guild.id, {
+                "target_channel": target_channel.id,
+                "speaker": speaker,
+                "ping_role": ping_role,
+                "last_updater": t.now().timestamp()
+            })
+
         except asyncio.TimeoutError:
-            return await ctx.send("Setup timed out. Please try again.", delete_after=9)
-        
-        # Save configuration
-        await self.update_config(ctx.guild.id, {
-            "target_channel": target_channel.id,
-            "speaker": speaker,
-            "ping_role": ping_role,
-            "last_updater": t.now().timestamp()
-        })
+            return await ctx.send("Setup timed out. Please try again.", delete_after=9)        
+
         
         await ctx.send(f"✅ Notification configuration saved!\n"
                          f"**Channel:** {target_channel.mention}\n"
