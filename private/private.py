@@ -98,7 +98,7 @@ class Private(commands.Cog):
     async def _setup_notifications(self, ctx):
         """Interactive setup for notification configuration"""
         # Step 1: Get target channel
-        await ctx.send("Please mention the target channel for notifications:")
+        await ctx.send("Please mention the target channel for notifications:", delete_after=60)
         
         def check(m):
             return m.author == ctx.author and m.channel == ctx.channel and m.channel_mentions
@@ -107,18 +107,18 @@ class Private(commands.Cog):
             msg = await self.bot.wait_for('message', timeout=60.0, check=check)
             target_channel = msg.channel_mentions[0]
         except asyncio.TimeoutError:
-            return await ctx.send("Setup timed out. Please try again.")
+            return await ctx.send("Setup timed out. Please try again.", delete_after=9)
         
         # Step 2: Get speaker name
-        await ctx.send("Please enter the speaker/host display name:")
+        await ctx.send("Please enter the speaker/host display name:", delete_after=50)
         try:
             msg = await self.bot.wait_for('message', timeout=60.0, check=lambda m: m.author == ctx.author)
             speaker = msg.content
         except asyncio.TimeoutError:
-            return await ctx.send("Setup timed out. Please try again.")
+            return await ctx.send("Setup timed out. Please try again.", delete_after=9)
         
         # Step 3: Get ping role
-        await ctx.send("Please mention the role to ping (or type 'skip' to skip):")
+        await ctx.send("Please mention the role to ping (or type 'skip' to skip):", delete_after=50)
         try:
             msg = await self.bot.wait_for('message', timeout=60.0, check=lambda m: m.author == ctx.author)
             if msg.content.lower() != 'skip' and msg.role_mentions:
@@ -126,7 +126,7 @@ class Private(commands.Cog):
             else:
                 ping_role = None
         except asyncio.TimeoutError:
-            return await ctx.send("Setup timed out. Please try again.")
+            return await ctx.send("Setup timed out. Please try again.", delete_after=9)
         
         # Save configuration
         await self.update_config(ctx.guild.id, {
@@ -146,7 +146,7 @@ class Private(commands.Cog):
     @commands.command(name="debug_private_config", description="View your configurations")
     @commands.has_any_role('Admin', 'Mod', 'Moderator')
     @commands.guild_only()
-    async def debug_config(self, ctx):
+    async def _debug_private_config(self, ctx):
         """Show the current configuration"""
         config = await self.get_guild_config(ctx.guild.id)
         
@@ -170,7 +170,7 @@ class Private(commands.Cog):
             "timezones": self.default_tzs,
             "last_updater": t.now()
         })
-        await ctx.send("✅ Timezones reset to defaults!")
+        await ctx.send("✅ Timezones reset to defaults!", delete_after=9)
     
     @commands.command(name="set_timezones", description="Set timezones using reactions")
     @commands.has_any_role('Admin', 'Mod', 'Moderator')
@@ -184,8 +184,10 @@ class Private(commands.Cog):
                         "🇬🇧 - GMT (Europe/London)\n"
                         "🗽 - EST (America/New_York)\n"
                         "🇺🇸 - PST (America/Los_Angeles)\n"
+                        "🇲🇽 - CMX (America/Mexico_City)\n"
+                        "🇧🇴 - BOT (America/La_Paz)\n"
                         "🇦🇷 - ART (America/Argentina/Buenos_Aires)\n"
-                        "🇧🇴 - BOT (America/La_Paz)\n\n"
+                        "🇩🇪 - CET (Europe/Berlin)\n\n"
                         "Click ✅ when done.",
             color=discord.Color.blue()
         )
@@ -197,8 +199,10 @@ class Private(commands.Cog):
             "🇬🇧": ("GMT", "Europe/London"),
             "🗽": ("EST", "America/New_York"),
             "🇺🇸": ("PST", "America/Los_Angeles"),
-            "🇦🇷": ("ART", "America/Argentina/Buenos_Aires"),
+            "🇲🇽": ("CMX", "America/Mexico_City"),
             "🇧🇴": ("BOT", "America/La_Paz"),
+            "🇦🇷": ("ART", "America/Argentina/Buenos_Aires"),
+            "🇩🇪": ("CET", "Europe/Berlin"),
             "✅": "done"
         }
         
@@ -223,7 +227,7 @@ class Private(commands.Cog):
                 await msg.remove_reaction(emoji, user)
                 
             except asyncio.TimeoutError:
-                await ctx.send("Timezone setup timed out.")
+                await ctx.send("Timezone setup timed out.", delete_after=9)
                 return
         
         if selected_tzs:
@@ -233,7 +237,7 @@ class Private(commands.Cog):
             })
             await ctx.send(f"✅ Selected timezones saved: {', '.join(selected_tzs.keys())}")
         else:
-            await ctx.send("No timezones selected. Using defaults.")
+            await ctx.send("No timezones selected. Using defaults.", delete_after=9)
 
     # +------------------------------------------------------------+
     # |                    NOTIFICATION COMMANDS                   |
@@ -320,17 +324,6 @@ class Private(commands.Cog):
             'You’ve been eagerly waiting for this, and so have we. Sit back, relax and, listen attentively'
         ]
 
-        """
-        if isinstance(channel, discord.TextChannel):
-            if not channel.topic:
-                return await ctx.send(err_m, delete_after=23)
-
-            if '—' in channel.topic:
-                _host = channel.topic.split('—')[-1]
-            else:
-                _host = config.get('speaker', 'and speaker')
-        """
-
         def get_ordinal_suffix(num):
             if 11 <= num % 32 <= 13:
                 suffix = 'ᵗʰ'
@@ -341,19 +334,21 @@ class Private(commands.Cog):
         print("Stored timezones:", config.get('timezones'))
         def get_t_str():
             t_str = []
-            # Get the current config (make sure this is passed correctly from the calling function)
+            # Get the current config
             timezones = config.get('timezones', self.default_tzs)
             
-            # Emoji mapping that matches what you used in set_timezones
+            # Emoji mapping that matches set_timezones
             emoji_map = {
                 "IST": "🇮🇳",
                 "GMT": "🇬🇧",
                 "EST": "🗽",
                 "PST": "🇺🇸",
                 "ART": "🇦🇷",
-                "BOT": "🇧🇴"
+                "BOT": "🇧🇴",
+                "CET": "🇩🇪",
+                "CMX": "🇲🇽"
             }
-            
+
             for code, tz_name in timezones.items():
                 try:
                     tz = z(tz_name)
