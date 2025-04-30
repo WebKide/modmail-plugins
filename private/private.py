@@ -308,20 +308,34 @@ class Private(commands.Cog):
 
         def get_t_str():
             t_str = []
+            # Get the current config (make sure this is passed correctly from the calling function)
             timezones = config.get('timezones', self.default_tzs)
+            
+            # Emoji mapping that matches what you used in set_timezones
+            emoji_map = {
+                "IST": "🇮🇳",
+                "GMT": "🇬🇧",
+                "EST": "🗽",
+                "PST": "🇺🇸",
+                "ART": "🇦🇷",
+                "BOT": "🇧🇴"
+            }
             
             for code, tz_name in timezones.items():
                 try:
                     tz = z(tz_name)
                     t_now = t.now(tz)
                     suffix = get_ordinal_suffix(t_now.day)
-                    flag_moji = f":flag_{code.lower().replace('ist', 'in').replace('gmt', 'gb').replace('est', 'us').replace('pst', 'us').replace('art', 'ar').replace('bot', 'bo')}:"
+                    
+                    # Get the emoji from our mapping
+                    flag_emoji = emoji_map.get(code, f":flag_{code.lower()}:")
                     
                     date_str = t_now.strftime('**%H**:%M:%S, %A %b %d, %Y')
                     date_str = date_str.replace(f"{t_now.day},", f"{t_now.day}{suffix},")
                     
-                    t_str.append(f"{flag_moji} {code} — {date_str}")
-                except Exception:
+                    t_str.append(f"{flag_emoji} {code} — {date_str}")
+                except Exception as e:
+                    print(f"Error processing timezone {code}: {e}")
                     continue
             return "\n".join(t_str)
 
