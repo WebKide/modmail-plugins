@@ -58,10 +58,21 @@ class Private(commands.Cog):
                 "last_updater": t.now().timestamp()
             }
             await self.db.insert_one(default_config)
-            return default_config
+            return config  # default_config
+
+        # Ensure all fields exist
+        defaults = {
+            "timezones": self.default_tzs,
+            "speaker": "and speaker",
+            "ping_role": None
+        }
         
+        for key, value in defaults.items():
+            if key not in config:
+                config[key] = value
+
         # Convert timestamp back to datetime if needed
-        if "last_updater" in config and isinstance(config["last_updater"], (int, float)):
+        if isinstance(config.get("last_updater"), (int, float)):
             config["last_updater"] = t.fromtimestamp(config["last_updater"])
         
         return config
@@ -119,17 +130,26 @@ class Private(commands.Cog):
         
         # Save configuration
         await self.update_config(ctx.guild.id, {
-            "target_channel": target_channel.id,
-            "speaker": speaker,
-            "ping_role": ping_role,
-            "last_updater": t.now()
+            "$set": {
+                "target_channel": target_channel.id,
+                "speaker": speaker,
+                "ping_role": ping_role,
+                "last_updater": t.now().timestamp()
+            }
         })
         
         await ctx.send(f"✅ Notification configuration saved!\n"
                          f"**Channel:** {target_channel.mention}\n"
                          f"**Speaker:** {speaker}\n"
                          f"**Ping Role:** {f'<@&{ping_role}>' if ping_role else 'None'}")
-    
+
+    @commands.command(name="debug_config", description="View your configurations")
+    @commands.has_any_role('Admin', 'Mod', 'Moderator')
+    @commands.guild_only()
+    async def debug_config(self, ctx):
+        config = await self.get_guild_config(ctx.guild.id)
+        await ctx.send(f"Current config:\n```json\n{json.dumps(config, indent=2)}\n```")
+
     @commands.command(name="reset_timezones", description="Reset timezone configurations")
     @commands.has_any_role('Admin', 'Mod', 'Moderator')
     @commands.guild_only()
