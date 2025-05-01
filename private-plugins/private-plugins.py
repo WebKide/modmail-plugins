@@ -187,20 +187,30 @@ class PrivatePlugins(commands.Cog):
             )
             embed.add_field(
                 name="Required Scopes", 
-                value="`repo` (Full control of private repositories)\n- Private repository contents (read/write)\n- Repository metadata\n- Commit status")
+                value="`repo` (Full control of private repositories)\n- Private repository contents (read/write)\n- Repository metadata\n- Commit status", 
+                inline=False
+            )
             embed.add_field(
                 name="Recommended Settings", 
-                value="**Token Name:** `Modmail Private Plugins`\n(or any descriptive name)")
+                value="**Token Name:** `Modmail Private Plugins`\n(or any descriptive name)", 
+                inline=False
+            )
             embed.add_field(
                 name="Expiration", 
-                value="For security, set an expiration date (e.g., 6 months)\nYou’ll need to generate a new TOKEN after expiration")
+                value="For security, set an expiration date (e.g., 6 months)\nYou’ll need to generate a new TOKEN after expiration", 
+                inline=False
+            )
             embed.add_field(
                 name="Scope Selection", 
-                value="✅ **repo** (Full control of private repositories)\n❌ No other scopes needed")
+                value="✅ **repo** (Full control of private repositories)\n❌ No other scopes needed", 
+                inline=False
+            )
             embed.add_field(
                 name="Generate token", 
-                value="**Copy the token immediately** (you won’t see it again!)")
-            embed.set_footer(text="Treat this token like a password!")
+                value="**Copy the token immediately** (you won’t see it again!)", 
+                inline=False
+            )
+            embed.set_footer(text="IMPORTANT!! Treat this token like a password")
             return await ctx.send(embed=embed)
 
         embed = discord.Embed(color=self.bot.main_color)
