@@ -1,45 +1,47 @@
 # modmail-plugins/remindmepro/corefunc/storage.py
 from typing import List, Optional
 from datetime import datetime, timedelta
-from pymongo import ReturnDocument
-import pytz
 import logging
-from motor.motor_asyncio import AsyncIOMotorCollection
+import pytz
+from discord.ext.commands import Bot
 
 from .schemas import Reminder
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("Modmail")
 
 class ReminderStorage:
-    """Handles all database operations for reminders"""
+    """Handles all database operations using Modmail's plugin_db"""
     
-    def __init__(self, db_collection: AsyncIOMotorCollection):
-        self.collection = db_collection
+    def __init__(self, bot: Bot):
+        self.db = bot.plugin_db.get_partition(self)
+        self._cache = {}  # Simple cache for reminders
 
     async def setup_indexes(self):
-        """Create necessary database indexes"""
-        await self.collection.create_index("due")
-        await self.collection.create_index("user_id")
-        await self.collection.create_index([("user_id", 1), ("due", 1)])
-        await self.collection.create_index("status")
+        """Modmail handles indexes automatically - no need to create them"""
+        pass
 
     async def create_reminder(self, reminder: Reminder) -> str:
         """Insert a new reminder and return its ID"""
-        result = await self.collection.insert_one(reminder.dict())
-        return str(result.inserted_id)
+        data = reminder.dict()
+        # Create a composite ID to bypass ObjectId
+        reminder_id = f"{data['user_id']}_{int(data['due'].timestamp())}"
+        data["_id"] = reminder_id
+        
+        await self.db.insert_one(data)
+        return reminder_id
 
     async def get_reminder(self, reminder_id: str) -> Optional[Reminder]:
         """Get a single reminder by its ID"""
         try:
-            doc = await self.collection.find_one({"_id": ObjectId(reminder_id)})
+            doc = await self.db.find_one({"_id": reminder_id})
             return Reminder(**doc) if doc else None
         except Exception as e:
-            log.error(f"Error fetching reminder {reminder_id}: {str(e)}")
+            log.error(f"Error fetching reminder `{reminder_id}:` {str(e)}")
             return None
 
     async def get_user_reminders(self, user_id: int, limit: int = 50) -> List[Reminder]:
         """Get active reminders for a user, sorted by due date"""
-        cursor = self.collection.find({
+        cursor = self.db.find({
             "user_id": user_id,
             "status": "active"
         }).sort("due", 1).limit(limit)
@@ -47,7 +49,7 @@ class ReminderStorage:
 
     async def get_due_reminders(self, batch_size: int = 100) -> List[Reminder]:
         """Get reminders that are due, for batch processing"""
-        cursor = self.collection.find({
+        cursor = self.db.find({
             "due": {"$lte": datetime.now(pytz.UTC)},
             "status": "active"
         }).limit(batch_size)
@@ -55,8 +57,8 @@ class ReminderStorage:
 
     async def update_reminder(self, reminder_id: str, update_data: dict) -> bool:
         """Update a reminder by ID"""
-        result = await self.collection.update_one(
-            {"_id": ObjectId(reminder_id)},
+        result = await self.db.update_one(
+            {"_id": reminder_id},
             {"$set": update_data}
         )
         return result.modified_count > 0
@@ -71,18 +73,19 @@ class ReminderStorage:
     async def cleanup_old_reminders(self, days: int = 30):
         """Remove completed reminders older than X days"""
         cutoff = datetime.now(pytz.UTC) - timedelta(days=days)
-        await self.collection.delete_many({
+        await self.db.delete_many({
             "status": "completed",
             "completed_at": {"$lte": cutoff}
         })
     
-    # Prevent duplicates
     async def check_reminder_conflict(self, user_id: int, due: datetime) -> Optional[Reminder]:
         """Check if user already has a reminder at similar time"""
         window_start = due - timedelta(minutes=5)
         window_end = due + timedelta(minutes=5)
-        return await self.collection.find_one({
+        doc = await self.db.find_one({
             "user_id": user_id,
             "due": {"$gte": window_start, "$lte": window_end},
             "status": "active"
         })
+        return Reminder(**doc) if doc else None
+    
