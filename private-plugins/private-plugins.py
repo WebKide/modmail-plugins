@@ -196,7 +196,7 @@ class PrivatePlugins(commands.Cog):
                 value="For security, set an expiration date (e.g., 6 months)\nYou’ll need to generate a new TOKEN after expiration")
             embed.add_field(
                 name="Scope Selection", 
-                value="✅ **repo** (Full control for private repositories)\n❌ No other scopes needed")
+                value="✅ **repo** (Full control of private repositories)\n❌ No other scopes needed")
             embed.add_field(
                 name="Generate token", 
                 value="**Copy the token immediately** (you won’t see it again!)")
