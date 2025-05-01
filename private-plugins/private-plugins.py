@@ -401,5 +401,9 @@ class PrivatePlugins(commands.Cog):
             
             await reaction.remove(user)
 
+async def setup(bot):
+    await bot.add_cog(PrivatePlugins(bot))
+"""
 def setup(bot):
     bot.add_cog(PrivatePlugins(bot))
+"""
