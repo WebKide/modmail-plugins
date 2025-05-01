@@ -1,4 +1,4 @@
-import asyncio, io, json, os, shutil, sys, typing, zipfile
+import asyncio, logging, io, json, os, shutil, sys, typing, zipfile
 from difflib import get_close_matches
 from pathlib import Path, PurePath
 from re import match
