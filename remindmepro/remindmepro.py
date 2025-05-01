@@ -4,11 +4,11 @@ from discord.ext import commands
 
 from .corefunc.storage import ReminderStorage
 from .corefunc.user_settings import UserSettings
-from .handlers import UserCommands, AdminCommands, TimezoneCommands
-from .tasks.service_task import ReminderServiceTask
+from ..handlers import UserCommands, AdminCommands, TimezoneCommands  # go up one level
+from ..tasks.service_task import ReminderServiceTask  # go up one level
 from .exceptions import ReminderError
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("Modmail")
 
 class RemindMePro(commands.Cog):
     """RemindMePro plugin by Webkide
@@ -24,11 +24,10 @@ class RemindMePro(commands.Cog):
     def _setup_dependencies(self):
         """Initialize and wire up all components"""
         # Database setup
-        self.db = self.bot.plugin_db.get_partition(self)
-        
+        # self.db = self.bot.plugin_db.get_partition(self)
         # Core services
-        self.storage = ReminderStorage(self.db)
-        self.user_settings = UserSettings(self.db)
+        self.storage = ReminderStorage(self.bot)
+        self.user_settings = UserSettings(self.bot)
         
         # Handlers
         self.user_commands = UserCommands(self.bot, self.storage, self.user_settings)
@@ -40,14 +39,8 @@ class RemindMePro(commands.Cog):
         
     async def cog_load(self):
         """Called when the cog is loaded"""
-        await self.storage.setup_indexes()
         await self.user_settings.load_timezones()
-        
-        # Add commands from Handlers
-        await self.bot.add_cog(self.user_commands)
-        await self.bot.add_cog(self.admin_commands)
-        await self.bot.add_cog(self.timezone_commands)
-        
+        self.service_task.reminder_loop.start()
         log.info("RemindMePro plugin loaded")
         
     async def cog_unload(self):
@@ -58,4 +51,3 @@ class RemindMePro(commands.Cog):
         
 async def setup(bot):
     await bot.add_cog(RemindMePro(bot))
-    
