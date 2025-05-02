@@ -36,7 +36,10 @@ class Reminder(BaseModel):
 
     class Config:
         json_encoders = {
-            datetime: lambda dt: dt.isoformat(),
-            ObjectId: lambda oid: str(oid)
+            datetime: lambda dt: dt.isoformat()
         }
-        
+ 
+        # Allow arbitrary types for Modmail's data handling
+        arbitrary_types_allowed = True
+        # Use enum values for JSON serialization
+        use_enum_values = True
