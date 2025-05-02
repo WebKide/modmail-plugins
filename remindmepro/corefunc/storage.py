@@ -10,58 +10,67 @@ from .schemas import Reminder
 log = logging.getLogger("Modmail")
 
 class ReminderStorage:
-    """Handles all database operations using Modmail's plugin_db"""
+    """Handles all database operations for reminders using Modmail's plugin_db"""
     
     def __init__(self, bot: Bot):
         self.db = bot.plugin_db.get_partition(self)
-        self._cache = {}  # Simple cache for reminders
+        self._cache = {}
 
     async def setup_indexes(self):
-        """Modmail handles indexes automatically - no need to create them"""
+        """Modmail handles indexes automatically"""
         pass
-
-    async def create_reminder(self, reminder: Reminder) -> str:
-        """Insert a new reminder and return its ID"""
-        data = reminder.dict()
-        # Create a composite ID to bypass ObjectId
-        reminder_id = f"{data['user_id']}_{int(data['due'].timestamp())}"
-        data["_id"] = reminder_id
-        
-        await self.db.insert_one(data)
-        return reminder_id
-
-    async def get_reminder(self, reminder_id: str) -> Optional[Reminder]:
-        """Get a single reminder by its ID"""
-        try:
-            doc = await self.db.find_one({"_id": reminder_id})
-            return Reminder(**doc) if doc else None
-        except Exception as e:
-            log.error(f"Error fetching reminder `{reminder_id}:` {str(e)}")
-            return None
 
     async def get_user_reminders(self, user_id: int, limit: int = 50) -> List[Reminder]:
         """Get active reminders for a user, sorted by due date"""
-        cursor = self.db.find({
-            "user_id": user_id,
-            "status": "active"
-        }).sort("due", 1).limit(limit)
-        return [Reminder(**doc) async for doc in cursor]
+        try:
+            # Modmail's find_many doesn't support chaining, so we do sorting in Python
+            reminders = await self.db.find_many({
+                "user_id": user_id,
+                "status": "active"
+            })
+            # Sort by due date and apply limit
+            reminders.sort(key=lambda x: x["due"])
+            return [Reminder(**doc) for doc in reminders[:limit]]
+        except Exception as e:
+            log.error(f"Error getting reminders for user {user_id}: {str(e)}")
+            return []
 
     async def get_due_reminders(self, batch_size: int = 100) -> List[Reminder]:
         """Get reminders that are due, for batch processing"""
-        cursor = self.db.find({
-            "due": {"$lte": datetime.now(pytz.UTC)},
-            "status": "active"
-        }).limit(batch_size)
-        return [Reminder(**doc) async for doc in cursor]
+        try:
+            reminders = await self.db.find_many({
+                "due": {"$lte": datetime.now(pytz.UTC)},
+                "status": "active"
+            })
+            return [Reminder(**doc) for doc in reminders[:batch_size]]
+        except Exception as e:
+            log.error(f"Error getting due reminders: {str(e)}")
+            return []
+
+    async def create_reminder(self, reminder: Reminder) -> str:
+        """Insert a new reminder and return its ID"""
+        try:
+            data = reminder.dict()
+            # Create a composite ID since we don't have ObjectId
+            reminder_id = f"{data['user_id']}_{int(data['due'].timestamp())}"
+            data["_id"] = reminder_id
+            await self.db.insert_one(data)
+            return reminder_id
+        except Exception as e:
+            log.error(f"Error creating reminder: {str(e)}")
+            raise
 
     async def update_reminder(self, reminder_id: str, update_data: dict) -> bool:
         """Update a reminder by ID"""
-        result = await self.db.update_one(
-            {"_id": reminder_id},
-            {"$set": update_data}
-        )
-        return result.modified_count > 0
+        try:
+            result = await self.db.update_one(
+                {"_id": reminder_id},
+                {"$set": update_data}
+            )
+            return result.modified_count > 0
+        except Exception as e:
+            log.error(f"Error updating reminder {reminder_id}: {str(e)}")
+            return False
 
     async def mark_completed(self, reminder_id: str) -> bool:
         """Mark a reminder as completed instead of deleting"""
@@ -88,4 +97,3 @@ class ReminderStorage:
             "status": "active"
         })
         return Reminder(**doc) if doc else None
-    
