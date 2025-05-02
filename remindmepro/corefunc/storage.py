@@ -10,27 +10,22 @@ from .schemas import Reminder
 log = logging.getLogger("Modmail")
 
 class ReminderStorage:
-    """Handles all database operations for reminders using Modmail's plugin_db"""
+    """Handles all database operations for reminders"""
     
     def __init__(self, bot: Bot):
         self.db = bot.plugin_db.get_partition(self)
-        self._cache = {}
-
-    async def setup_indexes(self):
-        """Modmail handles indexes automatically"""
-        pass
 
     async def get_user_reminders(self, user_id: int, limit: int = 50) -> List[Reminder]:
         """Get active reminders for a user, sorted by due date"""
         try:
-            # Modmail's find_many doesn't support chaining, so we do sorting in Python
-            reminders = await self.db.find_many({
+            cursor = self.db.find({
                 "user_id": user_id,
                 "status": "active"
             })
-            # Sort by due date and apply limit
+            reminders = await cursor.to_list(length=limit)
+            # Manual sorting since we can't chain .sort()
             reminders.sort(key=lambda x: x["due"])
-            return [Reminder(**doc) for doc in reminders[:limit]]
+            return [Reminder(**doc) for doc in reminders]
         except Exception as e:
             log.error(f"Error getting reminders for user {user_id}: {str(e)}")
             return []
@@ -38,11 +33,12 @@ class ReminderStorage:
     async def get_due_reminders(self, batch_size: int = 100) -> List[Reminder]:
         """Get reminders that are due, for batch processing"""
         try:
-            reminders = await self.db.find_many({
+            cursor = self.db.find({
                 "due": {"$lte": datetime.now(pytz.UTC)},
                 "status": "active"
             })
-            return [Reminder(**doc) for doc in reminders[:batch_size]]
+            reminders = await cursor.to_list(length=batch_size)
+            return [Reminder(**doc) for doc in reminders]
         except Exception as e:
             log.error(f"Error getting due reminders: {str(e)}")
             return []
