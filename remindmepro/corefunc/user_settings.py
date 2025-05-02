@@ -1,19 +1,22 @@
 # modmail-plugins/remindmepro/corefunc/user_settings.py
 from typing import Dict
 import pytz
-from motor.motor_asyncio import AsyncIOMotorCollection
+from discord.ext.commands import Bot
+
+SUPPORTED_LOCATIONS_URL = "https://gist.github.com/mjrulesamrat/0c1f7de951d3c508fb3a20b4b0b33a98"
 
 class UserSettings:
-    """Manages user-specific settings like timezones"""
+    """Manages user-specific settings like timezones using Modmail's plugin_db"""
     
-    def __init__(self, db_collection: AsyncIOMotorCollection):
-        self.db = db_collection
+    def __init__(self, bot: Bot):
+        self.db = bot.plugin_db.get_partition(self)
         self._timezone_cache: Dict[int, str] = {}
 
     async def load_timezones(self):
         """Load all user timezones into cache"""
         self._timezone_cache.clear()
-        async for user in self.db.find({"timezone": {"$exists": True}}):
+        cursor = self.db.find({"timezone": {"$exists": True}})
+        async for user in cursor:
             self._timezone_cache[user["user_id"]] = user["timezone"]
 
     async def get_timezone(self, user_id: int) -> str:
@@ -39,4 +42,3 @@ class UserSettings:
             upsert=True
         )
         self._timezone_cache[user_id] = timezone
-        
