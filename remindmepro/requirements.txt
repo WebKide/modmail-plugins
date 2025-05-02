@@ -1,10 +1,8 @@
-# modmail-plugins/RemindMePro/requirements.txt
+# modmail-plugins/remindmepro/requirements.txt
 # Core Dependencies
 pydantic==1.10.7               # Data validation and settings management
 pytz==2023.3                   # Timezone support
 python-dateutil==2.8.2         # Advanced date parsing
-motor==3.1.2                   # Async MongoDB driver
-# bson==0.5.10                   # MongoDB BSON support
 
 # Testing (only needed for development)
 # pytest>=7.0.0,<8.0.0
