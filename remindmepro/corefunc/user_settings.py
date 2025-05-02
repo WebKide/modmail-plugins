@@ -13,10 +13,10 @@ class UserSettings:
         self._timezone_cache: Dict[int, str] = {}
 
     async def load_timezones(self):
-        """Load all user timezones into cache using Modmail's plugin_db"""
+        """Load all user timezones into cache"""
         self._timezone_cache.clear()
-        # Modmail's plugin_db requires using find_many instead of find
-        users = await self.db.find_many({"timezone": {"$exists": True}})
+        cursor = self.db.find({"timezone": {"$exists": True}})
+        users = await cursor.to_list(None)  # None returns all documents
         for user in users:
             self._timezone_cache[user["user_id"]] = user["timezone"]
 
