@@ -4,8 +4,8 @@ from discord.ext import commands
 
 from .corefunc.storage import ReminderStorage
 from .corefunc.user_settings import UserSettings
-from ..handlers import UserCommands, AdminCommands, TimezoneCommands  # go up one level
-from ..tasks.service_task import ReminderServiceTask  # go up one level
+from .handlers import UserCommands, AdminCommands, TimezoneCommands
+from .tasks.service_task import ReminderServiceTask
 from .exceptions import ReminderError
 
 log = logging.getLogger("Modmail")
