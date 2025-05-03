@@ -803,7 +803,7 @@ class Games(commands.Cog):
         
         for i, entry in enumerate(leaderboard, 1):
             embed.add_field(
-                name=f"{i}. {entry['user']}",
+                name=f"{i}. {entry['user.display_name']}",
                 value=(
                     f"Commands: {entry['total']}\n"
                     f"Different games: {entry['commands']}"
