@@ -1,9 +1,9 @@
 class GameConfig:
     # Image URLs
     COIN_IMAGES = {
-        'heads': 'https://media.discordapp.net/attachments/541059392951418880/556977776771596333/1926_heads.png',
-        'tails': 'https://media.discordapp.net/attachments/541059392951418880/556977839166193674/1926_tails.png',
-        'edge': 'https://media.discordapp.net/attachments/541059392951418880/556978114354348052/1926_edge.png'
+        'heads': 'https://i.imgur.com/ygrKmgh.png',
+        'tails': 'https://i.imgur.com/tDfAVCx.png',
+        'edge': 'https://i.imgur.com/6Os6BBY.png'
     }
     COIN_DESCRIPTION = '1926 Golden Dollar coin'
     
