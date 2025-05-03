@@ -1,6 +1,3 @@
-from .games import Games
-
-def __init__(self, bot):
-    self.bot = bot
-    self.tracker = GamesTracker(bot)
-    # ... other initializations ...
+# modmail-plugins/games/__init__.py
+__version__ = "1.0.0"
+__author__ = "WebKide"
