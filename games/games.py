@@ -158,6 +158,7 @@ class Games(commands.Cog):
     # ╠════════════════════╣ DISCORD COMMANDS ╠════════════════════╣
     # ╚════════════════════╩══════════════════╩════════════════════╝
     @commands.command(aliases=['8ball'])
+    @commands.guild_only()
     async def eightball(self, ctx, *, question=None):
         """Ask the magic 8-ball a question"""
         start_time = time.time()
@@ -197,6 +198,7 @@ class Games(commands.Cog):
     # ╠════════════════════╣ DISCORD COMMANDS ╠════════════════════╣
     # ╚════════════════════╩══════════════════╩════════════════════╝
     @commands.command(aliases=['rpsls', 'rps'])
+    @commands.guild_only()
     async def settle(self, ctx, your_choice: str = None):
         """Play Rock-Paper-Scissors-Lizard-Spock"""
         start_time = time.time()
@@ -230,6 +232,7 @@ class Games(commands.Cog):
     # ╠════════════════════╣ DISCORD COMMANDS ╠════════════════════╣
     # ╚════════════════════╩══════════════════╩════════════════════╝
     @commands.command()
+    @commands.guild_only()
     async def guess(self, ctx, number: int = None):
         """Guess a number between 1-11"""
         start_time = time.time()
@@ -283,6 +286,7 @@ class Games(commands.Cog):
     # ╠════════════════════╣ DISCORD COMMANDS ╠════════════════════╣
     # ╚════════════════════╩══════════════════╩════════════════════╝
     @commands.command(aliases=['toss', 'tossacoin'])
+    @commands.guild_only()
     async def flip(self, ctx, *, text: str = None):
         """Flip a coin or some text"""
         start_time = time.time()
@@ -354,6 +358,7 @@ class Games(commands.Cog):
     # ╠════════════════════╣ DISCORD COMMANDS ╠════════════════════╣
     # ╚════════════════════╩══════════════════╩════════════════════╝
     @commands.command()
+    @commands.guild_only()
     async def choose(self, ctx, *, options: str = None):
         """Choose between multiple options"""
         start_time = time.time()
@@ -401,34 +406,76 @@ class Games(commands.Cog):
     # ╠════════════════════╣ DISCORD COMMANDS ╠════════════════════╣
     # ╚════════════════════╩══════════════════╩════════════════════╝
     @commands.group(invoke_without_command=True)
+    @commands.guild_only()
     async def tarot(self, ctx):
         """Start a tarot reading session"""
-        await self.embed_manager.show_processing(
-            ctx,
-            messages=GameConfig.TAROT_MESSAGES,
-            delays=GameConfig.TAROT_DELAYS
+        start_time = time.time()
+        
+        # Send initial message
+        message = await ctx.send(GameConfig.TAROT_MESSAGES[0])
+        
+        # Edit through the sequence with delays
+        for msg, delay in zip(GameConfig.TAROT_MESSAGES[1:], GameConfig.TAROT_DELAYS):
+            await asyncio.sleep(delay)
+            await message.edit(content=msg)
+        
+        # Final instruction
+        final_msg = (
+            f"When you feel ready, type:\n"
+            f"**`{ctx.prefix}tarot reading`**\n\n"
+            "I will shuffle the cards and pick three for you."
         )
+        await message.edit(content=final_msg, delete_after=GameConfig.LONG_DELETE_AFTER)
 
     @tarot.command()
     async def reading(self, ctx, *, question: str = None):
         """Perform a 3-card tarot reading"""
         start_time = time.time()
+        u = ctx.author
         
-        cards = [random.choice(self.card_deck) for _ in range(3)]
-        positions = [
-            "1️⃣ **The Past:** Why you're in this situation",
-            "2️⃣ **The Present:** Current challenges",
-            "3️⃣ **The Future:** Potential outcomes"
-        ]
-        
-        embed = await self.embed_manager.create_oracle_embed(
-            ctx,
-            title=f'Tarot Reading for {ctx.author.display_name}',
-            description='\n\n'.join(f'{p}\n{c}' for p, c in zip(positions, cards)),
-            image_url=GameConfig.TAROT_DECK_IMAGE,
-            start_time=start_time
-        )
-        await ctx.send(embed=embed)
+        try:
+            # Send initial message and simulate shuffling
+            message = await ctx.send(f"Allow me to shuffle my Tarot deck... {u.display_name}")
+            await ctx.channel.typing()
+            await asyncio.sleep(random.randint(5, 9))
+            
+            # Draw 3 unique cards
+            cards = random.sample(self.card_deck, 3)
+            positions = [
+                "1️⃣ **The Past:** This represents your situation and how you got here",
+                "2️⃣ **The Present:** The current challenge or opportunity",
+                "3️⃣ **The Future:** Potential outcome or guidance"
+            ]
+            
+            # Build the reading embed
+            embed = await self.embed_manager.create_command_embed(
+                ctx,
+                title=f"Tarot Reading for {u.display_name}",
+                description='\n\n'.join(
+                    f"{pos}\n{card}" for pos, card in zip(positions, cards)
+                ),
+                thumbnail=GameConfig.TAROT_DECK_IMAGE,
+                start_time=start_time
+            )
+            
+            if question:
+                embed.add_field(
+                    name="Your Question",
+                    value=question,
+                    inline=False
+                )
+            
+            await message.edit(content=None, embed=embed)
+            await self.tracker.log_command(
+                ctx,
+                'tarot_reading',
+                question=question,
+                result_str=", ".join(card.split('\n')[0] for card in cards)
+            )
+            
+        except Exception as e:
+            logger.error(f"Tarot error: {e}")
+            await ctx.send("An error occurred during the reading.", delete_after=5)
 
     # ╔════════════════════════════════════════════════════════════╗
     # ║                          i-CHING                           ║
@@ -436,6 +483,7 @@ class Games(commands.Cog):
     # ╠════════════════════╣ DISCORD COMMANDS ╠════════════════════╣
     # ╚════════════════════╩══════════════════╩════════════════════╝
     @commands.command(aliases=['i-ching', 'oracle'])
+    @commands.guild_only()
     async def iching(self, ctx, *, question: str = None):
         """Consult the I Ching oracle"""
         start_time = time.time()
@@ -461,17 +509,21 @@ class Games(commands.Cog):
     # ╠════════════════════╣ DISCORD COMMANDS ╠════════════════════╣
     # ╚════════════════════╩══════════════════╩════════════════════╝
     @commands.command(aliases=['futhark'])
+    @commands.guild_only()
     async def rune(self, ctx, *, query: str = None):
         """Draw a Viking rune"""
         start_time = time.time()
         rune = random.choice(self.runes_list)
         
-        embed = await self.embed_manager.create_oracle_embed(
+        # Get a random draw (Upright or Reversed)
+        draw_type, meaning = random.choice(list(rune['rune_draw'].items()))
+        
+        embed = await self.embed_manager.create_command_embed(
             ctx,
-            title=f'{rune["rune_name"]} ({rune["rune_title"]})',
-            description=rune["meaning"],
-            image_url=rune["image"],
-            color_name='mod',
+            title=f'{rune["rune_name"]} ({rune["rune_title"]}) - {draw_type}',
+            description=meaning,
+            color=int(rune['colour'], 16),
+            thumbnail=rune['rune_img'],
             start_time=start_time
         )
         
@@ -483,6 +535,12 @@ class Games(commands.Cog):
             })
             
         await ctx.send(embed=embed)
+        await self.tracker.log_command(
+            ctx,
+            'rune',
+            question=query,
+            result_str=f"{rune['rune_name']} ({draw_type})"
+        )
 
     # ╔════════════════════════════════════════════════════════════╗
     # ║                         ROLL DICE                          ║
