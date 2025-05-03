@@ -442,17 +442,18 @@ class Games(commands.Cog):
             # Draw 3 unique cards
             cards = random.sample(self.card_deck, 3)
             positions = [
-                "1️⃣ **The Past:** This represents your situation and how you got here\nSymbolizes a person that influenced your question",
-                "2️⃣ **The Present:** The current challenge or opportunity\nPay close attention to this card for things you overlooked",
-                "3️⃣ **The Future:** Potential outcome or guidance to overcome your issue"
+                "1️⃣ **The Past:** — Influences, roots, or unresolved energies. This card reveals events or relationships that shaped your current situation.",
+                "2️⃣ **The Present:** — The heart of the matter. Reflects your current mindset or external circumstances affecting you now.",
+                "3️⃣ **The Future:** — Probable outcome or advice. Suggests where things may lead and what perspective to embrace."
             ]
             
             # Build the reading embed
             embed = await self.embed_manager.create_command_embed(
                 ctx,
-                title=f"Tarot Reading for {u.display_name}",
-                description='\n\n'.join(
-                    f"{pos}\n{card}" for pos, card in zip(positions, cards)
+                title=f"🎴 𝖳𝖺𝗋𝗈𝗍 𝖱𝖾𝖺𝖽𝗂𝗇𝗀 𝖿𝗈𝗋 {u.display_name}",
+                description=(
+                    "The **Three-Card Spread** reveals your situation across time —\n"
+                    "showing past influences, present circumstances, and likely future outcomes."
                 ),
                 thumbnail=GameConfig.TAROT_DECK_IMAGE,
                 start_time=start_time
@@ -460,8 +461,16 @@ class Games(commands.Cog):
             
             if question:
                 embed.add_field(
-                    name="Your Question",
-                    value=question,
+                    name="🤔 𝖸𝗈𝗎𝗋 𝗊𝗎𝖾𝗌𝗍𝗂𝗈𝗇:",
+                    value=f"*{question}*",
+                    inline=False
+                )
+            
+            # Add each card as a separate field
+            for pos, card in zip(positions, cards):
+                embed.add_field(
+                    name=pos,
+                    value=card,
                     inline=False
                 )
             
@@ -470,12 +479,12 @@ class Games(commands.Cog):
                 ctx,
                 'tarot_reading',
                 question=question,
-                result_str=", ".join(card.split('\n')[0] for card in cards)
+                result_str=" | ".join(card.split('\n')[0][:30] for card in cards)  # Truncate long card names
             )
             
         except Exception as e:
             logger.error(f"Tarot error: {e}")
-            await ctx.send("An error occurred during the reading.", delete_after=5)
+            await ctx.send("The cards refuse to speak... (An error occurred)", delete_after=5)
 
     # ╔════════════════════════════════════════════════════════════╗
     # ║                          i-CHING                           ║
