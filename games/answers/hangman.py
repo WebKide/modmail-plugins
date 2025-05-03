@@ -1,4 +1,4 @@
-HANGMAN_WORDS = [
+hangman_words = [
     "ASSET", "ANGEL", "PINEAPPLE", "EVOLVE", "DISCORD",
     "BEAST", "DANCE", "BEAUTY", "PERSON", "STARRED",
     "CANDLE", "JUNGLE", "KARMA", "WIZARD", "PYRAMID",
