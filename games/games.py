@@ -10,6 +10,7 @@ from discord import ui
 
 # Local imports
 from .config import GameConfig, Emoji
+from .tracker import GamesTracker
 from .embedmanager import EmbedManager
 from .rpsls import RPSLSGame
 
