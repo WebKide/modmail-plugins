@@ -14,7 +14,7 @@ from .embedmanager import EmbedManager
 from .rpsls import RPSLSGame
 
 # Answer file imports
-from .answers.cookie import fortune_cookies
+from .answers.cookie import FORTUNE_COOKIES
 from .answers.eightball import ball_answers
 from .answers.futhark import runes_list
 from .answers.hangman import hangman_words
