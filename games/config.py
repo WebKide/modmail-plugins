@@ -10,6 +10,10 @@ class GameConfig:
     EIGHTBALL_IMAGE = 'https://i.imgur.com/GVFY7ry.png'
     TAROT_DECK_IMAGE = 'https://i.imgur.com/rUAjxYx.png'
     ICHING_IMAGE = 'http://i.imgur.com/biEvXBN.png'
+    DICE_IMAGE = 'https://i.imgur.com/N4d4X3h.png'
+    COOKIE_IMAGE = 'https://i.imgur.com/MHkzgHU.png'
+    HANGMAN_IMAGE = 'https://i.imgur.com/EksOlTe.png'
+    UNSCRAMBLE_IMAGE = 'https://i.imgur.com/wydPdrN.png'
     
     # Game settings
     GUESS_RANGE = (1, 11)  # min, max
