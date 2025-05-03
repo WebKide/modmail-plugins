@@ -450,7 +450,7 @@ class Games(commands.Cog):
             # Build the reading embed
             embed = await self.embed_manager.create_command_embed(
                 ctx,
-                title=f"🎴 𝖳𝖺𝗋𝗈𝗍 𝖱𝖾𝖺𝖽𝗂𝗇𝗀 𝖿𝗈𝗋 {u.display_name}",
+                title=f"𝖳𝖺𝗋𝗈𝗍 𝖱𝖾𝖺𝖽𝗂𝗇𝗀 𝖿𝗈𝗋 {u.display_name}",
                 description=(
                     "The **Three-Card Spread** reveals your situation across time —\n"
                     "showing past influences, present circumstances, and likely future outcomes."
@@ -458,14 +458,7 @@ class Games(commands.Cog):
                 thumbnail=GameConfig.TAROT_DECK_IMAGE,
                 start_time=start_time
             )
-            
-            if question:
-                embed.add_field(
-                    name="🤔 𝖸𝗈𝗎𝗋 𝗊𝗎𝖾𝗌𝗍𝗂𝗈𝗇:",
-                    value=f"*{question}*",
-                    inline=False
-                )
-            
+
             # Add each card as a separate field
             for pos, card in zip(positions, cards):
                 embed.add_field(
@@ -474,6 +467,13 @@ class Games(commands.Cog):
                     inline=False
                 )
             
+            if question:
+                embed.add_field(
+                    name="🤔 𝖸𝗈𝗎𝗋 𝗊𝗎𝖾𝗌𝗍𝗂𝗈𝗇:",
+                    value=f"> {question}",
+                    inline=False
+                )
+
             await message.edit(content=None, embed=embed)
             await self.tracker.log_command(
                 ctx,
