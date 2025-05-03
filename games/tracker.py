@@ -2,6 +2,30 @@ from discord.ext import commands
 from datetime import datetime
 
 class GamesTracker:
+    def __init__(self, bot):
+        self.bot = bot
+        self.db = bot.plugin_db.get_partition(self)
+
+    async def log_command(self, ctx, command_name, **kwargs):
+        """Log command usage with flexible fields"""
+        try:
+            entry = {
+                'user_id': ctx.author.id,
+                'username': str(ctx.author),
+                'channel_id': ctx.channel.id,
+                'channel_name': ctx.channel.name,
+                'command': command_name,
+                'timestamp': datetime.utcnow(),
+                **kwargs
+            }
+            await self.db.find_one_and_update(
+                {'_id': 'games-tracking'},
+                {'$push': {'commands': entry}},
+                upsert=True
+            )
+        except Exception as e:
+            print(f"Error logging command: {e}")
+
     async def get_user_stats(self, user_id):
         """Get statistics for a specific user"""
         aggr = [
