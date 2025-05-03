@@ -2,10 +2,13 @@ from discord.ext import commands
 from datetime import datetime
 
 class GamesTracker:
+    """Handles all game statistics tracking and database operations"""
+    
     def __init__(self, bot):
+        """Initialize with bot reference and database partition"""
         self.bot = bot
         self.db = bot.plugin_db.get_partition(self)
-
+        
     async def log_command(self, ctx, command_name, **kwargs):
         """Log command usage with flexible fields"""
         try:
