@@ -15,7 +15,7 @@ from .embedmanager import EmbedManager
 from .rpsls import RPSLSGame
 
 # Answer file imports
-from .answers.cookie import FORTUNE_COOKIES
+from .answers.cookie import FORTUNE_COOKIES as fortune_cookies
 from .answers.eightball import ball_answers
 from .answers.futhark import runes_list
 from .answers.hangman import hangman_words
@@ -25,8 +25,7 @@ from .answers.words import scramble_words
 
 
 class Games(commands.Cog):
-    """(∩｀-´)⊃━☆ﾟ.*･｡ﾟ Text based games and oracle commands"""
-    
+    """Text based games and oracle commands"""
     def __init__(self, bot):
         self.bot = bot
         self.embed_manager = EmbedManager(bot)
