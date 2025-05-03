@@ -5,6 +5,7 @@ import time
 import asyncio
 from datetime import datetime, date
 import discord
+import logging
 from discord.ext import commands
 from discord import ui
 
