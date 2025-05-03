@@ -1,4 +1,4 @@
-SCRAMBLE_WORDS = [
+scramble_words = [
     "ORANGE", "BUTTON", "PIRATE", "GARDEN", "PLANET",
     "RIDDLE", "MARKET", "LANTERN", "THUNDER", "FANTASY",
     "BOTTLE", "WIZARD", "CASTLE", "GUITAR", "OCEANS",
