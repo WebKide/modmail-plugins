@@ -149,12 +149,13 @@ class Games(commands.Cog):
             icon = Emoji.MEDAL
         else:
             result_int = 0
-            result_str = f'{random.choice([
+            result_msg = random.choice([
                 "Not even close",
-                "Better luck next time",
+                "Better luck next time", 
                 "How could you have known",
                 "Right number was"
-            ])}: {answer}'
+            ])
+            result_str = f'{result_msg}: {answer}'
             color = self.embed_manager.colors['error']
             icon = Emoji.NO_ENTRY
 
