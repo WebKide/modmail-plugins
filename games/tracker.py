@@ -39,7 +39,7 @@ class GamesTracker:
             }}
         ]
         
-        return {doc['_id']: doc for doc in await self.db.aggregate(aggr)}
+        return {doc['_id']: doc async for doc in self.db.aggregate(aggr)}
 
     async def get_outcome_stats(self, command_name=None):
         """Get win/lose/draw statistics"""
@@ -72,7 +72,7 @@ class GamesTracker:
             }}
         ]
         
-        return {doc['_id']: doc for doc in await self.db.aggregate(aggr)}
+        return {doc['_id']: doc async for doc in self.db.aggregate(aggr)}
 
     async def get_leaderboard(self, limit=10):
         """Get top users by command usage"""
