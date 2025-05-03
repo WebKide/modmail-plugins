@@ -30,7 +30,9 @@ class Games(commands.Cog):
         self.bot = bot
         self.embed_manager = EmbedManager(bot)
         self.tracker = GamesTracker(bot)
-        
+        # Verify initialization worked
+        if not hasattr(self.tracker, 'db'):
+            raise RuntimeError("GamesTracker failed to initialize!")
         # Initialize answer lists
         self.fortune_cookies = fortune_cookies
         self.ball_answers = ball_answers
