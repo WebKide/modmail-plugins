@@ -442,9 +442,9 @@ class Games(commands.Cog):
             # Draw 3 unique cards
             cards = random.sample(self.card_deck, 3)
             positions = [
-                "1️⃣ **The Past:** This represents your situation and how you got here",
-                "2️⃣ **The Present:** The current challenge or opportunity",
-                "3️⃣ **The Future:** Potential outcome or guidance"
+                "1️⃣ **The Past:** This represents your situation and how you got here\nSymbolizes a person that influenced your question",
+                "2️⃣ **The Present:** The current challenge or opportunity\nPay close attention to this card for things you overlooked",
+                "3️⃣ **The Future:** Potential outcome or guidance to overcome your issue"
             ]
             
             # Build the reading embed
@@ -695,98 +695,6 @@ class Games(commands.Cog):
             question=word
         )
 
-# ╔═════════════════════╦═══════════════╦══════════════════════╗
-# ╠═════════════════════╣ DISCORD VIEWS ╠══════════════════════╣
-# ╚═════════════════════╩═══════════════╩══════════════════════╝
-class HangmanView(discord.ui.View):
-    def __init__(self, timeout=60.0):
-        super().__init__(timeout=timeout)
-        self.create_letter_buttons()
-        
-    def create_letter_buttons(self):
-        """Dynamically generate buttons for A-Z"""
-        for letter in 'ABCDEFGHIJKLMNOPQRSTUVWXYZ':
-            button = discord.ui.Button(
-                label=letter,
-                style=discord.ButtonStyle.secondary,
-                custom_id=f"hangman_{letter}"
-            )
-            button.callback = self.create_callback(letter)
-            self.add_item(button)
-
-    def create_callback(self, letter):
-        """Generate callback function for each button"""
-        async def button_callback(interaction):
-            await self.process_guess(interaction, letter)
-            # Disable the used button
-            for child in self.children:
-                if child.custom_id == f"hangman_{letter}":
-                    child.disabled = True
-            await interaction.response.edit_message(view=self)
-        return button_callback
-
-    async def process_guess(self, interaction, letter):
-        """Handle guess logic"""
-        games_cog = interaction.client.get_cog('Games')
-        game = games_cog.hangman_games.get(interaction.channel.id)
-        
-        if not game or letter in game['guessed']:
-            return
-
-        game['guessed'].add(letter)
-        word = game['word']
-        display = game['display']
-        
-        # Update display with correct guesses
-        correct_guess = False
-        for i, char in enumerate(word):
-            if char == letter:
-                display[i] = letter
-                correct_guess = True
-
-        if not correct_guess:
-            game['wrong'] += 1
-
-        # Update embed
-        embed = interaction.message.embeds[0]
-        embed.description = (
-            f"Word: `{' '.join(display)}`\n"
-            f"Wrong guesses left: {6 - game['wrong']}\n"
-            f"Used letters: {', '.join(sorted(game['guessed']))}"
-        )
-
-        # Check win/lose conditions
-        if '_' not in display:
-            embed.color = games_cog.embed_manager.colors['success']
-            await games_cog.tracker.log_command(
-                interaction,
-                'hangman_win',
-                result_str=word,
-                result_int=6 - game['wrong']
-            )
-            await interaction.response.edit_message(embed=embed, view=None)
-            del games_cog.hangman_games[interaction.channel.id]
-            return
-        elif game['wrong'] >= 6:
-            embed.color = games_cog.embed_manager.colors['error']
-            embed.description += f"\n\nGame Over! The word was: **{word}**"
-            await games_cog.tracker.log_command(
-                interaction,
-                'hangman_lose',
-                result_str=word
-            )
-            await interaction.response.edit_message(embed=embed, view=None)
-            del games_cog.hangman_games[interaction.channel.id]
-            return
-
-        await interaction.response.edit_message(embed=embed)
-
-    async def on_timeout(self):
-        """Clean up when view times out"""
-        for child in self.children:
-            child.disabled = True
-        await self.message.edit(view=self)
-
     # ╔════════════════════════════════════════════════════════════╗
     # ║                        GAMES STATS                         ║
     # ╠════════════════════╦══════════════════╦════════════════════╣
@@ -904,6 +812,99 @@ class HangmanView(discord.ui.View):
             )
             
         await ctx.send(embed=embed)
+
+# ╔═════════════════════╦═══════════════╦══════════════════════╗
+# ╠═════════════════════╣ DISCORD VIEWS ╠══════════════════════╣
+# ╚═════════════════════╩═══════════════╩══════════════════════╝
+class HangmanView(discord.ui.View):
+    def __init__(self, timeout=60.0):
+        super().__init__(timeout=timeout)
+        self.create_letter_buttons()
+        
+    def create_letter_buttons(self):
+        """Dynamically generate buttons for A-Z"""
+        for letter in 'ABCDEFGHIJKLMNOPQRSTUVWXYZ':
+            button = discord.ui.Button(
+                label=letter,
+                style=discord.ButtonStyle.secondary,
+                custom_id=f"hangman_{letter}"
+            )
+            button.callback = self.create_callback(letter)
+            self.add_item(button)
+
+    def create_callback(self, letter):
+        """Generate callback function for each button"""
+        async def button_callback(interaction):
+            await self.process_guess(interaction, letter)
+            # Disable the used button
+            for child in self.children:
+                if child.custom_id == f"hangman_{letter}":
+                    child.disabled = True
+            await interaction.response.edit_message(view=self)
+        return button_callback
+
+    async def process_guess(self, interaction, letter):
+        """Handle guess logic"""
+        games_cog = interaction.client.get_cog('Games')
+        game = games_cog.hangman_games.get(interaction.channel.id)
+        
+        if not game or letter in game['guessed']:
+            return
+
+        game['guessed'].add(letter)
+        word = game['word']
+        display = game['display']
+        
+        # Update display with correct guesses
+        correct_guess = False
+        for i, char in enumerate(word):
+            if char == letter:
+                display[i] = letter
+                correct_guess = True
+
+        if not correct_guess:
+            game['wrong'] += 1
+
+        # Update embed
+        embed = interaction.message.embeds[0]
+        embed.description = (
+            f"Word: `{' '.join(display)}`\n"
+            f"Wrong guesses left: {6 - game['wrong']}\n"
+            f"Used letters: {', '.join(sorted(game['guessed']))}"
+        )
+
+        # Check win/lose conditions
+        if '_' not in display:
+            embed.color = games_cog.embed_manager.colors['success']
+            await games_cog.tracker.log_command(
+                interaction,
+                'hangman_win',
+                result_str=word,
+                result_int=6 - game['wrong']
+            )
+            await interaction.response.edit_message(embed=embed, view=None)
+            del games_cog.hangman_games[interaction.channel.id]
+            return
+        elif game['wrong'] >= 6:
+            embed.color = games_cog.embed_manager.colors['error']
+            embed.description += f"\n\nGame Over! The word was: **{word}**"
+            await games_cog.tracker.log_command(
+                interaction,
+                'hangman_lose',
+                result_str=word
+            )
+            await interaction.response.edit_message(embed=embed, view=None)
+            del games_cog.hangman_games[interaction.channel.id]
+            return
+
+        await interaction.response.edit_message(embed=embed)
+
+    async def on_timeout(self):
+        """Clean up when view times out"""
+        for child in self.children:
+            child.disabled = True
+        await self.message.edit(view=self)
+
 
 async def setup(bot):
     await bot.add_cog(Games(bot))
