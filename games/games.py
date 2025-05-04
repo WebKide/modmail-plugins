@@ -686,14 +686,24 @@ class Games(commands.Cog):
         
         embed = await self.embed_manager.create_command_embed(
             ctx,
-            title='🔤 Word Scramble',
+            title='🔤 𝖶𝗈𝗋𝖽 𝖲𝖼𝗋𝖺𝗆𝖻𝗅𝖾',
             description=(
-                f"Unscramble this word:\n"
-                f"```{scrambled}```\n"
-                f"Type your answer in chat!"
+                f"# 𝖧𝗂𝗇𝗍: {len(word)} 𝗅𝖾𝗍𝗍𝖾𝗋𝗌"
             ),
             thumbnail="https://i.imgur.com/wydPdrN.png",
-            footer_text=f"Hint: {len(word)} letters | Related to tech",
+            fields=[
+                {
+                    'name': '𝖴𝗇𝗌𝖼𝗋𝖺𝗆𝖻𝗅𝖾 𝗍𝗁𝗂𝗌 𝗐𝗈𝗋𝖽:',
+                    'value': f'```ini\n[ {scrambled} ]\n```',
+                    'inline': False
+                    },
+                {
+                    'name': '𝖧𝗈𝗐 𝗍𝗈 𝖯𝗅𝖺𝗒:',
+                    'value': '𝖳𝗒𝗉𝖾 𝗒𝗈𝗎𝗋 𝖺𝗇𝗌𝗐𝖾𝗋 𝗂𝗇 𝖼𝗁𝖺𝗍.',
+                    'inline': False
+                    }
+                ],
+            footer_text="𝖸𝗈𝗎 𝗁𝖺𝗏𝖾 𝗍𝗐𝗈 𝗆𝗂𝗇𝗎𝗍𝖾𝗌! ",
             start_time=start_time
         )
         
@@ -703,6 +713,19 @@ class Games(commands.Cog):
             'scramble_start',
             question=word
         )
+        
+                def check(m):
+            return m.author == ctx.author and m.channel == ctx.channel
+
+        try:
+            msg = await self.bot.wait_for('message', check=check, timeout=120)
+            if msg.content.upper() == word:
+                await ctx.send(f"# ✅ 𝖢𝗈𝗋𝗋𝖾𝖼𝗍, {ctx.author.mention}!\n```ini\n[ 𝖳𝗁𝖾 𝗐𝗈𝗋𝖽 𝗐𝖺𝗌 {word} ]\n```")
+            else:
+                await ctx.send(f"# ❌ 𝖭𝗈𝗉𝖾! 𝖳𝗁𝖾 𝖼𝗈𝗋𝗋𝖾𝖼𝗍 𝗐𝗈𝗋𝖽 𝗐𝖺𝗌 **{word}**.")
+        except asyncio.TimeoutError:
+            await ctx.send(f"# ⏰ 𝖳𝗂𝗆𝖾’𝗌 𝗎𝗉, {ctx.author.mention}!\n```ini\n[ 𝖳𝗁𝖾 𝗐𝗈𝗋𝖽 𝗐𝖺𝗌 {word} ]\n```")
+
 
     # ╔════════════════════════════════════════════════════════════╗
     # ║                        GAMES STATS                         ║
