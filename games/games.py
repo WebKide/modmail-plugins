@@ -16,7 +16,7 @@ from .embedmanager import EmbedManager
 from .rpsls import RPSLSGame
 
 # Answer file imports
-from .answers.cookie import FORTUNE_COOKIES as fortune_cookies
+from .answers.cookie import FORTUNE as fortune_cookies
 from .answers.eightball import ball_answers
 from .answers.futhark import runes_list
 from .answers.hangman import hangman_words
@@ -613,8 +613,8 @@ class Games(commands.Cog):
         fortune = random.choice(self.fortune_cookies)
         embed = await self.embed_manager.create_command_embed(
             ctx,
-            title='🥠 Fortune Cookie Says',
-            description=f'```{fortune}```',
+            title=f'🥠 Fortune Cookie for {ctx.author.display_name}:',
+            description=f'```asciidoc\n"{fortune}"\n```',
             thumbnail='https://i.imgur.com/MHkzgHU.png',
             start_time=start_time
         )
