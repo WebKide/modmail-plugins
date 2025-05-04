@@ -614,7 +614,7 @@ class Games(commands.Cog):
         embed = await self.embed_manager.create_command_embed(
             ctx,
             title=f'🥠 Fortune Cookie for {ctx.author.display_name}:',
-            description=f'```asciidoc\n"{fortune}"\n```',
+            description=f'```asciidoc\n{fortune}\n--------===--------\n```',
             thumbnail='https://i.imgur.com/MHkzgHU.png',
             start_time=start_time
         )
