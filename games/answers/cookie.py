@@ -1,4 +1,4 @@
-FORTUNE_COOKIES = [
+FORTUNE = [
     "Now is the time to try something new.",
     "Be brave. Ask for extra chili sauce.",
     "The best version of you is unfolding —don’t interrupt the process.",
