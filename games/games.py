@@ -714,7 +714,7 @@ class Games(commands.Cog):
             question=word
         )
         
-                def check(m):
+        def check(m):
             return m.author == ctx.author and m.channel == ctx.channel
 
         try:
