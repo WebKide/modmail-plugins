@@ -39,7 +39,7 @@ class GameConfig:
         "The Big Bang Theory S02E08 — 'The Lizard-Spock Expansion'"
     )
     
-    ADVICE_FOOTER = "ADVICE: Don't take this too seriously"
+    ADVICE_FOOTER = "𝖮𝗋𝖺𝖼𝗅𝖾"
     
     # Timing
     DEFAULT_DELETE_AFTER = 23  # seconds
