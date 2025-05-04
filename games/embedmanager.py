@@ -31,9 +31,8 @@ class EmbedManager:
         """Create basic embed structure without footer"""
         embed = discord.Embed(
             color=kwargs.get('color', self.colors['user']),
-            description=kwargs.get('description'),
-            timestamp=kwargs.get('timestamp', discord.utils.utcnow())
-        )
+            description=kwargs.get('description')  # , timestamp=kwargs.get('timestamp', discord.utils.utcnow()))
+            )
         
         if title := kwargs.get('title'):
             embed.title = title
