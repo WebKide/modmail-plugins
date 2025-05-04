@@ -66,10 +66,11 @@ class EmbedManager:
         now = datetime.utcnow()
         unix_timestamp = int(now.timestamp())
         short_time = f"<t:{unix_timestamp}:t>"  # 't' = short time
+        short_t = now.strftime("%H:%M")
         if start_time:
             duration = time.time() - start_time
             footer_text += f" 𝗉𝗋𝗈𝖼𝖾𝗌𝗌𝖾𝖽 𝗂𝗇 {duration*1000:.2f}𝗆𝗌"
-        footer_text += f" | {short_time}"
+        footer_text += f" | {short_t}"
         footer_text += f" | 𝗉𝗂𝗇𝗀: {self.bot.latency*1000:.2f}𝗆𝗌"
         
         return {
