@@ -5,45 +5,177 @@
 
 
 <div align="center">
-<img src="http://forthebadge.com/images/badges/made-with-crayons.svg?style=for-the-badge" alt="made with crayons"><br>
-<img src="https://img.shields.io/badge/python-v3.7-12a4ff?style=for-the-badge&logo=python&logoColor=12a4ff">
-<img src="https://img.shields.io/badge/library-discord%2Epy-ffbb10?style=for-the-badge">
+<img src="http://forthebadge.com/images/badges/made-with-crayons.svg!style=for-the-badge" alt="made with crayons"><br>
+<img src="https://img.shields.io/badge/python-v3.7-12a4ff!style=for-the-badge&logo=python&logoColor=12a4ff">
+<img src="https://img.shields.io/badge/library-discord%2Epy-ffbb10!style=for-the-badge">
 
 <p>🛠️ if you experience a problem with any <b>modmail-plugin</b> in this repo, please open an issue or submit a pull-request</p>
 <br><br>
 </div>
 
-# Transform
+# 🪄 Transform
 
-This Discord.py Plugin provides various text transformation utilities to have fun in your Guild.
+This Discord.py Plugin provides various **text transformation utilities** to ✨ have fun ✨ in your Guild — from Unicode decoding to banner shouting.
 
-### Key Features:
-- AI-powered word generation using Markov chains
-- Text transformers (ᵗⁱⁿʏ, 𝒸𝓊�𝓈𝒾𝓋ℯ, 𝕓𝕠𝕝𝕕, sᴍᴀʟʟ ᴄᴀᴘs, 1337 5P34K, MoCkInG CaSe, ＶＡＰＯＲ, 𝖲𝖺𝗇𝗌-𝗌𝖾𝗋𝗂𝖿, Z͌͆a͠l̓g͊ő)
-- UNICODE character information display
-- Caesar cipher with optional rotation (default: 3)
-- Smart binary converter with decoder
-- Fun text modifiers (👏, 🙏)
+## 💫 Key Features
 
-### Commands:
-- [x] **`{p}aiword`** - Generate realistic-sounding artificial words
-- [x] **`{p}binary`** - Smart binary converter with format detection
-- [x] **`{p}bold`** - Convert text to 𝕓𝕠𝕝𝕕
-- [x] **`{p}caesar`** - Apply Caesar cipher with optional rot (default: 3)
-- [x] **`{p}charinfo`** - Show Unicode character information
-- [x] **`{p}clap`** - Add 👏 between 👏 words 👏
-- [x] **`{p}cursive`** - Convert text to 𝒸𝓊𝓇𝓈𝒾𝓋ℯ
-- [x] **`{p}leet`** - Convert text to 1337 5P34K
-- [x] **`{p}mock`** - Convert text to MoCkInG CaSe (alternating case)
-- [x] **`{p}pray`** - Add 🙏 between 🙏 words 🙏
-- [x] **`{p}sans`** - Convert text to 𝖲𝖺𝗇𝗌-𝗌𝖾𝗋𝗂𝖿
-- [x] **`{p}smallcaps`** - Convert text to sᴍᴀʟʟ ᴄᴀᴘs
-- [x] **`{p}tiny`** - Convert text to ᵗⁱⁿʸ letters
-- [x] **`{p}vapor`** - Convert text to ＶＡＰＯＲＷＡＶＥ ＡＥＳＴＨＥＴＩＣ
-- [x] **`{p}zalgo`** - Z͆͌̓a͒͠l̓͌̚g͊͝o͋̑̿ your normal text
+* 🤖 **AI-powered word generation** using Markov chains
+* 🅰️ **ASCII Banner Generator** (`!banner` group):
 
-# Installation
+  * `2linesthick`, `3linethick`, `3linethin`, `3lineingle`, `3linedouble`
+* 🔡 **Stylish Text Transformers**:
 
-🔸 <b>Installation</b>: `{p}plugin add WebKide/modmail-plugins/transform@master`
+  * ᵗⁱⁿʸ, 𝒸𝓊𝓇𝓈𝒾𝓋ℯ, 𝕕𝕠𝕦𝕓𝕝𝕖-𝕤𝕥𝕣𝕦𝕔𝕜
+  * 𝐁𝐨𝐥𝐝, 𝘽𝙤𝙡𝙙𝙄𝙩𝙖𝙡𝙞𝙘, 𝕲𝖔𝖙𝖍𝖎𝖈, 𝓘𝓽𝓪𝓵𝓲𝓬
+  * sᴍᴀʟʟ ᴄᴀᴘs, 1337 5P34K, MoCkInG CaSe
+  * ＶＡＰＯＲ, 𝖲𝖺𝗇𝗌-𝗌𝖾𝗋𝗂𝖿, Z͌͆a͠l̓g͊ő
+* 🔠 **Unicode ↔ Character Info**:
 
-> `{p}` will be your guild's prefix, by default it is **`?`** unless you changed it
+  * View Unicode name and codepoint (`!charinfo @`)
+  * Convert escapes to actual characters (`!charinfo \N{WHITE HEAVY CHECK MARK}`)
+* 🏛️ **Caesar Cipher** with optional rotation `(default: 13)`
+* 💾 **Binary Encoder/Decoder**
+* 🕺 **Fun Modifiers** (👏, 🙏)
+
+---
+
+
+## 🧪 Commands List:
+- [x] **`!ainame`** - Generate fantasy names that sound authentic
+- [x] **`!caesar`** - Apply Caesar cipher with optional rot `(default: 13)`
+- [x] **`!charinfo`** - Transform 𝐔𝐧𝐢𝐜𝐨𝐝𝐞 <--> 𝐂𝐡𝐚𝐫𝐚𝐜𝐭𝐞𝐫
+- [x] **`!binary`** - Smart binary 8-16-32-bit converter with format detection
+- [x] **`!banner`** - Convert text to 3-line ASCII banners
+  - [x] ├─ **`2linesthick`** - Convert text to 2-line ASCII banners
+  - [x] ├─ **`3linedouble`** - Convert text to 3-double-line ASCII banners
+  - [x] ├─ **`3linesingle`** - Convert text to 3-single-line ASCII banners
+  - [x] ├─ **`3linethick`** - Convert text to 3-double-line ASCII banners
+  - [x] └─ **`3linethin`** - Convert text to 3-single-line ASCII banners
+- [x] **`!bold`** - Convert text to 𝐁𝐨𝐥𝐝
+- [x] **`!bolditalic`** - Convert text to 𝘽𝙤𝙡𝙙𝙄𝙩𝙖𝙡𝙞𝙘
+- [x] **`!cursive`** - Convert text to 𝒸𝓊𝓇𝓈𝒾𝓋ℯ
+- [x] **`!double`** - Convert text to 𝕕𝕠𝕦𝕓𝕝𝕖-𝕤𝕥𝕣𝕦𝕔𝕜
+- [x] **`!gothic`** - Convert text to 𝕲𝖔𝖙𝖍𝖎𝖈
+- [x] **`!italic`** - Convert text to 𝓘𝓽𝓪𝓵𝓲𝓬
+- [x] **`!leet`** - Convert text to 1337 5P34K
+- [x] **`!mock`** - Convert text to MoCkInG CaSe (alternating case)
+- [x] **`!sans`** - Convert text to 𝖲𝖺𝗇𝗌-𝗌𝖾𝗋𝗂𝖿
+- [x] **`!smallcaps`** - Convert text to sᴍᴀʟʟ ᴄᴀᴘs
+- [x] **`!tiny`** - Convert text to ᵗⁱⁿʸ ᶜʰᵃʳᵃᶜᵗᵉʳˢ
+- [x] **`!vapor`** - Convert text to ＶＡＰＯＲＷＡＶＥ ＡＥＳＴＨＥＴＩＣ
+- [x] **`!zalgo`** - Convert your text to z̧a͠l̜ͭg̑̃o̯ͪ͢ 
+- [x] **`!pray`** - Add 🙏 between 🙏 words 🙏
+- [x] **`!clap`** - Add 👏 between 👏 words 👏
+
+---
+
+## 🔧 Installation
+
+```diff
+!plugin add WebKide/modmail-plugins/transform@master
+```
+
+> Replace `!` with your server's prefix (by dafault: `?`)
+
+---
+
+# EXAMPLES:
+
+## 🤖 AI Fantasy Name Generator
+
+### `!ainame 23`
+
+```bf
+Adreis, Thea, Aphai, Ibryok, Oquoshor, Ivegas,
+Uchomicha, Unoep, Aviush, Idrai, Oqud, Ufien,
+Ish, Amama, Oziu, Amay, Amohith, Ymueach, Awayen,
+Ehit, Iyoueu, Uric, Ewapan
+```
+
+---
+
+## 🔐 Caesar Cipher
+
+#### `!caesar` encode or decode messages
+
+Caesar cipher applied with `rot=13`
+
+**Input:** `Hello World`
+
+**Result:** `Uryyb Jbeyq`
+
+---
+
+## 8️⃣ Binary [8-16-32] bit
+
+#### `!binary 8 hello`
+
+**Input:** `hello`
+
+**Result:** `01101000 01100101 01101100 01101100 01101111`
+
+---
+
+#### `!binary 16 0000000001101000 0000000001100101 0000000001101100 0000000001101100 0000000001101111`
+
+**Input:** `0000000001101000 0000000001100101 0000000001101100 0000000001101100 0000000001101111`
+
+**Result:** `hello`
+
+---
+
+#### `!binary 32 hello`
+
+**Input:** `hello`
+
+**Result:** `00000000000000000000000001101000 00000000000000000000000001100101 00000000000000000000000001101100 00000000000000000000000001101100 00000000000000000000000001101111`
+
+---
+
+## 
+
+####
+
+---
+
+## 🔡 Example Banners
+
+#### `!banner 2linesthick holly cow`
+
+```
+█░█ █▀█ █░░ █░░ █▄█   █▀▀ █▀█ █░█░█ 
+█▀█ █▄█ █▄▄ █▄▄ ░█░   █▄▄ █▄█ ▀▄▀▄▀ 
+```
+
+#### `!banner 3lineingle world cup`
+
+```
+┬ ┬┌─┐┬─╮┬  ┌─╮   ┌─┐┬ ┬┌─┐
+││││ │├┬┘│  │ │   │  │ │├─┘
+└┴┘└─┘┴╰─┴─┘┴─┘   └─┘╰─╯┴  
+```
+
+#### `!banner 3linethin modmail`
+
+```
+┌┬┐┌─┐┌─╮┌┬┐╭─╮┬┬  
+╽╽╽╽ ╽╽ ╽╽╽╽┟─┧╽╽  
+┻ ┻┗━┛┻━┛┻ ┻┻ ┻┻┻━┛
+```
+
+#### `!banner 3linedouble love 69`
+
+```
+╦  ╔═╗╦ ╦╔═╗   ╔══╔═╗
+║  ║ ║╚╗║╠═    ╠═╗╚═╣
+╩═╝╚═╝ ╚╝╚═╝   ╚═╝══╝
+```
+
+#### `!banner 3linethick supreme`
+
+```
+█▀▀░█░░█░█▀▀█░█▀▀█░█▀▀▀░█▀▄▀█░█▀▀▀░
+▀▀█░█░░█░█░░█░█▄▄▀░█▀▀░░█░▀░█░█▀▀░░
+▀▀▀░░▀▀▀░█▀▀▀░▀░▀▀░▀▀▀▀░▀░░░▀░▀▀▀▀░
+```
+---
