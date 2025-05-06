@@ -663,10 +663,10 @@ class Transform(commands.Cog):
         """Transform 𝐔𝐧𝐢𝐜𝐨𝐝𝐞 <--> 𝐂𝐡𝐚𝐫𝐚𝐜𝐭𝐞𝐫
         
         - Show info about unicode characters:
-          - Character `@` to `\\𝖴0040`
+          - Character `@` to `\\U0040`
         - Convert unicode escapes to character:
-          - `\\𝖴0040` to character `@`
-          - `\\𝖭{WHITE HEAVY CHECK MARK}` to `✅`
+          - `\\U0040` to character `@`
+          - `\\N{WHITE HEAVY CHECK MARK}` to `✅`
         """
         if not characters:
             return await ctx.send_help(self.charinfo)
