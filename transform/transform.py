@@ -652,12 +652,16 @@ class Transform(commands.Cog):
     @commands.command(description='Command to identify characters', no_pm=True)
     async def charinfo(self, ctx, *, characters: str):
         """Transform Unicode<->character
+        
         - Show info about unicode characters
          - Character "@" to "\U00000040"
         - Convert unicode escapes like
          - \\U00000040 to character "@"
          - \\N{WHITE HEAVY CHECK MARK} to "✅"
         """
+        if not characters:
+            return await ctx.send_help(ctx.command)
+
         start_time = time.time()
         characters = characters.strip()
 
