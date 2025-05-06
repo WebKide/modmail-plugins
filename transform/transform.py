@@ -649,18 +649,18 @@ class Transform(commands.Cog):
     # +------------------------------------------------------------+
     # |                     CHARINFO                               |
     # +------------------------------------------------------------+
-    @commands.command(name='charinfo', description='Command to identify characters', aliases=['charingo', 'char'], no_pm=True)
-    async def char_info(self, ctx, *, characters: str = None):
+    @commands.command(description='Command to identify characters', aliases=['charingo', 'char'], no_pm=True)
+    async def charinfo(self, ctx, *, characters: str = None):
         """Transform Unicode<->character
         
         - Show info about unicode characters
          - Character "@" to "\U00000040"
         - Convert unicode escapes like
          - \\U00000040 to character "@"
-         - \\N{WHITE HEAVY CHECK MARK} to "✅"
+         - \N{WHITE HEAVY CHECK MARK} to "✅"
         """
         if not characters:
-            return await ctx.send_help(self.char_info)
+            return await ctx.send_help(self.charinfo)
 
         start_time = time.time()
         characters = characters.strip()
