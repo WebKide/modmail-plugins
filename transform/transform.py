@@ -1128,21 +1128,34 @@ class Transform(commands.Cog):
     # +------------------------------------------------------------+
     # |                  CAESAR ROTATE CIPHER                      |
     # +------------------------------------------------------------+
-    @commands.command(description='Text transformer command')
+    @commands.command(description='Text transformer command', aliases=['rot', 'rotate'])
     @commands.guild_only()
-    async def caesar(self, ctx, rot: int = 13, *, text: str):
+    async def caesar(self, ctx, *, message: str):
         """Apply Caesar cipher with optional rot `(default: 13)`
         
-        - rot: Rotation amount (1–25). Values outside this range will wrap using modulo 26.
-        - text: Text message to encode or decode.
+        - `rot:` Rotation amount (1–25).
+          - Values outside this range will wrap using modulo 26.
+        - `text:` Text message to encode or decode.
         """
+        start_time = time.time()
+        args_split = message.strip().split()
+        rot = 13  # default
+        text = message
+        # Try parsing first token as int
+        if args_split:
+            try:
+                parsed_rot = int(args_split[0])
+                if 1 <= parsed_rot <= 25:
+                    rot = parsed_rot
+                    text = ' '.join(args_split[1:])  # rest is the actual text
+            except ValueError:
+                pass  # No valid rotation given, use default 13
+
         if not text:
             return await ctx.send_help(self.caesar)
-        start_time = time.time()
 
         original_rot = rot
-        rot %= 26  # Wrap rotation
-
+        rot %= 26
         result = []
         for c in text:
             if c.isupper():
@@ -1152,18 +1165,16 @@ class Transform(commands.Cog):
             else:
                 result.append(c)
 
-        msg = f"```bf\n{''.join(result)}```"
-        desc = f"Caesar cipher applied with rot={rot} ({original_rot} % 26)"
+        transformed = ''.join(result)
+        msg_block = f"```bf\n{transformed[:1024]}```"
 
         em = discord.Embed(
             title="🔐 Caesar Cipher",
-            description=desc,
+            description=f"Caesar cipher applied with rot={rot} (from input: {original_rot})",
             color=self.user_color
         )
-        em.add_field(name='Input:', value=f'```\n{text}```', inline=False)
-        em.add_field(name=f'Result (rot={rot}):', value=msg, inline=False)
-
-
+        em.add_field(name="Input:", value=f"```\n{text[:1024]}```", inline=False)
+        em.add_field(name="Result:", value=msg_block, inline=False)
         em = await self._add_footer(em)
         await ctx.send(embed=em, allowed_mentions=discord.AllowedMentions.none())
 
