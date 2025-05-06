@@ -204,15 +204,36 @@ class Transform(commands.Cog):
     # +------------------------------------------------------------+
     @commands.group(name="banner", invoke_without_command=True, no_pm=True)
     async def banner_group(self, ctx):
-        """Convert text to 3-line ASCII banners"""
+        """Convert text to 3-line ASCII banners
+        ```
+        ▀█   █░░ █ █▄░█ █▀▀ █▀   ▀█▀ █░█ █ █▀▀ █▄▀
+        █▄   █▄▄ █ █░▀█ ██▄ ▄█   ░█░ █▀█ █ █▄▄ █░█
+
+        ┌─┐   ┬  ┬┌╮┌┌─┐   ╭─┐┬┌╮┌┌─┐┬  ┌─┐
+         ─┤ ─ │  ││││├┤  ─ ╰─╮│││││ ┬│  ├┤ 
+        └─┘   ┴─┘┴┘└┘└─┘   └─╯┴┘└┘└─┘┴─┘└─┘
+
+        ┌─╮   ┬  ┬┌╮┌┌─┐╭─┐   ┌┬┐┬ ┬┬┌╮┌
+         ─┧   ╽  ╽╽╽╽┟┧ ╰─┒    ╽ ┟─┧╽╽╽╽
+        ┗━┛   ┻━┛┻┛┗┛┗━┛┗━┛    ┻ ┻ ┻┻┛┗┛
+
+        ╔═╗   ╦  ╦╔╗╦╔═╗   ╔╦╗╔═╗╦ ╦╔╗ ╦  ╔═╗
+         ═╣ ═ ║  ║║║║╠═  ═  ║║║ ║║ ║╠╩╗║  ╠═ 
+        ╚═╝   ╩═╝╩╝╚╝╚═╝   ═╩╝╚═╝╚═╝╚═╝╩═╝╚═╝
+
+        ▀▀█░░█░░░░▀█▀░█▄░█░█▀▀▀░▀▀█▀▀░█░░█░▀█▀░█▀▀▀░█░▄▀░
+        ░▀█░░█░░░░░█░░█▒▀█░█▀▀░░░░█░░░█▀▀█░░█░░█░░░░█▀▄░
+        ▀▀▀░░▀▀▀▀░▀▀▀░▀░░▀░▀▀▀▀░░░▀░░░▀░░▀░▀▀▀░▀▀▀▀░▀░▀▀░
+        ```
+        """
         await ctx.send_help(ctx.command)
 
     @banner_group.command(description="Generate 2-line-thick ASCII banners", name="2linesthick", no_pm=True)
     async def _banner_zero(self, ctx, *, text: str):
         """Convert text to 2-line ASCII banners
         ```
-        █▄▄ ▄▀█ █▄░█ █▄░█ █▀▀ █▀█   ▀█   █░░ █ █▄░█ █▀▀ █▀
-        █▄█ █▀█ █░▀█ █░▀█ ██▄ █▀▄   █▄   █▄▄ █ █░▀█ ██▄ ▄█
+        ▀█   █░░ █ █▄░█ █▀▀ █▀   ▀█▀ █░█ █ █▀▀ █▄▀
+        █▄   █▄▄ █ █░▀█ ██▄ ▄█   ░█░ █▀█ █ █▄▄ █░█
         ```
         """
         if not text:
@@ -265,22 +286,31 @@ class Transform(commands.Cog):
             '=': ['▄▄', '▄▄'],
             }
 
-        # Convert text to uppercase and limit length
-        text = text.upper()[:16]  # Prevent abuse with long text
-        banner_lines = ['', '']  # Initialize 2 empty lines
+        max_chars_per_line = 10
+        banner_lines = []
 
-        for char in text:
-            # Get the character's ASCII art or default to space
-            char_art = font.get(char, font[' '])
-            for i in range(2):
-                banner_lines[i] += char_art[i] + ' '  # Add spacing between chars
+        # Split input manually using '|' and then auto-wrap each segment
+        user_lines = text.upper().split('|')
 
-        # Combine into a single string
-        banner = '\n'.join(banner_lines)
-        
+        for line in user_lines:
+            for i in range(0, len(line), max_chars_per_line):
+                chunk = line[i:i + max_chars_per_line]
+                if not chunk:
+                    continue
+
+                line_block = ['', '']
+                for char in chunk:
+                    char_art = font.get(char, font[' '])
+                    for j in range(2):
+                        line_block[j] += char_art[j] + ' '  # add space between characters
+                banner_lines.append('\n'.join(line_block))
+
+        full_banner = '\n\n'.join(banner_lines)
+
         em = discord.Embed(color=self.user_color)
-        em.add_field(name="Input:", value=f'```\n{text}```', inline=False)
-        em.add_field(name="2-Line Banner:", value=f'```\n{banner}```', inline=False)
+        em.add_field(name="Input:", value=f'```bf\n{text}\n```', inline=False)
+        em.add_field(name="2-Line Banner:", value=f'```\n{full_banner}```', inline=False)
+
         await ctx.send(embed=em, allowed_mentions=discord.AllowedMentions.none())
 
     # +------------------------------------------------------------+
@@ -290,9 +320,9 @@ class Transform(commands.Cog):
     async def _banner_one(self, ctx, *, text: str):
         """Convert text to 3-single-line ASCII banners
         ```
-        ┌┐ ╭─╮┌╮┌┌╮┌┌─┐┬─╮   ┌─┐   ┬  ┬┌╮┌┌─┐╭─┐
-        ├┴┐├─┤││││││├┤ ├┬┘    ─┤   │  ││││├┤ ╰─╮
-        └─┘┴ ┴┘└┘┘└┘└─┘┴╰─   └─┘   ┴─┘┴┘└┘└─┘└─╯
+        ┌─┐   ┬  ┬┌╮┌┌─┐   ╭─┐┬┌╮┌┌─┐┬  ┌─┐
+         ─┤ ─ │  ││││├┤  ─ ╰─╮│││││ ┬│  ├┤ 
+        └─┘   ┴─┘┴┘└┘└─┘   └─╯┴┘└┘└─┘┴─┘└─┘
         ```
         """
         if not text:
@@ -360,7 +390,7 @@ class Transform(commands.Cog):
         banner = '\n'.join(banner_lines)
         
         em = discord.Embed(color=self.user_color)
-        em.add_field(name="Input:", value=f'```\n{text}```', inline=False)
+        em.add_field(name="Input:", value=f'```bf\n{text}\n```', inline=False)
         em.add_field(name="3-Line Banner:", value=f'```\n{banner}```', inline=False)
         await ctx.send(embed=em, allowed_mentions=discord.AllowedMentions.none())
 
@@ -441,7 +471,7 @@ class Transform(commands.Cog):
         banner = '\n'.join(banner_lines)
         
         em = discord.Embed(color=self.user_color)
-        em.add_field(name="Input:", value=f'```\n{text}```', inline=False)
+        em.add_field(name="Input:", value=f'```bf\n{text}\n```', inline=False)
         em.add_field(name="3-Single-Line Banner:", value=f'```\n{banner}```', inline=False)
         await ctx.send(embed=em, allowed_mentions=discord.AllowedMentions.none())
 
@@ -452,9 +482,9 @@ class Transform(commands.Cog):
     async def _banner_three(self, ctx, *, text: str):
         """Convert text to 3-double-line ASCII banners
         ```
-        ╔═╗   ╦  ╦╔╗╦╔═╗╔═╗   ╔╦╗╔═╗╦ ╦╔╗ ╦  ╔═╗
-         ═╣ ═ ║  ║║║║╠═ ╚═╗ ═  ║║║ ║║ ║╠╩╗║  ╠═ 
-        ╚═╝   ╩═╝╩╝╚╝╚═╝╚═╝   ═╩╝╚═╝╚═╝╚═╝╩═╝╚═╝
+        ╔═╗   ╦  ╦╔╗╦╔═╗   ╔╦╗╔═╗╦ ╦╔╗ ╦  ╔═╗
+         ═╣ ═ ║  ║║║║╠═  ═  ║║║ ║║ ║╠╩╗║  ╠═ 
+        ╚═╝   ╩═╝╩╝╚╝╚═╝   ═╩╝╚═╝╚═╝╚═╝╩═╝╚═╝
         ```
         """
         if not text:
@@ -522,7 +552,7 @@ class Transform(commands.Cog):
         banner = '\n'.join(banner_lines)
         
         em = discord.Embed(color=self.user_color)
-        em.add_field(name="Input:", value=f'```\n{text}```', inline=False)
+        em.add_field(name="Input:", value=f'```bf\n{text}\n```', inline=False)
         em.add_field(name="3-Double-Line Banner:", value=f'```\n{banner}```', inline=False)
         await ctx.send(embed=em, allowed_mentions=discord.AllowedMentions.none())
 
@@ -533,9 +563,9 @@ class Transform(commands.Cog):
     async def _banner_four(self, ctx, *, text: str):
         """Convert text to 3-double-line ASCII banners
         ```
-        ▀▀█░░░░░█░░░░▀█▀░█▄░█░█▀▀▀░█▀▀░░░░░▀▀█▀▀░█░░█░▀█▀░█▀▀▀
-        ░▀█░▀▀▀░█░░░░░█░░█▒▀█░█▀▀░░▀▀█░▀▀▀░░░█░░░█▀▀█░░█░░█░░░
-        ▀▀▀░░░░░▀▀▀▀░▀▀▀░▀░░▀░▀▀▀▀░▀▀▀░░░░░░░▀░░░▀░░▀░▀▀▀░▀▀▀▀
+        ▀▀█░░█░░░░▀█▀░█▄░█░█▀▀▀░▀▀█▀▀░█░░█░▀█▀░█▀▀▀░█░▄▀░
+        ░▀█░░█░░░░░█░░█▒▀█░█▀▀░░░░█░░░█▀▀█░░█░░█░░░░█▀▄░
+        ▀▀▀░░▀▀▀▀░▀▀▀░▀░░▀░▀▀▀▀░░░▀░░░▀░░▀░▀▀▀░▀▀▀▀░▀░▀▀░
         ```
         Convert text to 3-double-line ASCII banners with auto-wrap and manual breaks using '|'
         Example:
@@ -585,10 +615,10 @@ class Transform(commands.Cog):
             '!': ['█░', '█░', '▄░'],
             '?': ['▀▀█░', '░█░░', '░▄░░'],
             ' ': ['░', '░', '░'],
-            '-': ['░░░░', '▀▀▀░', '░░░░'],
+            '-': ['░░░', '▀▀░', '░░░'],
             '+': ['░▄░░', '▀█▀░', '░░░░'],
-            '=': ['▄▄▄░', '▄▄▄░', '░░░░'],
-            '.': ['░░░', '░░░', '▀░░'],
+            '=': ['▄▄░', '▄▄░', '░░░'],
+            '.': ['░░', '░░', '▀░'],
         }
 
         max_chars_per_line = 8
@@ -614,7 +644,7 @@ class Transform(commands.Cog):
         full_banner = '\n\n'.join(banner_lines)
 
         em = discord.Embed(color=self.user_color)
-        em.add_field(name="Input:", value=f'```\n{text}```', inline=False)
+        em.add_field(name="Input:", value=f'```bf\n{text}\n```', inline=False)
         em.add_field(name="3-Double-Line Banner:", value=f'```\n{full_banner}```', inline=False)
 
         await ctx.send(embed=em, allowed_mentions=discord.AllowedMentions.none())
@@ -624,21 +654,48 @@ class Transform(commands.Cog):
     # +------------------------------------------------------------+
     @commands.command(description='Command to identify characters', no_pm=True)
     async def charinfo(self, ctx, *, characters: str):
-        """Show Unicode character information"""
+        """Transform Unicode<->character
+        - Show info about unicode characters
+         - Character "@" to "\U00000040"
+        - Convert unicode escapes like
+         - \\U00000040 to character "@"
+         - \\N{WHITE HEAVY CHECK MARK} to "✅"
+        """
         start_time = time.time()
+        import unicodedata as ud2
 
+        # Detect mode: unicode escape to char if starts with "\"
+        if characters.strip().startswith("\\"):
+            parts = characters.strip().split()
+            result = []
+
+            for part in parts:
+                # Normalise formats
+                code = part.upper().lstrip('\\U').lstrip('u').lstrip('+').lstrip('0X')
+                try:
+                    char = chr(int(code, 16))
+                    result.append(f"`{part}` → `{char}`")
+                except ValueError:
+                    result.append(f"`{part}` → ❌ Invalid code")
+
+            em = discord.Embed(title="Transform", description='\n'.join(result), color=self.user_color)
+            em.set_author(name="Unicode → Character", icon_url="https://cdn.discordapp.com/embed/avatars/0.png")
+            em = await self._add_footer(em)
+            return await ctx.send(embed=em, allowed_mentions=discord.AllowedMentions.none())
+
+        # Character to Unicode info
         if len(characters) > 15:
-            return await ctx.send(f'Too many characters ({len(characters)}/15)')
+            return await ctx.send(f'Too many characters ({len(characters)}/15)', delete_after=9)
 
         fmt = '`{2}` — `\\U{0:>08}`\n```tex\n\\N{{{1}}}```'
-        
-        def to_string(c):
-            digit = format(ord(c), 'x')
-            name = ud2.name(c, 'Name not found.')
-            return fmt.format(digit, name, c)
 
-        em = discord.Embed(color=self.user_color)
-        em.description = '\n'.join(map(to_string, characters))
+        def to_string(c):
+            digit = format(ord(c), 'X')
+            name = ud2.name(c, 'Name not found.')
+            return fmt.format(ord(c), name, c)
+
+        em = discord.Embed(title="Transform", description='\n'.join(map(to_string, characters)), color=self.user_color)
+        em.set_author(name="Character → Unicode Info", icon_url="https://cdn.discordapp.com/embed/avatars/0.png")
         em = await self._add_footer(em)
         await ctx.send(embed=em, allowed_mentions=discord.AllowedMentions.none())
 
