@@ -660,7 +660,7 @@ class Transform(commands.Cog):
          - \\N{WHITE HEAVY CHECK MARK} to "✅"
         """
         if not characters:
-            return await ctx.send_help(ctx.command)
+            return await ctx.send_help(self.char_info)
 
         start_time = time.time()
         characters = characters.strip()
