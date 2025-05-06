@@ -1170,7 +1170,7 @@ class Transform(commands.Cog):
 
         em = discord.Embed(
             title="🔐 Caesar Cipher",
-            description=f"Caesar cipher applied with rot={rot} (from input: {original_rot})",
+            description=f"Caesar cipher applied with `rot={rot}`",
             color=self.user_color
         )
         em.add_field(name="Input:", value=f"```\n{text[:1024]}```", inline=False)
