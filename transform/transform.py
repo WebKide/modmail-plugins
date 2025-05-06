@@ -666,7 +666,7 @@ class Transform(commands.Cog):
           - Character `@` to `\\𝖴0040`
         - Convert unicode escapes to character:
           - `\\𝖴0040` to character `@`
-          - `\\𝖭{𝖶𝖧𝖨𝖳𝖤 𝖧𝖤𝖠𝖵𝖸 𝖢𝖧𝖤𝖢𝖪 𝖬𝖠𝖱𝖪}` to `✅`
+          - `\\𝖭{WHITE HEAVY CHECK MARK}` to `✅`
         """
         if not characters:
             return await ctx.send_help(self.charinfo)
