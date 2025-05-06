@@ -23,6 +23,7 @@ import unicodedata as ud2
 
 from discord.ext import commands
 from collections import defaultdict
+from discord import ui
 
 
 class NameGeneratorView(discord.ui.View):
@@ -214,7 +215,8 @@ class Transform(commands.Cog):
         
         return names
 
-    @commands.command(description='Generate fantasy character names', aliases=['aiword', 'fantasynames'], no_pm=True)
+    @commands.command(description='Generate fantasy character names', aliases=['aiword', 'fantasynames'])
+    @commands.guild_only()
     async def ainame(self, ctx, count: int = 10, min_length: int = 4, max_length: int = 12):
         """Generate fantasy names that sound authentic
         
@@ -238,7 +240,8 @@ class Transform(commands.Cog):
     # +------------------------------------------------------------+
     # |                   REGION COMMANDS                          |
     # +------------------------------------------------------------+
-    @commands.group(name="banner", invoke_without_command=True, no_pm=True)
+    @commands.group(name="banner", invoke_without_command=True)
+    @commands.guild_only()
     async def banner_group(self, ctx):
         """Convert text to 3-line ASCII banners
         ```
@@ -264,7 +267,8 @@ class Transform(commands.Cog):
         """
         await ctx.send_help(ctx.command)
 
-    @banner_group.command(description="Generate 2-line-thick ASCII banners", name="2linesthick", no_pm=True)
+    @banner_group.command(description="Generate 2-line-thick ASCII banners", name="2linesthick")
+    @commands.guild_only()
     async def _banner_zero(self, ctx, *, text: str):
         """Convert text to 2-line ASCII banners
         ```
@@ -353,7 +357,8 @@ class Transform(commands.Cog):
     # +------------------------------------------------------------+
     # |                     BANNER 1                               |
     # +------------------------------------------------------------+
-    @banner_group.command(description="Generate 3-single-line ASCII banners", name="3lineingle", no_pm=True)
+    @banner_group.command(description="Generate 3-single-line ASCII banners", name="3lineingle")
+    @commands.guild_only()
     async def _banner_one(self, ctx, *, text: str):
         """Convert text to 3-single-line ASCII banners
         ```
@@ -436,7 +441,8 @@ class Transform(commands.Cog):
     # +------------------------------------------------------------+
     # |                     BANNER 2                               |
     # +------------------------------------------------------------+
-    @banner_group.command(description="Generate 3-line-thin ASCII banners", name="3linethin", no_pm=True)
+    @banner_group.command(description="Generate 3-line-thin ASCII banners", name="3linethin")
+    @commands.guild_only()
     async def _banner_two(self, ctx, *, text: str):
         """Convert text to 3-single-line ASCII banners
         ```
@@ -519,7 +525,8 @@ class Transform(commands.Cog):
     # +------------------------------------------------------------+
     # |                     BANNER 3                               |
     # +------------------------------------------------------------+
-    @banner_group.command(description="Generate 3-double-line ASCII banners", name="3linedouble", no_pm=True)
+    @banner_group.command(description="Generate 3-double-line ASCII banners", name="3linedouble")
+    @commands.guild_only()
     async def _banner_three(self, ctx, *, text: str):
         """Convert text to 3-double-line ASCII banners
         ```
@@ -602,7 +609,8 @@ class Transform(commands.Cog):
     # +------------------------------------------------------------+
     # |                     BANNER 4                               |
     # +------------------------------------------------------------+
-    @banner_group.command(description="Generate 3-line-thick ASCII banners", name="3linethick", no_pm=True)
+    @banner_group.command(description="Generate 3-line-thick ASCII banners", name="3linethick")
+    @commands.guild_only()
     async def _banner_four(self, ctx, *, text: str):
         """Convert text to 3-double-line ASCII banners
         ```
@@ -697,7 +705,8 @@ class Transform(commands.Cog):
     # +------------------------------------------------------------+
     # |                     CHARINFO                               |
     # +------------------------------------------------------------+
-    @commands.command(description='Command to identify characters', aliases=['charingo', 'char'], no_pm=True)
+    @commands.command(description='Command to identify characters', aliases=['charingo', 'char'])
+    @commands.guild_only()
     async def charinfo(self, ctx, *, characters: str = None):
         """Transform 𝐔𝐧𝐢𝐜𝐨𝐝𝐞 <--> 𝐂𝐡𝐚𝐫𝐚𝐜𝐭𝐞𝐫
         
@@ -762,7 +771,8 @@ class Transform(commands.Cog):
     # +------------------------------------------------------------+
     # |                     TEXT TRANSFORMERS                      |
     # +------------------------------------------------------------+
-    @commands.command(description='Text transformer command', no_pm=True)
+    @commands.command(description='Text transformer command')
+    @commands.guild_only()
     async def tiny(self, ctx, *, text: str):
         """Convert text to ᵗⁱⁿʸ letters"""
         if not text:
@@ -782,7 +792,8 @@ class Transform(commands.Cog):
     # +------------------------------------------------------------+
     # |                  CURSIVE FONT                              |
     # +------------------------------------------------------------+
-    @commands.command(description='Text transformer command', no_pm=True)
+    @commands.command(description='Text transformer command')
+    @commands.guild_only()
     async def cursive(self, ctx, *, text: str):
         """Convert text to 𝒸𝓊𝓇𝓈𝒾𝓋ℯ"""
         if not text:
@@ -802,7 +813,8 @@ class Transform(commands.Cog):
     # +------------------------------------------------------------+
     # |                  SMALL CAPS FONT                           |
     # +------------------------------------------------------------+
-    @commands.command(description='Text transformer command', no_pm=True)
+    @commands.command(description='Text transformer command')
+    @commands.guild_only()
     async def smallcaps(self, ctx, *, text: str):
         """Convert text to sᴍᴀʟʟ ᴄᴀᴘs"""
         if not text:
@@ -832,7 +844,8 @@ class Transform(commands.Cog):
     # +------------------------------------------------------------+
     # |                  MOCK CASE TRANSFORMER                     |
     # +------------------------------------------------------------+
-    @commands.command(description='Text transformer command', no_pm=True)
+    @commands.command(description='Text transformer command')
+    @commands.guild_only()
     async def mock(self, ctx, *, text: str):
         """Convert text to MoCkInG CaSe (alternating case)"""
         if not text:
@@ -857,7 +870,8 @@ class Transform(commands.Cog):
     # +------------------------------------------------------------+
     # |                  A E S T H E T I C S                       |
     # +------------------------------------------------------------+
-    @commands.command(description='Text transformer command', no_pm=True)
+    @commands.command(description='Text transformer command')
+    @commands.guild_only()
     async def vapor(self, ctx, *, text: str):
         """Convert text to ＶＡＰＯＲＷＡＶＥ ＡＥＳＴＨＥＴＩＣ"""
         if not text:
@@ -877,7 +891,8 @@ class Transform(commands.Cog):
     # +------------------------------------------------------------+
     # |                  SANS SERIF FONT                           |
     # +------------------------------------------------------------+
-    @commands.command(description='Text transformer command', no_pm=True)
+    @commands.command(description='Text transformer command')
+    @commands.guild_only()
     async def sans(self, ctx, *, text: str):
         """Convert text to 𝖲𝖺𝗇𝗌-𝗌𝖾𝗋𝗂𝖿"""
         if not text:
@@ -898,7 +913,8 @@ class Transform(commands.Cog):
     # +------------------------------------------------------------+
     # |                  DOUBLE-STRUCK (BLACKBOARD BOLD) FONT      |
     # +------------------------------------------------------------+
-    @commands.command(description='Text transformer command', no_pm=True)
+    @commands.command(description='Text transformer command')
+    @commands.guild_only()
     async def double(self, ctx, *, text: str):
         """Convert text to 𝕕𝕠𝕦𝕓𝕝𝕖-𝕤𝕥𝕣𝕦𝕔𝕜"""
         if not text:
@@ -945,7 +961,8 @@ class Transform(commands.Cog):
     # +------------------------------------------------------------+
     # |                  BOLD FONT                                 |
     # +------------------------------------------------------------+
-    @commands.command(description='Text transformer command', no_pm=True)
+    @commands.command(description='Text transformer command')
+    @commands.guild_only()
     async def bold(self, ctx, *, text: str):
         """Convert text to 𝐁𝐨𝐥𝐝"""
         if not text:
@@ -966,7 +983,8 @@ class Transform(commands.Cog):
     # +------------------------------------------------------------+
     # |                  BOLDITALIC FONT                           |
     # +------------------------------------------------------------+
-    @commands.command(description='Text transformer command', no_pm=True)
+    @commands.command(description='Text transformer command')
+    @commands.guild_only()
     async def bolditalic(self, ctx, *, text: str):
         """Convert text to 𝘽𝙤𝙡𝙙𝙄𝙩𝙖𝙡𝙞𝙘"""
         if not text:
@@ -987,7 +1005,8 @@ class Transform(commands.Cog):
     # +------------------------------------------------------------+
     # |                     ITALIC FONT                            |
     # +------------------------------------------------------------+
-    @commands.command(description='Text transformer command', no_pm=True)
+    @commands.command(description='Text transformer command')
+    @commands.guild_only()
     async def italic(self, ctx, *, text: str):
         """Convert text to 𝓘𝓽𝓪𝓵𝓲𝓬"""
         if not text:
@@ -1008,7 +1027,8 @@ class Transform(commands.Cog):
     # +------------------------------------------------------------+
     # |                     GOTHIC FONT                            |
     # +------------------------------------------------------------+
-    @commands.command(description='Text transformer command', no_pm=True)
+    @commands.command(description='Text transformer command')
+    @commands.guild_only()
     async def gothic(self, ctx, *, text: str):
         """Convert text to 𝕲𝖔𝖙𝖍𝖎𝖈"""
         if not text:
@@ -1029,7 +1049,8 @@ class Transform(commands.Cog):
     # +------------------------------------------------------------+
     # |                  BINARY ENCODER/DECODER                    |
     # +------------------------------------------------------------+
-    @commands.command(description='Text transformer command', no_pm=True)
+    @commands.command(description='Text transformer command')
+    @commands.guild_only()
     async def binary(self, ctx, bits: int = 8, *, text: str = None):
         """Smart binary converter with format detection
         
@@ -1038,23 +1059,19 @@ class Transform(commands.Cog):
         !binary 01000001    → Binary → text
         !binary 16 Hello    → 16-bit encoding
         """
-        start_time = time.time()
-
-        if bits is None:
-            # Handle cases where no bit numbers were given
-            text_fix = "Provide bits int before text to convert"
-            return await ctx.send(text_fix, delete_after=23)
-
         if text is None:
-            # Handle cases where only numbers were given
-            text = str(bits)
-            bits = 8
-        elif isinstance(bits, str):
-            # Handle cases where first "bits" argument is actually binary
-            text = f"{bits} {text}"
-            bits = 8
+            # If no text was provided, and only one argument was passed, treat bits as text
+            if bits in (8, 16, 32):  # legit bit values
+                return await ctx.send_help(self.binary)
+            else:
+                text = str(bits)
+                bits = 8  # fallback to default
+
+        if bits not in (8, 16, 32):
+            return await ctx.send("Please specify a valid bit size: 8, 16, or 32.")
 
         # Enhanced detection
+        start_time = time.time()
         def is_binary(t):
             t = ''.join(t.split()).lower()
             if t.startswith(('0b', 'b''', '0x')):
@@ -1083,18 +1100,19 @@ class Transform(commands.Cog):
 
         em = discord.Embed(color=self.user_color)
         em.add_field(name='Input:', value=f'```\n{text}```', inline=False)
-        em.add_field(name='Result:', value=f'```\n{result}```', inline=False)
+        em.add_field(name='Result:', value=f'```cs\n{result}```', inline=False)
         em.set_footer(text=f"{conversion_type} | {self.bot.latency*1000:.2f}ms")
         await ctx.send(embed=em, allowed_mentions=discord.AllowedMentions.none())
 
     # +------------------------------------------------------------+
     # |                  LEET FONT TRANSFORMER                     |
     # +------------------------------------------------------------+
-    @commands.command(description='Text transformer command', no_pm=True)
+    @commands.command(description='Text transformer command')
+    @commands.guild_only()
     async def leet(self, ctx, *, text: str):
         """Convert text to 1337 5P34K"""
         if not text:
-            return await ctx.send("Please provide some text.", delete_after=23)
+            return await ctx.send_help(self.leet)
         start_time = time.time()
 
         char = "abcdefghijklmnopqrstuvwxyz0123456789+-()."
@@ -1110,12 +1128,20 @@ class Transform(commands.Cog):
     # +------------------------------------------------------------+
     # |                  CAESAR ROTATE CIPHER                      |
     # +------------------------------------------------------------+
-    @commands.command(description='Text transformer command', no_pm=True)
+    @commands.command(description='Text transformer command')
+    @commands.guild_only()
     async def caesar(self, ctx, rot: int = 13, *, text: str):
-        """Apply Caesar cipher with optional rot `(default: 13)`"""
+        """Apply Caesar cipher with optional rot `(default: 13)`
+        
+        - rot: Rotation amount (1–25). Values outside this range will wrap using modulo 26.
+        - text: Text message to encode or decode.
+        """
         if not text:
-            return await ctx.send("Please provide some text.", delete_after=23)
+            return await ctx.send_help(self.caesar)
         start_time = time.time()
+
+        original_rot = rot
+        rot %= 26  # Wrap rotation
 
         result = []
         for c in text:
@@ -1125,18 +1151,27 @@ class Transform(commands.Cog):
                 result.append(chr((ord(c) - 97 + rot) % 26 + 97))
             else:
                 result.append(c)
-        result = ''.join(result)
 
-        em = discord.Embed(color=self.user_color)
+        msg = f"```bf\n{''.join(result)}```"
+        desc = f"Caesar cipher applied with rot={rot} ({original_rot} % 26)"
+
+        em = discord.Embed(
+            title="🔐 Caesar Cipher",
+            description=desc,
+            color=self.user_color
+        )
         em.add_field(name='Input:', value=f'```\n{text}```', inline=False)
-        em.add_field(name=f'Result (rot={rot}):', value=f'```\n{result}```', inline=False)
+        em.add_field(name=f'Result (rot={rot}):', value=msg, inline=False)
+
+
         em = await self._add_footer(em)
         await ctx.send(embed=em, allowed_mentions=discord.AllowedMentions.none())
 
     # +------------------------------------------------------------+
     # |                  ZALGO FONT                                |
     # +------------------------------------------------------------+
-    @commands.command(description='Text transformer command', no_pm=True)
+    @commands.command(description='Text transformer command')
+    @commands.guild_only()
     async def zalgo(self, ctx, *, text: str = None):
         """Z͆͌̓̑͗̀a͒͠l̓͌̾̀̚g͊͝o͋̑̿͝ your text"""
         if not text:
@@ -1158,7 +1193,8 @@ class Transform(commands.Cog):
     # +------------------------------------------------------------+
     # |                     FUN COMMANDS                           |
     # +------------------------------------------------------------+
-    @commands.command(description='Text transformer command', no_pm=True)
+    @commands.command(description='Text transformer command')
+    @commands.guild_only()
     async def clap(self, ctx, *, text: str = None):
         """Add 👏 between 👏 words 👏"""
         if text and len(text.split()) > 1:
@@ -1169,7 +1205,8 @@ class Transform(commands.Cog):
         else:
             await ctx.send('👏')
 
-    @commands.command(description='Text transformer command', no_pm=True)
+    @commands.command(description='Text transformer command')
+    @commands.guild_only()
     async def pray(self, ctx, *, text: str = None):
         """Add 🙏 between 🙏 words 🙏"""
         if text and len(text.split()) > 1:
