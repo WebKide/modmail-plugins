@@ -649,8 +649,8 @@ class Transform(commands.Cog):
     # +------------------------------------------------------------+
     # |                     CHARINFO                               |
     # +------------------------------------------------------------+
-    @commands.command(description='Command to identify characters', no_pm=True)
-    async def charinfo(self, ctx, *, characters: str):
+    @commands.command(name='charinfo', description='Command to identify characters', aliases=['charingo', 'char'], no_pm=True)
+    async def char_info(self, ctx, *, characters: str = None):
         """Transform Unicode<->character
         
         - Show info about unicode characters
