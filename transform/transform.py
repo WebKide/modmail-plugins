@@ -677,16 +677,16 @@ class Transform(commands.Cog):
                         # Handle \N{name}
                         name = token[3:-1]  # Strip \N{ and }
                         char = ud2.lookup(name)
-                        results.append(f"`{token}` → `{char}`")
+                        results.append(f"# `{token}` → `{char}`")
                     else:
                         # Normalise and decode hex
                         code = token.upper().lstrip('\\U').lstrip('u').lstrip('+').lstrip('0X').lstrip('\\')
                         char = chr(int(code, 16))
-                        results.append(f"`{token}` → `{char}`")
+                        results.append(f"# `{token}` → `{char}`")
                 except Exception as e:
                     results.append(f"`{token}` → ❌ Invalid code")
 
-            em = discord.Embed(title="Transform", description='\n'.join(result), color=self.user_color)
+            em = discord.Embed(title="Transform", description='\n'.join(results), color=self.user_color)
             em.set_author(name="Unicode → Character", icon_url="https://cdn.discordapp.com/embed/avatars/0.png")
             em = await self._add_footer(em)
             return await ctx.send(embed=em, allowed_mentions=discord.AllowedMentions.none())
@@ -695,7 +695,7 @@ class Transform(commands.Cog):
         if len(characters) > 15:
             return await ctx.send(f'Too many characters ({len(characters)}/15)', delete_after=9)
 
-        fmt = '`{2}` — `\\U{0:>08}`\n```tex\n\\N{{{1}}}```'
+        fmt = '# `{2}` — `\\U{0:>08}`\n```tex\n\\N{{{1}}}```'
 
         def to_string(c):
             digit = format(ord(c), 'X')
