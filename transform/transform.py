@@ -40,6 +40,7 @@ class Transform(commands.Cog):
       - 3linethin 
     - Text transformers:
       - ᵗⁱⁿʸ, 𝒸𝓊𝓇𝓈𝒾𝓋ℯ, 𝕕𝕠𝕦𝕓𝕝𝕖-𝕤𝕥𝕣𝕦𝕔𝕜
+      - 𝐁𝐨𝐥𝐝, 𝘽𝙤𝙡𝙙𝙄𝙩𝙖𝙡𝙞𝙘, 𝕲𝖔𝖙𝖍𝖎𝖈, 𝓘𝓽𝓪𝓵𝓲𝓬
       - sᴍᴀʟʟ ᴄᴀᴘs, 1337 5P34K, MoCkInG CaSe
       - ＶＡＰＯＲ, 𝖲𝖺𝗇𝗌-𝗌𝖾𝗋𝗂𝖿, Z͌͆a͠l̓g͊ő
     - UNICODE character information display
@@ -536,6 +537,9 @@ class Transform(commands.Cog):
         ░▀█░▀▀▀░█░░░░░█░░█▒▀█░█▀▀░░▀▀█░▀▀▀░░░█░░░█▀▀█░░█░░█░░░
         ▀▀▀░░░░░▀▀▀▀░▀▀▀░▀░░▀░▀▀▀▀░▀▀▀░░░░░░░▀░░░▀░░▀░▀▀▀░▀▀▀▀
         ```
+        Convert text to 3-double-line ASCII banners with auto-wrap and manual breaks using '|'
+        Example:
+        !banner 3linethick hello|world
         """
         if not text:
             return await ctx.send("Please provide text to bannerize!", delete_after=23)
@@ -587,22 +591,32 @@ class Transform(commands.Cog):
             '.': ['░░░', '░░░', '▀░░'],
         }
 
-        # Convert text to uppercase and limit length
-        text = text.upper()[:12]  # Prevent abuse with long text
-        banner_lines = ['', '', '']  # Initialize 3 empty lines
+        max_chars_per_line = 8
+        banner_lines = []  # Will hold groups of 3-line outputs
 
-        for char in text:
-            # Get the character's ASCII art or default to space
-            char_art = font.get(char, font[' '])
-            for i in range(3):
-                banner_lines[i] += char_art[i] #+ ' '  # Add spacing between chars
+        # Preprocess: manual split with '|', then auto-wrap each line
+        user_lines = text.upper().split('|')
 
-        # Combine into a single string
-        banner = '\n'.join(banner_lines)
-        
+        for line in user_lines:
+            # Auto-wrap long lines into chunks of max_chars_per_line
+            for i in range(0, len(line), max_chars_per_line):
+                chunk = line[i:i + max_chars_per_line]
+                if not chunk:
+                    continue
+
+                line_block = ['', '', '']
+                for char in chunk:
+                    char_art = font.get(char, font[' '])
+                    for j in range(3):
+                        line_block[j] += char_art[j]
+                banner_lines.append('\n'.join(line_block))
+
+        full_banner = '\n\n'.join(banner_lines)
+
         em = discord.Embed(color=self.user_color)
         em.add_field(name="Input:", value=f'```\n{text}```', inline=False)
-        em.add_field(name="3-Double-Line Banner:", value=f'```\n{banner}```', inline=False)
+        em.add_field(name="3-Double-Line Banner:", value=f'```\n{full_banner}```', inline=False)
+
         await ctx.send(embed=em, allowed_mentions=discord.AllowedMentions.none())
 
     # +------------------------------------------------------------+
