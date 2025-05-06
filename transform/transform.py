@@ -822,6 +822,94 @@ class Transform(commands.Cog):
         await ctx.send(embed=em, allowed_mentions=discord.AllowedMentions.none())
 
     # +------------------------------------------------------------+
+    # |                  BOLD FONT                                 |
+    # +------------------------------------------------------------+
+    @commands.command(description='Text transformer command', no_pm=True)
+    async def bold(self, ctx, *, text: str):
+        """Convert text to 𝐁𝐨𝐥𝐝"""
+        start_time = time.time()
+
+        if not text:
+            return await ctx.send("Please provide some text.", delete_after=23)
+
+        char = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890"
+        tran = "𝐀𝐁𝐂𝐃𝐄𝐅𝐆𝐇𝐈𝐉𝐊𝐋𝐌𝐍𝐎𝐏𝐐𝐑𝐒𝐓𝐔𝐕𝐖𝐗𝐘𝐙𝐚𝐛𝐜𝐝𝐞𝐟𝐠𝐡𝐢𝐣𝐤𝐥𝐦𝐧𝐨𝐩𝐪𝐫𝐬𝐭𝐮𝐯𝐰𝐱𝐲𝐳𝟏𝟐𝟑𝟒𝟓𝟔𝟕𝟖𝟗𝟎"
+        # result = text.upper().translate(str.maketrans(char, tran))
+        result = text.translate(str.maketrans(char, tran))
+
+        em = discord.Embed(color=self.user_color)
+        em.add_field(name='Input:', value=f'```\n{text}```', inline=False)
+        em.add_field(name='Result:', value=f'```\n{result}```', inline=False)
+        em = await self._add_footer(em)
+        await ctx.send(embed=em, allowed_mentions=discord.AllowedMentions.none())
+
+    # +------------------------------------------------------------+
+    # |                  BOLDITALIC FONT                           |
+    # +------------------------------------------------------------+
+    @commands.command(description='Text transformer command', no_pm=True)
+    async def bolditalic(self, ctx, *, text: str):
+        """Convert text to 𝘽𝙤𝙡𝙙𝙄𝙩𝙖𝙡𝙞𝙘"""
+        start_time = time.time()
+
+        if not text:
+            return await ctx.send("Please provide some text.", delete_after=23)
+
+        char = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+        tran = "𝘼𝘽𝘾𝘿𝙀𝙁𝙂𝙃𝙄𝙅𝙆𝙇𝙈𝙉𝙊𝙋𝙌𝙍𝙎𝙏𝙐𝙑𝙒𝙓𝙔𝙕𝙖𝙗𝙘𝙙𝙚𝙛𝙜𝙝𝙞𝙟𝙠𝙡𝙢𝙣𝙤𝙥𝙦𝙧𝙨𝙩𝙪𝙫𝙬𝙭𝙮𝙯"
+        # result = text.upper().translate(str.maketrans(char, tran))
+        result = text.translate(str.maketrans(char, tran))
+
+        em = discord.Embed(color=self.user_color)
+        em.add_field(name='Input:', value=f'```\n{text}```', inline=False)
+        em.add_field(name='Result:', value=f'```\n{result}```', inline=False)
+        em = await self._add_footer(em)
+        await ctx.send(embed=em, allowed_mentions=discord.AllowedMentions.none())
+
+    # +------------------------------------------------------------+
+    # |                     ITALIC FONT                            |
+    # +------------------------------------------------------------+
+    @commands.command(description='Text transformer command', no_pm=True)
+    async def italic(self, ctx, *, text: str):
+        """Convert text to 𝓘𝓽𝓪𝓵𝓲𝓬"""
+        start_time = time.time()
+
+        if not text:
+            return await ctx.send("Please provide some text.", delete_after=23)
+
+        char = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+        tran = "𝓐𝓑𝓒𝓓𝓔𝓕𝓖𝓗𝓘𝓙𝓚𝓛𝓜𝓝𝓞𝓟𝓠𝓡𝓢𝓣𝓤𝓥𝓦𝓧𝓨𝓩𝓪𝓫𝓬𝓭𝓮𝓯𝓰𝓱𝓲𝓳𝓴𝓵𝓶𝓷𝓸𝓹𝓺𝓻𝓼𝓽𝓾𝓿𝔀𝔁𝔂𝔃"
+        # result = text.upper().translate(str.maketrans(char, tran))
+        result = text.translate(str.maketrans(char, tran))
+
+        em = discord.Embed(color=self.user_color)
+        em.add_field(name='Input:', value=f'```\n{text}```', inline=False)
+        em.add_field(name='Result:', value=f'```\n{result}```', inline=False)
+        em = await self._add_footer(em)
+        await ctx.send(embed=em, allowed_mentions=discord.AllowedMentions.none())
+
+    # +------------------------------------------------------------+
+    # |                     GOTHIC FONT                            |
+    # +------------------------------------------------------------+
+    @commands.command(description='Text transformer command', no_pm=True)
+    async def gothic(self, ctx, *, text: str):
+        """Convert text to 𝕲𝖔𝖙𝖍𝖎𝖈"""
+        start_time = time.time()
+
+        if not text:
+            return await ctx.send("Please provide some text.", delete_after=23)
+
+        char = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+        tran = "𝕬𝕭𝕮𝕯𝕰𝕱𝕲𝕳𝕴𝕵𝕶𝕷𝕸𝕹𝕺𝕻𝕼𝕽𝕾𝕿𝖀𝖁𝖂𝖃𝖄𝖅𝖆𝖇𝖈𝖉𝖊𝖋𝖌𝖍𝖎𝖏𝖐𝖑𝖒𝖓𝖔𝖕𝖖𝖗𝖘𝖙𝖚𝖛𝖜𝖝𝖞𝖟"
+        # result = text.upper().translate(str.maketrans(char, tran))
+        result = text.translate(str.maketrans(char, tran))
+
+        em = discord.Embed(color=self.user_color)
+        em.add_field(name='Input:', value=f'```\n{text}```', inline=False)
+        em.add_field(name='Result:', value=f'```\n{result}```', inline=False)
+        em = await self._add_footer(em)
+        await ctx.send(embed=em, allowed_mentions=discord.AllowedMentions.none())
+
+    # +------------------------------------------------------------+
     # |                  BINARY ENCODER/DECODER                    |
     # +------------------------------------------------------------+
     @commands.command(description='Text transformer command', no_pm=True)
