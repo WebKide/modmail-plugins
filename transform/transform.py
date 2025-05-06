@@ -18,11 +18,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-import discord
-import random
-import string
-import time
-import unicodedata2 as ud2
+import discord, random, string, time, re
+import unicodedata as ud2
 
 from discord.ext import commands
 from collections import defaultdict
@@ -43,7 +40,7 @@ class Transform(commands.Cog):
       - 𝐁𝐨𝐥𝐝, 𝘽𝙤𝙡𝙙𝙄𝙩𝙖𝙡𝙞𝙘, 𝕲𝖔𝖙𝖍𝖎𝖈, 𝓘𝓽𝓪𝓵𝓲𝓬
       - sᴍᴀʟʟ ᴄᴀᴘs, 1337 5P34K, MoCkInG CaSe
       - ＶＡＰＯＲ, 𝖲𝖺𝗇𝗌-𝗌𝖾𝗋𝗂𝖿, Z͌͆a͠l̓g͊ő
-    - UNICODE character information display
+    - UNICODE <--> Character
     - Caesar cipher with optional rotation `(default:13)`
     - Smart binary converter with encoder and decoder
     - Fun text modifiers (👏, 🙏)
@@ -662,21 +659,32 @@ class Transform(commands.Cog):
          - \\N{WHITE HEAVY CHECK MARK} to "✅"
         """
         start_time = time.time()
-        import unicodedata as ud2
+        characters = characters.strip()
 
         # Detect mode: unicode escape to char if starts with "\"
-        if characters.strip().startswith("\\"):
-            parts = characters.strip().split()
-            result = []
+        if characters.startswith("\\"):
+            pattern = re.compile(
+                r'(\\N\{[^}]+\})|(\\U\+?[0-9a-fA-F]+)|(\\u[0-9a-fA-F]{4})|(0x[0-9a-fA-F]+)|(\\[0-9a-fA-F]+)'
+            )
+            matches = pattern.findall(characters)
+            results = []
 
-            for part in parts:
-                # Normalise formats
-                code = part.upper().lstrip('\\U').lstrip('u').lstrip('+').lstrip('0X')
+            for match in matches:
+                token = next(filter(None, match))  # get the non-empty group
+
                 try:
-                    char = chr(int(code, 16))
-                    result.append(f"`{part}` → `{char}`")
-                except ValueError:
-                    result.append(f"`{part}` → ❌ Invalid code")
+                    if token.startswith("\\N{"):
+                        # Handle \N{name}
+                        name = token[3:-1]  # Strip \N{ and }
+                        char = ud2.lookup(name)
+                        results.append(f"`{token}` → `{char}`")
+                    else:
+                        # Normalise and decode hex
+                        code = token.upper().lstrip('\\U').lstrip('u').lstrip('+').lstrip('0X').lstrip('\\')
+                        char = chr(int(code, 16))
+                        results.append(f"`{token}` → `{char}`")
+                except Exception as e:
+                    results.append(f"`{token}` → ❌ Invalid code")
 
             em = discord.Embed(title="Transform", description='\n'.join(result), color=self.user_color)
             em.set_author(name="Unicode → Character", icon_url="https://cdn.discordapp.com/embed/avatars/0.png")
