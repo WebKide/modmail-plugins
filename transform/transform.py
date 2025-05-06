@@ -24,6 +24,44 @@ import unicodedata as ud2
 from discord.ext import commands
 from collections import defaultdict
 
+
+class NameGeneratorView(discord.ui.View):
+    def __init__(self, parent_cog, ctx, count, min_length, max_length, timeout=60):
+        super().__init__(timeout=timeout)
+        self.ctx = ctx
+        self.parent_cog = parent_cog
+        self.count = count
+        self.min_length = min_length
+        self.max_length = max_length
+
+    async def send_new_embed(self, interaction: discord.Interaction):
+        start_time = time.time()
+        names = await self.parent_cog.generate_names(
+            self.count, self.min_length, self.max_length
+        )
+        embed = discord.Embed(
+            title="Fantasy Name Generator",
+            description=f'```rb\n{", ".join(names)}```',
+            color=self.ctx.author.colour
+        )
+        embed.set_footer(text=f"Generated {len(names)} names in {(time.time() - start_time) * 1000:.2f}ms")
+        await interaction.response.edit_message(embed=embed, view=self)
+
+    @discord.ui.button(label="Generate More", style=discord.ButtonStyle.green)
+    async def regenerate(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user != self.ctx.author:
+            await interaction.response.send_message("This button isn't for you!", ephemeral=True)
+            return
+        await self.send_new_embed(interaction)
+
+    @discord.ui.button(label="Close", style=discord.ButtonStyle.red)
+    async def close(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user != self.ctx.author:
+            await interaction.response.send_message("This button isn't for you!", ephemeral=True)
+            return
+        await interaction.message.delete()
+        self.stop()
+
 class Transform(commands.Cog):
     """░ (∩｀-´)⊃━☆ﾟ.*･｡ﾟ this Discord.py Plugin provides various text transformation utilities
 
@@ -194,7 +232,8 @@ class Transform(commands.Cog):
             color=self.user_color
         )
         embed.set_footer(text=f"Generated {len(names)} names in {(time.time() - start_time)*1000:.2f}ms")
-        await ctx.send(embed=embed)
+        view = NameGeneratorView(self, ctx, count, min_length, max_length)
+        await ctx.send(embed=embed, view=view)
 
     # +------------------------------------------------------------+
     # |                   REGION COMMANDS                          |
