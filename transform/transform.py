@@ -190,7 +190,7 @@ class Transform(commands.Cog):
         
         embed = discord.Embed(
             title="Fantasy Name Generator",
-            description=f'```\n{", ".join(names)}```',
+            description=f'```rb\n{", ".join(names)}```',
             color=self.user_color
         )
         embed.set_footer(text=f"Generated {len(names)} names in {(time.time() - start_time)*1000:.2f}ms")
@@ -218,9 +218,9 @@ class Transform(commands.Cog):
          ═╣ ═ ║  ║║║║╠═  ═  ║║║ ║║ ║╠╩╗║  ╠═ 
         ╚═╝   ╩═╝╩╝╚╝╚═╝   ═╩╝╚═╝╚═╝╚═╝╩═╝╚═╝
 
-        ▀▀█░░█░░░░▀█▀░█▄░█░█▀▀▀░▀▀█▀▀░█░░█░▀█▀░█▀▀▀░█░▄▀░
-        ░▀█░░█░░░░░█░░█▒▀█░█▀▀░░░░█░░░█▀▀█░░█░░█░░░░█▀▄░
-        ▀▀▀░░▀▀▀▀░▀▀▀░▀░░▀░▀▀▀▀░░░▀░░░▀░░▀░▀▀▀░▀▀▀▀░▀░▀▀░
+        ▀▀█░░█░░░░▀█▀░█▄░█░█▀▀▀░░▀▀█▀▀░█░░█░▀█▀░█▀▀▀░█░▄▀░
+        ░▀█░░█░░░░░█░░█▒▀█░█▀▀░░░░░█░░░█▀▀█░░█░░█░░░░█▀▄░
+        ▀▀▀░░▀▀▀▀░▀▀▀░▀░░▀░▀▀▀▀░░░░▀░░░▀░░▀░▀▀▀░▀▀▀▀░▀░▀▀░
         ```
         """
         await ctx.send_help(ctx.command)
