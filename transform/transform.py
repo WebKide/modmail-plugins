@@ -235,6 +235,7 @@ class Transform(commands.Cog):
         """
         if not text:
             return await ctx.send("Please provide text to bannerize!", delete_after=23)
+        start_time = time.time()
 
         # Define the 3-line font (uppercase only)
         font = {
@@ -307,7 +308,7 @@ class Transform(commands.Cog):
         em = discord.Embed(color=self.user_color)
         em.add_field(name="Input:", value=f'```bf\n{text}\n```', inline=False)
         em.add_field(name="2-Line Banner:", value=f'```\n{full_banner}```', inline=False)
-
+        em = await self._add_footer(em)
         await ctx.send(embed=em, allowed_mentions=discord.AllowedMentions.none())
 
     # +------------------------------------------------------------+
@@ -324,6 +325,7 @@ class Transform(commands.Cog):
         """
         if not text:
             return await ctx.send("Please provide text to bannerize!", delete_after=23)
+        start_time = time.time()
 
         # Define the 3-line font (uppercase only)
         font = {
@@ -389,6 +391,7 @@ class Transform(commands.Cog):
         em = discord.Embed(color=self.user_color)
         em.add_field(name="Input:", value=f'```bf\n{text}\n```', inline=False)
         em.add_field(name="3-Line Banner:", value=f'```\n{banner}```', inline=False)
+        em = await self._add_footer(em)
         await ctx.send(embed=em, allowed_mentions=discord.AllowedMentions.none())
 
     # +------------------------------------------------------------+
@@ -405,6 +408,7 @@ class Transform(commands.Cog):
         """
         if not text:
             return await ctx.send("Please provide text to bannerize!", delete_after=23)
+        start_time = time.time()
 
         # Define the 3-line font (uppercase only)
         font = {
@@ -470,6 +474,7 @@ class Transform(commands.Cog):
         em = discord.Embed(color=self.user_color)
         em.add_field(name="Input:", value=f'```bf\n{text}\n```', inline=False)
         em.add_field(name="3-Single-Line Banner:", value=f'```\n{banner}```', inline=False)
+        em = await self._add_footer(em)
         await ctx.send(embed=em, allowed_mentions=discord.AllowedMentions.none())
 
     # +------------------------------------------------------------+
@@ -486,6 +491,7 @@ class Transform(commands.Cog):
         """
         if not text:
             return await ctx.send("Please provide text to bannerize!", delete_after=23)
+        start_time = time.time()
 
         # Define the 3-line font (uppercase only)
         font = {
@@ -551,6 +557,7 @@ class Transform(commands.Cog):
         em = discord.Embed(color=self.user_color)
         em.add_field(name="Input:", value=f'```bf\n{text}\n```', inline=False)
         em.add_field(name="3-Double-Line Banner:", value=f'```\n{banner}```', inline=False)
+        em = await self._add_footer(em)
         await ctx.send(embed=em, allowed_mentions=discord.AllowedMentions.none())
 
     # +------------------------------------------------------------+
@@ -570,6 +577,7 @@ class Transform(commands.Cog):
         """
         if not text:
             return await ctx.send("Please provide text to bannerize!", delete_after=23)
+        start_time = time.time()
 
         # Define the 3-line font (uppercase only)  # 'N': ['█▀▀▄', '█░░█', '▀░░▀'],
         font = {
@@ -643,6 +651,7 @@ class Transform(commands.Cog):
         em = discord.Embed(color=self.user_color)
         em.add_field(name="Input:", value=f'```bf\n{text}\n```', inline=False)
         em.add_field(name="3-Double-Line Banner:", value=f'```\n{full_banner}```', inline=False)
+        em = await self._add_footer(em)
 
         await ctx.send(embed=em, allowed_mentions=discord.AllowedMentions.none())
 
@@ -651,13 +660,13 @@ class Transform(commands.Cog):
     # +------------------------------------------------------------+
     @commands.command(description='Command to identify characters', aliases=['charingo', 'char'], no_pm=True)
     async def charinfo(self, ctx, *, characters: str = None):
-        """Transform Unicode<->character
+        """Transform 𝐔𝐧𝐢𝐜𝐨𝐝𝐞 <--> 𝐂𝐡𝐚𝐫𝐚𝐜𝐭𝐞𝐫
         
-        - Show info about unicode characters
-         - Character "@" to "\U00000040"
-        - Convert unicode escapes like
-         - \\U00000040 to character "@"
-         - \N{WHITE HEAVY CHECK MARK} to "✅"
+        - Show info about unicode characters:
+          - Character `@` to `\U0040`
+        - Convert unicode escapes to character:
+          - `\\U0040` to character `@`
+          - `\N{WHITE HEAVY CHECK MARK}` to `✅`
         """
         if not characters:
             return await ctx.send_help(self.charinfo)
@@ -717,10 +726,9 @@ class Transform(commands.Cog):
     @commands.command(description='Text transformer command', no_pm=True)
     async def tiny(self, ctx, *, text: str):
         """Convert text to ᵗⁱⁿʸ letters"""
-        start_time = time.time()
-
         if not text:
             return await ctx.send("Please provide some text.", delete_after=23)
+        start_time = time.time()
 
         char = "abcdefghijklmnopqrstuvwxyz0123456789+-+()."
         tran = "ᵃᵇᶜᵈᵉᶠᵍʰⁱʲᵏˡᵐⁿᵒᵖ٩ʳˢᵗᵘᵛʷˣʸᶻ₀₁₂₃₄₅₆₇₈₉₊₋₌₍₎•"
@@ -738,10 +746,9 @@ class Transform(commands.Cog):
     @commands.command(description='Text transformer command', no_pm=True)
     async def cursive(self, ctx, *, text: str):
         """Convert text to 𝒸𝓊𝓇𝓈𝒾𝓋ℯ"""
-        start_time = time.time()
-
         if not text:
             return await ctx.send("Please provide some text.", delete_after=23)
+        start_time = time.time()
 
         char = "abcdefghijklmnopqrstuvwxyz0123456789+-+()."
         tran = "𝒶𝒷𝒸𝒹𝑒𝒻𝑔𝒽𝒾𝒿𝓀𝓁𝓂𝓃𝑜𝓅𝓆𝓇𝓈𝓉𝓊𝓋𝓌𝓍𝓎𝓏𝟢𝟣𝟤𝟥𝟦𝟧𝟨𝟩𝟪𝟫+-+()."
@@ -759,10 +766,9 @@ class Transform(commands.Cog):
     @commands.command(description='Text transformer command', no_pm=True)
     async def smallcaps(self, ctx, *, text: str):
         """Convert text to sᴍᴀʟʟ ᴄᴀᴘs"""
-        start_time = time.time()
-        
         if not text:
             return await ctx.send("Please provide some text.", delete_after=23)
+        start_time = time.time()
 
         alpha = list(string.ascii_lowercase)
         converter = ['ᴀ', 'ʙ', 'ᴄ', 'ᴅ', 'ᴇ', 'ꜰ', 'ɢ', 'ʜ', 'ɪ', 'ᴊ', 'ᴋ', 'ʟ', 
@@ -780,10 +786,7 @@ class Transform(commands.Cog):
         em = discord.Embed(color=self.user_color)
         em.add_field(name='Input:', value=f'```\n{text}```', inline=False)
         em.add_field(name='Result:', value=f'```\n{result_text}```', inline=False)
-        
-        # Add processing time to footer
-        processing_time = (time.time() - start_time) * 1000  # Convert to milliseconds
-        em.set_footer(text=f"Transformed in {processing_time:.2f} ms")
+        em = await self._add_footer(em)
         
         await ctx.send(embed=em, allowed_mentions=discord.AllowedMentions.none())
 
@@ -793,10 +796,9 @@ class Transform(commands.Cog):
     @commands.command(description='Text transformer command', no_pm=True)
     async def mock(self, ctx, *, text: str):
         """Convert text to MoCkInG CaSe (alternating case)"""
-        start_time = time.time()
-
         if not text:
             return await ctx.send("Please provide some text.", delete_after=23)
+        start_time = time.time()
 
         result = []
         should_upper = random.choice([True, False])  # Random starting case
@@ -819,10 +821,9 @@ class Transform(commands.Cog):
     @commands.command(description='Text transformer command', no_pm=True)
     async def vapor(self, ctx, *, text: str):
         """Convert text to ＶＡＰＯＲＷＡＶＥ ＡＥＳＴＨＥＴＩＣ"""
-        start_time = time.time()
-
         if not text:
             return await ctx.send("Please provide some text.", delete_after=23)
+        start_time = time.time()
 
         char = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
         tran = "ＡＢＣＤＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺ０１２３４５６７８９"
@@ -840,10 +841,9 @@ class Transform(commands.Cog):
     @commands.command(description='Text transformer command', no_pm=True)
     async def sans(self, ctx, *, text: str):
         """Convert text to 𝖲𝖺𝗇𝗌-𝗌𝖾𝗋𝗂𝖿"""
-        start_time = time.time()
-
         if not text:
             return await ctx.send("Please provide some text.", delete_after=23)
+        start_time = time.time()
 
         char = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
         tran = "𝖠𝖡𝖢𝖣𝖤𝖥𝖦𝖧𝖨𝖩𝖪𝖫𝖬𝖭𝖮𝖯𝖰𝖱𝖲𝖳𝖴𝖵𝖶𝖷𝖸𝖹𝖺𝖻𝖼𝖽𝖾𝖿𝗀𝗁𝗂𝗃𝗄𝗅𝗆𝗇𝗈𝗉𝗊𝗋𝗌𝗍𝗎𝗏𝗐𝗑𝗒𝗓"
@@ -862,10 +862,9 @@ class Transform(commands.Cog):
     @commands.command(description='Text transformer command', no_pm=True)
     async def double(self, ctx, *, text: str):
         """Convert text to 𝕕𝕠𝕦𝕓𝕝𝕖-𝕤𝕥𝕣𝕦𝕔𝕜"""
-        start_time = time.time()
-
         if not text:
             return await ctx.send("Please provide some text.", delete_after=23)
+        start_time = time.time()
 
         # Create translation tables for lowercase and uppercase
         lower_char = "abcdefghijklmnopqrstuvwxyz0123456789"
@@ -910,10 +909,9 @@ class Transform(commands.Cog):
     @commands.command(description='Text transformer command', no_pm=True)
     async def bold(self, ctx, *, text: str):
         """Convert text to 𝐁𝐨𝐥𝐝"""
-        start_time = time.time()
-
         if not text:
             return await ctx.send("Please provide some text.", delete_after=23)
+        start_time = time.time()
 
         char = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890"
         tran = "𝐀𝐁𝐂𝐃𝐄𝐅𝐆𝐇𝐈𝐉𝐊𝐋𝐌𝐍𝐎𝐏𝐐𝐑𝐒𝐓𝐔𝐕𝐖𝐗𝐘𝐙𝐚𝐛𝐜𝐝𝐞𝐟𝐠𝐡𝐢𝐣𝐤𝐥𝐦𝐧𝐨𝐩𝐪𝐫𝐬𝐭𝐮𝐯𝐰𝐱𝐲𝐳𝟏𝟐𝟑𝟒𝟓𝟔𝟕𝟖𝟗𝟎"
@@ -932,10 +930,9 @@ class Transform(commands.Cog):
     @commands.command(description='Text transformer command', no_pm=True)
     async def bolditalic(self, ctx, *, text: str):
         """Convert text to 𝘽𝙤𝙡𝙙𝙄𝙩𝙖𝙡𝙞𝙘"""
-        start_time = time.time()
-
         if not text:
             return await ctx.send("Please provide some text.", delete_after=23)
+        start_time = time.time()
 
         char = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
         tran = "𝘼𝘽𝘾𝘿𝙀𝙁𝙂𝙃𝙄𝙅𝙆𝙇𝙈𝙉𝙊𝙋𝙌𝙍𝙎𝙏𝙐𝙑𝙒𝙓𝙔𝙕𝙖𝙗𝙘𝙙𝙚𝙛𝙜𝙝𝙞𝙟𝙠𝙡𝙢𝙣𝙤𝙥𝙦𝙧𝙨𝙩𝙪𝙫𝙬𝙭𝙮𝙯"
@@ -954,10 +951,9 @@ class Transform(commands.Cog):
     @commands.command(description='Text transformer command', no_pm=True)
     async def italic(self, ctx, *, text: str):
         """Convert text to 𝓘𝓽𝓪𝓵𝓲𝓬"""
-        start_time = time.time()
-
         if not text:
             return await ctx.send("Please provide some text.", delete_after=23)
+        start_time = time.time()
 
         char = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
         tran = "𝓐𝓑𝓒𝓓𝓔𝓕𝓖𝓗𝓘𝓙𝓚𝓛𝓜𝓝𝓞𝓟𝓠𝓡𝓢𝓣𝓤𝓥𝓦𝓧𝓨𝓩𝓪𝓫𝓬𝓭𝓮𝓯𝓰𝓱𝓲𝓳𝓴𝓵𝓶𝓷𝓸𝓹𝓺𝓻𝓼𝓽𝓾𝓿𝔀𝔁𝔂𝔃"
@@ -976,10 +972,9 @@ class Transform(commands.Cog):
     @commands.command(description='Text transformer command', no_pm=True)
     async def gothic(self, ctx, *, text: str):
         """Convert text to 𝕲𝖔𝖙𝖍𝖎𝖈"""
-        start_time = time.time()
-
         if not text:
             return await ctx.send("Please provide some text.", delete_after=23)
+        start_time = time.time()
 
         char = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
         tran = "𝕬𝕭𝕮𝕯𝕰𝕱𝕲𝕳𝕴𝕵𝕶𝕷𝕸𝕹𝕺𝕻𝕼𝕽𝕾𝕿𝖀𝖁𝖂𝖃𝖄𝖅𝖆𝖇𝖈𝖉𝖊𝖋𝖌𝖍𝖎𝖏𝖐𝖑𝖒𝖓𝖔𝖕𝖖𝖗𝖘𝖙𝖚𝖛𝖜𝖝𝖞𝖟"
@@ -1059,10 +1054,9 @@ class Transform(commands.Cog):
     @commands.command(description='Text transformer command', no_pm=True)
     async def leet(self, ctx, *, text: str):
         """Convert text to 1337 5P34K"""
-        start_time = time.time()
-
         if not text:
             return await ctx.send("Please provide some text.", delete_after=23)
+        start_time = time.time()
 
         char = "abcdefghijklmnopqrstuvwxyz0123456789+-()."
         tran = "4b<D3ƒ6#!JK1M^0PQЯ57UVωXY20123456789+-「」･"
@@ -1079,11 +1073,10 @@ class Transform(commands.Cog):
     # +------------------------------------------------------------+
     @commands.command(description='Text transformer command', no_pm=True)
     async def caesar(self, ctx, rot: int = 13, *, text: str):
-        """Apply Caesar cipher with optional rot (default: 13)"""
-        start_time = time.time()
-
+        """Apply Caesar cipher with optional rot `(default: 13)`"""
         if not text:
             return await ctx.send("Please provide some text.", delete_after=23)
+        start_time = time.time()
 
         result = []
         for c in text:
@@ -1150,4 +1143,3 @@ class Transform(commands.Cog):
 
 async def setup(bot):
     await bot.add_cog(Transform(bot))
-    
