@@ -195,7 +195,7 @@ class MediaLogger(commands.Cog):
         # File information
         embed.add_field(
             name="Files",
-            value=f"Count: {len(attachments)}\nTypes: {', '.join(set(a.filename.split('.')[-1] for a in attachments)}",
+            value=f"Count: {len(attachments)}\nTypes: {', '.join(set(a.filename.split('.')[-1] for a in attachments))}",
             inline=False
         )
         
