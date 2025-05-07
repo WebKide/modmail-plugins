@@ -1,11 +1,22 @@
-# ╔════════════════════════════════════════════════════════════╗
-# ║                    MEDIALOGGER.PY v2025                    ║
-# ╠════════════════════╦══════════════════╦════════════════════╣
-# ╠════════════════════╣ MODMAIL PLUGINS  ╠════════════════════╣
-# ╠════════════════════╣ ORIGINAL FOURJR  ╠════════════════════╣
-# ╠════════════════════╣ EXPANDED WEBKIDE ╠════════════════════╣
-# ╚════════════════════╩══════════════════╩════════════════════╝
-# https://github.com/fourjr/modmail-plugins/blob/v4/media-logger/media-logger.py
+"""
+MIT License
+Copyright (c) 2020-2025 WebKide [d.id @323578534763298816]
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+"""
 
 from datetime import datetime, timedelta
 import time
@@ -15,6 +26,15 @@ from discord.ui import View, Button
 from core import checks
 from core.models import PermissionLevel
 from typing import Dict, Optional
+
+__original__ = "code inspired by @fourjr media-logger"
+__source__ = "https://github.com/fourjr/modmail-plugins/blob/v4/media-logger/media-logger.py"
+__author__ = "WebKide"
+__version__ = "0.5.3"
+__codename__ = "media-logger"
+__copyright__ = "MIT License 2020-2025"
+__description__ = ""
+__installation__ = "!plugin add WebKide/modmail-plugins/media-logger@master"
 
 DEFAULT_MEDIA_TYPES = {
     '.png': True, '.gif': True, '.jpg': True, '.jpeg': True, '.webm': True,
@@ -44,25 +64,25 @@ CATEGORY_MAPPING = {
 }
 
 class FiletypeToggleButton(Button):
-    def __init__(self, ext, enabled, view):
+    def __init__(self, ext, enabled, parent_view):  # Changed parameter name from view to parent_view
         super().__init__(
             label=ext,
             style=discord.ButtonStyle.green if enabled else discord.ButtonStyle.red
         )
         self.ext = ext
         self.enabled = enabled
-        self.view = view
+        self._parent_view = parent_view  # Store reference using different attribute name
 
     async def callback(self, interaction: discord.Interaction):
-        self.view.types[self.ext] = not self.enabled
-        await self.view.cog.db.find_one_and_update(
+        self._parent_view.types[self.ext] = not self.enabled
+        await self._parent_view.cog.db.find_one_and_update(
             {'_id': 'config'},
-            {'$set': {'allowed_types': self.view.types}},
+            {'$set': {'allowed_types': self._parent_view.types}},
             upsert=True
         )
-        await self.view.cog.update_config_cache()
-        self.view.update_buttons()
-        await interaction.response.edit_message(embed=self.view.create_embed(), view=self.view)
+        await self._parent_view.cog.update_config_cache()
+        self._parent_view.update_buttons()
+        await interaction.response.edit_message(embed=self._parent_view.create_embed(), view=self._parent_view)
 
 class PageNavButton(Button):
     def __init__(self, label: str, view: View, direction: int):
