@@ -19,6 +19,8 @@ SOFTWARE.
 """
 
 import aiohttp
+import asyncio
+import io
 import time
 from collections import defaultdict
 from datetime import datetime, timedelta
@@ -34,7 +36,7 @@ from core.models import PermissionLevel
 __original__ = "code inspired by @fourjr media-logger"
 __source__ = "https://github.com/fourjr/modmail-plugins/blob/v4/media-logger/media-logger.py"
 __author__ = "WebKide"
-__version__ = "0.0.9"
+__version__ = "0.1.0"
 __codename__ = "media-logger"
 __copyright__ = "MIT License 2020-2025"
 __description__ = "Enhanced Modmail plugin for media logging with smart user tracking"
@@ -146,14 +148,22 @@ class FiletypePaginator(View):
 
         embed = discord.Embed(
             title=f"💾 {category} Filetypes",
-            description=(
-                f"**Enabled**: {' '.join(f'`{e}`' for e in enabled) or 'None'}\n"
-                f"~~Disabled~~: {' '.join(f'`{e}`' for e in disabled) or 'None'}"
-            ),
+            description="Menu to choose filetypes to log",
             colour=self.cog.bot.main_color
+        ).add_field(
+            name='✅ **Enabled:**',
+            value=' '.join(f'`{e}`' for e in enabled) or 'None',
+            inline=False
+        ).add_field(
+            name='❎ ~~Disabled:~~',
+            value=' '.join(f'`{e}`' for e in disabled) or 'None',
+            inline=False
+        ).set_thumbnail(
+            url=CATEGORY_MAPPING[category]['thumbnail']
+        ).set_footer(
+            text="This menu will timeout in 90 seconds"
         )
-        embed.set_thumbnail(url=CATEGORY_MAPPING[category]['thumbnail'])
-        embed.set_footer(text="This menu will timeout in 90 seconds")
+
         return embed
 
     async def on_timeout(self):
@@ -162,22 +172,29 @@ class FiletypePaginator(View):
         disabled = [ext for ext in CATEGORY_MAPPING[category]['exts'] if not self.types.get(ext, False)]
 
         embed = discord.Embed(
-            title=f"💾 {category} Filetypes (Menu Expired)",
-            description=(
-                f"**Enabled**: {' '.join(f'`{e}`' for e in enabled) or 'None'}\n"
-                f"~~Disabled~~: {' '.join(f'`{e}`' for e in disabled) or 'None'}\n\n"
-                f"*This selection menu has expired. Use `{self.ctx.prefix}medialogtypes` to make changes.*"
-            ),
-            colour=discord.Color.light_grey()
+            title=f"💾 {category} Filetypes",
+            description="(Menu Expired)",
+            colour=self.cog.bot.light_grey
+        ).add_field(
+            name='✅ **Enabled:**',
+            value=' '.join(f'`{e}`' for e in enabled) or 'None',
+            inline=False
+        ).add_field(
+            name='❎ ~~Disabled:~~',
+            value=' '.join(f'`{e}`' for e in disabled) or 'None',
+            inline=False
+        ).set_thumbnail(
+            url=CATEGORY_MAPPING[category]['thumbnail']
+        ).set_footer(
+            text=f"Use `{self.ctx.prefix}medialogtypes` to make changes."
         )
-        embed.set_thumbnail(url=CATEGORY_MAPPING[category]['thumbnail'])
         
         try:
             await self.message.edit(embed=embed, view=None)
         except discord.NotFound:
-            pass  # Message was already deleted
+            pass
         except discord.HTTPException:
-            pass  # Other Discord errors
+            pass
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         """Ensure only the command invoker can interact with the buttons"""
@@ -365,14 +382,78 @@ class MediaLogger(commands.Cog):
     @commands.guild_only()
     async def setmedialogchannel(self, ctx, channel: discord.TextChannel):
         """Set the media log channel, run this command first"""
-        u = ctx.author
+        # Check basic permissions first
+        required_perms = {
+            'view_channel': True, 'send_messages': True, 'embed_links': True, 'attach_files': True, 'read_message_history': True
+        }
+        
+        bot_perms = channel.permissions_for(ctx.guild.me)
+        missing_perms = [perm for perm, required in required_perms.items() 
+                        if required and not getattr(bot_perms, perm)]
+        
+        if missing_perms:
+            return await ctx.send(
+                f"❌ I'm missing required permissions in {channel.mention}:\n"
+                f"`{', '.join(missing_perms).replace('_', ' ').title()}`\n"
+                "Please fix these permissions and try again."
+            )
+
+        # Test actual embed and file sending capability
+        test_embed = discord.Embed(
+            title="📁 Media Logger Test",
+            description="Verifying channel permissions...",
+            color=self.bot.main_color
+        )
+        test_embed.set_thumbnail(url=CATEGORY_MAPPING['Media']['thumbnail'])
+        test_embed.set_footer(text="This is a test message, it will be deleted shortly")
+        
+        try:
+            # Create a small test file in memory
+            test_file = discord.File(
+                io.BytesIO(b"This is a test file for permission verification"),
+                filename="permission_test.txt"
+            )
+            
+            # Send test message
+            test_msg = await channel.send(
+                embed=test_embed,
+                file=test_file
+            )
+            
+            # Clean up test message after short delay
+            await asyncio.sleep(5)
+            await test_msg.delete()
+            
+        except discord.Forbidden as e:
+            return await ctx.send(
+                f"❌ Permission verification failed in {channel.mention}:\n"
+                f"`{str(e)}`\n"
+                "Please ensure I have all required permissions and try again."
+            )
+        except discord.HTTPException as e:
+            return await ctx.send(
+                f"⚠️ Unexpected error while testing {channel.mention}:\n"
+                f"`{str(e)}`\n"
+                "Please try again or contact support."
+            )
+
+        # If we get here, permissions are good - save the channel
         await self.db.find_one_and_update(
             {'_id': 'config'},
-            {'$set': {'log_channel': str(channel.id), 'ignored_channels': [], 'allowed_types': DEFAULT_MEDIA_TYPES}},
+            {'$set': {
+                'log_channel': str(channel.id), 
+                'ignored_channels': [], 
+                'allowed_types': DEFAULT_MEDIA_TYPES
+            }},
             upsert=True
         )
         await self.update_config_cache()
-        await ctx.send(f'🗃️ Media log channel set to {channel.mention} by **{u.display_name}**')
+        
+        await ctx.send(
+            f"✅ **Media log channel** successfully set to {channel.mention} by **{ctx.author.display_name}**\n"
+            "*All required permissions were succesfully verified.*\n"
+            f"Next: `{ctx.prefix}medialogtracking` - to set channel tracking mode"
+        )
 
     # ╔════════════════════════════════════════════════════════════╗
     # ║                       MEDIALOGIGNORE                       ║
