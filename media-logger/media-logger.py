@@ -34,7 +34,7 @@ from core.models import PermissionLevel
 __original__ = "code inspired by @fourjr media-logger"
 __source__ = "https://github.com/fourjr/modmail-plugins/blob/v4/media-logger/media-logger.py"
 __author__ = "WebKide"
-__version__ = "0.0.8"
+__version__ = "0.0.9"
 __codename__ = "media-logger"
 __copyright__ = "MIT License 2020-2025"
 __description__ = "Enhanced Modmail plugin for media logging with smart user tracking"
@@ -126,6 +126,7 @@ class FiletypePaginator(View):
         self.types = types
         self.categories = list(CATEGORY_MAPPING.keys())
         self.current_page = 0
+        self.message = None
         self.update_buttons()
 
     def update_buttons(self):
@@ -152,15 +153,41 @@ class FiletypePaginator(View):
             colour=self.cog.bot.main_color
         )
         embed.set_thumbnail(url=CATEGORY_MAPPING[category]['thumbnail'])
+        embed.set_footer(text="This menu will timeout in 90 seconds")
         return embed
 
     async def on_timeout(self):
-        self.clear_items()
-        if hasattr(self, 'message'):
-            try:
-                await self.message.edit(view=None)
-            except discord.NotFound:
-                pass
+        category = self.categories[self.current_page]
+        enabled = [ext for ext in CATEGORY_MAPPING[category]['exts'] if self.types.get(ext, False)]
+        disabled = [ext for ext in CATEGORY_MAPPING[category]['exts'] if not self.types.get(ext, False)]
+
+        embed = discord.Embed(
+            title=f"💾 {category} Filetypes (Menu Expired)",
+            description=(
+                f"**Enabled**: {' '.join(f'`{e}`' for e in enabled) or 'None'}\n"
+                f"~~Disabled~~: {' '.join(f'`{e}`' for e in disabled) or 'None'}\n\n"
+                f"*This selection menu has expired. Use `{self.ctx.prefix}medialogtypes` to make changes.*"
+            ),
+            colour=discord.Color.light_grey()
+        )
+        embed.set_thumbnail(url=CATEGORY_MAPPING[category]['thumbnail'])
+        
+        try:
+            await self.message.edit(embed=embed, view=None)
+        except discord.NotFound:
+            pass  # Message was already deleted
+        except discord.HTTPException:
+            pass  # Other Discord errors
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        """Ensure only the command invoker can interact with the buttons"""
+        if interaction.user != self.ctx.author:
+            await interaction.response.send_message(
+                "❌ This menu is not for you!",
+                ephemeral=True
+            )
+            return False
+        return True
 
 # ┌───────────────────────┬───────────────────────┬───────────────────────┐
 # ├───────────────────────┤    MAIN COG CLASS     ├───────────────────────┤
@@ -475,7 +502,7 @@ class MediaLogger(commands.Cog):
         types = config.get("allowed_types", DEFAULT_MEDIA_TYPES.copy())
 
         view = FiletypePaginator(self, ctx, types)
-        await ctx.send("💾 Select filetypes to log:", embed=view.create_embed(), view=view)
+        view.message = await ctx.send("💾 Select filetypes to log:", embed=view.create_embed(), view=view)
 
     # ╔════════════════════════════════════════════════════════════╗
     # ║                       MEDIALOGGONFIG                       ║
