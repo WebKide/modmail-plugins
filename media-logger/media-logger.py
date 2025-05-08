@@ -34,7 +34,7 @@ from core.models import PermissionLevel
 __original__ = "code inspired by @fourjr media-logger"
 __source__ = "https://github.com/fourjr/modmail-plugins/blob/v4/media-logger/media-logger.py"
 __author__ = "WebKide"
-__version__ = "0.0.6"
+__version__ = "0.0.7"
 __codename__ = "media-logger"
 __copyright__ = "MIT License 2020-2025"
 __description__ = "Enhanced Modmail plugin for media logging with smart user tracking"
@@ -166,7 +166,22 @@ class FiletypePaginator(View):
 # ├───────────────────────┤    MAIN COG CLASS     ├───────────────────────┤
 # └───────────────────────┴───────────────────────┴───────────────────────┘
 class MediaLogger(commands.Cog):
-    """Enhanced Modmail plugin for media logging with smart user tracking"""
+    """Advanced Modmail plugin for media logging with smart user tracking
+
+    - `setmedialogchannel` - Set the media log channel
+    - `medialogtracking` - Set channel tracking mode
+    - `medialogtypes` - Toggle which filetypes to log
+    - `medialogtogglebots` - Log media from bots too?
+    - `medialogconfig` - Media logger configuration
+      ├─ `enable` - Enable advanced tracking
+      ├─ `disable` - Disable advanced tracking
+      ├─ `force_enable` - Bypass server-size check
+      └─ `force_disable` - Disable bypass
+    - `medialogaddchannel` - Opt-in a channel
+    - `medialogignore` - Ignore status for channel
+    - `medialog` - View current media logging settings
+    - `medialoggerstats` - View detailed statistics
+    """
 
     def __init__(self, bot):
         self.bot = bot
