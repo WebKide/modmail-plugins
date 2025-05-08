@@ -34,7 +34,7 @@ from core.models import PermissionLevel
 __original__ = "code inspired by @fourjr media-logger"
 __source__ = "https://github.com/fourjr/modmail-plugins/blob/v4/media-logger/media-logger.py"
 __author__ = "WebKide"
-__version__ = "0.0.7"
+__version__ = "0.0.8"
 __codename__ = "media-logger"
 __copyright__ = "MIT License 2020-2025"
 __description__ = "Enhanced Modmail plugin for media logging with smart user tracking"
@@ -44,7 +44,7 @@ __installation__ = "!plugin add WebKide/modmail-plugins/media-logger@master"
 DEFAULT_MEDIA_TYPES = {
     '.png': True, '.gif': True, '.jpg': True, '.jpeg': True, '.webm': True,
     '.pdf': False, '.txt': False, '.py': False, '.html': False, '.js': False,
-    '.json': False, '.md': False, '.css': False, '.mp3': False, '.mp4': False,
+    '.json': False, '.doc': False, '.css': False, '.mp3': False, '.mp4': False,
     '.avi': False, '.mov': False, '.mkv': False, '.webv': False, '.zip': False,
     '.rar': False, '.epub': False,
 }
@@ -55,7 +55,7 @@ CATEGORY_MAPPING = {
         'thumbnail': 'https://i.imgur.com/l9yCq6n.png'
     },
     'Documents': {
-        'exts': ['.pdf', '.txt', '.md', '.zip', '.rar', '.epub'],
+        'exts': ['.pdf', '.txt', '.doc', '.zip', '.rar', '.epub'],
         'thumbnail': 'https://i.imgur.com/qiOFtgt.png'
     },
     'Code': {
@@ -135,8 +135,8 @@ class FiletypePaginator(View):
             enabled = self.types.get(ext, False)
             self.add_item(FiletypeToggleButton(ext, enabled, self))
         if len(self.categories) > 1:
-            self.add_item(PageNavButton('❰', -1))
-            self.add_item(PageNavButton('❱', 1))
+            self.add_item(PageNavButton('❰ 𝗉𝗋𝖾𝗏', -1))
+            self.add_item(PageNavButton('𝗇𝖾𝗑𝗍 ❱', 1))
 
     def create_embed(self):
         category = self.categories[self.current_page]
@@ -166,22 +166,7 @@ class FiletypePaginator(View):
 # ├───────────────────────┤    MAIN COG CLASS     ├───────────────────────┤
 # └───────────────────────┴───────────────────────┴───────────────────────┘
 class MediaLogger(commands.Cog):
-    """Advanced Modmail plugin for media logging with smart user tracking
-
-    - `setmedialogchannel` - Set the media log channel
-    - `medialogtracking` - Set channel tracking mode
-    - `medialogtypes` - Toggle which filetypes to log
-    - `medialogtogglebots` - Log media from bots too?
-    - `medialogconfig` - Media logger configuration
-      ├─ `enable` - Enable advanced tracking
-      ├─ `disable` - Disable advanced tracking
-      ├─ `force_enable` - Bypass server-size check
-      └─ `force_disable` - Disable bypass
-    - `medialogaddchannel` - Opt-in a channel
-    - `medialogignore` - Ignore status for channel
-    - `medialog` - View current media logging settings
-    - `medialoggerstats` - View detailed statistics
-    """
+    """Advanced Modmail plugin for media logging with smart user tracking"""
 
     def __init__(self, bot):
         self.bot = bot
@@ -390,7 +375,22 @@ class MediaLogger(commands.Cog):
     @commands.command()
     @commands.guild_only()
     async def medialog(self, ctx):
-        """View current media logging settings"""
+        """View current media logging settings
+        - `setmedialogchannel` - Set the media log channel
+        - `medialogtracking` - Set channel tracking mode
+        - `medialogtypes` - Toggle which filetypes to log
+        - `medialogtogglebots` - Log media from bots too?
+        - `medialogconfig` - Media logger configuration
+          ├─ `enable` - Enable advanced tracking
+          ├─ `disable` - Disable advanced tracking
+          ├─ `force_enable` - Bypass server-size check
+          └─ `force_disable` - Disable bypass
+        - `medialogaddchannel` - Opt-in a channel
+        - `medialogignore` - Ignore status for channel
+        - `medialog` - View current media logging settings
+        - `medialoggerstats` - View detailed statistics
+        """
+
         config = await self.get_config()
         allowed = config.get("allowed_types", DEFAULT_MEDIA_TYPES)
         log_bot = config.get("log_bot_media", False)
