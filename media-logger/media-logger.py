@@ -37,7 +37,7 @@ from core.models import PermissionLevel
 __original__ = "code inspired by @fourjr media-logger"
 __source__ = "https://github.com/fourjr/modmail-plugins/blob/v4/media-logger/media-logger.py"
 __author__ = "WebKide"
-__version__ = "0.1.4"
+__version__ = "0.1.5"
 __codename__ = "media-logger"
 __copyright__ = "MIT License 2020-2025"
 __description__ = "Enhanced Modmail plugin for media logging with smart user tracking"
@@ -665,7 +665,7 @@ class MediaLogger(commands.Cog):
             }},
             upsert=True
         )
-        await self.update_config_cache()
+        await self.invalidate_config_cache()
 
         await ctx.send(
             f"✅ **Media log channel** successfully set to {channel.mention} by **{ctx.author.display_name}**\n"
@@ -689,7 +689,7 @@ class MediaLogger(commands.Cog):
         update = {'$pull': {'ignored_channels': str(channel.id)}} if action == "Removed" \
             else {'$addToSet': {'ignored_channels': str(channel.id)}}
         await self.db.find_one_and_update({'_id': 'config'}, update, upsert=True)
-        await self.update_config_cache()
+        await self.invalidate_config_cache()
         await ctx.send(f'📦 {action} {channel.mention} {"from" if action == "Removed" else "to"} ignore list.')
 
     # ╔════════════════════════════════════════════════════════════╗
@@ -785,7 +785,7 @@ class MediaLogger(commands.Cog):
             {'$set': {'log_bot_media': not current}},
             upsert=True
         )
-        await self.update_config_cache()
+        await self.invalidate_config_cache()
         await ctx.send(f"🤖 Logging bot media is now {'enabled ✅' if not current else 'disabled ❎'}.")
 
     # ╔════════════════════════════════════════════════════════════╗
@@ -798,8 +798,8 @@ class MediaLogger(commands.Cog):
     @commands.guild_only()
     async def medialogtypes(self, ctx):
         """Toggle which filetypes to log using paginator"""
-        await self.update_config_cache()
-        config = self.config_cache
+        await self.invalidate_config_cache()
+        config = await self.get_config()
         types = config.get("allowed_types", DEFAULT_MEDIA_TYPES.copy())
 
         view = FiletypePaginator(self, ctx, types)
@@ -919,7 +919,7 @@ class MediaLogger(commands.Cog):
             }},
             upsert=True
         )
-        await self.update_config_cache()
+        await self.invalidate_config_cache()
 
     # ╔════════════════════════════════════════════════════════════╗
     # ║░░░░░░░░░░░░░░░░░░░░░░MEDIALOGGERSTATS░░░░░░░░░░░░░░░░░░░░░░║
