@@ -6,12 +6,14 @@
 
 <div align="center">
 <img src="http://forthebadge.com/images/badges/made-with-crayons.svg?style=for-the-badge" alt="made with crayons"><br>
-<img src="https://img.shields.io/badge/python-v3.7-12a4ff?style=for-the-badge&logo=python&logoColor=12a4ff">
-<img src="https://img.shields.io/badge/library-discord%2Epy-ffbb10?style=for-the-badge">
+<img src="https://img.shields.io/badge/python-v3.7+-12a4ff?style=for-the-badge&logo=python&logoColor=12a4ff">
+<img src="https://img.shields.io/badge/library-discord%2Epy%202%2Ex-ffbb10?style=for-the-badge&logo=discord">
 
-<p>🛠️ if you experience a problem with any <b>modmail-plugin</b> in this repo, please open an issue or submit a pull-request</p>
-<br><br>
+<p>🛠️ if you experience a problem with any <b>modmail-plugin</b> in this repo, please open an issue or submit a pull-request
+<br>If you like this repo, leave a :star:<br><br></p>
 </div>
+
+---
 
 > 🔸 by default the prefix is `?` unless you changed it
 
