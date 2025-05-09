@@ -34,10 +34,10 @@ from discord.ui import View, Button
 from core import checks
 from core.models import PermissionLevel
 
-__original__ = "code inspired by @fourjr media-logger"
+__original__ = "code inspired by @fourjr media-logger plugin"
 __source__ = "https://github.com/fourjr/modmail-plugins/blob/v4/media-logger/media-logger.py"
 __author__ = "WebKide"
-__version__ = "0.2.13"
+__version__ = "0.2.14"
 __codename__ = "media-logger"
 __copyright__ = "MIT License 2020-2025"
 __description__ = "Enhanced Modmail plugin for media logging with smart user tracking"
@@ -1078,11 +1078,11 @@ class MediaLogger(commands.Cog):
         embed = discord.Embed(
             title="📁 Media Logger - About",
             description=(
-                "Advanced media tracking system for Modmail\n"
-                "Logs attachments into a designated media-logger channel\n"
+                f"{__description__}\n"
+                f"Logs attachments into a designated media-logger channel {__original__}\n"
                 "```diff\n+ Privacy Note: Only monitors filetypes explicitly enabled\n"
                 "- Never stores file contents outside of Discord, only saves metadata in media-logger channel\n```"
-                f"Currently logging:\n{ext_list}"
+                f"## Currently logging:\n{ext_list}"
             ),
             color=discord.Color.blurple()
         )
