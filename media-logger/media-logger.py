@@ -37,7 +37,7 @@ from core.models import PermissionLevel
 __original__ = "code inspired by @fourjr media-logger"
 __source__ = "https://github.com/fourjr/modmail-plugins/blob/v4/media-logger/media-logger.py"
 __author__ = "WebKide"
-__version__ = "0.1.7"
+__version__ = "0.2.0"
 __codename__ = "media-logger"
 __copyright__ = "MIT License 2020-2025"
 __description__ = "Enhanced Modmail plugin for media logging with smart user tracking"
@@ -59,11 +59,11 @@ CATEGORY_MAPPING = {
     },
     'Documents': {
         'exts': ['.pdf', '.txt', '.doc', '.epub', '.docx', '.rtf', '.odt'],
-        'thumbnail': 'https://i.imgur.com/qiOFtgt.png'
+        'thumbnail': 'https://i.imgur.com/QWtGa8Q.png'
     },
     'Code': {
         'exts': ['.py', '.html', '.js', '.json', '.css', '.zip', '.rar'],
-        'thumbnail': 'https://i.imgur.com/QWtGa8Q.png'
+        'thumbnail': 'https://i.imgur.com/qiOFtgt.png'
     },
     'Media': {
         'exts': ['.mp3', '.mp4', '.avi', '.mov', '.mkv', '.webm'],
@@ -452,31 +452,32 @@ class MediaLogger(commands.Cog):
         # Ignore messages from the bot itself to prevent loops
         if message.author == self.bot.user:
             return
-
+        # Skip bots and webhooks entirely
+        config = await self.get_config()
+        log_bot_media = config.get("log_bot_media", False)  # Default False
+        if message.webhook_id:  # Always ignore webhooks
+            return
+        # Ignore bots only if config disabled
+        if message.author.bot and not log_bot_media:
+            return
         # Ignore DMs - only process guild messages
         if not message.guild:
             return
-
         # Skip messages without attachments
         if not message.attachments:
             return
-
         # Get current configuration
         config = await self.get_config()
-
         # Check if logging channel is set up
         log_channel = await self.log_channel()
         if not log_channel:
             return
-
         # IMPORTANT: Ignore messages in the log channel itself
         if message.channel.id == log_channel.id:
             return
-
         # Check if we should ignore bots
         if message.author.bot and not config.get("log_bot_media", False):
             return
-
         # Determine channel tracking mode
         channel_tracking = config.get("channel_tracking", "all")
         ignored_channels = config.get("ignored_channels", [])
@@ -494,7 +495,6 @@ class MediaLogger(commands.Cog):
 
         # Get allowed file types
         allowed_types = config.get("allowed_types", DEFAULT_MEDIA_TYPES)
-
         # Filter attachments by allowed types and size
         valid_attachments = []
         for attachment in message.attachments:
@@ -502,13 +502,11 @@ class MediaLogger(commands.Cog):
             file_ext = Path(attachment.filename).suffix.lower()
             if file_ext not in allowed_types or not allowed_types[file_ext]:
                 continue
-
             # Check file size
             if attachment.size > MAX_ATTACHMENT_SIZE:
                 continue
 
             valid_attachments.append(attachment)
-
         # If no valid attachments, stop processing
         if not valid_attachments:
             return
@@ -517,18 +515,15 @@ class MediaLogger(commands.Cog):
         if message.guild.member_count < self.stats_threshold or config.get("force_enabled", False):
             await self.update_user_stats(str(message.author.id), message.channel, valid_attachments)
             self.server_stats['total_uploads'] += len(valid_attachments)
-
         # Prepare and send log messages
         try:
             # For multiple attachments, we'll group some types together
             image_exts = ('.png', '.jpg', '.jpeg', '.gif', '.webp')
             document_exts = ('.pdf', '.txt', '.doc', '.docx', '.xls', '.xlsx')
-
             # Group attachments by type
             images = [a for a in valid_attachments if a.filename.lower().endswith(image_exts)]
             documents = [a for a in valid_attachments if a.filename.lower().endswith(document_exts)]
             other_files = [a for a in valid_attachments if a not in images and a not in documents]
-
             # Create base embed
             embed = discord.Embed(
                 color=self.bot.main_color,
@@ -543,7 +538,6 @@ class MediaLogger(commands.Cog):
                 value=f"[Jump to message]({message.jump_url}) in {message.channel.mention}",
                 inline=False
             )
-
             # Log images in a single embed with thumbnails
             if images:
                 image_embed = embed.copy()
@@ -551,13 +545,11 @@ class MediaLogger(commands.Cog):
                 image_embed.description = "\n".join(
                     f"[{img.filename}]({img.url})" for img in images
                 )
-
                 # Use first image as thumbnail if available
                 if images[0].filename.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.webp')):
-                    image_embed.set_thumbnail(url=images[0].url)
+                    image_embed.set_image(url=images[0].url)
 
                 await log_channel.send(embed=image_embed)
-
             # Log documents in a single embed
             if documents:
                 doc_embed = embed.copy()
@@ -566,13 +558,11 @@ class MediaLogger(commands.Cog):
                     f"[{doc.filename}]({doc.url})" for doc in documents
                 )
                 await log_channel.send(embed=doc_embed)
-
             # Log other files individually
             for file in other_files:
                 file_embed = embed.copy()
                 file_embed.title = f"📁 File Logged: {file.filename}"
                 file_embed.description = f"[Download]({file.url})"
-
                 # For video/audio files, show duration if available
                 if file.filename.lower().endswith(('.mp4', '.mov', '.mp3', '.wav')):
                     file_embed.add_field(name="Type", value=file.filename.split('.')[-1].upper(), inline=True)
@@ -596,7 +586,6 @@ class MediaLogger(commands.Cog):
         if valid_attachments:
             # Store message ID for deletion tracking
             self.tracked_messages.add(message.id)
-
             # Update database with message tracking
             await self.db.find_one_and_update(
                 {'_id': 'tracked_messages'},
@@ -646,10 +635,8 @@ class MediaLogger(commands.Cog):
         self.tracked_messages.discard(message.id)
 
     # ╔════════════════════════════════════════════════════════════╗
-    # ║░░░░░░░░░░░░░░░░░░░░░SETMEDIALOGCHANNEL░░░░░░░░░░░░░░░░░░░░░║
-    # ╠════════════════════╦══════════════════╦════════════════════╣
-    # ╠════════════════════╣░DISCORD░COMMANDS░╠════════════════════╣
-    # ╚════════════════════╩══════════════════╩════════════════════╝
+    # ║░░░░░░░░░░░░░░░░░░░░ SETMEDIALOGCHANNEL ░░░░░░░░░░░░░░░░░░░░║
+    # ╚════════════════════════════════════════════════════════════╝
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
     @commands.command()
     @commands.guild_only()
@@ -733,10 +720,8 @@ class MediaLogger(commands.Cog):
         )
 
     # ╔════════════════════════════════════════════════════════════╗
-    # ║░░░░░░░░░░░░░░░░░░░░░░░MEDIALOGIGNORE░░░░░░░░░░░░░░░░░░░░░░░║
-    # ╠════════════════════╦══════════════════╦════════════════════╣
-    # ╠════════════════════╣░DISCORD░COMMANDS░╠════════════════════╣
-    # ╚════════════════════╩══════════════════╩════════════════════╝
+    # ║░░░░░░░░░░░░░░░░░░░░░░ MEDIALOGIGNORE ░░░░░░░░░░░░░░░░░░░░░░║
+    # ╚════════════════════════════════════════════════════════════╝
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
     @commands.command()
     @commands.guild_only()
@@ -752,16 +737,15 @@ class MediaLogger(commands.Cog):
         await ctx.send(f'📦 {action} {channel.mention} {"from" if action == "Removed" else "to"} ignore list.')
 
     # ╔════════════════════════════════════════════════════════════╗
-    # ║░░░░░░░░░░░░░░░░░░░░░░░░░░MEDIALOG░░░░░░░░░░░░░░░░░░░░░░░░░░║
-    # ╠════════════════════╦══════════════════╦════════════════════╣
-    # ╠════════════════════╣░DISCORD░COMMANDS░╠════════════════════╣
-    # ╚════════════════════╩══════════════════╩════════════════════╝
+    # ║░░░░░░░░░░░░░░░░░░░░░░░░ MEDIALOG ░░░░░░░░░░░░░░░░░░░░░░░░░░║
+    # ╚════════════════════════════════════════════════════════════╝
     @checks.has_permissions(PermissionLevel.MODERATOR)
     @commands.command()
     @commands.guild_only()
     async def medialog(self, ctx):
         """View current media logging settings
-
+        For set-up and more functionality
+        - `medialogabout` - Info and disclaimer
         - `setmedialogchannel` - Set the media log channel
         - `medialogtracking` - Set channel tracking mode
         - `medialogtypes` - Toggle which filetypes to log
@@ -776,7 +760,6 @@ class MediaLogger(commands.Cog):
         - `medialog` - View current media logging settings
         - `medialoggerstats` - View detailed statistics
         """
-
 
         config = await self.get_config()
         allowed = config.get("allowed_types", DEFAULT_MEDIA_TYPES)
@@ -828,10 +811,8 @@ class MediaLogger(commands.Cog):
         await ctx.send(embed=embed)
 
     # ╔════════════════════════════════════════════════════════════╗
-    # ║░░░░░░░░░░░░░░░░░░░░░MEDIALOGTOGGLEBOTS░░░░░░░░░░░░░░░░░░░░░║
-    # ╠════════════════════╦══════════════════╦════════════════════╣
-    # ╠════════════════════╣░DISCORD░COMMANDS░╠════════════════════╣
-    # ╚════════════════════╩══════════════════╩════════════════════╝
+    # ║░░░░░░░░░░░░░░░░░░░░ MEDIALOGTOGGLEBOTS ░░░░░░░░░░░░░░░░░░░░║
+    # ╚════════════════════════════════════════════════════════════╝
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
     @commands.command()
     @commands.guild_only()
@@ -848,10 +829,8 @@ class MediaLogger(commands.Cog):
         await ctx.send(f"🤖 Logging bot media is now {'enabled ✅' if not current else 'disabled ❎'}.")
 
     # ╔════════════════════════════════════════════════════════════╗
-    # ║░░░░░░░░░░░░░░░░░░░░░░MEDIALOGTOGTYPES░░░░░░░░░░░░░░░░░░░░░░║
-    # ╠════════════════════╦══════════════════╦════════════════════╣
-    # ╠════════════════════╣░DISCORD░COMMANDS░╠════════════════════╣
-    # ╚════════════════════╩══════════════════╩════════════════════╝
+    # ║░░░░░░░░░░░░░░░░░░░░░ MEDIALOGTOGTYPES ░░░░░░░░░░░░░░░░░░░░░║
+    # ╚════════════════════════════════════════════════════════════╝
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
     @commands.command()
     @commands.guild_only()
@@ -866,10 +845,8 @@ class MediaLogger(commands.Cog):
 
 
     # ╔════════════════════════════════════════════════════════════╗
-    # ║░░░░░░░░░░░░░░░░░░░░░░░MEDIALOGGONFIG░░░░░░░░░░░░░░░░░░░░░░░║
-    # ╠════════════════════╦══════════════════╦════════════════════╣
-    # ╠════════════════════╣░DISCORD░COMMANDS░╠════════════════════╣
-    # ╚════════════════════╩══════════════════╩════════════════════╝
+    # ║░░░░░░░░░░░░░░░░░░░░░░ MEDIALOGGONFIG ░░░░░░░░░░░░░░░░░░░░░░║
+    # ╚════════════════════════════════════════════════════════════╝
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
     @commands.group(invoke_without_command=True)
     @commands.guild_only()
@@ -895,7 +872,7 @@ class MediaLogger(commands.Cog):
         )
         embed.add_field(
             name="👥 Server Size",
-            value=f"{ctx.guild.member_count} members (threshold: {self.stats_threshold})",
+            value=f"{ctx.guild.member_count} members `(threshold: {self.stats_threshold})`",
             inline=False
         )
         embed.add_field(
@@ -908,10 +885,8 @@ class MediaLogger(commands.Cog):
         await ctx.send(embed=embed)
 
     # ╔════════════════════════════════════════════════════════════╗
-    # ║░░░░░░░░░░░░░░░░░░░░MEDIALOGCONFIG.ENABLE░░░░░░░░░░░░░░░░░░░║
-    # ╠════════════════════╦══════════════════╦════════════════════╣
-    # ╠════════════════════╣░DISCORD░COMMANDS░╠════════════════════╣
-    # ╚════════════════════╩══════════════════╩════════════════════╝
+    # ║░░░░░░░░░░░░░░░░░░░ MEDIALOGCONFIG.ENABLE ░░░░░░░░░░░░░░░░░░║
+    # ╚════════════════════════════════════════════════════════════╝
     @medialogconfig.command()
     async def enable(self, ctx):
         """Enable advanced tracking"""
@@ -926,10 +901,8 @@ class MediaLogger(commands.Cog):
         await ctx.send(f"✅ Advanced tracking enabled by **{ctx.author.display_name}** using normal configuration.")
 
     # ╔════════════════════════════════════════════════════════════╗
-    # ║░░░░░░░░░░░░░░░░░░░MEDIALOGCONFIG.DISABLE░░░░░░░░░░░░░░░░░░░║
-    # ╠════════════════════╦══════════════════╦════════════════════╣
-    # ╠════════════════════╣░DISCORD░COMMANDS░╠════════════════════╣
-    # ╚════════════════════╩══════════════════╩════════════════════╝
+    # ║░░░░░░░░░░░░░░░░░░ MEDIALOGCONFIG.DISABLE ░░░░░░░░░░░░░░░░░░║
+    # ╚════════════════════════════════════════════════════════════╝
     @medialogconfig.command()
     async def disable(self, ctx):
         """Disable advanced tracking"""
@@ -939,10 +912,8 @@ class MediaLogger(commands.Cog):
         await ctx.send("❎ Advanced tracking disabled by **{ctx.author.display_name}** using normal configuration.")
 
     # ╔════════════════════════════════════════════════════════════╗
-    # ║░░░░░░░░░░░░░░░░MEDIALOGCONFIG.FORCE_ENABLE░░░░░░░░░░░░░░░░░║
-    # ╠════════════════════╦══════════════════╦════════════════════╣
-    # ╠════════════════════╣░DISCORD░COMMANDS░╠════════════════════╣
-    # ╚════════════════════╩══════════════════╩════════════════════╝
+    # ║░░░░░░░░░░░░░░░ MEDIALOGCONFIG.FORCE_ENABLE ░░░░░░░░░░░░░░░░║
+    # ╚════════════════════════════════════════════════════════════╝
     @medialogconfig.command()
     @checks.has_permissions(PermissionLevel.OWNER)
     async def force_enable(self, ctx):
@@ -955,10 +926,8 @@ class MediaLogger(commands.Cog):
         )
 
     # ╔════════════════════════════════════════════════════════════╗
-    # ║░░░░░░░░░░░░░░░░MEDIALOGCONFIG.FORCE_DISABLE░░░░░░░░░░░░░░░░║
-    # ╠════════════════════╦══════════════════╦════════════════════╣
-    # ╠════════════════════╣░DISCORD░COMMANDS░╠════════════════════╣
-    # ╚════════════════════╩══════════════════╩════════════════════╝
+    # ║░░░░░░░░░░░░░░░ MEDIALOGCONFIG.FORCE_DISABLE ░░░░░░░░░░░░░░░║
+    # ╚════════════════════════════════════════════════════════════╝
     @medialogconfig.command()
     @checks.has_permissions(PermissionLevel.OWNER)
     async def force_disable(self, ctx):
@@ -981,10 +950,8 @@ class MediaLogger(commands.Cog):
         await self.invalidate_config_cache()
 
     # ╔════════════════════════════════════════════════════════════╗
-    # ║░░░░░░░░░░░░░░░░░░░░░░MEDIALOGGERSTATS░░░░░░░░░░░░░░░░░░░░░░║
-    # ╠════════════════════╦══════════════════╦════════════════════╣
-    # ╠════════════════════╣░DISCORD░COMMANDS░╠════════════════════╣
-    # ╚════════════════════╩══════════════════╩════════════════════╝
+    # ║░░░░░░░░░░░░░░░░░░░░░ MEDIALOGGERSTATS ░░░░░░░░░░░░░░░░░░░░░║
+    # ╚════════════════════════════════════════════════════════════╝
     @checks.has_permissions(PermissionLevel.MODERATOR)
     @commands.command()
     @commands.cooldown(1, 30, commands.BucketType.user)
@@ -1052,10 +1019,8 @@ class MediaLogger(commands.Cog):
         await ctx.send(embed=embed)
 
     # ╔════════════════════════════════════════════════════════════╗
-    # ║░░░░░░░░░░░░░░░░░░░░░░MEDIALOGTRACKING░░░░░░░░░░░░░░░░░░░░░░║
-    # ╠════════════════════╦══════════════════╦════════════════════╣
-    # ╠════════════════════╣░DISCORD░COMMANDS░╠════════════════════╣
-    # ╚════════════════════╩══════════════════╩════════════════════╝
+    # ║░░░░░░░░░░░░░░░░░░░░░ MEDIALOGTRACKING ░░░░░░░░░░░░░░░░░░░░░║
+    # ╚════════════════════════════════════════════════════════════╝
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
     @commands.command()
     async def medialogtracking(self, ctx, mode: str):
@@ -1077,10 +1042,8 @@ class MediaLogger(commands.Cog):
         await ctx.send(f"Channel tracking set to `{mode.lower()}` mode.")
 
     # ╔════════════════════════════════════════════════════════════╗
-    # ║░░░░░░░░░░░░░░░░░░░░░MEDIALOGADDCHANNEL░░░░░░░░░░░░░░░░░░░░░║
-    # ╠════════════════════╦══════════════════╦════════════════════╣
-    # ╠════════════════════╣░DISCORD░COMMANDS░╠════════════════════╣
-    # ╚════════════════════╩══════════════════╩════════════════════╝
+    # ║░░░░░░░░░░░░░░░░░░░░ MEDIALOGADDCHANNEL ░░░░░░░░░░░░░░░░░░░░║
+    # ╚════════════════════════════════════════════════════════════╝
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
     @commands.command()
     async def medialogaddchannel(self, ctx, channel: discord.TextChannel):
@@ -1096,6 +1059,78 @@ class MediaLogger(commands.Cog):
         )
         await self.invalidate_config_cache()
         await ctx.send(f"Added {channel.mention} to tracked channels.")
+
+    # ╔════════════════════════════════════════════════════════════╗
+    # ║░░░░░░░░░░░░░░░░░░░░░░ MEDIALOGABOUT ░░░░░░░░░░░░░░░░░░░░░░░║
+    # ╚════════════════════════════════════════════════════════════╝
+    @commands.command()
+    async def medialogabout(self, ctx):
+        """Display plugin information and usage guide"""
+        config = await self.get_config()
+        allowed_types = config.get("allowed_types", DEFAULT_MEDIA_TYPES)
+        enabled_exts = [ext for ext, enabled in allowed_types.items() if enabled]
+
+        ext_list = " ".join(f"`{ext}`" for ext in enabled_exts) if enabled_exts else "*(None configured yet)*"
+
+        embed = discord.Embed(
+            title="📁 Media Logger - About",
+            description=(
+                "Advanced media tracking system for Modmail\n"
+                "Logs attachments into a designated media-logger channel\n"
+                "```diff\n+ Privacy Note: Only monitors filetypes explicitly enabled\n"
+                "- Never stores file contents outside of Discord, only saves metadata in media-logger channel\n```"
+                f"Currently logging:\n{ext_list}"
+            ),
+            color=discord.Color.blurple()
+        )
+        
+        embed.add_field(
+            name="⚙️ Setup Commands for Admins",
+            value=(
+                "`setmedialogchannel` - Set logging channel\n"
+                "`medialogtracking` - Opt-in/global channel mode\n"
+                "`medialogaddchannel` - Whitelist specific channel\n"
+                "`medialogignore` - Blacklist a channel"
+            ),
+            inline=False
+        )
+
+        embed.add_field(
+            name="🎛️ Configuration for Admins",
+            value=(
+                "`medialogtypes` - Toggle logged file extensions\n"
+                "`medialogtogglebots` - Enable bot media logging\n"
+                "`medialogconfig` - Advanced tracking settings:\n"
+                "　├─ `enable`/`disable` - Basic toggle\n"
+                "　├─ `force_enable` - Ignore size limits\n"
+                "　└─ `force_disable` - Enforce safety"
+            ),
+            inline=False
+        )
+
+        embed.add_field(
+            name="📊 Statistics for Mods",
+            value=(
+                "`medialog` - Current settings overview\n"
+                "`medialoggerstats` - User/channel analytics\n"
+                "`medialoggerstats [user]` - Individual reports"
+            ),
+            inline=False
+        )
+
+        embed.add_field(
+            name="🗃️ Shows this notice for all users",
+            value=(
+                "`medialogabout` - Info and disclaimer"
+            ),
+            inline=False
+        )
+
+        embed.set_footer(
+            text=f"Version {__version__} | Use {ctx.prefix}help [command] for details"
+        )
+        
+        await ctx.send(embed=embed)
 
 async def setup(bot):
     await bot.add_cog(MediaLogger(bot))
