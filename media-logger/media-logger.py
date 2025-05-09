@@ -37,7 +37,7 @@ from core.models import PermissionLevel
 __original__ = "code inspired by @fourjr media-logger"
 __source__ = "https://github.com/fourjr/modmail-plugins/blob/v4/media-logger/media-logger.py"
 __author__ = "WebKide"
-__version__ = "0.1.3"
+__version__ = "0.1.4"
 __codename__ = "media-logger"
 __copyright__ = "MIT License 2020-2025"
 __description__ = "Enhanced Modmail plugin for media logging with smart user tracking"
@@ -379,11 +379,6 @@ class MediaLogger(commands.Cog):
 
         user_data['uploads'] += len(attachments)
         user_data['last_upload'] = datetime.utcnow()
-
-        # Process attachments per batch
-        for attachment in attachments:
-            ext = '.' + attachment.filename.split('.')[-1].lower()
-            user_data['file_types'][ext] = user_data['file_types'].get(ext, 0) + 1
 
     # ┌───────────────────────┬────────────┬───────────────────────┐
     # ├───────────────────────┤ TASKS.LOOP ├───────────────────────┤
