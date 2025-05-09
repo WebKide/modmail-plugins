@@ -22,6 +22,7 @@ import aiohttp
 import asyncio
 import io
 import time
+
 from collections import defaultdict
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -36,7 +37,7 @@ from core.models import PermissionLevel
 __original__ = "code inspired by @fourjr media-logger"
 __source__ = "https://github.com/fourjr/modmail-plugins/blob/v4/media-logger/media-logger.py"
 __author__ = "WebKide"
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 __codename__ = "media-logger"
 __copyright__ = "MIT License 2020-2025"
 __description__ = "Enhanced Modmail plugin for media logging with smart user tracking"
@@ -46,7 +47,7 @@ __installation__ = "!plugin add WebKide/modmail-plugins/media-logger@master"
 DEFAULT_MEDIA_TYPES = {
     '.png': True, '.gif': True, '.jpg': True, '.jpeg': True, '.webm': True,
     '.pdf': False, '.txt': False, '.py': False, '.html': False, '.js': False,
-    '.json': False, '.doc': False, '.css': False, '.mp3': False, '.mp4': False,
+    '.json': False, '.md': False, '.css': False, '.mp3': False, '.mp4': False,
     '.avi': False, '.mov': False, '.mkv': False, '.webv': False, '.zip': False,
     '.rar': False, '.epub': False,
 }
@@ -57,7 +58,7 @@ CATEGORY_MAPPING = {
         'thumbnail': 'https://i.imgur.com/l9yCq6n.png'
     },
     'Documents': {
-        'exts': ['.pdf', '.txt', '.doc', '.zip', '.rar', '.epub'],
+        'exts': ['.pdf', '.txt', '.md', '.zip', '.rar', '.epub'],
         'thumbnail': 'https://i.imgur.com/qiOFtgt.png'
     },
     'Code': {
@@ -70,15 +71,12 @@ CATEGORY_MAPPING = {
     }
 }
 
-MAX_TRACKED_USERS = 1000
+MAX_TRACKED_USERS = 1000  # To prevent large spikes in memory
 MAX_ATTACHMENT_SIZE = 25 * 1024 * 1024  # 25MB
 MAX_DIRECT_UPLOAD_SIZE = 5 * 1024 * 1024  # 5MB
 CACHE_TTL = 300  # 5 minutes
-STATS_PRUNE_DAYS = 7
+STATS_PRUNE_DAYS = 7  # Prune stats older than 1 week
 
-# ┌───────────────────────┬───────────────────────┬───────────────────────┐
-# ├───────────────────────┤     HELPER CLASSES    ├───────────────────────┤
-# └───────────────────────┴───────────────────────┴───────────────────────┘
 class FiletypeToggleButton(Button):
     def __init__(self, ext: str, enabled: bool, parent_view: View):
         super().__init__(
@@ -166,6 +164,7 @@ class FiletypePaginator(View):
 
         return embed
 
+
     async def on_timeout(self):
         category = self.categories[self.current_page]
         enabled = [ext for ext in CATEGORY_MAPPING[category]['exts'] if self.types.get(ext, False)]
@@ -174,7 +173,7 @@ class FiletypePaginator(View):
         embed = discord.Embed(
             title=f"💾 {category} Filetypes",
             description="(Menu Expired)",
-            colour=self.cog.bot.light_grey
+            colour=self.cog.bot.light_grey()
         ).add_field(
             name='✅ **Enabled:**',
             value=' '.join(f'`{e}`' for e in enabled) or 'None',
@@ -206,9 +205,6 @@ class FiletypePaginator(View):
             return False
         return True
 
-# ┌───────────────────────┬───────────────────────┬───────────────────────┐
-# ├───────────────────────┤    MAIN COG CLASS     ├───────────────────────┤
-# └───────────────────────┴───────────────────────┴───────────────────────┘
 class MediaLogger(commands.Cog):
     """Advanced Modmail plugin for media logging with smart user tracking"""
 
@@ -217,7 +213,6 @@ class MediaLogger(commands.Cog):
         self.db = self.bot.plugin_db.get_partition(self)
         self.config_cache = None
         self._last_config_fetch = 0
-        self.session = aiohttp.ClientSession()
         
         # Memory-optimized user stats
         self.user_stats = {}  # {user_id: {uploads, deletes, last_upload, file_types}}
@@ -231,12 +226,7 @@ class MediaLogger(commands.Cog):
     def cog_unload(self):
         self.clean_stats.cancel()
         self.save_stats_to_db.cancel()
-        if hasattr(self, 'session'):
-            self.bot.loop.create_task(self.session.close())
 
-    # ┌───────────────────────┬────────────┬───────────────────────┐
-    # ├───────────────────────┤ CORE UTILS ├───────────────────────┤
-    # └───────────────────────┴────────────┴───────────────────────┘
     async def invalidate_config_cache(self):
         """Force refresh config cache on next access"""
         self.config_cache = None
@@ -249,105 +239,123 @@ class MediaLogger(commands.Cog):
             self._last_config_fetch = time.time()
         return self.config_cache
 
-    async def update_config_cache(self):
-        """Force update and return config"""
-        await self.invalidate_config_cache()
-        return await self.get_config()
-
     async def log_channel(self):
-        """Safely get log channel with permission checks"""
         config = await self.get_config()
         channel_id = config.get('log_channel')
-        if not channel_id:
-            return None
-        
-        channel = self.bot.get_channel(int(channel_id))
-        if channel and channel.permissions_for(channel.guild.me).send_messages:
-            return channel
-        return None
+        return self.bot.get_channel(int(channel_id)) if channel_id else None
 
-    # ┌───────────────────────┬────────────┬───────────────────────┐
-    # ├───────────────────────┤ TASKS.LOOP ├───────────────────────┤
-    # └───────────────────────┴────────────┴───────────────────────┘
-    @tasks.loop(hours=1)
-    async def clean_stats(self):
-        """Prune old stats and enforce memory limits"""
-        cutoff = datetime.utcnow() - timedelta(days=STATS_PRUNE_DAYS)
-        
-        # Prune old user stats
-        for user_id in list(self.user_stats.keys()):
-            if self.user_stats[user_id]['last_upload'] < cutoff:
-                del self.user_stats[user_id]
-        
-        # Enforce max tracked users
-        while len(self.user_stats) > MAX_TRACKED_USERS:
-            oldest_user = min(self.user_stats.items(), key=lambda x: x[1]['last_upload'])
-            del self.user_stats[oldest_user[0]]
+    async def process_attachments(self, message: discord.Message, log_channel: discord.TextChannel):
+        """Process and log valid attachments"""
+        config = await self.get_config()
+        allowed_types = config.get("allowed_types", DEFAULT_MEDIA_TYPES)
 
-    @tasks.loop(hours=6)
-    async def save_stats_to_db(self):
-        """Periodically save stats to database"""
-        if not self.user_stats:
+        valid_attachments = [
+            att for att in message.attachments
+            if Path(att.filename).suffix.lower() in allowed_types
+            and allowed_types[Path(att.filename).suffix.lower()]
+        ]
+
+        if not valid_attachments:
             return
-            
-        # Convert datetime objects to ISO format for storage
-        stats_to_save = {}
-        for user_id, data in self.user_stats.items():
-            stats_to_save[user_id] = data.copy()
-            if isinstance(data['last_upload'], datetime):
-                stats_to_save[user_id]['last_upload'] = data['last_upload'].isoformat()
+
+        # Update stats
+        if message.guild.member_count < self.stats_threshold or config.get("force_enabled", False):
+            await self.update_user_stats(str(message.author.id), message.channel, valid_attachments)
+            self.server_stats['total_uploads'] += len(valid_attachments)
+
+        # Log each attachment
+        for attachment in valid_attachments:
+            try:
+                embed = discord.Embed(
+                    title="📁 Media Logged",
+                    color=self.bot.main_color,
+                    timestamp=message.created_at
+                )
+                embed.add_field(name="Author", value=f"{message.author.mention} (`{message.author.id}`)", inline=False)
+                embed.add_field(name="Channel", value=f"{message.channel.mention}", inline=False)
+                embed.add_field(name="File", value=f"[{attachment.filename}]({attachment.url})", inline=False)
+                embed.set_footer(text=f"Message ID: {message.id}")
+
+                # For images, set the image as embed thumbnail
+                if attachment.filename.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.webp')):
+                    embed.set_thumbnail(url=attachment.url)
+
+                await log_channel.send(embed=embed)
+
+            except discord.HTTPException as e:
+                print(f"Failed to log media: {e}")
+
+    async def is_ignored(self, channel):
+        config = await self.get_config()
+        ignored_channels = config.get('ignored_channels', [])
+        tracked_channels = config.get('tracked_channels', [])
         
-        await self.db.find_one_and_update(
-            {'_id': 'user_stats'},
-            {'$set': {'data': stats_to_save}},
-            upsert=True
-        )
-
-    # ┌──────────────────────┬──────────────┬──────────────────────┐
-    # ├──────────────────────┤ COG_LISTENER ├──────────────────────┤
-    # └──────────────────────┴──────────────┴──────────────────────┘
-    @commands.Cog.listener()
-    async def on_ready(self):
-        """Load stats on startup"""
-        await self.load_stats_from_db()
-
-    @commands.Cog.listener()
-    async def on_command_error(self, ctx, error):
-        """Log command errors to media log channel"""
-        log_channel = await self.log_channel()
-        if log_channel:
-            embed = discord.Embed(
-                title="⚠️ Command Error",
-                description=(
-                    f"**Command:** `{ctx.command}`\n"
-                    f"**User:** {ctx.author.mention}\n"
-                    f"**Error:** ```{str(error)}```"
-                ),
-                color=discord.Color.red()
-            )
-            await log_channel.send(embed=embed)
-
-    # ┌───────────────────────┬────────────┬───────────────────────┐
-    # ├───────────────────────┤ STATS UTIL ├───────────────────────┤
-    # └───────────────────────┴────────────┴───────────────────────┘
-    async def load_stats_from_db(self):
-        """Load stats from database on startup"""
-        data = await self.db.find_one({'_id': 'user_stats'})
-        if data and 'data' in data:
-            for user_id, stats in data['data'].items():
-                if 'last_upload' in stats and isinstance(stats['last_upload'], str):
-                    stats['last_upload'] = datetime.fromisoformat(stats['last_upload'])
-            self.user_stats = data['data']
+        # If channel tracking is opt-in and this channel isn't tracked
+        if config.get('channel_tracking') == 'opt-in' and str(channel.id) not in tracked_channels:
+            return True
             
-            # Prune immediately on load
-            cutoff = datetime.utcnow() - timedelta(days=STATS_PRUNE_DAYS)
-            self.user_stats = {
-                k: v for k, v in self.user_stats.items()
-                if v['last_upload'] >= cutoff
-            }
+        return str(channel.id) in ignored_channels
 
-    async def update_user_stats(self, user_id: str, channel: discord.TextChannel, attachments: list):
-        """Update user stats with memory limits"""
+    async def validate_attachment(self, attachment: discord.Attachment, allowed_types: Dict[str, bool]) -> bool:
+        """Validate attachment with header checks and size limits."""
+        if attachment.size > MAX_ATTACHMENT_SIZE:
+            return False
+
+        ext = '.' + attachment.filename.lower().split('.')[-1]
+        if not allowed_types.get(ext, False):
+            return False
+
+        # Skip header checks for small files
+        if attachment.size < 1024:  # 1KB
+            return True
+
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(attachment.url) as resp:
+                    if resp.status != 200:
+                        return False
+                    
+                    # Read first 256 bytes for file signature
+                    chunk = await resp.content.read(256)
+                    return self.validate_file_signature(ext, chunk)
+        except Exception:
+            return False
+
+    def validate_file_signature(self, ext: str, header: bytes) -> bool:
+        """Validate file headers against known signatures."""
+        signatures = {
+            '.png': b'\x89PNG',
+            '.jpg': b'\xFF\xD8\xFF',
+            '.jpeg': b'\xFF\xD8\xFF',
+            '.gif': b'GIF',
+            '.pdf': b'%PDF',
+            '.zip': b'PK\x03\x04',
+            '.rar': [b'Rar!\x1A\x07', b'Rar!\x1A\x07\x01\x00']
+        }
+        return ext not in signatures or header.startswith(signatures[ext])
+
+    async def stream_attachment(self, attachment: discord.Attachment) -> Optional[discord.File]:
+        """Stream large attachments >5MB without full download."""
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(attachment.url) as resp:
+                    if resp.status != 200:
+                        return None
+                    return discord.File(
+                        fp=resp.content,
+                        filename=attachment.filename
+                    )
+        except Exception:
+            return None
+
+    async def handle_attachment(self, attachment: discord.Attachment) -> Optional[discord.File]:
+        """Hybrid attachment handler with size-based streaming."""
+        if attachment.size <= MAX_DIRECT_UPLOAD_SIZE:
+            return await attachment.to_file()
+        return await self.stream_attachment(attachment)
+
+    async def update_user_stats(self, user_id: str, attachments: list):
+        """Update user stats with memory limits."""
         if len(self.user_stats) >= MAX_TRACKED_USERS:
             # Remove oldest user if bot is at capacity
             oldest_user = min(self.user_stats.items(), key=lambda x: x[1]['last_upload'])
@@ -358,24 +366,230 @@ class MediaLogger(commands.Cog):
                 'uploads': 0,
                 'deletes': 0,
                 'last_upload': datetime.utcnow(),
-                'type_stats': defaultdict(int),
-                'channel_stats': defaultdict(int)
+                'file_types': {}
             }
 
         user_data = self.user_stats[user_id]
-        for attachment in attachments:
-            filetype = Path(attachment.filename).suffix.lower()
-            user_data["type_stats"][filetype] += 1
-            user_data["channel_stats"][str(channel.id)] += 1
-
+        filetype = Path(attachment.filename).suffix.lower()
+        user_data["type_stats"][filetype] += 1
+        user_data["channel_stats"][str(channel.id)] += 1
         user_data['uploads'] += len(attachments)
         user_data['last_upload'] = datetime.utcnow()
-        await self.save_stats_to_db()  # Persist changes immediately
+
+        for attachment in attachments:
+            ext = '.' + attachment.filename.split('.')[-1].lower()
+            user_data['file_types'][ext] = user_data['file_types'].get(ext, 0) + 1
+
+    # ┌───────────────────────┬────────────┬───────────────────────┐
+    # ├───────────────────────┤ TASKS.LOOP ├───────────────────────┤
+    # └───────────────────────┴────────────┴───────────────────────┘
+    @tasks.loop(hours=1)
+    async def clean_stats(self):
+        """Prune old stats and enforce memory limits."""
+        cutoff = datetime.utcnow() - timedelta(days=STATS_PRUNE_DAYS)
+
+        # Prune old user stats
+        for user_id in list(self.user_stats.keys()):
+            if self.user_stats[user_id]['last_upload'] < cutoff:
+                del self.user_stats[user_id]
+
+        # Enforce max tracked users
+        while len(self.user_stats) > MAX_TRACKED_USERS:
+            oldest_user = min(self.user_stats.items(), key=lambda x: x[1]['last_upload'])
+            del self.user_stats[oldest_user[0]]
+
+    # ┌───────────────────────┬────────────┬───────────────────────┐
+    # ├───────────────────────┤ TASKS.LOOP ├───────────────────────┤
+    # └───────────────────────┴────────────┴───────────────────────┘
+    @tasks.loop(hours=6)
+    async def save_stats_to_db(self):
+        """Periodically save stats to database."""
+        if not self.user_stats:
+            return
+
+        await self.db.find_one_and_update(
+            {'_id': 'user_stats'},
+            {'$set': {'data': self.user_stats}},
+            upsert=True
+        )
+
+    async def load_stats_from_db(self):
+        """Load stats from database on startup."""
+        data = await self.db.find_one({'_id': 'user_stats'})
+        if data and 'data' in data:
+            self.user_stats = data['data']
+
+            # Prune immediately on load
+            cutoff = datetime.utcnow() - timedelta(days=STATS_PRUNE_DAYS)
+            self.user_stats = {
+                k: v for k, v in self.user_stats.items()
+                if v['last_upload'] >= cutoff
+            }
+
+    # ┌──────────────────────┬──────────────┬──────────────────────┐
+    # ├──────────────────────┤ COG_LISTENER ├──────────────────────┤
+    # └──────────────────────┴──────────────┴──────────────────────┘
+    @commands.Cog.listener()
+    async def on_ready(self):
+        await self.load_stats_from_db()
+
+    # ┌──────────────────────┬──────────────┬──────────────────────┐
+    # ├──────────────────────┤ COG_LISTENER ├──────────────────────┤
+    # └──────────────────────┴──────────────┴──────────────────────┘
+    @commands.Cog.listener()
+    async def on_message(self, message: discord.Message):
+        """
+        Main event listener that handles media attachment logging
+        according to configuration.
+        """
+        # Ignore messages from the bot itself to prevent loops
+        if message.author == self.bot.user:
+            return
+
+        # Ignore DMs - only process guild messages
+        if not message.guild:
+            return
+
+        # Skip messages without attachments
+        if not message.attachments:
+            return
+
+        # Get current configuration
+        config = await self.get_config()
+
+        # Check if logging channel is set up
+        log_channel = await self.log_channel()
+        if not log_channel:
+            return
+
+        # IMPORTANT: Ignore messages in the log channel itself
+        if message.channel.id == log_channel.id:
+            return
+
+        # Check if we should ignore bots
+        if message.author.bot and not config.get("log_bot_media", False):
+            return
+
+        # Determine channel tracking mode
+        channel_tracking = config.get("channel_tracking", "all")
+        ignored_channels = config.get("ignored_channels", [])
+        tracked_channels = config.get("tracked_channels", [])
+
+        # Check if this channel should be processed based on tracking mode
+        if channel_tracking == "all":
+            # In 'all' mode, skip only explicitly ignored channels
+            if str(message.channel.id) in ignored_channels:
+                return
+        else:  # opt-in mode
+            # In 'opt-in' mode, process only explicitly tracked channels
+            if str(message.channel.id) not in tracked_channels:
+                return
+
+        # Get allowed file types
+        allowed_types = config.get("allowed_types", DEFAULT_MEDIA_TYPES)
+
+        # Filter attachments by allowed types and size
+        valid_attachments = []
+        for attachment in message.attachments:
+            # Check file extension
+            file_ext = Path(attachment.filename).suffix.lower()
+            if file_ext not in allowed_types or not allowed_types[file_ext]:
+                continue
+
+            # Check file size
+            if attachment.size > MAX_ATTACHMENT_SIZE:
+                continue
+
+            valid_attachments.append(attachment)
+
+        # If no valid attachments, stop processing
+        if not valid_attachments:
+            return
+
+        # Update statistics if tracking is enabled
+        if message.guild.member_count < self.stats_threshold or config.get("force_enabled", False):
+            await self.update_user_stats(str(message.author.id), message.channel, valid_attachments)
+            self.server_stats['total_uploads'] += len(valid_attachments)
+
+        # Prepare and send log messages
+        try:
+            # For multiple attachments, we'll group some types together
+            image_exts = ('.png', '.jpg', '.jpeg', '.gif', '.webp')
+            document_exts = ('.pdf', '.txt', '.doc', '.docx', '.xls', '.xlsx')
+
+            # Group attachments by type
+            images = [a for a in valid_attachments if a.filename.lower().endswith(image_exts)]
+            documents = [a for a in valid_attachments if a.filename.lower().endswith(document_exts)]
+            other_files = [a for a in valid_attachments if a not in images and a not in documents]
+
+            # Create base embed
+            embed = discord.Embed(
+                color=self.bot.main_color,
+                timestamp=message.created_at
+            )
+            embed.set_author(
+                name=f"{message.author.display_name} ({message.author.id})",
+                icon_url=message.author.display_avatar.url
+            )
+            embed.add_field(
+                name="📌 Message",
+                value=f"[Jump to message]({message.jump_url}) in {message.channel.mention}",
+                inline=False
+            )
+
+            # Log images in a single embed with thumbnails
+            if images:
+                image_embed = embed.copy()
+                image_embed.title = f"🖼️ {len(images)} Image(s) Logged"
+                image_embed.description = "\n".join(
+                    f"[{img.filename}]({img.url})" for img in images
+                )
+
+                # Use first image as thumbnail if available
+                if images[0].filename.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.webp')):
+                    image_embed.set_thumbnail(url=images[0].url)
+
+                await log_channel.send(embed=image_embed)
+
+            # Log documents in a single embed
+            if documents:
+                doc_embed = embed.copy()
+                doc_embed.title = f"📄 {len(documents)} Document(s) Logged"
+                doc_embed.description = "\n".join(
+                    f"[{doc.filename}]({doc.url})" for doc in documents
+                )
+                await log_channel.send(embed=doc_embed)
+
+            # Log other files individually
+            for file in other_files:
+                file_embed = embed.copy()
+                file_embed.title = f"📁 File Logged: {file.filename}"
+                file_embed.description = f"[Download]({file.url})"
+
+                # For video/audio files, show duration if available
+                if file.filename.lower().endswith(('.mp4', '.mov', '.mp3', '.wav')):
+                    file_embed.add_field(name="Type", value=file.filename.split('.')[-1].upper(), inline=True)
+
+                await log_channel.send(embed=file_embed)
+
+        except discord.HTTPException as e:
+            # Fallback to simple text logging if embeds fail
+            try:
+                file_links = "\n".join(f"- {a.filename}: {a.url}" for a in valid_attachments)
+                await log_channel.send(
+                    f"📁 Files uploaded by {message.author} in {message.channel.mention}:\n"
+                    f"{file_links}\n"
+                    f"Original message: {message.jump_url}"
+                )
+            except discord.HTTPException:
+                print(f"Failed to log media from message {message.id}: {e}")
+        except Exception as e:
+            print(f"Unexpected error logging media: {e}")
 
     # ╔════════════════════════════════════════════════════════════╗
-    # ║                     SETMEDIALOGCHANNEL                     ║
+    # ║░░░░░░░░░░░░░░░░░░░░░SETMEDIALOGCHANNEL░░░░░░░░░░░░░░░░░░░░░║
     # ╠════════════════════╦══════════════════╦════════════════════╣
-    # ╠════════════════════╣ DISCORD COMMANDS ╠════════════════════╣
+    # ╠════════════════════╣░DISCORD░COMMANDS░╠════════════════════╣
     # ╚════════════════════╩══════════════════╩════════════════════╝
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
     @commands.command()
@@ -384,13 +598,17 @@ class MediaLogger(commands.Cog):
         """Set the media log channel, run this command first"""
         # Check basic permissions first
         required_perms = {
-            'view_channel': True, 'send_messages': True, 'embed_links': True, 'attach_files': True, 'read_message_history': True
+            'view_channel': True,
+            'send_messages': True,
+            'embed_links': True,
+            'attach_files': True,
+            'read_message_history': True
         }
-        
+
         bot_perms = channel.permissions_for(ctx.guild.me)
         missing_perms = [perm for perm, required in required_perms.items() 
                         if required and not getattr(bot_perms, perm)]
-        
+
         if missing_perms:
             return await ctx.send(
                 f"❌ I'm missing required permissions in {channel.mention}:\n"
@@ -406,24 +624,24 @@ class MediaLogger(commands.Cog):
         )
         test_embed.set_thumbnail(url=CATEGORY_MAPPING['Media']['thumbnail'])
         test_embed.set_footer(text="This is a test message, it will be deleted shortly")
-        
+
         try:
             # Create a small test file in memory
             test_file = discord.File(
                 io.BytesIO(b"This is a test file for permission verification"),
                 filename="permission_test.txt"
             )
-            
+
             # Send test message
             test_msg = await channel.send(
                 embed=test_embed,
                 file=test_file
             )
-            
+
             # Clean up test message after short delay
             await asyncio.sleep(5)
             await test_msg.delete()
-            
+
         except discord.Forbidden as e:
             return await ctx.send(
                 f"❌ Permission verification failed in {channel.mention}:\n"
@@ -448,7 +666,7 @@ class MediaLogger(commands.Cog):
             upsert=True
         )
         await self.update_config_cache()
-        
+
         await ctx.send(
             f"✅ **Media log channel** successfully set to {channel.mention} by **{ctx.author.display_name}**\n"
             "*All required permissions were succesfully verified.*\n"
@@ -456,9 +674,9 @@ class MediaLogger(commands.Cog):
         )
 
     # ╔════════════════════════════════════════════════════════════╗
-    # ║                       MEDIALOGIGNORE                       ║
+    # ║░░░░░░░░░░░░░░░░░░░░░░░MEDIALOGIGNORE░░░░░░░░░░░░░░░░░░░░░░░║
     # ╠════════════════════╦══════════════════╦════════════════════╣
-    # ╠════════════════════╣ DISCORD COMMANDS ╠════════════════════╣
+    # ╠════════════════════╣░DISCORD░COMMANDS░╠════════════════════╣
     # ╚════════════════════╩══════════════════╩════════════════════╝
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
     @commands.command()
@@ -475,15 +693,16 @@ class MediaLogger(commands.Cog):
         await ctx.send(f'📦 {action} {channel.mention} {"from" if action == "Removed" else "to"} ignore list.')
 
     # ╔════════════════════════════════════════════════════════════╗
-    # ║                          MEDIALOG                          ║
+    # ║░░░░░░░░░░░░░░░░░░░░░░░░░░MEDIALOG░░░░░░░░░░░░░░░░░░░░░░░░░░║
     # ╠════════════════════╦══════════════════╦════════════════════╣
-    # ╠════════════════════╣ DISCORD COMMANDS ╠════════════════════╣
+    # ╠════════════════════╣░DISCORD░COMMANDS░╠════════════════════╣
     # ╚════════════════════╩══════════════════╩════════════════════╝
     @checks.has_permissions(PermissionLevel.MODERATOR)
     @commands.command()
     @commands.guild_only()
     async def medialog(self, ctx):
         """View current media logging settings
+
         - `setmedialogchannel` - Set the media log channel
         - `medialogtracking` - Set channel tracking mode
         - `medialogtypes` - Toggle which filetypes to log
@@ -498,6 +717,7 @@ class MediaLogger(commands.Cog):
         - `medialog` - View current media logging settings
         - `medialoggerstats` - View detailed statistics
         """
+
 
         config = await self.get_config()
         allowed = config.get("allowed_types", DEFAULT_MEDIA_TYPES)
@@ -524,10 +744,10 @@ class MediaLogger(commands.Cog):
             value=", ".join(f"<#{c}>" for c in ignored) or "None",
             inline=False
         )
-        
+
         enabled_types = [ext for ext, enabled in allowed.items() if enabled]
         disabled_types = [ext for ext, enabled in allowed.items() if not enabled]
-        
+
         embed.add_field(
             name="💾 Enabled Filetypes",
             value=" ".join(f"`{ext}`" for ext in enabled_types) or "None",
@@ -549,9 +769,9 @@ class MediaLogger(commands.Cog):
         await ctx.send(embed=embed)
 
     # ╔════════════════════════════════════════════════════════════╗
-    # ║                     MEDIALOGTOGGLEBOTS                     ║
+    # ║░░░░░░░░░░░░░░░░░░░░░MEDIALOGTOGGLEBOTS░░░░░░░░░░░░░░░░░░░░░║
     # ╠════════════════════╦══════════════════╦════════════════════╣
-    # ╠════════════════════╣ DISCORD COMMANDS ╠════════════════════╣
+    # ╠════════════════════╣░DISCORD░COMMANDS░╠════════════════════╣
     # ╚════════════════════╩══════════════════╩════════════════════╝
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
     @commands.command()
@@ -569,9 +789,9 @@ class MediaLogger(commands.Cog):
         await ctx.send(f"🤖 Logging bot media is now {'enabled ✅' if not current else 'disabled ❎'}.")
 
     # ╔════════════════════════════════════════════════════════════╗
-    # ║                      MEDIALOGTOGTYPES                      ║
+    # ║░░░░░░░░░░░░░░░░░░░░░░MEDIALOGTOGTYPES░░░░░░░░░░░░░░░░░░░░░░║
     # ╠════════════════════╦══════════════════╦════════════════════╣
-    # ╠════════════════════╣ DISCORD COMMANDS ╠════════════════════╣
+    # ╠════════════════════╣░DISCORD░COMMANDS░╠════════════════════╣
     # ╚════════════════════╩══════════════════╩════════════════════╝
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
     @commands.command()
@@ -583,12 +803,13 @@ class MediaLogger(commands.Cog):
         types = config.get("allowed_types", DEFAULT_MEDIA_TYPES.copy())
 
         view = FiletypePaginator(self, ctx, types)
-        view.message = await ctx.send("💾 Select filetypes to log:", embed=view.create_embed(), view=view)
+        view.message = await ctx.send(embed=view.create_embed(), view=view)
+
 
     # ╔════════════════════════════════════════════════════════════╗
-    # ║                       MEDIALOGGONFIG                       ║
+    # ║░░░░░░░░░░░░░░░░░░░░░░░MEDIALOGGONFIG░░░░░░░░░░░░░░░░░░░░░░░║
     # ╠════════════════════╦══════════════════╦════════════════════╣
-    # ╠════════════════════╣ DISCORD COMMANDS ╠════════════════════╣
+    # ╠════════════════════╣░DISCORD░COMMANDS░╠════════════════════╣
     # ╚════════════════════╩══════════════════╩════════════════════╝
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
     @commands.group(invoke_without_command=True)
@@ -598,16 +819,16 @@ class MediaLogger(commands.Cog):
         config = await self.get_config()
         current = config.get("advanced_tracking", ctx.guild.member_count < self.stats_threshold)
         force_enabled = config.get("force_enabled", False)
-        
+
         embed = discord.Embed(
             title="🎛️ Media Logger Configuration",
             color=self.bot.main_color
         )
-        
+
         status = "✅ Enabled" if current else "❎ Disabled"
         if force_enabled:
             status += " (⚠️ Force-enabled)"
-        
+
         embed.add_field(
             name="🚥 Current Status",
             value=status,
@@ -628,9 +849,9 @@ class MediaLogger(commands.Cog):
         await ctx.send(embed=embed)
 
     # ╔════════════════════════════════════════════════════════════╗
-    # ║                    MEDIALOGCONFIG.ENABLE                   ║
+    # ║░░░░░░░░░░░░░░░░░░░░MEDIALOGCONFIG.ENABLE░░░░░░░░░░░░░░░░░░░║
     # ╠════════════════════╦══════════════════╦════════════════════╣
-    # ╠════════════════════╣ DISCORD COMMANDS ╠════════════════════╣
+    # ╠════════════════════╣░DISCORD░COMMANDS░╠════════════════════╣
     # ╚════════════════════╩══════════════════╩════════════════════╝
     @medialogconfig.command()
     async def enable(self, ctx):
@@ -641,14 +862,14 @@ class MediaLogger(commands.Cog):
                 f"Advanced tracking is not recommended above {self.stats_threshold} members.\n\n"
                 f"Use `{ctx.prefix}medialogconfig force_enable` to override."
             )
-        
+
         await self._update_config(True, False)
         await ctx.send(f"✅ Advanced tracking enabled by **{ctx.author.display_name}** using normal configuration.")
 
     # ╔════════════════════════════════════════════════════════════╗
-    # ║                   MEDIALOGCONFIG.DISABLE                   ║
+    # ║░░░░░░░░░░░░░░░░░░░MEDIALOGCONFIG.DISABLE░░░░░░░░░░░░░░░░░░░║
     # ╠════════════════════╦══════════════════╦════════════════════╣
-    # ╠════════════════════╣ DISCORD COMMANDS ╠════════════════════╣
+    # ╠════════════════════╣░DISCORD░COMMANDS░╠════════════════════╣
     # ╚════════════════════╩══════════════════╩════════════════════╝
     @medialogconfig.command()
     async def disable(self, ctx):
@@ -659,9 +880,9 @@ class MediaLogger(commands.Cog):
         await ctx.send("❎ Advanced tracking disabled by **{ctx.author.display_name}** using normal configuration.")
 
     # ╔════════════════════════════════════════════════════════════╗
-    # ║                MEDIALOGCONFIG.FORCE_ENABLE                 ║
+    # ║░░░░░░░░░░░░░░░░MEDIALOGCONFIG.FORCE_ENABLE░░░░░░░░░░░░░░░░░║
     # ╠════════════════════╦══════════════════╦════════════════════╣
-    # ╠════════════════════╣ DISCORD COMMANDS ╠════════════════════╣
+    # ╠════════════════════╣░DISCORD░COMMANDS░╠════════════════════╣
     # ╚════════════════════╩══════════════════╩════════════════════╝
     @medialogconfig.command()
     @checks.has_permissions(PermissionLevel.OWNER)
@@ -675,9 +896,9 @@ class MediaLogger(commands.Cog):
         )
 
     # ╔════════════════════════════════════════════════════════════╗
-    # ║                MEDIALOGCONFIG.FORCE_DISABLE                ║
+    # ║░░░░░░░░░░░░░░░░MEDIALOGCONFIG.FORCE_DISABLE░░░░░░░░░░░░░░░░║
     # ╠════════════════════╦══════════════════╦════════════════════╣
-    # ╠════════════════════╣ DISCORD COMMANDS ╠════════════════════╣
+    # ╠════════════════════╣░DISCORD░COMMANDS░╠════════════════════╣
     # ╚════════════════════╩══════════════════╩════════════════════╝
     @medialogconfig.command()
     @checks.has_permissions(PermissionLevel.OWNER)
@@ -701,9 +922,9 @@ class MediaLogger(commands.Cog):
         await self.update_config_cache()
 
     # ╔════════════════════════════════════════════════════════════╗
-    # ║                      MEDIALOGGERSTATS                      ║
+    # ║░░░░░░░░░░░░░░░░░░░░░░MEDIALOGGERSTATS░░░░░░░░░░░░░░░░░░░░░░║
     # ╠════════════════════╦══════════════════╦════════════════════╣
-    # ╠════════════════════╣ DISCORD COMMANDS ╠════════════════════╣
+    # ╠════════════════════╣░DISCORD░COMMANDS░╠════════════════════╣
     # ╚════════════════════╩══════════════════╩════════════════════╝
     @checks.has_permissions(PermissionLevel.MODERATOR)
     @commands.command()
@@ -713,22 +934,22 @@ class MediaLogger(commands.Cog):
         """View detailed media statistics for a user (or yourself)"""
         target_user = user or ctx.author
         config = await self.get_config()
-        
+
         # Only show stats if advanced tracking is enabled for this server
         if ctx.guild.member_count >= self.stats_threshold:
             return await ctx.send("ℹ️ Advanced statistics tracking is disabled for large servers.")
-        
+
         user_data = self.user_stats.get(str(target_user.id))
         if not user_data:
             return await ctx.send(f"📊 No media statistics found for {target_user.display_name}.")
-        
+
         # Calculate top file types
         top_types = sorted(
             user_data['type_stats'].items(),
             key=lambda x: x[1],
             reverse=True
         )[:5]
-        
+
         # Calculate top channels
         top_channels = sorted(
             user_data['channel_stats'].items(),
@@ -742,7 +963,7 @@ class MediaLogger(commands.Cog):
             description=f"🛒 Total attachments sent: **{user_data.get('uploads', 0)}**",
             color=self.bot.main_color
         )
-        
+
         # Add file type distribution
         type_field = "\n".join(f"{ext}: {count}" for ext, count in top_types)
         embed.add_field(
@@ -750,7 +971,7 @@ class MediaLogger(commands.Cog):
             value=type_field or "🚧 No file type data",
             inline=True
         )
-        
+
         # Add channel distribution
         channel_field = "\n".join(f"<#{cid}>: {count}" for cid, count in top_channels)
         embed.add_field(
@@ -758,36 +979,36 @@ class MediaLogger(commands.Cog):
             value=channel_field or "🚧 No channel data",
             inline=True
         )
-        
+
         # Add activity info
         embed.add_field(
             name="⏱️ Last Activity",
             value=f"<t:{int(user_data['last_upload'].timestamp())}:R>",
             inline=False
         )
-        
+
         embed.set_footer(text=f"👤 User ID: {target_user.id}")
         embed.set_thumbnail(url=target_user.display_avatar.url)
         
         await ctx.send(embed=embed)
 
     # ╔════════════════════════════════════════════════════════════╗
-    # ║                      MEDIALOGTRACKING                      ║
+    # ║░░░░░░░░░░░░░░░░░░░░░░MEDIALOGTRACKING░░░░░░░░░░░░░░░░░░░░░░║
     # ╠════════════════════╦══════════════════╦════════════════════╣
-    # ╠════════════════════╣ DISCORD COMMANDS ╠════════════════════╣
+    # ╠════════════════════╣░DISCORD░COMMANDS░╠════════════════════╣
     # ╚════════════════════╩══════════════════╩════════════════════╝
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
     @commands.command()
     async def medialogtracking(self, ctx, mode: str):
         """Set channel tracking mode (opt-in or all).
-        
+
         Options:
         - `all`: Track all channels except ignored ones
         - `opt-in`: Only track explicitly listed channels
         """
         if mode.lower() not in ('all', 'opt-in'):
             return await ctx.send("Invalid mode. Use `all` or `opt-in`.")
-        
+
         await self.db.find_one_and_update(
             {'_id': 'config'},
             {'$set': {'channel_tracking': mode.lower()}},
@@ -797,9 +1018,9 @@ class MediaLogger(commands.Cog):
         await ctx.send(f"Channel tracking set to `{mode.lower()}` mode.")
 
     # ╔════════════════════════════════════════════════════════════╗
-    # ║                     MEDIALOGADDCHANNEL                     ║
+    # ║░░░░░░░░░░░░░░░░░░░░░MEDIALOGADDCHANNEL░░░░░░░░░░░░░░░░░░░░░║
     # ╠════════════════════╦══════════════════╦════════════════════╣
-    # ╠════════════════════╣ DISCORD COMMANDS ╠════════════════════╣
+    # ╠════════════════════╣░DISCORD░COMMANDS░╠════════════════════╣
     # ╚════════════════════╩══════════════════╩════════════════════╝
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
     @commands.command()
@@ -808,7 +1029,7 @@ class MediaLogger(commands.Cog):
         config = await self.get_config()
         if config.get('channel_tracking', 'all') != 'opt-in':
             return await ctx.send("Channel tracking is not in opt-in mode.")
-        
+
         await self.db.find_one_and_update(
             {'_id': 'config'},
             {'$addToSet': {'tracked_channels': str(channel.id)}},
