@@ -37,7 +37,7 @@ from core.models import PermissionLevel
 __original__ = "code inspired by @fourjr media-logger"
 __source__ = "https://github.com/fourjr/modmail-plugins/blob/v4/media-logger/media-logger.py"
 __author__ = "WebKide"
-__version__ = "0.1.5"
+__version__ = "0.1.6"
 __codename__ = "media-logger"
 __copyright__ = "MIT License 2020-2025"
 __description__ = "Enhanced Modmail plugin for media logging with smart user tracking"
@@ -173,7 +173,7 @@ class FiletypePaginator(View):
         embed = discord.Embed(
             title=f"💾 {category} Filetypes",
             description="(Menu Expired)",
-            colour=self.cog.bot.light_grey()
+            colour=discord.Color.light_grey()
         ).add_field(
             name='✅ **Enabled:**',
             value=' '.join(f'`{e}`' for e in enabled) or 'None',
@@ -220,6 +220,7 @@ class MediaLogger(commands.Cog):
         self.stats_threshold = 1000  # Member count threshold for tracking
         
         # Start background tasks
+        self.tracked_messages = set()
         self.clean_stats.start()
         self.save_stats_to_db.start()
 
@@ -426,12 +427,18 @@ class MediaLogger(commands.Cog):
                 if v['last_upload'] >= cutoff
             }
 
+    async def load_tracked_messages(self):
+        """Load tracked messages from database on startup"""
+        data = await self.db.find_one({'_id': 'tracked_messages'}) or {}
+        self.tracked_messages = {int(k) for k in data.keys() if k != '_id'}
+
     # ┌──────────────────────┬──────────────┬──────────────────────┐
     # ├──────────────────────┤ COG_LISTENER ├──────────────────────┤
     # └──────────────────────┴──────────────┴──────────────────────┘
     @commands.Cog.listener()
     async def on_ready(self):
         await self.load_stats_from_db()
+        await self.load_tracked_messages()
 
     # ┌──────────────────────┬──────────────┬──────────────────────┐
     # ├──────────────────────┤ COG_LISTENER ├──────────────────────┤
@@ -585,6 +592,58 @@ class MediaLogger(commands.Cog):
                 print(f"Failed to log media from message {message.id}: {e}")
         except Exception as e:
             print(f"Unexpected error logging media: {e}")
+
+        if valid_attachments:
+            # Store message ID for deletion tracking
+            self.tracked_messages.add(message.id)
+
+            # Update database with message tracking
+            await self.db.find_one_and_update(
+                {'_id': 'tracked_messages'},
+                {'$set': {
+                    str(message.id): {
+                        'user_id': str(message.author.id),
+                        'count': len(valid_attachments),
+                        'timestamp': message.created_at.timestamp()
+                    }
+                }},
+                upsert=True
+            )
+
+    # ┌──────────────────────┬──────────────┬──────────────────────┐
+    # ├──────────────────────┤ COG_LISTENER ├──────────────────────┤
+    # └──────────────────────┴──────────────┴──────────────────────┘
+    @commands.Cog.listener()
+    async def on_message_delete(self, message):
+        """Handle deleted messages with tracked attachments"""
+        if message.id not in self.tracked_messages:
+            return
+
+        # Get deletion data from database
+        tracked_data = await self.db.find_one(
+            {'_id': 'tracked_messages'},
+            {str(message.id): 1}
+        ) or {}
+
+        if not tracked_data.get(str(message.id)):
+            return
+
+        # Extract tracking info
+        user_id = tracked_data[str(message.id)]['user_id']
+        count = tracked_data[str(message.id)]['count']
+
+        # Update statistics
+        self.server_stats['total_deletes'] += count
+
+        if user_id in self.user_stats:
+            self.user_stats[user_id]['deletes'] += count
+
+        # Cleanup database
+        await self.db.find_one_and_update(
+            {'_id': 'tracked_messages'},
+            {'$unset': {str(message.id): ""}}
+        )
+        self.tracked_messages.discard(message.id)
 
     # ╔════════════════════════════════════════════════════════════╗
     # ║░░░░░░░░░░░░░░░░░░░░░SETMEDIALOGCHANNEL░░░░░░░░░░░░░░░░░░░░░║
