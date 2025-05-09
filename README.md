@@ -1,6 +1,6 @@
 <div align="center">
 <h1>「modmail-plugins」</h1>
-<p><b><i>plugins to expand Modmail2020's functionality 🍆💦🍑</i></b></p>
+<p><b><i>plugins to expand Modmail's functionality. 2020-2025 🍆💦🍑</i></b></p>
 </div>
 
 
@@ -13,138 +13,41 @@
 <br><br>
 </div>
 
-> 🔸 by default the prefix is `?` followed by a command: `?calc` but if you changed the prefix, then replace `{p}` with your custom prefix: `{p}calc` becomes `b!calc` if your new prefix is `b!`
+> 🔸 by default the prefix is `?` unless you changed it
 
 
 - - - -
 
-## .:: 1 Calculator ::. ##
-🔸 <b>Installation</b>: `{p}plugin add WebKide/modmail-plugins/calculator@master`
+# modmail-plugins by [WebKide](https://github.com/WebKide/modmail-plugins/)
+Variety of plugins for Modmail (discord.py v2.x)
 
-- [x] `{p}calc` — powerful calculator command, supports addition, substraction, multiplication, division, PEMDAS...
-#### Usage and examples ####
-|    **operation**  	 	|    **usage example**  	 	|    **result output**    |
-|:-----------------------:	|:-----------------------:	|:----------------------:	|
-|  addition  |  `{p}calc 2+5`  |    7.0    |
-|  substraction  |  `{p}calc 8 - 5.7`  |    2.3    |
-|  multiplication  |  `{p}calc 7 x 5`  |    35.0    |
-|  division  |  `{p}calc 9/4`  |    2.25    |
-|  PEMDAS  |  `{p}calc 6 /2 x (1+ 2) `  |    9.0    |
-|  long operation  |  `{p}calc 1,000+40 +1,000+30+ 1,000+20+1,000+10`  |    4100.0    |
-|  round()  |  `{p}calc round(9 - 3 / (1/3)+1)`  |    1    |
-|  exponent  |  `{p}calc (7^3)+(5x7)+6/6`  |    379.0    |
-|  π  |  `{p}calc 23 * 2 * PI`  |    144.51    |
-|  E  |  `{p}calc E ^ 2 * 50.13`  |    370.41    |
-|  trig  | `{p}calc sin(30)*cos(45)*tan(-264)`  |    -0.06    |
-|  trig  | `{p}calc sec(102.5)*csc(432)*cot(-23.45)`  |    -0.0    |
+# Plugin overview
 
+| Plugin                                                                                        | Status     | Install Command                                            | Notes                                 |
+|-----------------------------------------------------------------------------------------------|------------|------------------------------------------------------------|---------------------------------------|
+| [**ani**](https://github.com/WebKide/modmail-plugins/tree/master/ani)                         | stable     | ?plugin add WebKide/modmail-plugins/ani@master             | search - Anime, manga, and characters |
+| [**asitis**](https://github.com/WebKide/modmail-plugins/tree/master/asitis)                   | stable     | ?plugin add WebKide/modmail-plugins/asitis@master          | interactive verse retrieval system    |
+| [**bhagavadgita**](https://github.com/WebKide/modmail-plugins/tree/master/bhagavadgita)       | beta       | ?plugin add WebKide/modmail-plugins/bhagavadgita@master    | HTTP request for verses vedabase.io   |
+| [**calculator**](https://github.com/WebKide/modmail-plugins/tree/master/calculator)           | stable     | ?plugin add WebKide/modmail-plugins/calculator@master      | very flexible and powerful calculator |
+| [**dm_on_join**](https://github.com/WebKide/modmail-plugins/tree/master/dm_on_join)           | stable     | ?plugin add WebKide/modmail-plugins/dm_on_join@master      | send a message to a user upon joining |
+| [**games**](https://github.com/WebKide/modmail-plugins/tree/master/games)                     | stable     | ?plugin add WebKide/modmail-plugins/games@master           | Text based games and oracles          |
+| [**Html2Json**](https://github.com/WebKide/modmail-plugins/tree/master/html2json)             | beta       | ?plugin add WebKide/modmail-plugins/html2json@master       | to convert HTML to JSON for asitis    |
+| [**media-logger**](https://github.com/WebKide/modmail-plugins/tree/master/media-logger)       | stable     | ?plugin add WebKide/modmail-plugins/media-logger@master    | Advanced Media Tracking for Modmail   |
+| [**misc**](https://github.com/WebKide/modmail-plugins/tree/master/misc)                       | stable     | ?plugin add WebKide/modmail-plugins/misc@master            | Moderation tools & utility functions  |
+| [**on_message**](https://github.com/WebKide/modmail-plugins/tree/master/on_message)           | stable     | ?plugin add webkide/modmail-plugins/on_message@master      | I'm dad                               |
+| [**oracle**](https://github.com/WebKide/modmail-plugins/tree/master/oracle)                   | deprecated | ?plugin add WebKide/modmail-plugins/oracle@master          | commands moved to **games** plugin    |
+| [**private-plugins**](https://github.com/WebKide/modmail-plugins/tree/master/private-plugins) | beta       | ?plugin add WebKide/modmail-plugins/private-plugins@master | instal private plugins with token     |
+| [**private**](https://github.com/WebKide/modmail-plugins/tree/master/private)                 | stable     | ?plugin add WebKide/modmail-plugins/private@master         | not for you, only works on my server  |
+| [**remindme**](https://github.com/WebKide/modmail-plugins/tree/master/remindme)               | beta       | ?plugin add WebKide/modmail-plugins/remindme@master        | reminder for events and notes         |
+| [**remindmepro**](https://github.com/WebKide/modmail-plugins/tree/master/remindmepro)         | beta       | ?plugin add WebKide/modmail-plugins/remindmepro@master     | reminder, still hunting for bugs      |
+| [**rolereact**](https://github.com/WebKide/modmail-plugins/tree/master/rolereact)             | stable     | ?plugin add WebKide/modmail-plugins/rolereact@master       | react to message to get a role        |
+| [**slokas**](https://github.com/WebKide/modmail-plugins/tree/master/slokas)                   | beta       | ?plugin add WebKide/modmail-plugins/slokas@master          | under production and testing          |
+| [**starboard**](https://github.com/WebKide/modmail-plugins/tree/master/starboard)             | stable     | ?plugin add WebKide/modmail-plugins/starboard@master       | system to highlight starred messages  |
+| [**statsboard**](https://github.com/WebKide/modmail-plugins/tree/master/statsboard)           | beta       | ?plugin add WebKide/modmail-plugins/statsboard@master      | system to monitor server stats        |
+| [**timezone**](https://github.com/WebKide/modmail-plugins/tree/master/timezone)               | stable     | ?plugin add WebKide/modmail-plugins/timezone@master        | check multiple timezones in embed     |
+| [**transform**](https://github.com/WebKide/modmail-plugins/tree/master/transform)             | stable     | ?plugin add WebKide/modmail-plugins/transform@master       | various text transformation utilities |
+| [**translate**](https://github.com/WebKide/modmail-plugins/tree/master/translate)             | beta       | ?plugins add WebKide/modmail-plugins/translate             | translate various languages           |
+| [**util**](https://github.com/WebKide/modmail-plugins/tree/master/util)                       | beta       | ?plugin add WebKide/modmail-plugins/util@master            | Show Bot's env stats                  |
+| [**vedabase**](https://github.com/WebKide/modmail-plugins/tree/master/vedabase)               | beta       | ?plugin add WebKide/modmail-plugins/vedabase@master        | check vedabase for verses             |
+| [**wordmeaning**](https://github.com/WebKide/modmail-plugins/tree/master/wordmeaning)         | stable     | ?plugin add webkide/modmail-plugins/wordmeaning@master     | wikipedia, urbandictionary, oxford    |
 
-> as you can see, this calculator is very <i>flexible</i> and <b>powerful</b>
-
-- - - -
-<br>
-
-## .:: 2 Misc* ::. ##
-🔸 <b>Installation</b>: `{p}plugin add WebKide/modmail-plugins/misc@master`
-
-- [x] <b>`role`</b> - group commands to add/remove role to user
-- [x] <b>`g`</b> - Send a msg to another channel
-- [x] <b>`hackban`</b> - Ban someone using ID
-- [ ] <b>`logo`</b> - Change Bot's avatar img
-- [ ] <b>`name`</b> - Change Bot's name
-- [x] <b>`purge`</b> - Delete a number of messages
-- [x] <b>`sauce`</b> - Show source code for any command
-- [x] <b>`say`</b> - Bot sends message
-- [x] <b>`sayd`</b> - Sends message and deletes original
-- - - -
-<br>
-
-## .:: 3 on_message ::. ##
-🔸 <b>Installation</b>: `{p}plugin add webkide/modmail-plugins/on_message@master`
-
-- [x] bot responds to matching `[str]` in messages starting with "I am"
-- - - -
-<br>
-
-## .:: 4 Translate ::. ##
-🔸 <b>Installation</b>: `{p}plugin add WebKide/modmail-plugins/translate`
-
-- [x] `{p}tr langs` — list of supported/available languages
-- [x] `{p}tr <Language> <message>` — translate text from one language to another
-- [x] `{p}tt <message>` — translate text from any language to English inside ticket threads
-- [x] `{p}tat` — toggle (on/off) auto translate to English inside ticket threads
-- [x] `{p}att` — auto translate text from any language to English inside ticket threads
-- [ ] `{p}tr {default_english}` — defaults translation to English if no target language is provided
-- - - -
-<br>
-
-## .:: 5 Oracle ::. ##
-🔸 <b>Installation</b>: `{p}plugin add WebKide/modmail-plugins/oracle@master`
-
-- [x] `{p}8ball <question?>`
-- [x] `{p}iching <question?>`
-- [x] `{p}tarot reading`
-- - - -
-<br>
-
-## .:: 6 Timezone ::. ##
-🔸 <b>Installation</b>: `{p}plugin add WebKide/modmail-plugins/timezone@master`
-
-- [x] `{p}tz :flag_gb:` — get timezone using a flag
-- [x] `{p}tz EST` — get timezone using abbreviation
-- [x] `{p}tz Mexico` — get timezone usinc country
-- - - -
-<br>
-
-## .:: 7 TextGames ::. ##
-🔸 <b>Installation</b>: `{p}plugin add WebKide/modmail-plugins/textgames@master`
-
-- [x] `choose` — Choose an item from a list.
-- [x] `flip` — Flips a coin... or some text.
-- [x] `guess` — Guess a number between 1 and 11
-- [x] `settle` — Play: rock paper scissors lizard spock
-- [ ] `score` — database to record wins, losses, and draws per command
-- - - -
-<br>
-
-## .:: 8 Transform ::. ##
-🔸 <b>Installation</b>: `{p}plugin add WebKide/modmail-plugins/transform@master`
-
-- [x] `{p}charinfo <🍆>` - Return UNICODE characters for emoji `\U0001f346` or character `\N{AUBERGINE}`
-- [x] `{p}clap [message]` - Clap 👏 that 👏 message!
-- [x] `{p}pray [message]` - Pray 🙏 that 🙏 message!
-- [x] `{p}tiny [text]` - Convert any text into ᵗⁱⁿʸ text
-- [x] `{p}wordai` - Generate words (fantasy names) artificially
-- [ ] `{p}zalgo [name]` - <i>eye-rape</i> unreadable text
-- - - -
-<br>
-
-## .:: 9 WordMeaning ::. ##
-🔸 <b>Installation</b>: `{p}plugin add webkide/modmail-plugins/wordmeaning@master`
-
-Modmail-plugins to find definitions of English words in Wikipedia, UrbanDictionary, and Oxford English Dictionary
-
-- [x] **`dict`** - Search definitions in English, supports **[synonyms|proverbs|examples]** as arguments
-- [x] **`urban`** - Urban Dictionary search, fetches up to 10 results per query
-- [x] **`wiki`** - Wikipedia search command that displays the abstract of the result
-
-> `{p}` will be your guild's prefix, by default it is **`?`** unless you changed it
-- - - -
-<br>
-
-### .:: 10 Starboard2 ::. ###
-- [ ] have to fix so it uses db correctly
-- - - -
-<br>
-
-### .:: 11 Presence ::. ###
-- [ ] there's already a command that works, but I might add one to loop a list of presence statuses
-- - - -
-- - - -
-<br>
-
-# .:: TO-DO ::. #
-
-At some point I might do these, or some other ones, it all depends on how bored I am...
-
-> `youtube`, `show_color`, `$modbot`, `Base` (`bg`, `sb`, `cc`, `search_group`)
