@@ -37,7 +37,7 @@ from core.models import PermissionLevel
 __original__ = "code inspired by @fourjr media-logger"
 __source__ = "https://github.com/fourjr/modmail-plugins/blob/v4/media-logger/media-logger.py"
 __author__ = "WebKide"
-__version__ = "0.2.11"
+__version__ = "0.2.12"
 __codename__ = "media-logger"
 __copyright__ = "MIT License 2020-2025"
 __description__ = "Enhanced Modmail plugin for media logging with smart user tracking"
@@ -1129,6 +1129,7 @@ class MediaLogger(commands.Cog):
             inline=False
         )
 
+        embed.set_thumbnail(url=CATEGORY_MAPPING['Media']['thumbnail'])
         embed.set_footer(
             text=f"Version {__version__} | Use {ctx.prefix}help [command] for details"
         )
