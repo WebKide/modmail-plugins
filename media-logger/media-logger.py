@@ -37,7 +37,7 @@ from core.models import PermissionLevel
 __original__ = "code inspired by @fourjr media-logger plugin"
 __source__ = "https://github.com/fourjr/modmail-plugins/blob/v4/media-logger/media-logger.py"
 __author__ = "WebKide"
-__version__ = "0.2.15"
+__version__ = "0.2.16"
 __codename__ = "media-logger"
 __copyright__ = "MIT License 2020-2025"
 __description__ = "Enhanced Modmail plugin for media logging with smart user tracking"
@@ -701,7 +701,7 @@ class MediaLogger(commands.Cog):
                 "Please try again or contact support."
             )
 
-        # If we get here, permissions are good - save the channel
+        # If we get here, permissions are good — save the channel
         await self.db.find_one_and_update(
             {'_id': 'config'},
             {'$set': {
@@ -716,7 +716,7 @@ class MediaLogger(commands.Cog):
         await ctx.send(
             f"✅ **Media log channel** successfully set to {channel.mention} by **{ctx.author.display_name}**\n"
             "*All required permissions were succesfully verified.*\n"
-            f"Next: `{ctx.prefix}medialogtracking` - to set channel tracking mode"
+            f"Next: `{ctx.prefix}medialogtracking` — to set channel tracking mode"
         )
 
     # ╔════════════════════════════════════════════════════════════╗
@@ -745,20 +745,20 @@ class MediaLogger(commands.Cog):
     async def medialog(self, ctx):
         """View current media logging settings
         For set-up and more functionality
-        - `medialogabout` - Info and disclaimer
-        - `setmedialogchannel` - Set the media log channel
-        - `medialogtracking` - Set channel tracking mode
-        - `medialogtypes` - Toggle which filetypes to log
-        - `medialogtogglebots` - Log media from bots too?
-        - `medialogconfig` - Media logger configuration
-          ├─ `enable` - Enable advanced tracking
-          ├─ `disable` - Disable advanced tracking
-          ├─ `force_enable` - Bypass server-size check
-          └─ `force_disable` - Disable bypass
-        - `medialogaddchannel` - Opt-in a channel
-        - `medialogignore` - Ignore status for channel
-        - `medialog` - View current media logging settings
-        - `medialoggerstats` - View detailed statistics
+        - `medialogabout` — Info and disclaimer
+        - `setmedialogchannel` — Set the media log channel
+        - `medialogtracking` — Set channel tracking mode
+        - `medialogtypes` — Toggle which filetypes to log
+        - `medialogtogglebots` — Log media from bots too?
+        - `medialogconfig` — Media logger configuration
+          ├─ `enable` — Enable advanced tracking
+          ├─ `disable` — Disable advanced tracking
+          ├─ `force_enable` — Bypass server-size check
+          └─ `force_disable` — Disable bypass
+        - `medialogaddchannel` — Opt-in a channel
+        - `medialogignore` — Ignore status for channel
+        - `medialog` — View current media logging settings
+        - `medialoggerstats` — View detailed statistics
         """
 
         config = await self.get_config()
@@ -1076,12 +1076,13 @@ class MediaLogger(commands.Cog):
         ext_list = " ".join(f"`{ext}`" for ext in enabled_exts) if enabled_exts else "*(None configured yet)*"
 
         embed = discord.Embed(
-            title="📁 Media Logger - About",
+            title="📁 Media Logger — About",
             description=(
-                f"{__description__}\n"
-                f"Logs attachments into a designated media-logger channel, {__original__}\n"
+                f"{__description__}. Advanced system to log attachments into "
+                f"a designated media-logger channel, {__original__}\n"
                 "```diff\n+ Privacy Note: Only monitors filetypes explicitly enabled\n"
-                "- Never stores file contents outside of Discord, only saves metadata in media-logger channel\n```"
+                "- Never stores file contents outside of Discord, it only saves "
+                "metadata in media-logger channel\n```"
                 f"**Currently logging:**\n{ext_list}"
             ),
             color=discord.Color.blurple()
@@ -1090,10 +1091,10 @@ class MediaLogger(commands.Cog):
         embed.add_field(
             name="⚙️ Setup Commands for Admins",
             value=(
-                "`setmedialogchannel` - Set logging channel\n"
-                "`medialogtracking` - Opt-in/global channel mode\n"
-                "`medialogaddchannel` - Whitelist specific channel\n"
-                "`medialogignore` - Blacklist a channel"
+                "`setmedialogchannel` — Set logging channel\n"
+                "`medialogtracking` — Opt-in/global channel mode\n"
+                "`medialogaddchannel` — Whitelist specific channel\n"
+                "`medialogignore` — Blacklist a channel"
             ),
             inline=False
         )
@@ -1101,12 +1102,12 @@ class MediaLogger(commands.Cog):
         embed.add_field(
             name="🎛️ Configuration for Admins",
             value=(
-                "`medialogtypes` - Toggle logged file extensions\n"
-                "`medialogtogglebots` - Enable bot media logging\n"
-                "`medialogconfig` - Advanced tracking settings:\n"
-                "　├─ `enable`/`disable` - Basic toggle\n"
-                "　├─ `force_enable` - Ignore size limits\n"
-                "　└─ `force_disable` - Enforce safety"
+                "`medialogtypes` — Toggle logged file extensions\n"
+                "`medialogtogglebots` — Enable bot media logging\n"
+                "`medialogconfig` — Advanced tracking settings:\n"
+                "　├─ `enable`/`disable` — Basic toggle\n"
+                "　├─ `force_enable` — Ignore size limits\n"
+                "　└─ `force_disable` — Enforce safety"
             ),
             inline=False
         )
@@ -1114,9 +1115,9 @@ class MediaLogger(commands.Cog):
         embed.add_field(
             name="📊 Statistics for Mods",
             value=(
-                "`medialog` - Current settings overview\n"
-                "`medialoggerstats` - User/channel analytics\n"
-                "`medialoggerstats [user]` - Individual reports"
+                "`medialog` — Current settings overview\n"
+                "`medialoggerstats` — User/channel analytics\n"
+                "`medialoggerstats [user]` — Individual reports"
             ),
             inline=False
         )
@@ -1124,7 +1125,7 @@ class MediaLogger(commands.Cog):
         embed.add_field(
             name="🗃️ Shows this notice for all users",
             value=(
-                "`medialogabout` - Info and disclaimer"
+                "`medialogabout` — Info and disclaimer"
             ),
             inline=False
         )
