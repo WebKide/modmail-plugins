@@ -354,7 +354,7 @@ class MediaLogger(commands.Cog):
             return await attachment.to_file()
         return await self.stream_attachment(attachment)
 
-    async def update_user_stats(self, user_id: str, attachments: list):
+    async def update_user_stats(self, user_id: str, channel: discord.TextChannel, attachments: list):
         """Update user stats with memory limits."""
         if len(self.user_stats) >= MAX_TRACKED_USERS:
             # Remove oldest user if bot is at capacity
