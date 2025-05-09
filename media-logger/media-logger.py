@@ -37,7 +37,7 @@ from core.models import PermissionLevel
 __original__ = "code inspired by @fourjr media-logger"
 __source__ = "https://github.com/fourjr/modmail-plugins/blob/v4/media-logger/media-logger.py"
 __author__ = "WebKide"
-__version__ = "0.2.0"
+__version__ = "0.2.01"
 __codename__ = "media-logger"
 __copyright__ = "MIT License 2020-2025"
 __description__ = "Enhanced Modmail plugin for media logging with smart user tracking"
@@ -542,7 +542,7 @@ class MediaLogger(commands.Cog):
             if images:
                 image_embed = embed.copy()
                 image_embed.title = f"🖼️ {len(images)} Image(s) Logged"
-                image_embed.description = "\n".join(
+                image_embed.description = "• " + "\n• ".join(
                     f"[{img.filename}]({img.url})" for img in images
                 )
                 # Use first image as thumbnail if available
@@ -554,7 +554,7 @@ class MediaLogger(commands.Cog):
             if documents:
                 doc_embed = embed.copy()
                 doc_embed.title = f"📄 {len(documents)} Document(s) Logged"
-                doc_embed.description = "\n".join(
+                doc_embed.description = "• " + "\n• ".join(
                     f"[{doc.filename}]({doc.url})" for doc in documents
                 )
                 await log_channel.send(embed=doc_embed)
@@ -572,7 +572,7 @@ class MediaLogger(commands.Cog):
         except discord.HTTPException as e:
             # Fallback to simple text logging if embeds fail
             try:
-                file_links = "\n".join(f"- {a.filename}: {a.url}" for a in valid_attachments)
+                file_links = "• " + "\n• ".join(f"- {a.filename}: {a.url}" for a in valid_attachments)
                 await log_channel.send(
                     f"📁 Files uploaded by {message.author} in {message.channel.mention}:\n"
                     f"{file_links}\n"
