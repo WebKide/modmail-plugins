@@ -37,7 +37,7 @@ from core.models import PermissionLevel
 __original__ = "code inspired by @fourjr media-logger"
 __source__ = "https://github.com/fourjr/modmail-plugins/blob/v4/media-logger/media-logger.py"
 __author__ = "WebKide"
-__version__ = "0.1.1"
+__version__ = "0.1.3"
 __codename__ = "media-logger"
 __copyright__ = "MIT License 2020-2025"
 __description__ = "Enhanced Modmail plugin for media logging with smart user tracking"
@@ -357,7 +357,6 @@ class MediaLogger(commands.Cog):
     async def update_user_stats(self, user_id: str, channel: discord.TextChannel, attachments: list):
         """Update user stats with memory limits."""
         if len(self.user_stats) >= MAX_TRACKED_USERS:
-            # Remove oldest user if bot is at capacity
             oldest_user = min(self.user_stats.items(), key=lambda x: x[1]['last_upload'])
             del self.user_stats[oldest_user[0]]
 
@@ -366,16 +365,22 @@ class MediaLogger(commands.Cog):
                 'uploads': 0,
                 'deletes': 0,
                 'last_upload': datetime.utcnow(),
-                'file_types': {}
+                'type_stats': defaultdict(int),
+                'channel_stats': defaultdict(int)
             }
 
         user_data = self.user_stats[user_id]
-        filetype = Path(attachment.filename).suffix.lower()
-        user_data["type_stats"][filetype] += 1
-        user_data["channel_stats"][str(channel.id)] += 1
+
+        # Process each attachment
+        for attachment in attachments:
+            filetype = Path(attachment.filename).suffix.lower()
+            user_data["type_stats"][filetype] += 1
+            user_data["channel_stats"][str(channel.id)] += 1
+
         user_data['uploads'] += len(attachments)
         user_data['last_upload'] = datetime.utcnow()
 
+        # Process attachments per batch
         for attachment in attachments:
             ext = '.' + attachment.filename.split('.')[-1].lower()
             user_data['file_types'][ext] = user_data['file_types'].get(ext, 0) + 1
