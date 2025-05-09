@@ -18,8 +18,32 @@
 ?plugin add WebKide/modmail-plugins/media-logger@master
 ```
 
+## 🎚️ Command Reference
+
+| Command | Description | Permission Level |
+|---------|-------------|------------------|
+| **⚙️ Setup Commands for Admins** | | |
+| `?setmedialogchannel` | Set media logging channel | Admin |
+| `?medialogtracking` | Set opt-in/global channel mode | Admin |
+| `?medialogaddchannel` | Whitelist specific channel | Admin |
+| `?medialogignore` | Blacklist a channel | Admin |
+| **🎛️ Configuration for Admins** | | |
+| `?medialogtypes` | Toggle monitored file extensions | Admin |
+| `?medialogtogglebots` | Enable/disable bot media logging | Admin |
+| `?medialogconfig enable` | Enable advanced tracking | Admin |
+| `?medialogconfig disable` | Disable advanced tracking | Admin |
+| `?medialogconfig force_enable` | Bypass server size limits | Owner |
+| `?medialogconfig force_disable` | Enforce safety limits | Owner |
+| **📊 Statistics for Mods** | | |
+| `?medialog` | Show current settings overview | Mod |
+| `?medialoggerstats` | Server-wide upload analytics | Mod |
+| `?medialoggerstats @user` | Individual user statistics | Mod |
+| **🗃️ Information** | | |
+| `?medialogabout` | Display plugin info/disclaimer | All Users |
+
 ## 🛠️ Configuration Guide
 
+---
 ### 🔹 For Small Servers (<1000 members)
 
 1. **Set your log channel**  
@@ -44,6 +68,7 @@
    - Use `?medialogstats @user` to view individual activity
    - Keep advanced tracking enabled
 
+---
 ### 🔹 For Large Servers (>1000 members)
 
 1. **Set your log channel**  
@@ -67,20 +92,11 @@
      ?medialogconfig disable
      ```
 
-## 🎚️ Command Reference
-
-| Command | Description | Permission Level |
-|---------|-------------|------------------|
-| `?setmedialogchannel #channel` | Set logging channel | Admin |
-| `?medialogtypes` | Configure file types | Admin |
-| `?medialogignore #channel` | Toggle channel ignore | Admin |
-| `?medialogstats @user` | View user upload stats | Mod |
-| `?medialogconfig enable/disable` | Toggle statistics | Admin |
-
+---
 ## 💡 Pro Tips
 
 1. **For art servers**: Enable all image types but disable archives
-2. **For document-heavy servers**: Focus on PDF/TXT files
+2. **For document-heavy servers**: Focus on PDF/DOC files
 3. **Use `?medialog`** to check your current configuration
 4. **Large servers**: Set tracking to "opt-in" mode for best performance
 
@@ -109,7 +125,7 @@
 - __original__ = "code inspired by @fourjr media-logger"
 - __source__ = "https://github.com/fourjr/modmail-plugins/blob/v4/media-logger/media-logger.py"
 - __author__ = "WebKide"
-- __version__ = "0.0.6"
+- __version__ = "0.2.11"
 - __codename__ = "media-logger"
 - __copyright__ = "MIT License 2020-2025"
 - __description__ = "Enhanced Modmail plugin for media logging with smart user tracking"
