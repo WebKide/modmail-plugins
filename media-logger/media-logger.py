@@ -37,7 +37,7 @@ from core.models import PermissionLevel
 __original__ = "code inspired by @fourjr media-logger"
 __source__ = "https://github.com/fourjr/modmail-plugins/blob/v4/media-logger/media-logger.py"
 __author__ = "WebKide"
-__version__ = "0.1.6"
+__version__ = "0.1.7"
 __codename__ = "media-logger"
 __copyright__ = "MIT License 2020-2025"
 __description__ = "Enhanced Modmail plugin for media logging with smart user tracking"
@@ -45,28 +45,28 @@ __installation__ = "!plugin add WebKide/modmail-plugins/media-logger@master"
 
 # Constants
 DEFAULT_MEDIA_TYPES = {
-    '.png': True, '.gif': True, '.jpg': True, '.jpeg': True, '.webm': True,
+    '.png': True, '.gif': True, '.jpg': True, '.jpeg': True, '.webp': True,
     '.pdf': False, '.txt': False, '.py': False, '.html': False, '.js': False,
-    '.json': False, '.md': False, '.css': False, '.mp3': False, '.mp4': False,
-    '.avi': False, '.mov': False, '.mkv': False, '.webv': False, '.zip': False,
-    '.rar': False, '.epub': False,
+    '.json': False, '.doc': False, '.css': False, '.mp3': False, '.mp4': False,
+    '.avi': False, '.mov': False, '.mkv': False, '.webm': False, '.zip': False,
+    '.rar': False, '.epub': False, '.docx': False, '.rtf': False, '.odt': False,
 }
 
 CATEGORY_MAPPING = {
     'Images': {
-        'exts': ['.png', '.gif', '.jpg', '.jpeg', '.webm'],
+        'exts': ['.png', '.gif', '.jpg', '.jpeg', '.webp'],
         'thumbnail': 'https://i.imgur.com/l9yCq6n.png'
     },
     'Documents': {
-        'exts': ['.pdf', '.txt', '.md', '.zip', '.rar', '.epub'],
+        'exts': ['.pdf', '.txt', '.doc', '.epub', '.docx', '.rtf', '.odt'],
         'thumbnail': 'https://i.imgur.com/qiOFtgt.png'
     },
     'Code': {
-        'exts': ['.py', '.html', '.js', '.json', '.css'],
+        'exts': ['.py', '.html', '.js', '.json', '.css', '.zip', '.rar'],
         'thumbnail': 'https://i.imgur.com/QWtGa8Q.png'
     },
     'Media': {
-        'exts': ['.mp3', '.mp4', '.avi', '.mov', '.mkv', '.webv'],
+        'exts': ['.mp3', '.mp4', '.avi', '.mov', '.mkv', '.webm'],
         'thumbnail': 'https://i.imgur.com/l2xJzbh.png'
     }
 }
