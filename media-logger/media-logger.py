@@ -37,7 +37,7 @@ from core.models import PermissionLevel
 __original__ = "code inspired by @fourjr media-logger"
 __source__ = "https://github.com/fourjr/modmail-plugins/blob/v4/media-logger/media-logger.py"
 __author__ = "WebKide"
-__version__ = "0.2.01"
+__version__ = "0.2.11"
 __codename__ = "media-logger"
 __copyright__ = "MIT License 2020-2025"
 __description__ = "Enhanced Modmail plugin for media logging with smart user tracking"
@@ -1023,6 +1023,7 @@ class MediaLogger(commands.Cog):
     # ╚════════════════════════════════════════════════════════════╝
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
     @commands.command()
+    @commands.guild_only()
     async def medialogtracking(self, ctx, mode: str):
         """Set channel tracking mode (opt-in or all).
 
@@ -1046,6 +1047,7 @@ class MediaLogger(commands.Cog):
     # ╚════════════════════════════════════════════════════════════╝
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
     @commands.command()
+    @commands.guild_only()
     async def medialogaddchannel(self, ctx, channel: discord.TextChannel):
         """Add a channel to the tracked list (opt-in mode only)."""
         config = await self.get_config()
@@ -1063,7 +1065,8 @@ class MediaLogger(commands.Cog):
     # ╔════════════════════════════════════════════════════════════╗
     # ║░░░░░░░░░░░░░░░░░░░░░░ MEDIALOGABOUT ░░░░░░░░░░░░░░░░░░░░░░░║
     # ╚════════════════════════════════════════════════════════════╝
-    @commands.command()
+    @commands.command(aliases=['medialoggerabout'])
+    @commands.guild_only()
     async def medialogabout(self, ctx):
         """Display plugin information and usage guide"""
         config = await self.get_config()
