@@ -17,467 +17,387 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-import discord, traceback, asyncio
-
+import discord
+import logging
+import asyncio
+from typing import Optional, Dict, Set
 from discord.ext import commands
 from discord import User
 from core import checks
 from core.models import PermissionLevel
 
-from mtranslate import translate
-from googletrans import Translator
+# Translation libraries (primary and fallback)
+try:
+    from deep_translator import GoogleTranslator  # Primary translator
+    HAS_DEEP_TRANSLATOR = True
+except ImportError:
+    HAS_DEEP_TRANSLATOR = False
+    from googletrans import Translator  # Fallback 1
+    from mtranslate import translate  # Fallback 2
 
+logger = logging.getLogger("Modmail")
 
-conv = {
-    "ab": "Abkhaz",
-    "aa": "Afar",
-    "af": "Afrikaans",
-    "ak": "Akan",
-    "sq": "Albanian",
-    "am": "Amharic",
-    "ar": "Arabic",
-    "an": "Aragonese",
-    "hy": "Armenian",
-    "as": "Assamese",
-    "av": "Avaric",
-    "ae": "Avestan",
-    "ay": "Aymara",
-    "az": "Azerbaijani",
-    "bm": "Bambara",
-    "ba": "Bashkir",
-    "eu": "Basque",
-    "be": "Belarusian",
-    "bn": "Bengali",
-    "bh": "Bihari",
-    "bi": "Bislama",
-    "bs": "Bosnian",
-    "br": "Breton",
-    "bg": "Bulgarian",
-    "my": "Burmese",
-    "ca": "Catalan",
-    "ch": "Chamorro",
-    "ce": "Chechen",
-    "ny": "Nyanja",
-    "zh": "Chinese",
-    "cv": "Chuvash",
-    "kw": "Cornish",
-    "co": "Corsican",
-    "cr": "Cree",
-    "hr": "Croatian",
-    "cs": "Czech",
-    "da": "Danish",
-    "dv": "Divehi",
-    "nl": "Dutch",
-    "dz": "Dzongkha",
-    "en": "English",
-    "eo": "Esperanto",
-    "et": "Estonian",
-    "ee": "Ewe",
-    "fo": "Faroese",
-    "fj": "Fijian",
-    "fi": "Finnish",
-    "fr": "French",
-    "ff": "Fula",
-    "gl": "Galician",
-    "ka": "Georgian",
-    "de": "German",
-    "el": "Greek",
-    "gn": "Guarani",
-    "gu": "Gujarati",
-    "ht": "Haitian",
-    "ha": "Hausa",
-    "he": "Hebrew",
-    "hz": "Herero",
-    "hi": "Hindi",
-    "ho": "Hiri-Motu",
-    "hu": "Hungarian",
-    "ia": "Interlingua",
-    "id": "Indonesian",
-    "ie": "Interlingue",
-    "ga": "Irish",
-    "ig": "Igbo",
-    "ik": "Inupiaq",
-    "io": "Ido",
-    "is": "Icelandic",
-    "it": "Italian",
-    "iu": "Inuktitut",
-    "ja": "Japanese",
-    "jv": "Javanese",
-    "kl": "Kalaallisut",
-    "kn": "Kannada",
-    "kr": "Kanuri",
-    "ks": "Kashmiri",
-    "kk": "Kazakh",
-    "km": "Khmer",
-    "ki": "Kikuyu",
-    "rw": "Kinyarwanda",
-    "ky": "Kyrgyz",
-    "kv": "Komi",
-    "kg": "Kongo",
-    "ko": "Korean",
-    "ku": "Kurdish",
-    "kj": "Kwanyama",
-    "la": "Latin",
-    "lb": "Luxembourgish",
-    "lg": "Luganda",
-    "li": "Limburgish",
-    "ln": "Lingala",
-    "lo": "Lao",
-    "lt": "Lithuanian",
-    "lu": "Luba-Katanga",
-    "lv": "Latvian",
-    "gv": "Manx",
-    "mk": "Macedonian",
-    "mg": "Malagasy",
-    "ms": "Malay",
-    "ml": "Malayalam",
-    "mt": "Maltese",
-    "mi": "M\u0101ori",
-    "mr": "Marathi",
-    "mh": "Marshallese",
-    "mn": "Mongolian",
-    "na": "Nauru",
-    "nv": "Navajo",
-    "nb": "Norwegian Bokm\u00e5l",
-    "nd": "North-Ndebele",
-    "ne": "Nepali",
-    "ng": "Ndonga",
-    "nn": "Norwegian-Nynorsk",
-    "no": "Norwegian",
-    "ii": "Nuosu",
-    "nr": "South-Ndebele",
-    "oc": "Occitan",
-    "oj": "Ojibwe",
-    "cu": "Old-Church-Slavonic",
-    "om": "Oromo",
-    "or": "Oriya",
-    "os": "Ossetian",
-    "pa": "Panjabi",
-    "pi": "P\u0101li",
-    "fa": "Persian",
-    "pl": "Polish",
-    "ps": "Pashto",
-    "pt": "Portuguese",
-    "qu": "Quechua",
-    "rm": "Romansh",
-    "rn": "Kirundi",
-    "ro": "Romanian",
-    "ru": "Russian",
-    "sa": "Sanskrit",
-    "sc": "Sardinian",
-    "sd": "Sindhi",
-    "se": "Northern-Sami",
-    "sm": "Samoan",
-    "sg": "Sango",
-    "sr": "Serbian",
-    "gd": "Scottish-Gaelic",
-    "sn": "Shona",
-    "si": "Sinhala",
-    "sk": "Slovak",
-    "sl": "Slovene",
-    "so": "Somali",
-    "st": "Southern-Sotho",
-    "es": "Spanish",
-    "su": "Sundanese",
-    "sw": "Swahili",
-    "ss": "Swati",
-    "sv": "Swedish",
-    "ta": "Tamil",
-    "te": "Telugu",
-    "tg": "Tajik",
-    "th": "Thai",
-    "ti": "Tigrinya",
-    "bo": "Tibetan",
-    "tk": "Turkmen",
-    "tl": "Tagalog",
-    "tn": "Tswana",
-    "to": "Tonga",
-    "tr": "Turkish",
-    "ts": "Tsonga",
-    "tt": "Tatar",
-    "tw": "Twi",
-    "ty": "Tahitian",
-    "ug": "Uighur",
-    "uk": "Ukrainian",
-    "ur": "Urdu",
-    "uz": "Uzbek",
-    "ve": "Venda",
-    "vi": "Vietnamese",
-    "vo": "Volapuk",
-    "wa": "Walloon",
-    "cy": "Welsh",
-    "wo": "Wolof",
-    "fy": "Western-Frisian",
-    "xh": "Xhosa",
-    "yi": "Yiddish",
-    "yo": "Yoruba",
-    "za": "Zhuang",
-    "zu": "Zulu"
-}
+__version__ = "2.0.0"
 
 class Translate(commands.Cog):
-    """ (∩｀-´)⊃━☆ﾟ.*･｡ﾟ translate text from one language to another """
+    """🔠 Translation tools for Modmail with user preferences and auto-translation.
+    
+    Features:
+    - Manual text translation
+    - Auto-translation in threads
+    - User language preferences
+    - Multiple translation service fallbacks
+    """
+
     def __init__(self, bot):
         self.bot = bot
-        self.user_color = discord.Colour(0xed791d) ## orange
-        self.mod_color = discord.Colour(0x7289da) ## blurple
+        self.user_color = discord.Colour(0xed791d)  # orange
+        self.mod_color = discord.Colour(0x7289da)  # blurple
         self.db = bot.plugin_db.get_partition(self)
-        self.translator = Translator()
-        self.tt = set()
+        self.tt: Set[int] = set()  # Auto-translate threads
         self.enabled = True
-        asyncio.create_task(self._set_config())
-    
-    async def _set_config(self):  # exception=AttributeError("'NoneType' object has no attribute 'get'")>
+        self.user_prefs: Dict[int, str] = {}  # {user_id: target_lang}
+        self.lock = asyncio.Lock()  # For thread-safe operations
+        
+        # Initialize translator
+        if HAS_DEEP_TRANSLATOR:
+            self.translator = GoogleTranslator
+        else:
+            self.translator = Translator()
+        
+        # Supported languages (ISO 639-1 codes)
+        self.languages = {
+            "af": "Afrikaans", "sq": "Albanian", "am": "Amharic", "ar": "Arabic",
+            "hy": "Armenian", "az": "Azerbaijani", "eu": "Basque", "be": "Belarusian",
+            "bn": "Bengali", "bs": "Bosnian", "bg": "Bulgarian", "ca": "Catalan",
+            "ceb": "Cebuano", "ny": "Chichewa", "zh": "Chinese", "co": "Corsican",
+            "hr": "Croatian", "cs": "Czech", "da": "Danish", "nl": "Dutch",
+            "en": "English", "eo": "Esperanto", "et": "Estonian", "tl": "Filipino",
+            "fi": "Finnish", "fr": "French", "fy": "Frisian", "gl": "Galician",
+            "ka": "Georgian", "de": "German", "el": "Greek", "gu": "Gujarati",
+            "ht": "Haitian Creole", "ha": "Hausa", "haw": "Hawaiian", "he": "Hebrew",
+            "hi": "Hindi", "hmn": "Hmong", "hu": "Hungarian", "is": "Icelandic",
+            "ig": "Igbo", "id": "Indonesian", "ga": "Irish", "it": "Italian",
+            "ja": "Japanese", "jw": "Javanese", "kn": "Kannada", "kk": "Kazakh",
+            "km": "Khmer", "ko": "Korean", "ku": "Kurdish", "ky": "Kyrgyz",
+            "lo": "Lao", "la": "Latin", "lv": "Latvian", "lt": "Lithuanian",
+            "lb": "Luxembourgish", "mk": "Macedonian", "mg": "Malagasy", "ms": "Malay",
+            "ml": "Malayalam", "mt": "Maltese", "mi": "Maori", "mr": "Marathi",
+            "mn": "Mongolian", "my": "Myanmar", "ne": "Nepali", "no": "Norwegian",
+            "ps": "Pashto", "fa": "Persian", "pl": "Polish", "pt": "Portuguese",
+            "pa": "Punjabi", "ro": "Romanian", "ru": "Russian", "sm": "Samoan",
+            "gd": "Scots Gaelic", "sr": "Serbian", "st": "Sesotho", "sn": "Shona",
+            "sd": "Sindhi", "si": "Sinhala", "sk": "Slovak", "sl": "Slovenian",
+            "so": "Somali", "es": "Spanish", "su": "Sundanese", "sw": "Swahili",
+            "sv": "Swedish", "tg": "Tajik", "ta": "Tamil", "te": "Telugu",
+            "th": "Thai", "tr": "Turkish", "uk": "Ukrainian", "ur": "Urdu",
+            "uz": "Uzbek", "vi": "Vietnamese", "cy": "Welsh", "xh": "Xhosa",
+            "yi": "Yiddish", "yo": "Yoruba", "zu": "Zulu"
+        }
+        
+        # Reverse mapping for name to code
+        self.lang_names = {v.lower(): k for k, v in self.languages.items()}
+        
+        bot.loop.create_task(self._load_config())
+
+    async def _load_config(self):
+        """Load configuration and user preferences from database."""
         try:
-            config = await self.db.find_one({'_id': 'config'})
-            self.enabled = config.get('enabled', True)
-            self.tt = set(config.get('auto-translate', []))  # AttributeError: 'NoneType' object has no attribute 'get'
-        except:
-            pass
+            async with self.lock:
+                config = await self.db.find_one({'_id': 'config'})
+                if config:
+                    self.enabled = config.get('enabled', True)
+                    self.tt = set(config.get('auto-translate', []))
+                
+                # Load user preferences
+                prefs = await self.db.find_one({'_id': 'user_prefs'})
+                if prefs:
+                    self.user_prefs = prefs.get('prefs', {})
+        except Exception as e:
+            logger.error(f"Error loading config: {e}", exc_info=True)
 
-
-    # +------------------------------------------------------------+
-    # |                   Translate cmd                            |
-    # +------------------------------------------------------------+
-    @commands.group(description='Command to translate across languages', aliases=['translate'],  invoke_without_command=True)
-    async def tr(self, ctx, language: str = None, *, text: str = None):
+    async def _translate_text(self, text: str, target: str, source: str = 'auto') -> str:
+        """Translate text using available services with fallback.
+        
+        Args:
+            text: The text to translate
+            target: Target language code (e.g., 'es')
+            source: Source language code (default 'auto' for auto-detection)
+            
+        Returns:
+            Translated text or error message if translation fails
         """
-        (∩｀-´)⊃━☆ﾟ.*･｡ﾟ translate text from one language to another
+        if not text.strip():
+            return "No text provided to translate."
+            
+        try:
+            # Try primary translator first
+            if HAS_DEEP_TRANSLATOR:
+                translated = GoogleTranslator(source=source, target=target).translate(text)
+                return translated
+            
+            # Fallback to googletrans
+            try:
+                translated = self.translator.translate(text, dest=target, src=source).text
+                return translated
+            except Exception:
+                # Final fallback to mtranslate
+                return translate(text, target)
+                
+        except Exception as e:
+            logger.error(f"Translation failed: {e}", exc_info=True)
+            return f"⚠️ Translation failed: {str(e)}"
 
+    @commands.group(aliases=['translate', 'tr'], invoke_without_command=True)
+    @commands.guild_only()
+    async def translation(self, ctx, target_lang: Optional[str] = None, *, text: Optional[str] = None):
+        """Translate text to another language.
+        
         Usage:
-        {prefix}tr Zulu hello world, welcome to this server
+        {prefix}translation <target_language> <text>
+        {prefix}translation set <language> (to set your preferred language)
+        
+        Examples:
+        {prefix}translation french Hello world
+        {prefix}translation set spanish
         """
-        lang = language.title()
-        available = ', '.join(conv.values())
-        languages = 'Albanian, Arabic, Aymara, Belarusian, Bulgarian, Catalan, Chinese, Croatian, Czech, ' \
-                    'Danish, Dutch, English, Estonian, Fijian, Finnish, French, Georgian, German, Greek, ' \
-                    'Hebrew, Hindi, Irish, Icelandic, Italian, Japanese, Kannada, Kashmiri, Korean, Latin, ' \
-                    'Lithuanian, Malayalam, Marathi, Norwegian, Panjabi, Persian, Polish, Portuguese, ' \
-                    'Quechua, Romanian, Russian, Sanskrit, Scottish-Gaelic, Spanish, Swahili, Swedish, ' \
-                    'Tamil, Telugu, Tagalog, Turkish, Urdu, Welsh, Yiddish, Zulu \n\nFor full list: \n' \
-                    'https://github.com/WebKide/modmail-plugins/translate/langs.json'
-        m = f'{ctx.message.author.display_name} | {ctx.message.author.id}'
-        msg = f'**Usage:** {ctx.prefix}{ctx.invoked_with} <Language_target> <message>\n\n```bf\n{languages}```'
-        distance = self.bot or self.bot.message
-        duration = f'Translated in {distance.ws.latency * 990:.2f} ms'
-
+        if target_lang is None:
+            return await ctx.send_help(ctx.command)
+            
+        # Handle set preference command
+        if target_lang.lower() == 'set' and text:
+            return await self._set_user_language(ctx, text)
+            
+        # Check if user has a preferred target language
+        user_lang = self.user_prefs.get(ctx.author.id)
+        if user_lang and not target_lang:
+            target_lang = user_lang
+            text = target_lang  # Shift arguments
+            
+        if not text:
+            return await ctx.send("Please provide text to translate.")
+            
+        # Clean and validate language input
+        target_lang = target_lang.lower().strip()
+        lang_code = self.lang_names.get(target_lang) or target_lang[:2]
+        
+        if lang_code not in self.languages:
+            return await ctx.send(
+                f"⚠️ Unsupported language. Use `{ctx.prefix}translation langs` for available languages."
+            )
+            
         try:
-            em = discord.Embed(color=self.mod_color)
-            em.set_author(name='Available Languages:', icon_url=ctx.message.author.avatar_url),
-            em.description = f'```bf\n{available}```'
-            em.set_footer(text=duration, icon_url='https://i.imgur.com/yeHFKgl.png')
+            # Translate the text
+            translated = await self._translate_text(text, lang_code)
+            
+            # Handle message length limits
+            if len(translated) > 2000:
+                translated = translated[:1990] + "... [truncated]"
+                
+            # Create embed response
+            lang_name = self.languages[lang_code]
+            embed = discord.Embed(
+                color=self.user_color,
+                title=f"Translation to {lang_name}",
+                description=translated
+            )
+            embed.set_author(
+                name=f"{ctx.author.display_name} ({ctx.author.id})",
+                icon_url=ctx.author.avatar.url if ctx.author.avatar else None
+            )
+            embed.add_field(
+                name="Original Text",
+                value=text[:1024] + ("..." if len(text) > 1024 else ""),
+                inline=False
+            )
+            
+            await ctx.send(embed=embed)
+            
+        except Exception as e:
+            logger.error(f"Translation command failed: {e}", exc_info=True)
+            await ctx.send(f"⚠️ An error occurred during translation: {str(e)}")
 
-            if lang in conv:
-                t = f'{translate(text, lang)}'
-                e = discord.Embed(color=self.user_color)
-                e.set_author(name=m, icon_url=ctx.message.author.avatar_url),
-                e.add_field(name='Original1', value=f'*```css\n{text}```*', inline=False)
-                e.add_field(name='Translation1', value=f'```css\n{t}```', inline=False)
-                e.set_footer(text=duration, icon_url='https://i.imgur.com/yeHFKgl.png')
-                try:
-                    await ctx.message.add_reaction('\N{WHITE HEAVY CHECK MARK}')
-                except discord.Forbidden:  # FORBIDDEN (status code: 403): Missing Permissions
-                    pass
-                return await ctx.send(embed=e)
+    async def _set_user_language(self, ctx, language: str):
+        """Set a user's preferred target language."""
+        language = language.lower().strip()
+        lang_code = self.lang_names.get(language) or language[:2]
+        
+        if lang_code not in self.languages:
+            return await ctx.send(
+                f"⚠️ Unsupported language. Use `{ctx.prefix}translation langs` for available languages."
+            )
+            
+        async with self.lock:
+            self.user_prefs[ctx.author.id] = lang_code
+            await self.db.update_one(
+                {'_id': 'user_prefs'},
+                {'$set': {'prefs': self.user_prefs}},
+                upsert=True
+            )
+            
+        lang_name = self.languages[lang_code]
+        await ctx.send(f"✅ Your preferred translation language has been set to {lang_name}.")
 
-            lang = dict(zip(conv.values(), conv.keys())).get(lang.lower().title())
-            if lang:
-                tn = f'{translate(text, lang)}'
-                em = discord.Embed(color=self.user_color)
-                em.set_author(name=m, icon_url=ctx.message.author.avatar_url),
-                em.add_field(name='Original Message', value=f'*```bf\n{text}```*', inline=False)
-                em.add_field(name=f'Translation to {language}', value=tn, inline=False)
-                em.set_footer(text=duration, icon_url='https://i.imgur.com/yeHFKgl.png')
-                try:
-                    await ctx.message.add_reaction('\N{WHITE HEAVY CHECK MARK}')
-                except discord.Forbidden:  # FORBIDDEN (status code: 403): Missing Permissions
-                    pass
-                await ctx.send(embed=em)
+    @translation.command(name='langs', aliases=['languages'])
+    @commands.guild_only()
+    async def list_languages(self, ctx):
+        """List all available languages for translation."""
+        lang_list = "\n".join(f"{code}: {name}" for code, name in sorted(self.languages.items()))
+        
+        if len(lang_list) > 2000:
+            lang_list = lang_list[:1990] + "... [truncated]"
+            
+        embed = discord.Embed(
+            title="Available Languages",
+            description=f"```\n{lang_list}\n```",
+            color=self.mod_color
+        )
+        embed.set_footer(text=f"Use '{ctx.prefix}translation set <language>' to set your preference")
+        await ctx.send(embed=embed)
 
-            else:
-                await ctx.send(msg, delete_after=23)
-
-        except discord.Forbidden:
-            if lang in conv:
-                trans = f'{ctx.message.author.mention} | *{translate(text, lang)}*'
-                return await ctx.send(trans)
-
-            lang = dict(zip(conv.values(), conv.keys())).get(lang.lower().title())
-            if lang:
-                trans = f'{ctx.message.author.mention} | *{translate(text, lang)}*'
-                await ctx.send(trans)
-                try:
-                    await ctx.message.add_reaction('\N{WHITE HEAVY CHECK MARK}')
-                except discord.Forbidden:  # FORBIDDEN (status code: 403): Missing Permissions
-                    pass
-
-            else:
-                await ctx.send(msg, delete_after=23)
-                try:
-                    await ctx.message.add_reaction('\N{BLACK QUESTION MARK ORNAMENT}')
-                except discord.Forbidden:  # FORBIDDEN (status code: 403): Missing Permissions
-                    pass
-
-    # +------------------------------------------------------------+
-    # |                Translate plain text                        |
-    # +------------------------------------------------------------+
-    @commands.command(no_pm=True)
-    async def t(self, ctx, language: str = None, *, text: str = None):
+    @commands.command(aliases=['tt'])
+    @commands.guild_only()
+    async def translatetext(self, ctx, message_id: Optional[int] = None, target_lang: Optional[str] = None):
+        """Translate a message by ID or the replied message.
+        
+        Usage:
+        {prefix}tt <message_id> [target_language]
+        {prefix}tt [target_language] (when replying to a message)
+        
+        If no target language is specified, uses your preferred language or English.
         """
-        (∩｀-´)⊃━☆ﾟ.*･｡ﾟ translate some text
-        """
-        lang = language.title()
-        available = ', '.join(conv.values())
+        # Determine target language
+        if target_lang:
+            lang_code = self.lang_names.get(target_lang.lower()) or target_lang[:2]
+            if lang_code not in self.languages:
+                return await ctx.send("⚠️ Unsupported language.")
+        else:
+            lang_code = self.user_prefs.get(ctx.author.id, 'en')
+            
+        # Get the target message
+        message = None
+        if message_id:
+            try:
+                message = await ctx.channel.fetch_message(message_id)
+            except discord.NotFound:
+                return await ctx.send("⚠️ Message not found.")
+            except discord.Forbidden:
+                return await ctx.send("⚠️ No permission to access that message.")
+        elif ctx.message.reference:
+            try:
+                message = await ctx.channel.fetch_message(ctx.message.reference.message_id)
+            except:
+                pass
+                
+        if not message:
+            return await ctx.send("⚠️ Please specify a message ID or reply to a message.")
+            
+        # Translate the message content
+        text = message.content
+        if not text.strip():
+            return await ctx.send("⚠️ The selected message has no text content.")
+            
         try:
-            await ctx.message.delete()
-            if lang in conv:
-                t = f'{translate(text, lang)}'
-                if (len(t) > 2000):
-                    cropped = t[:2000]
-                    await ctx.send(cropped, delete_after=360)
-                else:
-                    await ctx.send(t, delete_after=360)
+            translated = await self._translate_text(text, lang_code)
+            lang_name = self.languages[lang_code]
+            
+            embed = discord.Embed(
+                description=translated,
+                color=self.user_color,
+                timestamp=message.created_at
+            )
+            embed.set_author(
+                name=f"Translated to {lang_name}",
+                icon_url="https://i.imgur.com/yeHFKgl.png"
+            )
+            embed.set_footer(text=f"Original message by {message.author.display_name}")
+            
+            await ctx.send(embed=embed)
+        except Exception as e:
+            logger.error(f"Translate text command failed: {e}", exc_info=True)
+            await ctx.send(f"⚠️ Failed to translate message: {str(e)}")
 
-            lang = dict(zip(conv.values(), conv.keys())).get(lang.lower().title())
-            if lang:
-                tn = f'{translate(text, lang)}'
-                if (len(tn) > 2000):
-                    cropped = tn[:2000]
-                    await ctx.send(cropped, delete_after=360)
-                else:
-                    await ctx.send(tn, delete_after=360)
-            else:
-                return
-
-        except discord.Forbidden:
-            if lang in conv:
-                trans = translate(text, lang)
-                if (len(trans) > 2000):
-                    cropped = trans[:2000]
-                    return await ctx.send(cropped, delete_after=360)
-                else:
-                    return await ctx.send(trans, delete_after=360)
-
-            lang = dict(zip(conv.values(), conv.keys())).get(lang.lower().title())
-            if lang:
-                trans = f'{ctx.message.author.mention} | *{translate(text, lang)}*'
-                if (len(trans) > 2000):
-                    cropped = trans[:2000]
-                    await ctx.send(cropped, delete_after=360)
-                else:
-                    await ctx.send(trans, delete_after=360)
-
-    # +------------------------------------------------------------+
-    # |                   Available Langs                          |
-    # +------------------------------------------------------------+
-    @tr.command()
-    async def langs(self, ctx):
-        """ List of available languages """
-        available = ', '.join(conv.values())
-        foo = 'Full list in https://github.com/WebKide/modmail-plugins/translate/langs.json'
-
-        em = discord.Embed(color=discord.Color.blue())
-        em.set_author(name='Available Languages:', icon_url=ctx.message.author.avatar_url),
-        em.description = f'```bf\n{available}```'
-        em.set_footer(text=foo, icon_url='https://i.imgur.com/yeHFKgl.png')
-
-        try:
-            await ctx.send(embed=em, delete_after=420)
-
-        except discord.Forbidden:
-            msg = f'Available languages:\n```bf\n{available}```\n{foo}'
-            await ctx.send(msg, delete_after=420)
-
-    # +------------------------------------------------------------+
-    # |              Translate Message with ID                     |
-    # +------------------------------------------------------------+
-    @commands.command(aliases=["tt"])
-    async def translatetext(self, ctx, *, message):
-        """
-        Translates given messageID into English
-        original command by officialpiyush
-        """
-        tmsg = self.translator.translate(message)
-        em = discord.Embed()
-        em.color = 4388013
-        em.description = tmsg.text
-        await ctx.channel.send(embed=em)
-
-    # +------------------------------------------------------------+
-    # |                 Auto Translate Text                        |
-    # +------------------------------------------------------------+
-    @commands.command(aliases=["att"])
-    @checks.has_permissions(PermissionLevel.SUPPORTER)
+    @commands.command(aliases=['att'])
+    @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
     @checks.thread_only()
     async def auto_translate_thread(self, ctx):
-        """ to be used inside ticket threads
-        original command by officialpiyush
-        """
-        if "User ID:" not in ctx.channel.topic:
-            await ctx.send("The Channel Is Not A Modmail Thread")
-            return
-
-        if ctx.channel.id in self.tt:
-            self.tt.remove(ctx.channel.id)
-            removed = True
-
-        else:
-            self.tt.add(ctx.channel.id)
-            removed = False
-        
-        await self.db.update_one(
-            {'_id': 'config'},
-            {'$set': {'auto-translate': list(self.tt)}}, 
-            upsert=True
+        """Toggle auto-translation for this modmail thread."""
+        async with self.lock:
+            if ctx.channel.id in self.tt:
+                self.tt.remove(ctx.channel.id)
+                removed = True
+            else:
+                self.tt.add(ctx.channel.id)
+                removed = False
+            
+            await self.db.update_one(
+                {'_id': 'config'},
+                {'$set': {'auto-translate': list(self.tt)}},
+                upsert=True
             )
+            
+        status = "disabled" if removed else "enabled"
+        await ctx.send(f"✅ Auto-translation has been {status} for this thread.")
 
-        await ctx.send(f"{'Removed' if removed else 'Added'} Channel {'from' if removed else 'to'} Auto Translations List.")
-    
-    # +------------------------------------------------------------+
-    # |              Toggle Auto Translate on/off                  |
-    # +------------------------------------------------------------+
-    @commands.command(aliases=["tat"])
-    @checks.has_permissions(PermissionLevel.SUPPORTER)
-    @checks.thread_only()
+    @commands.command(aliases=['tat'])
+    @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
+    @commands.guild_only()
     async def toggle_auto_translations(self, ctx, enabled: bool):
-        """ to be used inside ticket threads
-        original command by officialpiyush
+        """Enable or disable auto-translation system-wide.
+        
+        Usage:
+        {prefix}tat <True/False>
         """
-        self.enabled = enabled
-        await self.coll.update_one(
-            {'_id': 'config'},
-            {'$set': {'at-enabled': self.enabled}}, 
-            upsert=True
+        async with self.lock:
+            self.enabled = enabled
+            await self.db.update_one(
+                {'_id': 'config'},
+                {'$set': {'enabled': self.enabled}},
+                upsert=True
             )
-        await ctx.send(f"{'Enabled' if enabled else 'Disabled'} Auto Translations")
-    
+            
+        status = "enabled" if enabled else "disabled"
+        await ctx.send(f"✅ Auto-translation has been {status} system-wide.")
+
     async def on_message(self, message):
-        if not self.enabled:
+        """Handle auto-translation of messages in configured threads."""
+        if (not self.enabled or 
+            not message.guild or 
+            message.author.bot or 
+            message.channel.id not in self.tt or
+            "User ID:" not in getattr(message.channel, 'topic', '')):
             return
-        
-        channel = message.channel
-
-        if channel.id not in self.tt:
-            return
-        
-        if isinstance(message.author,User):
-            return
-        
-        if "User ID:" not in channel.topic:
-            return
-        
-        if not message.embeds:
-            return
-        
-        msg = message.embeds[0].description
-        tmsg = self.translator.translate(msg)
-        em = discord.Embed()
-        em.description = tmsg.text
-        em.color = 4388013
-        em.footer = "Auto Translate Plugin"
-
-        await channel.send(embed=em)
-
+            
+        try:
+            # Get text to translate (from embed or content)
+            text = None
+            if message.embeds and message.embeds[0].description:
+                text = message.embeds[0].description
+            elif message.content:
+                text = message.content
+                
+            if not text:
+                return
+                
+            # Get target language (default to English)
+            user_id = int(message.channel.topic.split("User ID: ")[1].split("\n")[0])
+            lang_code = self.user_prefs.get(user_id, 'en')
+            
+            # Translate the text
+            translated = await self._translate_text(text, lang_code)
+            if len(translated) > 2000:
+                translated = translated[:1990] + "... [truncated]"
+                
+            # Send translation
+            embed = discord.Embed(
+                description=translated,
+                color=4388013  # Blurple
+            )
+            embed.set_footer(text="Auto-translated message")
+            await message.channel.send(embed=embed)
+            
+        except Exception as e:
+            logger.error(f"Auto-translation failed: {e}", exc_info=True)
 
 async def setup(bot):
     await bot.add_cog(Translate(bot))
