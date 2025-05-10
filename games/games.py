@@ -25,7 +25,7 @@ from .answers.tarot import card_deck
 from .answers.words import scramble_words
 
 logger = logging.getLogger("Modmail")
-__version__ = "0.2.10"
+__version__ = "0.2.10 — {ctx.author.display_name}"
 
 
 class GamesTracker:
@@ -378,15 +378,11 @@ class Games(commands.Cog):
             return await ctx.send(embed=embed, delete_after=GameConfig.DEFAULT_DELETE_AFTER)
 
         picked = random.choice(choices)
+        given_choices = '\n'.join(f'• {c}' for c in choices)
         embed = await self.embed_manager.create_command_embed(
             ctx,
-            fields=[{
-                'name': 'Options',
-                'value': '\n'.join(f'• {c}' for c in choices)
-            }, {
-                'name': f'{Emoji.DIAMOND} Selection',
-                'value': f'I choose: **{picked}**'
-            }],
+            title=f'🙈 Options given by {ctx.author.display_name}:',
+            description=f'{given_choices}\n### {Emoji.DIAMOND} Selection:\n# I choose: **{picked}**',
             start_time=start_time
         )
         await ctx.send(embed=embed)
