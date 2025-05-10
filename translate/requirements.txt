@@ -1,2 +1,3 @@
 mtranslate
 googletrans==2.4.0
+deep-translator
