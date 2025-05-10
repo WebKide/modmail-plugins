@@ -1,7 +1,29 @@
-import discord
+"""
+MIT License
+Copyright (c) 2023-2025 WebKide [d.id @323578534763298816]
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+"""
+
 import logging
 import re
 import asyncio
+import textwrap
+
+import discord
 from discord.ext import commands
 from core import checks
 from core.models import PermissionLevel
@@ -21,14 +43,34 @@ class DmOnJoin(commands.Cog):
     @commands.guild_only()
     async def setdmmessage(self, ctx):
         """Set a message to DM users when they join"""
-        instructions = (
-            "Please send your DM message with supported formatting:\n"
-            "# H1\n## H2\n### H3\n"
-            "**bold**, *italic*, ~~strikethrough~~, ```css\nCode block```, "
-            "`monospace`, emojis, and these placeholders:\n"
-            "{guild_name}, {user.display_name}, {user.id}, {guild.owner}\n"
-            "You have 2 minutes to submit your message."
-        )
+        instructions = textwrap.dedent("""
+        # Formatting Guide #
+
+        🔸 Headers:
+        # \# H1
+        ## \## H2
+        ### \### H3
+        -# \-# subtitle
+
+        🔸 Text Formatting:
+        \``monospace`\` — **\**bold**\** — *\*italic*\* — ~~strikethrough~~
+
+        🔸 Code Blocks:
+        ```css
+        ```py
+        ?plugin add WebKide/modmail-plugins/quote@master```
+
+        🔸 Other:
+        Emojis :white_check_mark: :raised_hand:
+
+        🔸 Available Placeholders:
+        `{guild.name}` - Server name
+        `{user.display_name}` - User's display name
+        `{user.id}` - User ID
+        `{guild.owner}` - Server owner's name
+
+        You have 2 minutes to submit your message.
+        """).strip()
         await ctx.send(instructions)
 
         def check(m):
@@ -43,7 +85,7 @@ class DmOnJoin(commands.Cog):
         # Validate placeholders
         raw_placeholders = re.findall(r'\{([^}]+)\}', msg.content)
         placeholders = [ph.strip() for ph in raw_placeholders]
-        allowed = {'guild_name', 'user.display_name', 'user.id', 'guild.owner'}
+        allowed = {'guild.name', 'user.display_name', 'user.id', 'guild.owner'}
         invalid = [ph for ph in placeholders if ph not in allowed]
 
         if invalid:
@@ -89,7 +131,7 @@ class DmOnJoin(commands.Cog):
         try:
             message = config["dm-message"]["message"]
             # Format with current context
-            formatted = re.sub(r'\{\s*guild_name\s*\}', ctx.guild.name, message)
+            formatted = re.sub(r'\{\s*guild\.name\s*\}', ctx.guild.name, message)
             formatted = re.sub(r'\{\s*user\.display_name\s*\}', ctx.author.display_name, formatted)
             formatted = re.sub(r'\{\s*user\.id\s*\}', str(ctx.author.id), formatted)
             formatted = re.sub(r'\{\s*guild\.owner\s*\}', ctx.guild.owner.mention, formatted)
@@ -117,7 +159,7 @@ class DmOnJoin(commands.Cog):
 
         try:
             # Format message with dynamic replacements
-            formatted = re.sub(r'\{\s*guild_name\s*\}', member.guild.name, message)
+            formatted = re.sub(r'\{\s*guild\.name\s*\}', member.guild.name, message)
             formatted = re.sub(r'\{\s*user\.display_name\s*\}', member.display_name, formatted)
             formatted = re.sub(r'\{\s*user\.id\s*\}', str(member.id), formatted)
             formatted = re.sub(r'\{\s*guild\.owner\s*\}', member.guild.owner.mention, formatted)
