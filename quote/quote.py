@@ -19,7 +19,7 @@ class Quote(commands.Cog):
             for webhook in webhooks:
                 if webhook.user == self.bot.user:
                     return webhook
-        
+
         # Create a new webhook if none exist
         avatar = await self.bot.user.avatar.read()
         webhook = await channel.create_webhook(
@@ -36,7 +36,7 @@ class Quote(commands.Cog):
                 return await ctx.channel.fetch_message(int(query))
             except discord.NotFound:
                 pass
-        
+
         # Check if query is a message link
         if query.startswith(('http://', 'https://')):
             try:
@@ -46,12 +46,12 @@ class Quote(commands.Cog):
                 return await ctx.channel.fetch_message(message_id)
             except (ValueError, IndexError, discord.NotFound):
                 pass
-        
+
         # Search through message history for matching content
         async for message in ctx.channel.history(limit=100):
             if query.lower() in message.content.lower():
                 return message
-        
+
         return None
 
     @commands.command(name="quote", aliases=["q"])
@@ -62,21 +62,21 @@ class Quote(commands.Cog):
             await ctx.message.delete()
         except discord.Forbidden:
             pass
-        
+
         message = await self.find_message(ctx, query)
         if not message:
             return await ctx.send("Could not find a message matching your query.", delete_after=10)
-        
+
         # Create or get existing webhook
         webhook = await self.create_webhook(ctx.channel)
-        
+
         # Prepare the webhook payload
         files = []
         embeds = []
-        
+
         # Add message content
         content = message.content
-        
+
         # Add message attachments as files
         for attachment in message.attachments:
             try:
@@ -84,13 +84,13 @@ class Quote(commands.Cog):
                 files.append(file)
             except:
                 pass
-        
+
         # Add message embeds
         if message.embeds:
             embeds = message.embeds
-        
+
         # Add reference to original message
-        reference_text = f"[Original Message]({message.jump_url})"
+        reference_text = f"[↑ 𝖮𝗋𝗂𝗀𝗂𝗇𝖺𝗅 𝖬𝖾𝗌𝗌𝖺𝗀𝖾]({message.jump_url})"
         if embeds and len(embeds) < 10:  # Discord allows max 10 embeds
             embed = discord.Embed(description=reference_text, color=message.author.color)
             embeds.append(embed)
@@ -99,7 +99,7 @@ class Quote(commands.Cog):
                 content += f"\n\n{reference_text}"
             else:
                 content = reference_text
-        
+
         # Send the webhook
         await webhook.send(
             content=content,
