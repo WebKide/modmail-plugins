@@ -26,7 +26,7 @@ from .answers.tarot import card_deck
 from .answers.words import scramble_words
 
 logger = logging.getLogger("Modmail")
-__version__ = "0.2.13 — import textwrap"
+__version__ = "0.2.14 — import textwrap.strip()"
 
 
 class GamesTracker:
@@ -385,7 +385,7 @@ class Games(commands.Cog):
         {given_choices}```
         ### {Emoji.DIAMOND} I choose:
         # {picked}
-        """).strip()
+        """)
         embed = await self.embed_manager.create_command_embed(
             ctx,
             title=f'🙈 Options given by {ctx.author.display_name}:',
