@@ -17,7 +17,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
-__version__ = "v0.10 — MyAnimeList, inline=True"
+__version__ = "v0.11 — on_timeout remove buttons"
 
 import discord, traceback, asyncio, datetime, json, re, aiohttp, html
 from discord.ext import commands
@@ -151,27 +151,35 @@ query ($id: Int, $page: Int, $search: String) {
 
 class PaginatorView(View):
     def __init__(self, embeds):
-        super().__init__(timeout=60)
+        super().__init__(timeout=54)
         self.embeds = embeds
         self.current_page = 0
         self.message = None
         
+    async def on_timeout(self):
+        """Called when the view times out"""
+        if self.message:
+            try:
+                await self.message.edit(view=None)  # Edit message to remove buttons but keep embed
+            except discord.NotFound:
+                pass  # Message was already deleted
+        
     async def update_embed(self, interaction):
         await interaction.response.edit_message(embed=self.embeds[self.current_page], view=self)
         
-    @discord.ui.button(label="Previous", style=discord.ButtonStyle.grey)
+    @discord.ui.button(label="❰ prev", style=discord.ButtonStyle.grey)
     async def previous_button(self, interaction: discord.Interaction, button: Button):
         if self.current_page > 0:
             self.current_page -= 1
             await self.update_embed(interaction)
         
-    @discord.ui.button(label="Next", style=discord.ButtonStyle.grey)
+    @discord.ui.button(label="next ❱", style=discord.ButtonStyle.grey)
     async def next_button(self, interaction: discord.Interaction, button: Button):
         if self.current_page < len(self.embeds) - 1:
             self.current_page += 1
             await self.update_embed(interaction)
             
-    @discord.ui.button(label="Close", style=discord.ButtonStyle.red)
+    @discord.ui.button(label="𝖢𝗅𝗈𝗌𝖾", style=discord.ButtonStyle.red)
     async def close_button(self, interaction: discord.Interaction, button: Button):
         await interaction.message.delete()
         self.stop()
