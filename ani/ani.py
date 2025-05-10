@@ -17,9 +17,9 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
-# v0.07 — emojis for names
+__version__ = "v0.08 — self.clean_html_entities()"
 
-import discord, traceback, asyncio, datetime, json, re, aiohttp
+import discord, traceback, asyncio, datetime, json, re, aiohttp, html
 from discord.ext import commands
 from discord.ui import Button, View
 
@@ -192,6 +192,10 @@ class Ani(commands.Cog):
         else:
             return "No name"
 
+    def clean_html_entities(self, text):
+        """Converts all HTML entities (&quot; &amp; etc) to their characters"""
+        return html.unescape(text) if text else text
+
     def clean_html(self, description):
         if not description:
             return ""
@@ -207,6 +211,7 @@ class Ani(commands.Cog):
         return cleantext
 
     def description_parser(self, description):
+        description = self.clean_html_entities(description)
         description = self.clean_spoilers(description)
         description = self.clean_html(description)
         description = "\n".join(description.split("\n")[:5])
