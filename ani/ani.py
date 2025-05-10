@@ -17,7 +17,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
-__version__ = "v0.08 — self.clean_html_entities()"
+__version__ = "v0.09 — MyAnimeList, inline=False"
 
 import discord, traceback, asyncio, datetime, json, re, aiohttp, html
 from discord.ext import commands
@@ -296,25 +296,25 @@ class Ani(commands.Cog):
                 embed.set_thumbnail(url=anime_manga["coverImage"]["medium"])
                 
                 if cmd == "ANIME":
-                    embed.add_field(name="⭐ Score", value=anime_manga.get("averageScore", "N/A"))
-                    embed.add_field(name="🎬 Episodes", value=anime_manga.get("episodes", "N/A"))
-                    embed.add_field(name="⏳ Duration", value=f"{anime_manga.get('duration', 'N/A')} mins")
-                    embed.add_field(name="🏷️ Genres", value=f"```fix\n{genres}```", inline=False)
-                    embed.add_field(name="🎥 Studios", value=studios)
+                    embed.add_field(name="⭐ Score:", value=f'`{anime_manga.get("averageScore", "N/A")}`', inline=False)
+                    embed.add_field(name="🎬 Episodes:", value=f'`{anime_manga.get("episodes", "N/A")}`', inline=False)
+                    embed.add_field(name="⏳ Duration:", value=f"`{anime_manga.get('duration', 'N/A')} mins`", inline=False)
+                    embed.add_field(name="🏷️ Genres:", value=f"```fix\n{genres}```", inline=False)
+                    embed.add_field(name="🎥 Studios:", value=studios, inline=False)
                     if season_info:
-                        embed.add_field(name="📅 Season", value=season_info)
+                        embed.add_field(name="📅 Season:", value=season_info, inline=False)
                     
                     embed.set_footer(text="Status: " + MediaStatusToString[anime_manga["status"]] + 
                                     ", Next episode: " + time_left + 
                                     " (ﾉ^ヮ^)ﾉ Powered by AniList.co")
                 else:
-                    embed.add_field(name="⭐ Score", value=anime_manga.get("averageScore", "N/A"))
-                    embed.add_field(name="📖 Chapters", value=anime_manga.get("chapters", "N/A"))
-                    embed.add_field(name="🏷️ Genres", value=f"```fix\n{genres}```", inline=False)
+                    embed.add_field(name="⭐ Score:", value=f'`{anime_manga.get("averageScore", "N/A")}`', inline=False)
+                    embed.add_field(name="📖 Chapters:", value=f'`{anime_manga.get("chapters", "N/A")}`', inline=False)
+                    embed.add_field(name="🏷️ Genres:", value=f"```fix\n{genres}```", inline=False)
                     if season_info:
-                        embed.add_field(name="Published", value=season_info)
+                        embed.add_field(name="🎞️ Published:", value=season_info, inline=False)
                     
-                    embed.set_footer(text="🎞️ Status: " + MediaStatusToString.get(anime_manga.get("status"), "N/A") + 
+                    embed.set_footer(text="Status: " + MediaStatusToString.get(anime_manga.get("status"), "N/A") + 
                                     " (ﾉ^ヮ^)ﾉ Powered by AniList.co")
                 
                 if external_links:
@@ -324,7 +324,7 @@ class Ani(commands.Cog):
                     embed.set_image(url=anime_manga["bannerImage"])
                 
                 embed.add_field(name="🔍 More Info", 
-                               value=f"🌐 [AniList]({link}), 🌐 [MAL](https://myanimelist.net/{cmd.lower()}/{anime_manga['idMal']})", 
+                               value=f"🌐 [AniList]({link}), 🌐 [MyAnimeList](https://myanimelist.net/{cmd.lower()}/{anime_manga['idMal']})", 
                                inline=False)
                 
                 embeds.append(embed)
@@ -377,7 +377,7 @@ class Ani(commands.Cog):
                 embed.description = self.description_parser(user["about"])
                 embed.set_thumbnail(url=user["avatar"]["large"])
                 embed.add_field(name="📺 Watched time", value=datetime.timedelta(minutes=int(user["stats"]["watchedTime"])))
-                embed.add_field(name="📒 Chapters read", value=user["stats"].get("chaptersRead", "N/A"))
+                embed.add_field(name="📒 Chapters read", value=user["stats"].get("chaptersRead", "N/A"), inline=False)
                 for category in "anime", "manga", "characters":
                     fav = []
                     for node in user["favourites"][category]["nodes"]:
@@ -392,7 +392,7 @@ class Ani(commands.Cog):
                         fav.append(f'🌐 [{title}](https://anilist.co/{url_path}/{node["id"]})')
 
                     if fav:
-                        embed.add_field(name=f"🎯 Favorite {category}", value="\n".join(self.list_maximum(fav)))
+                        embed.add_field(name=f"🎯 Favorite {category}", value="\n".join(self.list_maximum(fav)), inline=False)
                 embed.set_footer(text="Powered by Anilist")
                 embeds.append(embed)
 
@@ -454,4 +454,3 @@ class Ani(commands.Cog):
 
 async def setup(bot):
     await bot.add_cog(Ani(bot))
-    
