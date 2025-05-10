@@ -41,7 +41,7 @@ class DmOnJoin(commands.Cog):
     @commands.command(aliases=["sdms"], description='Set DM message')
     @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
     @commands.guild_only()
-    async def setdmmessage(self, ctx):
+    async def setdmmessage(self, ctx, *, welcome_message: str = None):
         """Set a message to DM users when they join"""
         instructions = textwrap.dedent("""
         # Formatting Guide #
@@ -89,8 +89,8 @@ class DmOnJoin(commands.Cog):
         invalid = [ph for ph in placeholders if ph not in allowed]
 
         if invalid:
-            await ctx.send(f"❌ Invalid placeholders: {', '.join(invalid)}\n"
-                           f"Allowed: {', '.join(allowed)}")
+            await ctx.send(f"❌ **Invalid placeholders:** {', '.join(invalid)}\n"
+                           f"✅ **Allowed:** {', '.join(allowed)}")
             return
 
         # Save valid message
