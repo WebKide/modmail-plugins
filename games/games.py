@@ -3,7 +3,6 @@ import random
 import re
 import time
 import asyncio
-import textwrap
 from datetime import datetime, date
 import discord
 import logging
@@ -26,7 +25,7 @@ from .answers.tarot import card_deck
 from .answers.words import scramble_words
 
 logger = logging.getLogger("Modmail")
-__version__ = "0.2.14 — import textwrap.strip()"
+__version__ = "0.2.15 — ```dsconfig\n{given_choices}```"
 
 
 class GamesTracker:
@@ -380,16 +379,10 @@ class Games(commands.Cog):
 
         picked = random.choice(choices).title()
         given_choices = '\n'.join(f'• {c.title()}' for c in choices)
-        desc_msg = textwrap.dedent(f"""
-        ```ml
-        {given_choices}```
-        ### {Emoji.DIAMOND} I choose:
-        # {picked}
-        """)
         embed = await self.embed_manager.create_command_embed(
             ctx,
             title=f'🙈 Options given by {ctx.author.display_name}:',
-            description=desc_msg,
+            description=f"```dsconfig\n{given_choices}```\n### {Emoji.DIAMOND} I choose:\n# {picked}",
             start_time=start_time
         )
         await ctx.send(embed=embed)
