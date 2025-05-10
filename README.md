@@ -39,6 +39,7 @@ Variety of plugins for Modmail (discord.py v2.x)
 | ⛔ [**oracle**](https://github.com/WebKide/modmail-plugins/tree/master/oracle)                   | `?plugin add WebKide/modmail-plugins/oracle@master`          | Commands moved to **games** plugin    |
 | ✅ [**private-plugins**](https://github.com/WebKide/modmail-plugins/tree/master/private-plugins) | `?plugin add WebKide/modmail-plugins/private-plugins@master` | Instal private plugins with token     |
 | ⛔ [**private**](https://github.com/WebKide/modmail-plugins/tree/master/private)                 | `?plugin add WebKide/modmail-plugins/private@master`         | Not for you, only works on my server  |
+| ✅ [**quote**](https://github.com/WebKide/modmail-plugins/tree/master/quote)                     | `?plugin add WebKide/modmail-plugins/quote@master`           | Quote any message by ID, Link, words  |
 | ⛔ [**remindme**](https://github.com/WebKide/modmail-plugins/tree/master/remindme)               | `?plugin add WebKide/modmail-plugins/remindme@master`        | Reminder for events and notes         |
 | ⛔ [**remindmepro**](https://github.com/WebKide/modmail-plugins/tree/master/remindmepro)         | `?plugin add WebKide/modmail-plugins/remindmepro@master`     | Reminder, still hunting for bugs      |
 | ✅ [**rolereact**](https://github.com/WebKide/modmail-plugins/tree/master/rolereact)             | `?plugin add WebKide/modmail-plugins/rolereact@master`       | React to message to get a role        |
