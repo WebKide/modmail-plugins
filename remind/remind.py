@@ -1,10 +1,10 @@
 import logging
 from datetime import datetime
 import pytz
+import discord
 from dateutil.parser import parse
 from discord.ext import commands, tasks
-from discord import Embed, Button, View
-from discord.ui import button
+from discord.ui import View, Button
 from typing import List, Dict
 
 log = logging.getLogger("Modmail")
