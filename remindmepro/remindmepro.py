@@ -20,6 +20,7 @@ class RemindMePro(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self._setup_dependencies()
+        print(f"Available commands: {[cmd.name for cmd in self.get_commands()]}")  # Debug
         
     def _setup_dependencies(self):
         """Initialize and wire up all components"""
