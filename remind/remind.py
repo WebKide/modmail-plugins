@@ -4,7 +4,7 @@ import pytz
 import discord
 from dateutil.parser import parse
 from discord.ext import commands, tasks
-from discord.ui import View, Button
+from discord.ui import View, Button, Embed
 from typing import List, Dict
 
 log = logging.getLogger("Modmail")
