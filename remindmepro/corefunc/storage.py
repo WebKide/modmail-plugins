@@ -76,13 +76,16 @@ class ReminderStorage:
         })
 
     async def cleanup_old_reminders(self, days: int = 30):
-        """Remove completed reminders older than X days"""
-        cutoff = datetime.now(pytz.UTC) - timedelta(days=days)
-        result = await self.db.delete_many({
-            "status": "completed",
-            "completed_at": {"$lte": cutoff}
-        })
-        return result.deleted_count
+        try:
+            cutoff = datetime.now(pytz.UTC) - timedelta(days=days)
+            result = await self.db.delete_many({
+                "status": "completed",
+                "completed_at": {"$lte": cutoff}
+            })
+            return result.deleted_count
+        except Exception as e:
+            print(f"Cleanup failed: {e}")
+            return 0
 
     async def clean_all_completed(self) -> int:
         result = await self.db.delete_many({"status": "completed"})
