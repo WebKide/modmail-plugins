@@ -11,7 +11,7 @@ log = logging.getLogger("Modmail")
 
 class ReminderPaginator(View):
     """Basic paginator for reminder lists"""
-    def __init__(self, embeds: List[Embed], user_id: int):
+    def __init__(self, embeds: List[discord.Embed], user_id: int):
         super().__init__(timeout=120)
         self.embeds = embeds
         self.current_page = 0
