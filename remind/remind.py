@@ -4,7 +4,7 @@ import pytz
 import discord
 from dateutil.parser import parse
 from discord.ext import commands, tasks
-from discord.ui import View, Button, Embed
+from discord.ui import View, Button
 from typing import List, Dict
 
 log = logging.getLogger("Modmail")
@@ -122,7 +122,7 @@ class Remind(commands.Cog):
             
         embeds = []
         for idx, rem in enumerate(reminders, 1):
-            embed = Embed(title=f"Reminder #{idx}", color=0x00ff00)
+            embed = discord.Embed(title=f"Reminder #{idx}", color=0x00ff00)
             embed.add_field(name="When", value=discord.utils.format_dt(rem["due"], "R"))
             embed.add_field(name="Text", value=rem["text"][:100] + "...")
             embeds.append(embed)
