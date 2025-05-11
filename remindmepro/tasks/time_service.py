@@ -73,4 +73,3 @@ class TimeService:
         if search:
             return [zone for zone in all_zones if search.lower() in zone.lower()]
         return all_zones
-        

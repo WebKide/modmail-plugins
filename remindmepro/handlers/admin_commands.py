@@ -213,4 +213,3 @@ class AdminCommands(commands.Cog):
         if await ctx.prompt("This will delete ALL completed reminders. Continue?"):
             count = await self.storage.clean_all_completed()
             await ctx.send(f"Deleted {count} completed reminders")
-            

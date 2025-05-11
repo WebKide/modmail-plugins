@@ -82,7 +82,10 @@ class ReminderServiceTask:
             await self.deliver_reminder(reminder)
             
             # Calculate and schedule next occurrence
-            next_due = self.calculate_next_occurrence(reminder.due, reminder.recurring)
+            user_tz = pytz.timezone(reminder.timezone)
+            local_due = reminder.due.astimezone(user_tz)
+            next_due = self.calculate_next_occurrence(local_due, reminder.recurring)
+            next_due_utc = user_tz.localize(next_due).astimezone(pytz.UTC)
             await self.storage.update_reminder(
                 str(reminder.id),
                 {"due": next_due}
@@ -190,4 +193,3 @@ class ReminderServiceTask:
             )
         embed.set_footer(text=f"Reminder ID: {reminder.id}")
         return embed
-        

@@ -1,4 +1,4 @@
-# modmail-plugins/RemindMePro/exceptions.py
+# modmail-plugins/remindmepro/exceptions.py
 class ReminderError(Exception):
     """Base exception for reminder-related errors"""
     pass
@@ -23,4 +23,3 @@ class PermissionError(ReminderError):
 class RateLimitError(ReminderError):
     """Raised when rate limits are exceeded"""
     pass
-    

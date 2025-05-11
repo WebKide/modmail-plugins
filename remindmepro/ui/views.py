@@ -102,4 +102,3 @@ class ReminderControlsView(View):
                 f"Failed to update reminder: {str(e)}",
                 ephemeral=True
             )
-            

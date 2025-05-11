@@ -6,6 +6,7 @@ from datetime import datetime
 from dateutil.parser import parse
 
 from ..corefunc.schemas import Reminder
+from ..corefunc.user_settings import UserSettings
 from ..corefunc.utilities import validate_future_time
 
 class EditReminderModal(Modal, title="Edit Reminder"):
@@ -46,7 +47,8 @@ class EditReminderModal(Modal, title="Edit Reminder"):
             if time_input:
                 new_dt = parse(time_input, fuzzy=True)
                 if new_dt.tzinfo is None:
-                    new_dt = new_dt.replace(tzinfo=datetime.timezone.utc)
+                    user_tz = await UserSettings(self.bot).get_timezone(self.reminder.user_id)
+                    new_dt = new_dt.astimezone(pytz.timezone(user_tz))
                 validate_future_time(new_dt)
                 updates["due"] = new_dt
             
@@ -62,4 +64,3 @@ class EditReminderModal(Modal, title="Edit Reminder"):
                 f"Error updating reminder:\n{str(e)}",
                 ephemeral=True
             )
-    

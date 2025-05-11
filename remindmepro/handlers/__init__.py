@@ -1,4 +1,4 @@
-# modmail-plugins/RemindMePro/handlers/__init__.py
+# modmail-plugins/remindmepro/handlers/__init__.py
 # Marks this directory as a Python package
 from .user_commands import UserCommands
 from .admin_commands import AdminCommands

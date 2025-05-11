@@ -1,4 +1,4 @@
-# modmail-plugins/RemindMePro/config.py
+# modmail-plugins/remindmepro/config.py
 from datetime import timedelta
 
 class ReminderConfig:
@@ -15,6 +15,7 @@ class ReminderConfig:
     # UI settings
     PAGINATOR_TIMEOUT = 120  # seconds
     VIEW_TIMEOUT = 180  # seconds
+    REMINDER_ID_PREFIX_LENGTH = 13
     
     # Rate limits
     USER_COOLDOWN_RATE = 3  # commands
@@ -32,4 +33,3 @@ class ReminderConfig:
             cls.USER_COOLDOWN_PERIOD,
             commands.BucketType.user
         )
-        

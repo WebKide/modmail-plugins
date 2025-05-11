@@ -43,4 +43,3 @@ class UserSettings:
             upsert=True
         )
         self._timezone_cache[user_id] = timezone
-    

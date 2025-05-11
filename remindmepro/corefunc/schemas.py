@@ -21,7 +21,7 @@ class Reminder(BaseModel):
     def sanitize_text(cls, v):
         """Sanitize reminder text"""
         # Replace non-alphanumeric chars (except basic punctuation) with placeholder
-        sanitized = re.sub(r'[^a-zA-Z0-9\s.,!?-]', '␀', v)
+        sanitized = re.sub(r'[^\p{L}\p{N}\s.,!?\-@#\U0001F300-\U0001F6FF]', '␀', v)
         # Limit consecutive special chars
         sanitized = re.sub(r'-{3,}', '--', sanitized)
         return sanitized.strip()
@@ -31,6 +31,12 @@ class Reminder(BaseModel):
         """Validate timezone string"""
         if v not in pytz.all_timezones:
             raise ValueError(f"Invalid timezone. Must be one of: {pytz.all_timezones}")
+        return v
+
+    @validator('due')
+    def validate_due_future(cls, v):
+        if v <= datetime.now(pytz.UTC):
+            raise ValueError('Due time must be in future')
         return v
 
     class Config:

@@ -1,5 +1,5 @@
-# In handlers/user_commands.py
-# https://gist.github.com/mjrulesamrat/0c1f7de951d3c508fb3a20b4b0b33a98
+# modmail-plugins/remindmepro/handlers/timezones_config.py
+__source__ = "https://gist.github.com/mjrulesamrat/0c1f7de951d3c508fb3a20b4b0b33a98"
 TIMEZONE_ALIASES = {
     # Country codes/names
     'bolivia': 'America/La_Paz',

@@ -134,13 +134,13 @@ class UserCommands(commands.Cog):
                 # Check if input is an alias
                 normalized_input = timezone_input.lower().strip()
                 tz_key = next(
-                    (k for k in self.TIMEZONE_ALIASES.keys() 
+                    (k for k in self.timezone_aliases.keys() 
                      if k.lower() == normalized_input or k == timezone_input),
                     None
                 )
                 
                 if tz_key:
-                    timezone_input = self.TIMEZONE_ALIASES[tz_key]
+                    timezone_input = self.timezone_aliases[tz_key]
                     source = f"alias '{tz_key}'"
                 else:
                     source = "direct timezone"

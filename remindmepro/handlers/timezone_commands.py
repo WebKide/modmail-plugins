@@ -45,7 +45,7 @@ class TimezoneCommands(commands.Cog):
             filtered = [tz for tz in all_tz if search.lower() in tz.lower()]
             if not filtered:
                 return await ctx.send("No matching timezones found")
-            all_tz = filtered[:25]  # Limit to 25 results
+            all_tz = filtered[:10]  # Limit to 25 results
         
         description = "\n".join(f"• {tz}" for tz in all_tz[:10])  # Show first 10
         if len(all_tz) > 10:
@@ -57,4 +57,3 @@ class TimezoneCommands(commands.Cog):
             color=self.bot.main_color
         )
         await ctx.send(embed=embed)
-        

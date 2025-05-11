@@ -2,6 +2,7 @@
 from datetime import datetime
 from dateutil.parser import parse
 from dateutil.relativedelta import relativedelta
+from parsedatetime import Calendar
 import pytz
 
 SUPPORTED_LOCATIONS_URL = "https://gist.github.com/mjrulesamrat/0c1f7de951d3c508fb3a20b4b0b33a98"
@@ -17,7 +18,11 @@ def parse_user_time(time_str: str, user_tz: str) -> datetime:
     try:
         # Try parsing as relative time first
         if time_str.lower().startswith("in "):
-            delta = parse(time_str[3:], fuzzy=True, default=now) - now
+            cal = Calendar()
+            time_struct, parse_status = cal.parse(time_str[3:])
+            if not parse_status:
+                raise ValueError("Invalid time format. Use like 'in 2 hours' or 'in 30m'")
+            delta = datetime(*time_struct[:6]) - now  # More precise parsing
             return (datetime.now(pytz.UTC) + delta).astimezone(pytz.UTC)
         
         # Try parsing as absolute time
@@ -46,4 +51,3 @@ def calculate_next_occurrence(dt: datetime, frequency: str) -> datetime:
     elif frequency == "weekly":
         return dt + relativedelta(weeks=1)
     raise ValueError(f"Unsupported frequency: {frequency}")
-    

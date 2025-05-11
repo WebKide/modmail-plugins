@@ -58,4 +58,3 @@ class UserFriendlyTime:
         if not remaining:
             remaining = None
         return dt, remaining
-        
