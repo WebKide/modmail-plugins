@@ -44,9 +44,12 @@ class RemindMePro(commands.Cog):
         log.info("RemindMePro plugin loaded")
         
     async def cog_unload(self):
-        """Called when the cog is unloaded"""
-        self.service_task.reminder_loop.cancel()
-        log.info("RemindMePro plugin unloaded")
+        if self.service_task.reminder_loop.is_running():
+            self.service_task.reminder_loop.cancel()
+            try:
+                await self.service_task.reminder_loop
+            except asyncio.CancelledError:
+                pass
 
         
 async def setup(bot):
