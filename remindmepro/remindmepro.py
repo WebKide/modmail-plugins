@@ -38,10 +38,13 @@ class RemindMePro(commands.Cog):
         self.service_task = ReminderServiceTask(self.bot, self.storage)
         
     async def cog_load(self):
-        """Called when the cog is loaded"""
-        await self.user_settings.load_timezones()
-        self.service_task.reminder_loop.start()
-        log.info("RemindMePro plugin loaded")
+        try:
+            await self.user_settings.load_timezones()
+            if not self.service_task.reminder_loop.is_running():
+                self.service_task.reminder_loop.start()
+        except Exception as e:
+            print(f"Failed to start reminder loop: {e}")
+            raise
         
     async def cog_unload(self):
         if self.service_task.reminder_loop.is_running():
