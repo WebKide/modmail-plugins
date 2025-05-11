@@ -22,7 +22,7 @@ class ReminderServiceTask:
         self.storage = storage
         self._current_batch: List[Reminder] = []
         self._processing_lock = asyncio.Lock()
-        self.reminder_loop.start()
+        # self.reminder_loop.start()
 
     @tasks.loop(seconds=120.0)
     async def reminder_loop(self):
