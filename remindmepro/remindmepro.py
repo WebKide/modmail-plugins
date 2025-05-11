@@ -56,4 +56,8 @@ class RemindMePro(commands.Cog):
 
         
 async def setup(bot):
-    await bot.add_cog(RemindMePro(bot))
+    try:
+        await bot.add_cog(RemindMePro(bot))
+        print("[RemindMePro] Commands registered successfully")
+    except Exception as e:
+        print(f"[RemindMePro] Failed to register commands: {e}")
