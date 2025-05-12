@@ -15,25 +15,37 @@ from discord.ui import View, Button
 log = logging.getLogger("Modmail")
 
 class ReminderPaginator(View):
-    """Basic paginator for reminder lists"""
+    """Paginator for reminder lists with unique button IDs"""
     def __init__(self, embeds: List[discord.Embed], user_id: int):
         super().__init__(timeout=120)
         self.embeds = embeds
         self.current_page = 0
         self.user_id = user_id
 
-        # Add buttons
-        self.add_item(self.previous_button)
+        # Previous button
+        self.prev_button = Button(
+            emoji="⬅️",
+            style=discord.ButtonStyle.blurple,
+            custom_id=f"prev_{user_id}_{datetime.now().timestamp()}"
+        )
+        self.prev_button.callback = self.previous_page
+        self.add_item(self.prev_button)
+
+        # Next button
+        self.next_button = Button(
+            emoji="➡️",
+            style=discord.ButtonStyle.blurple,
+            custom_id=f"next_{user_id}_{datetime.now().timestamp()}"
+        )
+        self.next_button.callback = self.next_page
         self.add_item(self.next_button)
 
-    @discord.ui.button(emoji="⬅️", style=discord.ButtonStyle.blurple)
-    async def previous_button(self, interaction: discord.Interaction, button: Button):
+    async def previous_page(self, interaction: discord.Interaction):
         if self.current_page > 0:
             self.current_page -= 1
             await interaction.response.edit_message(embed=self.embeds[self.current_page])
 
-    @discord.ui.button(emoji="➡️", style=discord.ButtonStyle.blurple)
-    async def next_button(self, interaction: discord.Interaction, button: Button):
+    async def next_page(self, interaction: discord.Interaction):
         if self.current_page < len(self.embeds) - 1:
             self.current_page += 1
             await interaction.response.edit_message(embed=self.embeds[self.current_page])
