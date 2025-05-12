@@ -1,11 +1,16 @@
+# !plugin update WebKide/modmail-plugins/remind@master
 import logging
 from datetime import datetime, timedelta
+from typing import List, Dict
+
+import dateparser
 import pytz
-import discord
 from dateutil.parser import parse
+
+import discord
 from discord.ext import commands, tasks
 from discord.ui import View, Button
-from typing import List, Dict
+
 
 log = logging.getLogger("Modmail")
 
@@ -91,46 +96,86 @@ class Remind(commands.Cog):
         )
 
     @commands.command(aliases=["remindme"])
-    async def remind(self, ctx, when: str, *, text: str):
-        """Set a reminder - Usage: !remind [when] [text]"""
+    async def remind(self, ctx, *, input_string: str):
+        """Set a reminder - Usage: `!remind [time] SEPARATOR [text]`
+        
+        Supported separators: | , - . / > [ to
+        Examples:
+        • `!remind in 2 hours | take out the trash`
+        • `!remind tomorrow at 3pm - buy groceries`
+        • `!remind next monday, finish the report`
+        """
         try:
-            # Parse the input time
-            try:
-                due = parse(when, fuzzy=True)
-            except ValueError as e:
-                return await ctx.send(f"Couldn't understand the time format. Try something like 'in 2 hours' or 'tomorrow at 5pm'.\nError: {e}")
-
-            # Ensure timezone awareness
-            if due.tzinfo is None:
-                due = pytz.UTC.localize(due)
-            else:
-                due = due.astimezone(pytz.UTC)
-                
-            current_time = datetime.now(pytz.UTC)
-            if due <= current_time:
+            # Define possible separators (order matters, longest first)
+            SEPARATORS = [" to ", " | ", " - ", " , ", " . ", " / ", " > ", " [ "]
+            
+            # Find the first occurring separator
+            separator = None
+            for sep in SEPARATORS:
+                if sep in input_string:
+                    separator = sep
+                    break
+            
+            if not separator:
                 return await ctx.send(
-                    f"Time must be in the future! You entered a time that's {discord.utils.format_dt(due, 'R')} "
-                    f"(which is in the past). Current time is {discord.utils.format_dt(current_time)}."
+                    "⚠️ **Missing separator!**\n"
+                    "Please split the time and reminder text with one of these:\n"
+                    "`|` `-` `,` `.` `/` `>` `[` `to`\n\n"
+                    "**Example:**\n"
+                    "`!remind in 2 hours | take out the trash`"
                 )
-                
-            reminder = {
+            
+            # Split into time_part and reminder_text
+            time_part, reminder_text = input_string.split(separator, 1)
+            reminder_text = reminder_text.strip()
+            
+            if not reminder_text:
+                return await ctx.send("⚠️ Reminder text cannot be empty!")
+            
+            # Parse the time
+            settings = {'RELATIVE_BASE': datetime.now(pytz.UTC)}
+            due = dateparser.parse(time_part, settings=settings)
+            
+            if not due:
+                return await ctx.send(
+                    "⚠️ Couldn't understand the time. Try formats like:\n"
+                    "• `in 5 minutes`\n• `tomorrow at 3pm`\n• `next monday`"
+                )
+            
+            # Ensure timezone is UTC
+            due = pytz.UTC.localize(due) if due.tzinfo is None else due.astimezone(pytz.UTC)
+            
+            # Check if time is in the future
+            if due <= datetime.now(pytz.UTC):
+                return await ctx.send(
+                    f"⏳ **Time must be in the future!**\n"
+                    f"You entered: `{discord.utils.format_dt(due, 'f')}`\n"
+                    f"(Current time: `{discord.utils.format_dt(datetime.now(pytz.UTC), 'f')}`)"
+                )
+            
+            # Save to database
+            await self.db.insert_one({
                 "user_id": ctx.author.id,
                 "channel_id": ctx.channel.id,
-                "text": text,
+                "text": reminder_text,
                 "due": due,
-                "created": current_time,
                 "status": "active"
-            }
+            })
             
-            await self.db.insert_one(reminder)
-            await ctx.send(f"⏰ Reminder set for {discord.utils.format_dt(due, 'f')} ({discord.utils.format_dt(due, 'R')})!")
+            await ctx.send(
+                f"⏰ **Reminder set!**\n"
+                f"**When:** {discord.utils.format_dt(due, 'f')} ({discord.utils.format_dt(due, 'R')})\n"
+                f"**Reminder:** {reminder_text}"
+            )
             
         except Exception as e:
-            await ctx.send(f"❌ Error setting reminder: {e}\n\n"
-                          "**Proper usage examples:**\n"
-                          "• `!remind in 2 hours take out the trash`\n"
-                          "• `!remind tomorrow at 9am meeting with team`\n"
-                          "• `!remind june 30 2023 birthday party`")
+            await ctx.send(
+                f"❌ **Error setting reminder:** {e}\n\n"
+                "**Proper Usage Examples:**\n"
+                "• `!remind in 2 hours | take out the trash`\n"
+                "• `!remind tomorrow at 3pm - buy groceries`\n"
+                "• `!remind next monday, finish the report`"
+            )
 
     @commands.command(aliases=["myreminders"])
     async def reminders(self, ctx):
