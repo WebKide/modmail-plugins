@@ -107,7 +107,7 @@ class Remind(commands.Cog):
         """
         try:
             # Define possible separators (order matters, longest first)
-            SEPARATORS = [" to ", " | ", " - ", " , ", " . ", " / ", " > ", " [ "]
+            SEPARATORS = [" to ", " | ", " - ", " / ", " > ", " [", " — "]
             
             # Find the first occurring separator
             separator = None
@@ -177,23 +177,62 @@ class Remind(commands.Cog):
                 "• `!remind next monday, finish the report`"
             )
 
-    @commands.command(aliases=["myreminders"])
+    @commands.command(aliases=["myreminders", "mr"])
     async def reminders(self, ctx):
-        """List your active reminders"""
-        reminders = await self.db.find({"user_id": ctx.author.id, "status": "active"}).to_list(None)
-        
-        if not reminders:
-            return await ctx.send("No active reminders!")
+        """List your active reminders in a paginated embed"""
+        try:
+            # Fetch reminders from database
+            reminders = await self.db.find(
+                {"user_id": ctx.author.id, "status": "active"}
+            ).sort("due", 1).to_list(None)  # Sort by due date ascending
             
-        embeds = []
-        for idx, rem in enumerate(reminders, 1):
-            embed = discord.Embed(title=f"Reminder #{idx}", color=0x00ff00)
-            embed.add_field(name="When", value=discord.utils.format_dt(rem["due"], "R"))
-            embed.add_field(name="Text", value=rem["text"][:100] + ("..." if len(rem["text"]) > 100 else ""))
-            embeds.append(embed)
+            if not reminders:
+                embed = discord.Embed(
+                    description="⏰ You have no active reminders!",
+                    color=0x00ff00
+                )
+                return await ctx.send(embed=embed)
             
-        paginator = ReminderPaginator(embeds, ctx.author.id)
-        await ctx.send(embed=embeds[0], view=paginator)
+            # Create paginated embeds
+            embeds = []
+            for idx, rem in enumerate(reminders, 1):
+                embed = discord.Embed(
+                    title=f"⏰ Reminder #{idx}",
+                    color=0x00ff00,
+                    timestamp=rem["due"]
+                )
+                
+                # Format time information
+                time_str = (
+                    f"{discord.utils.format_dt(rem['due'], 'f')}\n"
+                    f"({discord.utils.format_dt(rem['due'], 'R')})"
+                )
+                
+                # Format reminder text (with smart truncation)
+                text = rem["text"]
+                if len(text) > 250:
+                    text = text[:250] + "..."
+                
+                embed.add_field(name="⏰ When", value=time_str, inline=False)
+                embed.add_field(name="📝 Reminder", value=text, inline=False)
+                
+                # Add creation time in footer
+                created_str = discord.utils.format_dt(rem["created"], "R")
+                embed.set_footer(text=f"Created {created_str} • ID: {rem['_id']}")
+                
+                embeds.append(embed)
+            
+            # Send paginated view
+            paginator = ReminderPaginator(embeds, ctx.author.id)
+            await ctx.send(embed=embeds[0], view=paginator)
+            
+        except Exception as e:
+            error_embed = discord.Embed(
+                title="❌ Error fetching reminders",
+                description=f"```{e}```",
+                color=0xff0000
+            )
+            await ctx.send(embed=error_embed)
 
 async def setup(bot):
     await bot.add_cog(Remind(bot))
