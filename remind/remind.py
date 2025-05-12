@@ -216,9 +216,13 @@ class Remind(commands.Cog):
                 embed.add_field(name="⏰ When", value=time_str, inline=False)
                 embed.add_field(name="📝 Reminder", value=text, inline=False)
                 
-                # Add creation time in footer
-                created_str = discord.utils.format_dt(rem["created"], "R")
-                embed.set_footer(text=f"Created {created_str} • ID: {rem['_id']}")
+                # Add creation time in footer if it exists
+                footer_text = f"ID: {rem['_id']}"
+                if "created" in rem:
+                    created_str = discord.utils.format_dt(rem["created"], "R")
+                    footer_text = f"Created {created_str} • {footer_text}"
+                
+                embed.set_footer(text=footer_text)
                 
                 embeds.append(embed)
             
@@ -229,7 +233,7 @@ class Remind(commands.Cog):
         except Exception as e:
             error_embed = discord.Embed(
                 title="❌ Error fetching reminders",
-                description=f"```{e}```",
+                description=f"```{str(e)[:1000]}```",  # Truncate long errors
                 color=0xff0000
             )
             await ctx.send(embed=error_embed)
