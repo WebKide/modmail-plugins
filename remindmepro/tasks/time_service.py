@@ -11,11 +11,11 @@ class TimeService:
     """Service for time-related operations"""
     
     def __init__(self, default_timezone: str = "UTC"):
-        self.default_timezone = pytz.timezone(default_timezone)
+        self.default_timezone = ZoneInfo(default_timezone)
 
     def parse_time_input(self, time_str: str, user_tz: str) -> datetime:
         """Parse user input into timezone-aware datetime"""
-        user_timezone = pytz.timezone(user_tz)
+        user_timezone = ZoneInfo(user_tz)
         now = datetime.now(user_timezone)
         
         try:

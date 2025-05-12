@@ -75,7 +75,7 @@ TIMEZONE_ALIASES = {
 try:
     import pytz
     for tz in TIMEZONE_ALIASES.values():
-        pytz.timezone(tz)  # Will raise UnknownTimeZoneError if invalid
+        ZoneInfo(tz)  # Will raise UnknownTimeZoneError if invalid
 except ImportError:
     pass
 """

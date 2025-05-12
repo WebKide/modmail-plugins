@@ -82,7 +82,7 @@ class ReminderServiceTask:
             await self.deliver_reminder(reminder)
             
             # Calculate and schedule next occurrence
-            user_tz = pytz.timezone(reminder.timezone)
+            user_tz = ZoneInfo(reminder.timezone)
             local_due = reminder.due.astimezone(user_tz)
             next_due = self.calculate_next_occurrence(local_due, reminder.recurring)
             next_due_utc = user_tz.localize(next_due).astimezone(pytz.UTC)
@@ -193,3 +193,11 @@ class ReminderServiceTask:
             )
         embed.set_footer(text=f"Reminder ID: {reminder.id}")
         return embed
+
+    async def shutdown(self):
+        """Graceful shutdown"""
+        self.reminder_loop.cancel()
+        try:
+            await asyncio.wait_for(self._processing_lock.acquire(), timeout=5.0)
+        except asyncio.TimeoutError:
+            log.warning("Forced shutdown during active processing")

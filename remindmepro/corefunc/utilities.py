@@ -3,7 +3,8 @@ from datetime import datetime
 from dateutil.parser import parse
 from dateutil.relativedelta import relativedelta
 from parsedatetime import Calendar
-import pytz
+from zoneinfo import ZoneInfo  # Instead of pytz
+import backports.zoneinfo; backports.zoneinfo.available_timezones()  # Fallback
 
 SUPPORTED_LOCATIONS_URL = "https://gist.github.com/mjrulesamrat/0c1f7de951d3c508fb3a20b4b0b33a98"
 
@@ -12,7 +13,7 @@ def parse_user_time(time_str: str, user_tz: str) -> datetime:
     Parse user-provided time string into timezone-aware datetime
     Handles both relative (in 5 minutes) and absolute (at 3pm) formats
     """
-    user_timezone = pytz.timezone(user_tz)
+    user_timezone = ZoneInfo(user_tz)
     now = datetime.now(user_timezone)
     
     try:

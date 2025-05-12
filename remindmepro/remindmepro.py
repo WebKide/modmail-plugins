@@ -20,7 +20,6 @@ class RemindMePro(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self._setup_dependencies()
-        print(f"Available commands: {[cmd.name for cmd in self.get_commands()]}")  # Debug
         
     def _setup_dependencies(self):
         """Initialize and wire up all components"""
@@ -40,6 +39,7 @@ class RemindMePro(commands.Cog):
         
     async def cog_load(self):
         try:
+            await self.storage.initialize()
             await self.user_settings.load_timezones()
             if not self.service_task.reminder_loop.is_running():
                 self.service_task.reminder_loop.start()

@@ -13,7 +13,7 @@ class UserFriendlyTime:
     def __init__(self, converter=None, *, default=None, timezone="UTC"):
         self.converter = converter
         self.default = default
-        self.timezone = pytz.timezone(timezone)
+        self.timezone = ZoneInfo(timezone)
 
     async def convert(self, ctx, argument):
         """Parse user input into timezone-aware datetime"""
@@ -24,7 +24,7 @@ class UserFriendlyTime:
             else:
                 user_tz = "UTC"
                 
-            tz = pytz.timezone(user_tz)
+            tz = ZoneInfo(user_tz)
             now = datetime.now(tz)
             
             # Try to parse as relative time first

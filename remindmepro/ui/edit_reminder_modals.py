@@ -48,7 +48,7 @@ class EditReminderModal(Modal, title="Edit Reminder"):
                 new_dt = parse(time_input, fuzzy=True)
                 if new_dt.tzinfo is None:
                     user_tz = await UserSettings(self.bot).get_timezone(self.reminder.user_id)
-                    new_dt = new_dt.astimezone(pytz.timezone(user_tz))
+                    new_dt = new_dt.astimezone(ZoneInfo(user_tz))
                 validate_future_time(new_dt)
                 updates["due"] = new_dt
             

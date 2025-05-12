@@ -147,7 +147,7 @@ class UserCommands(commands.Cog):
             
             # Validate timezone
             try:
-                tz = pytz.timezone(timezone_input)
+                tz = ZoneInfo(timezone_input)
             except pytz.UnknownTimeZoneError:
                 return await ctx.send(
                     f"Unknown timezone. Try:\n"

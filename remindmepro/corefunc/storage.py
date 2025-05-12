@@ -15,6 +15,12 @@ class ReminderStorage:
     def __init__(self, bot: Bot):
         self.db = bot.plugin_db.get_partition(self)
 
+    async def initialize(self):
+        """Create indexes on startup"""
+        await self.db.create_index("user_id")
+        await self.db.create_index("due")
+        await self.db.create_index([("status", 1), ("due", 1)])
+
     async def get_user_reminders(self, user_id: int, limit: int = 50) -> List[Reminder]:
         """Get active reminders for a user, sorted by due date"""
         try:
