@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 import pytz
 import discord
 from dateutil.parser import parse
@@ -17,19 +17,23 @@ class ReminderPaginator(View):
         self.current_page = 0
         self.user_id = user_id
 
-    @button(emoji="⬅️", style=ButtonStyle.blurple)
-    async def previous_page(self, interaction: discord.Interaction, button: Button):
+        # Add buttons
+        self.add_item(self.previous_button)
+        self.add_item(self.next_button)
+
+    @discord.ui.button(emoji="⬅️", style=discord.ButtonStyle.blurple)
+    async def previous_button(self, interaction: discord.Interaction, button: Button):
         if self.current_page > 0:
             self.current_page -= 1
             await interaction.response.edit_message(embed=self.embeds[self.current_page])
 
-    @button(emoji="➡️", style=ButtonStyle.blurple)
-    async def next_page(self, interaction: discord.Interaction, button: Button):
+    @discord.ui.button(emoji="➡️", style=discord.ButtonStyle.blurple)
+    async def next_button(self, interaction: discord.Interaction, button: Button):
         if self.current_page < len(self.embeds) - 1:
             self.current_page += 1
             await interaction.response.edit_message(embed=self.embeds[self.current_page])
 
-    async def interaction_check(self, interaction: Interaction) -> bool:
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
         return interaction.user.id == self.user_id
 
 class Remind(commands.Cog):
@@ -48,7 +52,7 @@ class Remind(commands.Cog):
         """Check reminders every minute"""
         try:
             now = datetime.now(pytz.UTC)
-            reminders = await self.db.find({"due": {"$lte": now}, "status": "active"})
+            reminders = await self.db.find({"due": {"$lte": now}, "status": "active"}).to_list(None)
             
             for reminder in reminders:
                 user = self.bot.get_user(reminder["user_id"])
@@ -115,7 +119,7 @@ class Remind(commands.Cog):
     @commands.command(aliases=["myreminders"])
     async def reminders(self, ctx):
         """List your active reminders"""
-        reminders = await self.db.find({"user_id": ctx.author.id, "status": "active"})
+        reminders = await self.db.find({"user_id": ctx.author.id, "status": "active"}).to_list(None)
         
         if not reminders:
             return await ctx.send("No active reminders!")
@@ -124,7 +128,7 @@ class Remind(commands.Cog):
         for idx, rem in enumerate(reminders, 1):
             embed = discord.Embed(title=f"Reminder #{idx}", color=0x00ff00)
             embed.add_field(name="When", value=discord.utils.format_dt(rem["due"], "R"))
-            embed.add_field(name="Text", value=rem["text"][:100] + "...")
+            embed.add_field(name="Text", value=rem["text"][:100] + ("..." if len(rem["text"]) > 100 else ""))
             embeds.append(embed)
             
         paginator = ReminderPaginator(embeds, ctx.author.id)
