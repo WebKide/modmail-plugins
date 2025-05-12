@@ -94,27 +94,43 @@ class Remind(commands.Cog):
     async def remind(self, ctx, when: str, *, text: str):
         """Set a reminder - Usage: !remind [when] [text]"""
         try:
-            due = parse(when, fuzzy=True)
+            # Parse the input time
+            try:
+                due = parse(when, fuzzy=True)
+            except ValueError as e:
+                return await ctx.send(f"Couldn't understand the time format. Try something like 'in 2 hours' or 'tomorrow at 5pm'.\nError: {e}")
+
+            # Ensure timezone awareness
             if due.tzinfo is None:
                 due = pytz.UTC.localize(due)
+            else:
+                due = due.astimezone(pytz.UTC)
                 
-            if due <= datetime.now(pytz.UTC):
-                return await ctx.send("Time must be in the future!")
+            current_time = datetime.now(pytz.UTC)
+            if due <= current_time:
+                return await ctx.send(
+                    f"Time must be in the future! You entered a time that's {discord.utils.format_dt(due, 'R')} "
+                    f"(which is in the past). Current time is {discord.utils.format_dt(current_time)}."
+                )
                 
             reminder = {
                 "user_id": ctx.author.id,
                 "channel_id": ctx.channel.id,
                 "text": text,
                 "due": due,
-                "created": datetime.now(pytz.UTC),
+                "created": current_time,
                 "status": "active"
             }
             
             await self.db.insert_one(reminder)
-            await ctx.send(f"Reminder set for {discord.utils.format_dt(due, 'R')}!")
+            await ctx.send(f"⏰ Reminder set for {discord.utils.format_dt(due, 'f')} ({discord.utils.format_dt(due, 'R')})!")
             
         except Exception as e:
-            await ctx.send(f"Error: {e}")
+            await ctx.send(f"❌ Error setting reminder: {e}\n\n"
+                          "**Proper usage examples:**\n"
+                          "• `!remind in 2 hours take out the trash`\n"
+                          "• `!remind tomorrow at 9am meeting with team`\n"
+                          "• `!remind june 30 2023 birthday party`")
 
     @commands.command(aliases=["myreminders"])
     async def reminders(self, ctx):
