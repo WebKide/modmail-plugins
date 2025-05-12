@@ -19,13 +19,14 @@ UTC_OFFSET_PATTERN = re.compile(r'^UTC([+-])(\d{1,2})$', re.IGNORECASE)
 
 class ReminderPaginator(View):
     """Enhanced paginator for reminder lists with delete functionality"""
-    def __init__(self, embeds: List[discord.Embed], user_id: int, original_message: discord.Message):
+    def __init__(self, embeds: List[discord.Embed], user_id: int, original_message: discord.Message, cog):
         super().__init__(timeout=120)
         self.embeds = embeds
         self.current_page = 0
         self.user_id = user_id
         self.original_message = original_message
         self.deleted = False
+        self.cog = cog  # Reference to the main cog for DB access
 
         # Add buttons
         self.add_buttons()
@@ -38,7 +39,7 @@ class ReminderPaginator(View):
         # Previous button
         if len(self.embeds) > 1:
             prev_button = Button(
-                emoji="⬅️ Prev",
+                emoji="⬅️",
                 style=discord.ButtonStyle.blurple,
                 custom_id=f"prev_{self.user_id}_{datetime.now().timestamp()}"
             )
@@ -47,7 +48,7 @@ class ReminderPaginator(View):
 
         # Delete button
         delete_button = Button(
-            emoji="🗑️ Del reminder",
+            emoji="🗑️",
             style=discord.ButtonStyle.red,
             custom_id=f"delete_{self.user_id}_{datetime.now().timestamp()}"
         )
@@ -57,17 +58,20 @@ class ReminderPaginator(View):
         # Next button
         if len(self.embeds) > 1:
             next_button = Button(
-                emoji="Next ➡️",
+                emoji="➡️",
                 style=discord.ButtonStyle.blurple,
                 custom_id=f"next_{self.user_id}_{datetime.now().timestamp()}"
             )
             next_button.callback = self.next_page
             self.add_item(next_button)
 
-    def create_embed(self, reminder_data: dict, user: discord.User) -> discord.Embed:
+    async def create_embed(self, reminder_data: dict, user: discord.User) -> discord.Embed:
         """Create a styled embed for a reminder"""
+        user_tz = await self.cog.get_user_timezone(self.user_id)
+        local_dt = reminder_data["due"].astimezone(user_tz)
+        
         embed = discord.Embed(
-            description=f"### 📝 Reminder:\n# {reminder_data['text']}",
+            description=f"### 📝 Reminder:\n{reminder_data['text']}",
             color=discord.Color(0xd0d88f),
             timestamp=reminder_data["due"]
         )
@@ -82,7 +86,6 @@ class ReminderPaginator(View):
         embed.set_thumbnail(url="https://cdn.discordapp.com/embed/avatars/0.png")
         
         # Add formatted time field
-        local_dt = reminder_data["due"].astimezone(await self.get_user_timezone(self.user_id))
         time_str = (
             f"```cs\n"
             f"{local_dt.strftime('%d %B %Y %H:%M')}\n"
@@ -113,7 +116,7 @@ class ReminderPaginator(View):
     async def delete_reminder(self, interaction: discord.Interaction):
         """Handle reminder deletion"""
         reminder_id = self.embeds[self.current_page].footer.text.split("ID: ")[1]
-        await self.db.delete_one({"_id": reminder_id})
+        await self.cog.db.delete_one({"_id": reminder_id})
         
         # Remove the deleted reminder from our list
         del self.embeds[self.current_page]
@@ -138,7 +141,13 @@ class ReminderPaginator(View):
 
     async def update_embed(self, interaction: discord.Interaction, confirmation: str = None):
         """Update the embed with current page and optional confirmation message"""
-        embed = self.embeds[self.current_page]
+        user = await self.cog.bot.fetch_user(self.user_id)
+        embed = await self.create_embed({
+            "_id": self.embeds[self.current_page].footer.text.split("ID: ")[1],
+            "due": self.embeds[self.current_page].timestamp,
+            "text": self.embeds[self.current_page].description.split("### 📝 Reminder:\n")[1]
+        }, user)
+        
         if confirmation:
             embed.set_footer(text=f"{confirmation}\n{embed.footer.text}")
         
@@ -439,7 +448,7 @@ class Remind(commands.Cog):
             
             # Send paginated view
             message = await ctx.send(embed=embeds[0])
-            paginator = ReminderPaginator(embeds, ctx.author.id, message)
+            paginator = ReminderPaginator(embeds, ctx.author.id, message, self)
             await message.edit(view=paginator)
             
         except Exception as e:
