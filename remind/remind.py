@@ -39,7 +39,7 @@ class ReminderPaginator(View):
         # Previous button
         if len(self.embeds) > 1:
             prev_button = Button(
-                emoji="⬅️",
+                emoji="𝖯𝖱𝖤𝖵",
                 style=discord.ButtonStyle.blurple,
                 custom_id=f"prev_{self.user_id}_{datetime.now().timestamp()}"
             )
@@ -48,7 +48,7 @@ class ReminderPaginator(View):
 
         # Delete button
         delete_button = Button(
-            emoji="🗑️",
+            emoji="𝖣𝖤𝖫 𝖱𝖤𝖬𝖨𝖭𝖣𝖤𝖱",
             style=discord.ButtonStyle.red,
             custom_id=f"delete_{self.user_id}_{datetime.now().timestamp()}"
         )
@@ -58,7 +58,7 @@ class ReminderPaginator(View):
         # Next button
         if len(self.embeds) > 1:
             next_button = Button(
-                emoji="➡️",
+                emoji="𝖭𝖤𝖷𝖳",
                 style=discord.ButtonStyle.blurple,
                 custom_id=f"next_{self.user_id}_{datetime.now().timestamp()}"
             )
@@ -71,7 +71,7 @@ class ReminderPaginator(View):
         local_dt = reminder_data["due"].astimezone(user_tz)
         
         embed = discord.Embed(
-            description=f"### 📝 Reminder:\n{reminder_data['text']}",
+            description=f"### 📝 Reminder:\n# {reminder_data['text']}",
             color=discord.Color(0xd0d88f),
             timestamp=reminder_data["due"]
         )
@@ -196,18 +196,28 @@ class Remind(commands.Cog):
     def cog_unload(self):
         self.reminder_loop.cancel()
 
-    async def get_user_timezone(self, user_id: int) -> pytz.FixedOffset:
-        """Get user's timezone from DB or cache"""
+    async def get_user_timezone(self, user_id: int) -> pytz.BaseTzInfo:
+        """Get user's timezone from DB or cache with proper fallback"""
         if user_id in self.user_timezones:
             return self.user_timezones[user_id]
         
         user_data = await self.db.find_one({"_id": f"timezone_{user_id}"})
         if user_data:
-            tz = pytz.FixedOffset(user_data["offset_minutes"])
-            self.user_timezones[user_id] = tz
-            return tz
+            try:
+                # Handle both offset minutes and timezone string
+                if "offset_minutes" in user_data:
+                    tz = pytz.FixedOffset(user_data["offset_minutes"])
+                elif "timezone" in user_data:
+                    tz = pytz.timezone(user_data["timezone"])
+                else:
+                    tz = pytz.UTC
+                
+                self.user_timezones[user_id] = tz
+                return tz
+            except Exception:
+                pass
         
-        # Default to UTC if not set
+        # Default to UTC if not set or invalid
         return pytz.UTC
 
     async def format_time_with_timezone(self, dt: datetime, user_id: int) -> str:
@@ -344,18 +354,23 @@ class Remind(commands.Cog):
             settings = {
                 'RELATIVE_BASE': datetime.now(user_tz),
                 'TIMEZONE': str(user_tz),
-                'TO_TIMEZONE': 'UTC'  # We'll store in UTC
+                'TO_TIMEZONE': 'UTC'
             }
+            
+            # First try parsing with timezone awareness
             due = dateparser.parse(time_part, settings=settings)
             
+            # Fallback if timezone parsing fails
             if not due:
-                return await ctx.send(
-                    "⚠️ Couldn't understand the time. Try formats like:\n"
-                    "• `in 5 minutes`\n• `tomorrow at 3pm`\n• `next monday`"
-                )
+                due = dateparser.parse(time_part)
+                if not due:
+                    return await ctx.send("⚠️ Couldn't understand the time format.")
+                
+                # Apply user's timezone to the naive datetime
+                due = user_tz.localize(due)
             
-            # Ensure timezone is UTC (dateparser should handle this, but just in case)
-            due = pytz.UTC.localize(due) if due.tzinfo is None else due.astimezone(pytz.UTC)
+            # Convert to UTC for storage
+            due = due.astimezone(pytz.UTC)
             
             # Check if time is in the future
             if due <= datetime.now(pytz.UTC):
