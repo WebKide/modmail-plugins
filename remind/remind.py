@@ -312,14 +312,7 @@ class Remind(commands.Cog):
 
     @commands.command(aliases=["remindme"])
     async def remind(self, ctx, *, input_string: str):
-        """Set a reminder - Usage: `!remind [time] SEPARATOR [text]`
-        
-        Supported separators: | , - . / > [ to
-        Examples:
-        • `!remind in 2 hours | take out the trash`
-        • `!remind tomorrow at 3pm - buy groceries`
-        • `!remind next monday, finish the report`
-        """
+        """Set a reminder - Usage: `!remind [time] SEPARATOR [text]`"""
         try:
             # Define possible separators (order matters, longest first)
             SEPARATORS = [" to ", " | ", " - ", " / ", " > ", " [", " — "]
@@ -347,29 +340,51 @@ class Remind(commands.Cog):
             if not reminder_text:
                 return await ctx.send("⚠️ Reminder text cannot be empty!")
             
-            # Get user's timezone for parsing
+            # Get user's timezone
             user_tz = await self.get_user_timezone(ctx.author.id)
             
-            # Parse the time with user's timezone context
-            settings = {
-                'RELATIVE_BASE': datetime.now(user_tz),
-                'TIMEZONE': str(user_tz),
-                'TO_TIMEZONE': 'UTC'
-            }
+            # Try multiple parsing strategies
+            due = None
+            parsing_attempts = [
+                # Try with "at" time specification first
+                lambda: dateparser.parse(f"{time_part}",
+                                       settings={
+                                           'RELATIVE_BASE': datetime.now(user_tz),
+                                           'PREFER_DATES_FROM': 'future',
+                                           'TIMEZONE': str(user_tz),
+                                       }),
+                # Try without timezone context
+                lambda: dateparser.parse(f"{time_part}",
+                                       settings={
+                                           'RELATIVE_BASE': datetime.now(user_tz),
+                                           'PREFER_DATES_FROM': 'future'
+                                       }),
+                # Try with day-first parsing for European-style dates
+                lambda: dateparser.parse(f"{time_part}",
+                                       settings={
+                                           'DATE_ORDER': 'DMY',
+                                           'RELATIVE_BASE': datetime.now(user_tz),
+                                           'PREFER_DATES_FROM': 'future'
+                                       })
+            ]
             
-            # First try parsing with timezone awareness
-            due = dateparser.parse(time_part, settings=settings)
+            for attempt in parsing_attempts:
+                due = attempt()
+                if due:
+                    break
             
-            # Fallback if timezone parsing fails
             if not due:
-                due = dateparser.parse(time_part)
-                if not due:
-                    return await ctx.send("⚠️ Couldn't understand the time format.")
-                
-                # Apply user's timezone to the naive datetime
-                due = user_tz.localize(due)
+                return await ctx.send(
+                    "⚠️ Couldn't understand the time format. Try these examples:\n"
+                    "• `18 May at 5pm`\n"
+                    "• `next Tuesday at 3:30`\n"
+                    "• `in 2 hours`\n"
+                    "• `tomorrow at noon`"
+                )
             
-            # Convert to UTC for storage
+            # Ensure timezone is set
+            if due.tzinfo is None:
+                due = user_tz.localize(due)
             due = due.astimezone(pytz.UTC)
             
             # Check if time is in the future
@@ -398,11 +413,11 @@ class Remind(commands.Cog):
             
         except Exception as e:
             await ctx.send(
-                f"❌ **Error setting reminder:** {e}\n\n"
+                f"❌ **Error setting reminder:** {str(e)[:200]}\n\n"
                 "**Proper Usage Examples:**\n"
-                "• `!remind in 2 hours | take out the trash`\n"
-                "• `!remind tomorrow at 3pm - buy groceries`\n"
-                "• `!remind next monday, finish the report`"
+                "• `!remind 18 May at 5pm | Renew subscription`\n"
+                "• `!remind tomorrow at 3pm - Doctor appointment`\n"
+                "• `!remind in 2 hours | Take pizza out of oven`"
             )
 
     @commands.command(aliases=["myreminders", "mr"])
