@@ -39,7 +39,7 @@ class ReminderPaginator(View):
         # Previous button
         if len(self.embeds) > 1:
             prev_button = Button(
-                emoji="𝖯𝖱𝖤𝖵",
+                emoji="⬅️",
                 style=discord.ButtonStyle.blurple,
                 custom_id=f"prev_{self.user_id}_{datetime.now().timestamp()}"
             )
@@ -48,7 +48,7 @@ class ReminderPaginator(View):
 
         # Delete button
         delete_button = Button(
-            emoji="𝖣𝖤𝖫 𝖱𝖤𝖬𝖨𝖭𝖣𝖤𝖱",
+            emoji="🗑️",
             style=discord.ButtonStyle.red,
             custom_id=f"delete_{self.user_id}_{datetime.now().timestamp()}"
         )
@@ -58,50 +58,12 @@ class ReminderPaginator(View):
         # Next button
         if len(self.embeds) > 1:
             next_button = Button(
-                emoji="𝖭𝖤𝖷𝖳",
+                emoji="➡️",
                 style=discord.ButtonStyle.blurple,
                 custom_id=f"next_{self.user_id}_{datetime.now().timestamp()}"
             )
             next_button.callback = self.next_page
             self.add_item(next_button)
-
-    async def create_embed(self, reminder_data: dict, user: discord.User) -> discord.Embed:
-        """Create a styled embed for a reminder"""
-        user_tz = await self.cog.get_user_timezone(self.user_id)
-        local_dt = reminder_data["due"].astimezone(user_tz)
-        
-        embed = discord.Embed(
-            description=f"### 📝 Reminder:\n# {reminder_data['text']}",
-            color=discord.Color(0xd0d88f),
-            timestamp=reminder_data["due"]
-        )
-        
-        # Set author with user's avatar
-        embed.set_author(
-            name=f"⏰ Reminder #{self.current_page + 1} for {user.display_name}",
-            icon_url=user.avatar.url
-        )
-        
-        # Set thumbnail and image
-        embed.set_thumbnail(url="https://cdn.discordapp.com/embed/avatars/0.png")
-        
-        # Add formatted time field
-        time_str = (
-            f"```cs\n"
-            f"{local_dt.strftime('%d %B %Y %H:%M')}\n"
-            f"[{discord.utils.format_dt(reminder_data['due'], 'R')}]\n"
-            f"```"
-        )
-        embed.add_field(
-            name="📆 When:",
-            value=time_str,
-            inline=False
-        )
-        
-        # Add footer with ID
-        embed.set_footer(text=f"ID: {reminder_data['_id']}")
-        
-        return embed
 
     async def previous_page(self, interaction: discord.Interaction):
         if self.current_page > 0:
@@ -142,11 +104,7 @@ class ReminderPaginator(View):
     async def update_embed(self, interaction: discord.Interaction, confirmation: str = None):
         """Update the embed with current page and optional confirmation message"""
         user = await self.cog.bot.fetch_user(self.user_id)
-        embed = await self.create_embed({
-            "_id": self.embeds[self.current_page].footer.text.split("ID: ")[1],
-            "due": self.embeds[self.current_page].timestamp,
-            "text": self.embeds[self.current_page].description.split("### 📝 Reminder:\n")[1]
-        }, user)
+        embed = self.embeds[self.current_page]
         
         if confirmation:
             embed.set_footer(text=f"{confirmation}\n{embed.footer.text}")
@@ -163,26 +121,6 @@ class ReminderPaginator(View):
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         return interaction.user.id == self.user_id
-
-class TimezoneConverter(commands.Converter):
-    async def convert(self, ctx, argument):
-        match = UTC_OFFSET_PATTERN.match(argument.strip())
-        if not match:
-            raise commands.BadArgument("Invalid timezone format. Use `UTC±HH` (e.g., `UTC+2`, `UTC-5`)")
-        
-        sign, hours = match.groups()
-        try:
-            hours = int(hours)
-            if hours > 14 or hours < -12:
-                raise commands.BadArgument("Timezone offset must be between UTC-12 and UTC+14")
-            
-            # Create a fixed offset timezone
-            offset = hours * 60 * 60
-            if sign == '-':
-                offset = -offset
-            return pytz.FixedOffset(offset / 60)
-        except ValueError:
-            raise commands.BadArgument("Invalid timezone format. Use `UTC±HH` (e.g., `UTC+2`, `UTC-5`)")
 
 class Remind(commands.Cog):
     """Remind plugin with timezone support"""
@@ -230,33 +168,47 @@ class Remind(commands.Cog):
         )
 
     @commands.command(name="mytimezone", aliases=["settimezone", "settz"])
-    async def set_timezone(self, ctx, timezone: TimezoneConverter):
-        """Set your timezone (e.g., `!mytimezone UTC+2`)"""
-        offset_minutes = timezone.utcoffset(None).total_seconds() / 60
-        
-        await self.db.update_one(
-            {"_id": f"timezone_{ctx.author.id}"},
-            {"$set": {"offset_minutes": offset_minutes}},
-            upsert=True
-        )
-        
-        # Update cache
-        self.user_timezones[ctx.author.id] = timezone
-        
-        await ctx.send(
-            f"⏰ Your timezone has been set to `{timezone}`\n"
-            f"Current time: {discord.utils.format_dt(datetime.now(timezone), 'f')}"
-        )
-
-    @commands.command(name="mytime")
-    async def show_current_time(self, ctx):
-        """Show your current time based on your timezone setting"""
-        user_tz = await self.get_user_timezone(ctx.author.id)
-        now = datetime.now(user_tz)
-        await ctx.send(
-            f"⏰ Your current time: {discord.utils.format_dt(now, 'f')}\n"
-            f"Timezone: `{user_tz}`"
-        )
+    async def set_timezone(self, ctx, timezone: str):
+        """Set your timezone (e.g., `!mytimezone UTC+2` or `!mytimezone America/New_York`)"""
+        try:
+            # Try parsing as UTC offset first
+            if match := UTC_OFFSET_PATTERN.match(timezone.strip()):
+                sign, hours = match.groups()
+                offset = int(hours) * 60
+                if sign == '-':
+                    offset = -offset
+                tz = pytz.FixedOffset(offset)
+            else:
+                # Try parsing as timezone name
+                tz = pytz.timezone(timezone.strip())
+            
+            # Verify the timezone
+            datetime.now(tz)
+            
+            await self.db.update_one(
+                {"_id": f"timezone_{ctx.author.id}"},
+                {"$set": {
+                    "offset_minutes": tz.utcoffset(None).total_seconds() / 60,
+                    "timezone": str(tz)
+                }},
+                upsert=True
+            )
+            
+            # Update cache
+            self.user_timezones[ctx.author.id] = tz
+            
+            await ctx.send(
+                f"⏰ Your timezone has been set to `{tz}`\n"
+                f"Current time: {discord.utils.format_dt(datetime.now(tz), 'f')}"
+            )
+        except pytz.UnknownTimeZoneError:
+            await ctx.send(
+                "⚠️ Unknown timezone. Use either:\n"
+                "• `UTC±HH` format (e.g., `UTC+2`, `UTC-5`)\n"
+                "• Standard timezone name (e.g., `America/New_York`)"
+            )
+        except Exception as e:
+            await ctx.send(f"❌ Error setting timezone: {str(e)}")
 
     @tasks.loop(seconds=60.0)
     async def reminder_loop(self):
@@ -298,18 +250,6 @@ class Remind(commands.Cog):
         except Exception as e:
             log.error(f"Reminder loop error: {e}")
 
-    async def _reschedule_recurring(self, reminder: Dict):
-        """Reschedule recurring reminders"""
-        frequency = reminder["recurring"]
-        new_due = parse(reminder["due"]) + (
-            timedelta(days=1) if frequency == "daily" else 
-            timedelta(weeks=1)
-        )
-        await self.db.update_one(
-            {"_id": reminder["_id"]},
-            {"$set": {"due": new_due}}
-        )
-
     @commands.command(aliases=["remindme"])
     async def remind(self, ctx, *, input_string: str):
         """Set a reminder - Usage: `!remind [time] SEPARATOR [text]`"""
@@ -343,43 +283,48 @@ class Remind(commands.Cog):
             # Get user's timezone
             user_tz = await self.get_user_timezone(ctx.author.id)
             
-            # Try multiple parsing strategies
+            # Parse the time with multiple strategies
             due = None
-            parsing_attempts = [
-                # Try with "at" time specification first
-                lambda: dateparser.parse(f"{time_part}",
-                                       settings={
-                                           'RELATIVE_BASE': datetime.now(user_tz),
-                                           'PREFER_DATES_FROM': 'future',
-                                           'TIMEZONE': str(user_tz),
-                                       }),
-                # Try without timezone context
-                lambda: dateparser.parse(f"{time_part}",
-                                       settings={
-                                           'RELATIVE_BASE': datetime.now(user_tz),
-                                           'PREFER_DATES_FROM': 'future'
-                                       }),
-                # Try with day-first parsing for European-style dates
-                lambda: dateparser.parse(f"{time_part}",
-                                       settings={
-                                           'DATE_ORDER': 'DMY',
-                                           'RELATIVE_BASE': datetime.now(user_tz),
-                                           'PREFER_DATES_FROM': 'future'
-                                       })
+            parsing_strategies = [
+                # Try with "at" time specification
+                lambda: dateparser.parse(
+                    time_part,
+                    settings={
+                        'RELATIVE_BASE': datetime.now(user_tz),
+                        'PREFER_DATES_FROM': 'future',
+                        'TIMEZONE': str(user_tz),
+                        'DATE_ORDER': 'DMY'
+                    }
+                ),
+                # Try with day-first parsing
+                lambda: dateparser.parse(
+                    time_part,
+                    settings={
+                        'RELATIVE_BASE': datetime.now(user_tz),
+                        'PREFER_DATES_FROM': 'future',
+                        'DATE_ORDER': 'DMY'
+                    }
+                ),
+                # Try default parsing
+                lambda: dateparser.parse(
+                    time_part,
+                    settings={
+                        'RELATIVE_BASE': datetime.now(user_tz),
+                        'PREFER_DATES_FROM': 'future'
+                    }
+                )
             ]
             
-            for attempt in parsing_attempts:
-                due = attempt()
+            for strategy in parsing_strategies:
+                due = strategy()
                 if due:
                     break
             
             if not due:
                 return await ctx.send(
                     "⚠️ Couldn't understand the time format. Try these examples:\n"
-                    "• `18 May at 5pm`\n"
-                    "• `next Tuesday at 3:30`\n"
-                    "• `in 2 hours`\n"
-                    "• `tomorrow at noon`"
+                    "• `18 May at 5pm`\n• `May 18 5pm`\n• `next Tuesday at 3pm`\n"
+                    "• `tomorrow at noon`\n• `in 2 hours`"
                 )
             
             # Ensure timezone is set
@@ -427,7 +372,7 @@ class Remind(commands.Cog):
             # Fetch reminders from database
             reminders = await self.db.find(
                 {"user_id": ctx.author.id, "status": "active"}
-            ).sort("due", 1).to_list(None)  # Sort by due date ascending
+            ).sort("due", 1).to_list(None)
             
             if not reminders:
                 embed = discord.Embed(
@@ -439,7 +384,6 @@ class Remind(commands.Cog):
             # Create paginated embeds
             embeds = []
             for idx, rem in enumerate(reminders, 1):
-                # Get user's timezone for display
                 user_tz = await self.get_user_timezone(ctx.author.id)
                 local_dt = rem["due"].astimezone(user_tz)
                 
@@ -448,30 +392,19 @@ class Remind(commands.Cog):
                     color=discord.Color(0xd0d88f),
                     timestamp=rem["due"]
                 )
-                
-                # Set author with user's avatar
                 embed.set_author(
                     name=f"⏰ Reminder #{idx} for {ctx.author.display_name}",
                     icon_url=ctx.author.avatar.url
                 )
-                
-                # Set thumbnail
                 embed.set_thumbnail(url="https://cdn.discordapp.com/embed/avatars/0.png")
                 
-                # Add formatted time field
                 time_str = (
                     f"```cs\n"
                     f"{local_dt.strftime('%d %B %Y %H:%M')}\n"
                     f"[{discord.utils.format_dt(rem['due'], 'R')}]\n"
                     f"```"
                 )
-                embed.add_field(
-                    name="📆 When:",
-                    value=time_str,
-                    inline=False
-                )
-                
-                # Add footer with ID
+                embed.add_field(name="📆 When:", value=time_str, inline=False)
                 embed.set_footer(text=f"ID: {rem['_id']}")
                 
                 embeds.append(embed)
@@ -484,7 +417,7 @@ class Remind(commands.Cog):
         except Exception as e:
             error_embed = discord.Embed(
                 title="❌ Error fetching reminders",
-                description=f"```{str(e)[:1000]}```",  # Truncate long errors
+                description=f"```{str(e)[:1000]}```",
                 color=0xff0000
             )
             await ctx.send(embed=error_embed)
