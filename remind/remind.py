@@ -18,40 +18,139 @@ log = logging.getLogger("Modmail")
 UTC_OFFSET_PATTERN = re.compile(r'^UTC([+-])(\d{1,2})$', re.IGNORECASE)
 
 class ReminderPaginator(View):
-    """Paginator for reminder lists with unique button IDs"""
-    def __init__(self, embeds: List[discord.Embed], user_id: int):
+    """Enhanced paginator for reminder lists with delete functionality"""
+    def __init__(self, embeds: List[discord.Embed], user_id: int, original_message: discord.Message):
         super().__init__(timeout=120)
         self.embeds = embeds
         self.current_page = 0
         self.user_id = user_id
+        self.original_message = original_message
+        self.deleted = False
+
+        # Add buttons
+        self.add_buttons()
+
+    def add_buttons(self):
+        """Dynamically add buttons based on page count"""
+        # Clear existing buttons
+        self.clear_items()
 
         # Previous button
-        self.prev_button = Button(
-            emoji="⬅️",
-            style=discord.ButtonStyle.blurple,
-            custom_id=f"prev_{user_id}_{datetime.now().timestamp()}"
+        if len(self.embeds) > 1:
+            prev_button = Button(
+                emoji="⬅️ Prev",
+                style=discord.ButtonStyle.blurple,
+                custom_id=f"prev_{self.user_id}_{datetime.now().timestamp()}"
+            )
+            prev_button.callback = self.previous_page
+            self.add_item(prev_button)
+
+        # Delete button
+        delete_button = Button(
+            emoji="🗑️ Del reminder",
+            style=discord.ButtonStyle.red,
+            custom_id=f"delete_{self.user_id}_{datetime.now().timestamp()}"
         )
-        self.prev_button.callback = self.previous_page
-        self.add_item(self.prev_button)
+        delete_button.callback = self.delete_reminder
+        self.add_item(delete_button)
 
         # Next button
-        self.next_button = Button(
-            emoji="➡️",
-            style=discord.ButtonStyle.blurple,
-            custom_id=f"next_{user_id}_{datetime.now().timestamp()}"
+        if len(self.embeds) > 1:
+            next_button = Button(
+                emoji="Next ➡️",
+                style=discord.ButtonStyle.blurple,
+                custom_id=f"next_{self.user_id}_{datetime.now().timestamp()}"
+            )
+            next_button.callback = self.next_page
+            self.add_item(next_button)
+
+    def create_embed(self, reminder_data: dict, user: discord.User) -> discord.Embed:
+        """Create a styled embed for a reminder"""
+        embed = discord.Embed(
+            description=f"### 📝 Reminder:\n# {reminder_data['text']}",
+            color=discord.Color(0xd0d88f),
+            timestamp=reminder_data["due"]
         )
-        self.next_button.callback = self.next_page
-        self.add_item(self.next_button)
+        
+        # Set author with user's avatar
+        embed.set_author(
+            name=f"⏰ Reminder #{self.current_page + 1} for {user.display_name}",
+            icon_url=user.avatar.url
+        )
+        
+        # Set thumbnail and image
+        embed.set_thumbnail(url="https://cdn.discordapp.com/embed/avatars/0.png")
+        
+        # Add formatted time field
+        local_dt = reminder_data["due"].astimezone(await self.get_user_timezone(self.user_id))
+        time_str = (
+            f"```cs\n"
+            f"{local_dt.strftime('%d %B %Y %H:%M')}\n"
+            f"[{discord.utils.format_dt(reminder_data['due'], 'R')}]\n"
+            f"```"
+        )
+        embed.add_field(
+            name="📆 When:",
+            value=time_str,
+            inline=False
+        )
+        
+        # Add footer with ID
+        embed.set_footer(text=f"ID: {reminder_data['_id']}")
+        
+        return embed
 
     async def previous_page(self, interaction: discord.Interaction):
         if self.current_page > 0:
             self.current_page -= 1
-            await interaction.response.edit_message(embed=self.embeds[self.current_page])
+            await self.update_embed(interaction)
 
     async def next_page(self, interaction: discord.Interaction):
         if self.current_page < len(self.embeds) - 1:
             self.current_page += 1
-            await interaction.response.edit_message(embed=self.embeds[self.current_page])
+            await self.update_embed(interaction)
+
+    async def delete_reminder(self, interaction: discord.Interaction):
+        """Handle reminder deletion"""
+        reminder_id = self.embeds[self.current_page].footer.text.split("ID: ")[1]
+        await self.db.delete_one({"_id": reminder_id})
+        
+        # Remove the deleted reminder from our list
+        del self.embeds[self.current_page]
+        
+        if not self.embeds:
+            # No reminders left
+            embed = discord.Embed(
+                description="🗑️ Reminder deleted! You have no more reminders.",
+                color=discord.Color.red()
+            )
+            self.deleted = True
+            await interaction.response.edit_message(embed=embed, view=None)
+            return
+        
+        # Adjust current page if needed
+        if self.current_page >= len(self.embeds):
+            self.current_page = len(self.embeds) - 1
+        
+        # Update buttons
+        self.add_buttons()
+        await self.update_embed(interaction, confirmation="🗑️ Reminder deleted!")
+
+    async def update_embed(self, interaction: discord.Interaction, confirmation: str = None):
+        """Update the embed with current page and optional confirmation message"""
+        embed = self.embeds[self.current_page]
+        if confirmation:
+            embed.set_footer(text=f"{confirmation}\n{embed.footer.text}")
+        
+        await interaction.response.edit_message(embed=embed, view=self)
+
+    async def on_timeout(self):
+        """Remove buttons when view times out"""
+        if not self.deleted:
+            try:
+                await self.original_message.edit(view=None)
+            except discord.NotFound:
+                pass
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         return interaction.user.id == self.user_id
@@ -298,46 +397,50 @@ class Remind(commands.Cog):
                 )
                 return await ctx.send(embed=embed)
             
-            # Get user's timezone for display
-            user_tz = await self.get_user_timezone(ctx.author.id)
-            
             # Create paginated embeds
             embeds = []
             for idx, rem in enumerate(reminders, 1):
-                embed = discord.Embed(
-                    title=f"⏰ Reminder #{idx}",
-                    color=0x00ff00
-                )
-                
-                # Format time information in user's timezone
+                # Get user's timezone for display
+                user_tz = await self.get_user_timezone(ctx.author.id)
                 local_dt = rem["due"].astimezone(user_tz)
-                time_str = (
-                    f"{discord.utils.format_dt(local_dt, 'f')}\n"
-                    f"({discord.utils.format_dt(local_dt, 'R')})"
+                
+                embed = discord.Embed(
+                    description=f"### 📝 Reminder:\n{rem['text']}",
+                    color=discord.Color(0xd0d88f),
+                    timestamp=rem["due"]
                 )
                 
-                # Format reminder text (with smart truncation)
-                text = rem["text"]
-                if len(text) > 250:
-                    text = text[:250] + "..."
+                # Set author with user's avatar
+                embed.set_author(
+                    name=f"⏰ Reminder #{idx} for {ctx.author.display_name}",
+                    icon_url=ctx.author.avatar.url
+                )
                 
-                embed.add_field(name="⏰ When", value=time_str, inline=False)
-                embed.add_field(name="📝 Reminder", value=text, inline=False)
+                # Set thumbnail
+                embed.set_thumbnail(url="https://cdn.discordapp.com/embed/avatars/0.png")
                 
-                # Add creation time in footer if it exists
-                footer_text = f"ID: {rem['_id']}"
-                if "created" in rem:
-                    created_dt = rem["created"].astimezone(user_tz)
-                    created_str = discord.utils.format_dt(created_dt, "R")
-                    footer_text = f"Created {created_str} • {footer_text}"
+                # Add formatted time field
+                time_str = (
+                    f"```cs\n"
+                    f"{local_dt.strftime('%d %B %Y %H:%M')}\n"
+                    f"[{discord.utils.format_dt(rem['due'], 'R')}]\n"
+                    f"```"
+                )
+                embed.add_field(
+                    name="📆 When:",
+                    value=time_str,
+                    inline=False
+                )
                 
-                embed.set_footer(text=footer_text)
+                # Add footer with ID
+                embed.set_footer(text=f"ID: {rem['_id']}")
                 
                 embeds.append(embed)
             
             # Send paginated view
-            paginator = ReminderPaginator(embeds, ctx.author.id)
-            await ctx.send(embed=embeds[0], view=paginator)
+            message = await ctx.send(embed=embeds[0])
+            paginator = ReminderPaginator(embeds, ctx.author.id, message)
+            await message.edit(view=paginator)
             
         except Exception as e:
             error_embed = discord.Embed(
