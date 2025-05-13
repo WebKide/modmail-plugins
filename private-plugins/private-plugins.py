@@ -113,34 +113,33 @@ class PrivatePluginManager:
             "Accept": "application/vnd.github.v3+json"
         }
         
+        plugin_io = None  # Initialize variable here
+        
         try:
-            # First verify the repo exists and is accessible
-            async with self.bot.session.get(
-                f"https://api.github.com/repos/{plugin.user}/{plugin.repo}",
-                headers=headers
-            ) as resp:
+            # Verify repo exists
+            repo_url = f"https://api.github.com/repos/{plugin.user}/{plugin.repo}"
+            async with self.bot.session.get(repo_url, headers=headers) as resp:
                 if resp.status == 404:
-                    raise ValueError("Repository not found or inaccessible")
+                    raise ValueError(f"Repository not found: {plugin.user}/{plugin.repo}")
                 if resp.status != 200:
                     raise ValueError(f"GitHub API returned status {resp.status}")
 
-            # Then download the zip
+            # Download zip
             async with self.bot.session.get(plugin.url, headers=headers) as resp:
                 if resp.status != 200:
-                    raise ValueError(f"Failed to download repository: {resp.status}")
+                    raise ValueError(f"Failed to download: {resp.status} - {plugin.url}")
                 
                 raw = await resp.read()
                 plugin_io = io.BytesIO(raw)
 
-            # Extract the zip file
+            # Extract zip
             with zipfile.ZipFile(plugin_io) as zipf:
-                # GitHub zip files have one root directory with commit hash in name
-                root_dir = zipf.namelist()[0]
+                root_dir = zipf.namelist()[0]  # Get the root directory (contains commit hash)
                 
                 for info in zipf.infolist():
                     path = PurePath(info.filename)
-                    if len(path.parts) > 1:  # Skip the root directory
-                        rel_path = Path(*path.parts[1:])  # Remove root dir from path
+                    if len(path.parts) > 1:  # Skip root directory
+                        rel_path = Path(*path.parts[1:])
                         plugin_path = plugin.abs_path / rel_path
                         
                         if info.is_dir():
@@ -153,7 +152,8 @@ class PrivatePluginManager:
         except Exception as e:
             raise ValueError(f"Download failed: {str(e)}")
         finally:
-            plugin_io.close()
+            if plugin_io:  # Only close if it was assigned
+                plugin_io.close()
 
     async def load_private_plugin(self, plugin):
         """Load a private-plugin into the Bot"""
@@ -519,9 +519,63 @@ class PrivatePlugins(commands.Cog):
             
             await reaction.remove(user)
 
+    @private_group.command(name="debug")
+    async def debug_plugin(self, ctx, user: str, repo: str, branch: str = "main"):
+        """Debug repository access issues"""
+        token = await self.manager.get_github_token()
+        if not token:
+            return await ctx.send("❌ No GitHub token configured")
+        
+        headers = {
+            "Authorization": f"token {token}",
+            "Accept": "application/vnd.github.v3+json"
+        }
+        
+        # Test 1: Check repo access
+        repo_url = f"https://api.github.com/repos/{user}/{repo}"
+        async with self.bot.session.get(repo_url, headers=headers) as resp:
+            repo_status = resp.status
+            repo_data = await resp.json() if resp.status == 200 else None
+        
+        # Test 2: Check zip download
+        zip_url = f"https://api.github.com/repos/{user}/{repo}/zipball/{branch}"
+        async with self.bot.session.get(zip_url, headers=headers) as resp:
+            zip_status = resp.status
+        
+        embed = discord.Embed(title="GitHub Debug Information", color=self.bot.main_color)
+        embed.add_field(name="Repository Access", value=f"`{repo_url}`\nStatus: {repo_status}")
+        
+        if repo_status == 200:
+            embed.add_field(name="Repository Info", 
+                          value=f"Name: {repo_data['full_name']}\n"
+                                f"Private: {repo_data['private']}\n"
+                                f"Default Branch: {repo_data['default_branch']}",
+                          inline=False)
+        
+        embed.add_field(name="Zip Download", value=f"`{zip_url}`\nStatus: {zip_status}", inline=False)
+        
+        if repo_status == 200 and zip_status == 200:
+            embed.description = "✅ All checks passed!"
+            embed.color = discord.Color.green()
+        else:
+            embed.description = "❌ Issues detected"
+            embed.color = discord.Color.red()
+            
+            if repo_status == 404:
+                embed.add_field(name="Repo 404 Solution", 
+                              value="1. Check the repository exists\n"
+                                    "2. Ensure your token has `repo` scope\n"
+                                    "3. For organizations, check your access level",
+                              inline=False)
+            
+            if zip_status == 404:
+                embed.add_field(name="Zip 404 Solution", 
+                              value="1. Verify the branch exists\n"
+                                    "2. Try the default branch\n"
+                                    "3. Check repository visibility",
+                              inline=False)
+        
+        await ctx.send(embed=embed)
+
 async def setup(bot):
     await bot.add_cog(PrivatePlugins(bot))
-"""
-def setup(bot):
-    bot.add_cog(PrivatePlugins(bot))
-"""
