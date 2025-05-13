@@ -108,29 +108,52 @@ class PrivatePluginManager:
         if not token:
             raise ValueError("GitHub token not configured")
 
-        headers = {"Authorization": f"token {token}"}
-        async with self.bot.session.get(plugin.url, headers=headers) as resp:
-            if resp.status == 404:
-                raise ValueError("Repository not found or inaccessible")
-            if resp.status != 200:
-                raise ValueError(f"GitHub API returned status {resp.status}")
+        headers = {
+            "Authorization": f"token {token}",
+            "Accept": "application/vnd.github.v3+json"
+        }
+        
+        try:
+            # First verify the repo exists and is accessible
+            async with self.bot.session.get(
+                f"https://api.github.com/repos/{plugin.user}/{plugin.repo}",
+                headers=headers
+            ) as resp:
+                if resp.status == 404:
+                    raise ValueError("Repository not found or inaccessible")
+                if resp.status != 200:
+                    raise ValueError(f"GitHub API returned status {resp.status}")
 
-            raw = await resp.read()
-            plugin_io = io.BytesIO(raw)
+            # Then download the zip
+            async with self.bot.session.get(plugin.url, headers=headers) as resp:
+                if resp.status != 200:
+                    raise ValueError(f"Failed to download repository: {resp.status}")
+                
+                raw = await resp.read()
+                plugin_io = io.BytesIO(raw)
 
-        with zipfile.ZipFile(plugin_io) as zipf:
-            for info in zipf.infolist():
-                path = PurePath(info.filename)
-                if len(path.parts) >= 3 and path.parts[1] == plugin.name:
-                    plugin_path = plugin.abs_path / Path(*path.parts[2:])
-                    if info.is_dir():
-                        plugin_path.mkdir(parents=True, exist_ok=True)
-                    else:
-                        plugin_path.parent.mkdir(parents=True, exist_ok=True)
-                        with zipfile.open(info) as src, plugin_path.open("wb") as dst:
-                            shutil.copyfileobj(src, dst)
+            # Extract the zip file
+            with zipfile.ZipFile(plugin_io) as zipf:
+                # GitHub zip files have one root directory with commit hash in name
+                root_dir = zipf.namelist()[0]
+                
+                for info in zipf.infolist():
+                    path = PurePath(info.filename)
+                    if len(path.parts) > 1:  # Skip the root directory
+                        rel_path = Path(*path.parts[1:])  # Remove root dir from path
+                        plugin_path = plugin.abs_path / rel_path
+                        
+                        if info.is_dir():
+                            plugin_path.mkdir(parents=True, exist_ok=True)
+                        else:
+                            plugin_path.parent.mkdir(parents=True, exist_ok=True)
+                            with zipf.open(info) as src, plugin_path.open("wb") as dst:
+                                shutil.copyfileobj(src, dst)
 
-        plugin_io.close()
+        except Exception as e:
+            raise ValueError(f"Download failed: {str(e)}")
+        finally:
+            plugin_io.close()
 
     async def load_private_plugin(self, plugin):
         """Load a private-plugin into the Bot"""
@@ -311,9 +334,15 @@ class PrivatePlugins(commands.Cog):
                 embed.description = f"❌ Failed to load **{plugin}**"
                 embed.color = self.bot.error_color
         except Exception as e:
-            embed.description = f"❌ Error loading plugin: {str(e)}"
+            error_msg = (f"❌ Error loading plugin:\n"
+                         f"```\n"
+                         f"Repository: {plugin.user}/{plugin.repo}\n"
+                         f"Branch: {plugin.branch}\n"
+                         f"Error: {str(e)}\n"
+                         f"```")
+            embed.description = error_msg
             embed.color = self.bot.error_color
-            logger.error(f"Failed to load private plugin **{plugin}**:", exc_info=True)
+            logger.error(f"Failed to load private plugin {plugin}:", exc_info=True)
 
         await msg.edit(embed=embed)
 
@@ -389,6 +418,46 @@ class PrivatePlugins(commands.Cog):
 
         embed = await self.manager.create_plugin_embed(page=0, interactive=False)
         await ctx.send(embed=embed)
+
+    @private_group.command(name="testtoken")
+    async def test_token(self, ctx):
+        """Test if your GitHub token is working"""
+        token = await self.manager.get_github_token()
+        if not token:
+            return await ctx.send("❌ No token configured")
+        
+        headers = {"Authorization": f"token {token}"}
+        try:
+            async with self.bot.session.get(
+                "https://api.github.com/user",
+                headers=headers
+            ) as resp:
+                if resp.status == 200:
+                    data = await resp.json()
+                    return await ctx.send(f"✅ Token valid for user: {data['login']}")
+                return await ctx.send(f"❌ Token error: {resp.status}")
+        except Exception as e:
+            await ctx.send(f"❌ Connection failed: {str(e)}")
+
+    @private_group.command(name="testrepo")
+    async def test_repo(self, ctx, user: str, repo: str):
+        """Test if you can access a repository"""
+        token = await self.manager.get_github_token()
+        if not token:
+            return await ctx.send("❌ No token configured")
+        
+        headers = {"Authorization": f"token {token}"}
+        try:
+            async with self.bot.session.get(
+                f"https://api.github.com/repos/{user}/{repo}",
+                headers=headers
+            ) as resp:
+                if resp.status == 200:
+                    data = await resp.json()
+                    return await ctx.send(f"✅ Access granted to {user}/{repo}\nPrivate: {data['private']}")
+                return await ctx.send(f"❌ Access denied: {resp.status}")
+        except Exception as e:
+            await ctx.send(f"❌ Connection failed: {str(e)}")
 
     @commands.Cog.listener()
     async def on_reaction_add(self, reaction, user):
