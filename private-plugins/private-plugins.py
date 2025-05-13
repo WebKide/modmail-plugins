@@ -1,4 +1,12 @@
-import asyncio, logging, io, json, os, shutil, sys, typing, zipfile
+import asyncio
+import io
+import json
+import logging
+import os
+import shutil
+import sys
+import typing
+import zipfile
 from difflib import get_close_matches
 from pathlib import Path, PurePath
 from re import match
@@ -14,7 +22,38 @@ from core.models import PermissionLevel, getLogger
 from core.paginator import EmbedPaginatorSession
 from core.utils import truncate, trigger_typing
 
+
 logger = logging.getLogger("Modmail")
+
+class Plugin:
+    """Represents a private GitHub plugin"""
+    def __init__(self, user, repo, name, branch="master"):
+        self.user = user
+        self.repo = repo
+        self.name = name
+        self.branch = branch
+        self.url = f"https://api.github.com/repos/{user}/{repo}/zipball/{branch}"
+        
+        # Path where the plugin will be stored
+        plugins_dir = Path("plugins/private")
+        self.abs_path = plugins_dir / name
+        self.ext_string = f"plugins.private.{name}"
+        
+    def __str__(self):
+        return f"{self.name}@{self.branch}"
+    
+    def __repr__(self):
+        return f"<Plugin {self.user}/{self.repo}/{self.name}@{self.branch}>"
+    
+    def __hash__(self):
+        return hash((self.user, self.repo, self.name, self.branch))
+    
+    def __eq__(self, other):
+        if not isinstance(other, Plugin):
+            return False
+        return (self.user, self.repo, self.name, self.branch) == (
+            other.user, other.repo, other.name, other.branch
+        )
 
 class PrivatePluginManager:
     """Handles the core logic for private-plugin management"""
