@@ -171,9 +171,24 @@ class PrivatePluginManager:
                 raise ValueError(f"Requirements install failed: {stderr.decode()}")
 
         try:
+            # First verify the setup function exists
+            spec = importlib.util.spec_from_file_location(
+                plugin.ext_string,
+                plugin.abs_path / "__init__.py"
+            )
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+            
+            if not hasattr(module, 'setup'):
+                raise ValueError(
+                    f"Plugin '{plugin.name}' is missing required 'setup' function. "
+                    "It must contain: `def setup(bot): bot.add_cog(YourCogClass(bot))`"
+                )
+                
             await self.bot.load_extension(plugin.ext_string)
             self.loaded_private_plugins.add(plugin)
             return True
+            
         except Exception as e:
             raise ValueError(f"Failed to load plugin: {str(e)}")
 
@@ -228,6 +243,9 @@ class PrivatePlugins(commands.Cog):
         self.manager = PrivatePluginManager(bot)
         self.active_messages = {}
 
+    # ╔════════════════╦══════════════════════╦════════════════════╗
+    # ╠════════════════╣PRIVATE GROUP COMMANDS╠════════════════════╣
+    # ╚════════════════╩══════════════════════╩════════════════════╝
     @commands.group(name="private", invoke_without_command=True)
     @checks.has_permissions(PermissionLevel.OWNER)
     async def private_group(self, ctx):
@@ -459,6 +477,90 @@ class PrivatePlugins(commands.Cog):
         except Exception as e:
             await ctx.send(f"❌ Connection failed: {str(e)}")
 
+    @private_group.command(name="debug")
+    async def debug_plugin(self, ctx, user: str, repo: str, branch: str = "main"):
+        """Debug repository access issues"""
+        token = await self.manager.get_github_token()
+        if not token:
+            return await ctx.send("❌ No GitHub token configured")
+        
+        headers = {
+            "Authorization": f"token {token}",
+            "Accept": "application/vnd.github.v3+json"
+        }
+        
+        # Test 1: Check repo access
+        repo_url = f"https://api.github.com/repos/{user}/{repo}"
+        async with self.bot.session.get(repo_url, headers=headers) as resp:
+            repo_status = resp.status
+            repo_data = await resp.json() if resp.status == 200 else None
+        
+        # Test 2: Check zip download
+        zip_url = f"https://api.github.com/repos/{user}/{repo}/zipball/{branch}"
+        async with self.bot.session.get(zip_url, headers=headers) as resp:
+            zip_status = resp.status
+        
+        embed = discord.Embed(title="GitHub Debug Information", color=self.bot.main_color)
+        embed.add_field(name="Repository Access", value=f"`{repo_url}`\nStatus: {repo_status}")
+        
+        if repo_status == 200:
+            embed.add_field(name="Repository Info", 
+                          value=f"Name: {repo_data['full_name']}\n"
+                                f"Private: {repo_data['private']}\n"
+                                f"Default Branch: {repo_data['default_branch']}",
+                          inline=False)
+        
+        embed.add_field(name="Zip Download", value=f"`{zip_url}`\nStatus: {zip_status}", inline=False)
+        
+        if repo_status == 200 and zip_status == 200:
+            embed.description = "✅ All checks passed!"
+            embed.color = discord.Color.green()
+        else:
+            embed.description = "❌ Issues detected"
+            embed.color = discord.Color.red()
+            
+            if repo_status == 404:
+                embed.add_field(name="Repo 404 Solution", 
+                              value="1. Check the repository exists\n"
+                                    "2. Ensure your token has `repo` scope\n"
+                                    "3. For organizations, check your access level",
+                              inline=False)
+            
+            if zip_status == 404:
+                embed.add_field(name="Zip 404 Solution", 
+                              value="1. Verify the branch exists\n"
+                                    "2. Try the default branch\n"
+                                    "3. Check repository visibility",
+                              inline=False)
+        
+        await ctx.send(embed=embed)
+
+    @private_group.command(name="validate")
+    async def validate_plugin(self, ctx, plugin_name: str):
+        """Validate a plugin's structure"""
+        plugin = next((p for p in self.manager.loaded_private_plugins if p.name == plugin_name), None)
+        if not plugin:
+            return await ctx.send("Plugin not found or not loaded")
+        
+        try:
+            spec = importlib.util.spec_from_file_location(
+                plugin.ext_string,
+                plugin.abs_path / "__init__.py"
+            )
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+            
+            if not hasattr(module, 'setup'):
+                return await ctx.send("❌ Missing 'setup' function")
+                
+            await ctx.send("✅ Plugin structure is valid")
+        except Exception as e:
+            await ctx.send(f"❌ Validation failed: {str(e)}")
+
+
+    # ╔════════════════════╦════════════╦══════════════════════════╗
+    # ╠════════════════════╣COG.LISTENER╠══════════════════════════╣
+    # ╚════════════════════╩════════════╩══════════════════════════╝
     @commands.Cog.listener()
     async def on_reaction_add(self, reaction, user):
         """Handle reactions for interactive plugin updates"""
@@ -518,64 +620,6 @@ class PrivatePlugins(commands.Cog):
                 await reaction.message.edit(embed=embed)
             
             await reaction.remove(user)
-
-    @private_group.command(name="debug")
-    async def debug_plugin(self, ctx, user: str, repo: str, branch: str = "main"):
-        """Debug repository access issues"""
-        token = await self.manager.get_github_token()
-        if not token:
-            return await ctx.send("❌ No GitHub token configured")
-        
-        headers = {
-            "Authorization": f"token {token}",
-            "Accept": "application/vnd.github.v3+json"
-        }
-        
-        # Test 1: Check repo access
-        repo_url = f"https://api.github.com/repos/{user}/{repo}"
-        async with self.bot.session.get(repo_url, headers=headers) as resp:
-            repo_status = resp.status
-            repo_data = await resp.json() if resp.status == 200 else None
-        
-        # Test 2: Check zip download
-        zip_url = f"https://api.github.com/repos/{user}/{repo}/zipball/{branch}"
-        async with self.bot.session.get(zip_url, headers=headers) as resp:
-            zip_status = resp.status
-        
-        embed = discord.Embed(title="GitHub Debug Information", color=self.bot.main_color)
-        embed.add_field(name="Repository Access", value=f"`{repo_url}`\nStatus: {repo_status}")
-        
-        if repo_status == 200:
-            embed.add_field(name="Repository Info", 
-                          value=f"Name: {repo_data['full_name']}\n"
-                                f"Private: {repo_data['private']}\n"
-                                f"Default Branch: {repo_data['default_branch']}",
-                          inline=False)
-        
-        embed.add_field(name="Zip Download", value=f"`{zip_url}`\nStatus: {zip_status}", inline=False)
-        
-        if repo_status == 200 and zip_status == 200:
-            embed.description = "✅ All checks passed!"
-            embed.color = discord.Color.green()
-        else:
-            embed.description = "❌ Issues detected"
-            embed.color = discord.Color.red()
-            
-            if repo_status == 404:
-                embed.add_field(name="Repo 404 Solution", 
-                              value="1. Check the repository exists\n"
-                                    "2. Ensure your token has `repo` scope\n"
-                                    "3. For organizations, check your access level",
-                              inline=False)
-            
-            if zip_status == 404:
-                embed.add_field(name="Zip 404 Solution", 
-                              value="1. Verify the branch exists\n"
-                                    "2. Try the default branch\n"
-                                    "3. Check repository visibility",
-                              inline=False)
-        
-        await ctx.send(embed=embed)
 
 async def setup(bot):
     await bot.add_cog(PrivatePlugins(bot))
