@@ -8,7 +8,6 @@ import sys
 import typing
 import zipfile
 import importlib
-import importlib.util
 from difflib import get_close_matches
 from pathlib import Path, PurePath
 from re import match
@@ -24,11 +23,12 @@ from core.models import PermissionLevel, getLogger
 from core.paginator import EmbedPaginatorSession
 from core.utils import truncate, trigger_typing
 
+
 logger = logging.getLogger("Modmail")
 
 class Plugin:
     """Represents a private GitHub plugin"""
-    def __init__(self, user, repo, name, branch="master"):
+    def __init__(self, user, repo, name, branch="main"):  # Changed default to "main"
         self.user = user
         self.repo = repo
         self.name = name
@@ -37,7 +37,6 @@ class Plugin:
 
         # Path where the plugin will be stored
         plugins_dir = Path("plugins/private")
-        plugins_dir.mkdir(parents=True, exist_ok=True)  # Ensure directory exists
         self.abs_path = plugins_dir / name
         self.ext_string = f"plugins.private.{name}"
 
@@ -134,21 +133,34 @@ class PrivatePluginManager:
                 raw = await resp.read()
                 plugin_io = io.BytesIO(raw)
 
-            # Clear existing plugin directory if it exists
-            if plugin.abs_path.exists():
-                shutil.rmtree(plugin.abs_path)
-
-            # Create fresh directory
-            plugin.abs_path.mkdir(parents=True)
+            # Create plugin directory if it doesn't exist
+            plugin.abs_path.mkdir(parents=True, exist_ok=True)
 
             # Extract zip
             with zipfile.ZipFile(plugin_io) as zipf:
+                logger.debug("=== ZIP CONTENTS ===")
+                for name in zipf.namelist():
+                    logger.debug(name)
+
                 root_dir = zipf.namelist()[0]  # Get the root directory (contains commit hash)
 
+                # Find the actual plugin directory (might be nested)
+                plugin_dir = None
+                for name in zipf.namelist():
+                    if name.lower().endswith(plugin.name.lower() + '/') or f'/{plugin.name.lower()}/' in name.lower():
+                        plugin_dir = name
+                        break
+
+                if not plugin_dir:
+                    raise ValueError(f"Could not find plugin directory '{plugin.name}' in the repository")
+
+                # Extract only the plugin files
                 for info in zipf.infolist():
-                    path = PurePath(info.filename)
-                    if len(path.parts) > 1:  # Skip root directory
-                        rel_path = Path(*path.parts[1:])
+                    if info.filename.startswith(plugin_dir):
+                        rel_path = Path(info.filename[len(plugin_dir):])
+                        if not rel_path.parts:  # Skip the root directory
+                            continue
+
                         plugin_path = plugin.abs_path / rel_path
 
                         if info.is_dir():
@@ -158,10 +170,20 @@ class PrivatePluginManager:
                             with zipf.open(info) as src, plugin_path.open("wb") as dst:
                                 shutil.copyfileobj(src, dst)
 
+            # Verify __init__.py exists
+            if not (plugin.abs_path / "__init__.py").exists():
+                # Provide more detailed directory listing for debugging
+                dir_contents = "\n".join(f"- {f.name} ({'dir' if f.is_dir() else 'file'})" 
+                                for f in plugin.abs_path.iterdir())
+                raise ValueError(
+                    f"Plugin directory '{plugin.name}' does not contain required '__init__.py' file.\n"
+                    f"Directory contents:\n{dir_contents}"
+                )
+
         except Exception as e:
             # Clean up if something went wrong
             if plugin.abs_path.exists():
-                shutil.rmtree(plugin.abs_path)
+                shutil.rmtree(plugin.abs_path, ignore_errors=True)
             raise ValueError(f"Download failed: {str(e)}")
         finally:
             if plugin_io:
@@ -169,7 +191,21 @@ class PrivatePluginManager:
 
     async def load_private_plugin(self, plugin):
         """Load a private-plugin into the Bot"""
-        # Install requirements if needed
+        # First, verify the plugin directory exists
+        if not plugin.abs_path.exists():
+            raise ValueError(f"Plugin directory not found: {plugin.abs_path}")
+
+        # Check for __init__.py specifically
+        init_file = plugin.abs_path / "__init__.py"
+        if not init_file.exists():
+            # Debug: List all files in the directory
+            files = "\n".join(f.name for f in plugin.abs_path.iterdir())
+            raise ValueError(
+                f"Plugin '{plugin.name}' is missing __init__.py file.\n"
+                f"Directory contents:\n{files}"
+            )
+
+        # Handle requirements
         req_txt = plugin.abs_path / "requirements.txt"
         if req_txt.exists():
             venv = hasattr(sys, "real_prefix")
@@ -185,19 +221,11 @@ class PrivatePluginManager:
 
         try:
             # First verify the setup function exists
-            init_file = plugin.abs_path / "__init__.py"
-            if not init_file.exists():
-                raise ValueError(f"Plugin '{plugin.name}' is missing __init__.py file")
-
             spec = importlib.util.spec_from_file_location(
                 plugin.ext_string,
-                init_file
+                plugin.abs_path / "__init__.py"
             )
-            if spec is None:
-                raise ValueError(f"Could not import plugin '{plugin.name}' - invalid spec")
-
             module = importlib.util.module_from_spec(spec)
-            sys.modules[plugin.ext_string] = module
             spec.loader.exec_module(module)
 
             if not hasattr(module, 'setup'):
@@ -211,37 +239,39 @@ class PrivatePluginManager:
             return True
 
         except Exception as e:
-            # Clean up if loading failed
-            if plugin in self.loaded_private_plugins:
-                self.loaded_private_plugins.remove(plugin)
-            raise ValueError(f"Failed to load plugin: {str(e)}")
+            # Get detailed error info for debugging
+            error_type = type(e).__name__
+            error_trace = "\n".join(
+                f"{frame.filename}:{frame.lineno}" 
+                for frame in getattr(e, "__traceback__", [])[-3:]
+            )
+            raise ValueError(
+                f"Failed to load plugin '{plugin.name}':\n"
+                f"Type: {error_type}\n"
+                f"Error: {str(e)}\n"
+                f"Trace: {error_trace}"
+            )
 
     async def unload_private_plugin(self, plugin):
         """Unload a private plugin"""
         try:
-            if plugin.ext_string in self.bot.extensions:
-                await self.bot.unload_extension(plugin.ext_string)
-            if plugin in self.loaded_private_plugins:
-                self.loaded_private_plugins.discard(plugin)
+            await self.bot.unload_extension(plugin.ext_string)
+            self.loaded_private_plugins.discard(plugin)
             return True
         except Exception as e:
-            logger.error(f"Failed to unload plugin {plugin}: {str(e)}")
+            logger.error(f"Failed to unload plugin {plugin}: {str(e)}", exc_info=True)
             return False
 
     async def create_plugin_embed(self, page=0, interactive=False):
         """Create paginated embed of private plugins"""
         plugins = sorted(self.loaded_private_plugins, key=lambda p: p.name)
-        total_pages = (len(plugins) + 7) // 8 if plugins else 1
+        total_pages = (len(plugins) + 7) // 8
         page = max(0, min(page, total_pages - 1))
 
         embed = discord.Embed(
             title=f"Private Plugins (Page {page + 1}/{total_pages})",
             color=self.bot.main_color
         )
-
-        if not plugins:
-            embed.description = "No private plugins loaded"
-            return embed
 
         for i in range(8):
             idx = page * 8 + i
@@ -274,7 +304,10 @@ class PrivatePlugins(commands.Cog):
         self.manager = PrivatePluginManager(bot)
         self.active_messages = {}
 
-    @commands.group(name="private", invoke_without_command=True)
+    # ╔════════════════╦══════════════════════╦════════════════════╗
+    # ╠════════════════╣PRIVATE GROUP COMMANDS╠════════════════════╣
+    # ╚════════════════╩══════════════════════╩════════════════════╝
+    @commands.group(name="private", aliases=['pr'], invoke_without_command=True)
     @checks.has_permissions(PermissionLevel.OWNER)
     async def private_group(self, ctx):
         """Manage private GitHub plugins"""
@@ -289,8 +322,8 @@ class PrivatePlugins(commands.Cog):
             embed = discord.Embed(
                 title="GitHub Token Setup",
                 description="Please provide your GitHub token with repo access.\n"
-                           "Create one at: https://github.com/settings/tokens/new\n\n"
-                           "⚠️ **Warning:** This will be stored in the Bot's database.",
+                            "Create one at: https://github.com/settings/tokens/new\n\n"
+                            "⚠️ **Warning:** This will be stored in the Bot’s database.",
                 color=self.bot.error_color
             )
             embed.add_field(
@@ -298,6 +331,27 @@ class PrivatePlugins(commands.Cog):
                 value="`repo` (Full control of private repositories)\n- Private repository contents (read/write)\n- Repository metadata\n- Commit status", 
                 inline=False
             )
+            embed.add_field(
+                name="Recommended Settings", 
+                value="**Token Name:** `Modmail Private Plugins`\n(or any descriptive name)", 
+                inline=False
+            )
+            embed.add_field(
+                name="Expiration", 
+                value="For security, set an expiration date (e.g., 6 months)\nYou’ll need to generate a new TOKEN after expiration", 
+                inline=False
+            )
+            embed.add_field(
+                name="Scope Selection", 
+                value="✅ **repo** (Full control of private repositories)\n❌ No other scopes needed", 
+                inline=False
+            )
+            embed.add_field(
+                name="Generate token", 
+                value="**Copy the token immediately** (you won’t see it again!)", 
+                inline=False
+            )
+            embed.set_footer(text="IMPORTANT!! Treat this token like a password")
             return await ctx.send(embed=embed)
 
         embed = discord.Embed(color=self.bot.main_color)
@@ -319,6 +373,7 @@ class PrivatePlugins(commands.Cog):
     @checks.has_permissions(PermissionLevel.OWNER)
     async def load_plugin(self, ctx, *, plugin_ref: str):
         """Load a private-plugin from GitHub"""
+        # Check for token first
         token = await self.manager.get_github_token()
         if not token:
             embed = discord.Embed(
@@ -329,12 +384,13 @@ class PrivatePlugins(commands.Cog):
             )
             return await ctx.send(embed=embed)
 
+        # Parse plugin reference
         try:
             m = match(r"^(.+?)/(.+?)/(.+?)(?:@(.+?))?$", plugin_ref)
             if not m:
                 raise ValueError("Invalid format. Use: user/repo/name@branch")
             user, repo, name, branch = m.groups()
-            plugin = Plugin(user, repo, name, branch or "master")
+            plugin = Plugin(user, repo, name, branch or "main")  # Changed default to "main"
         except Exception as e:
             embed = discord.Embed(
                 description=f"❌ Invalid plugin reference: {str(e)}",
@@ -349,22 +405,54 @@ class PrivatePlugins(commands.Cog):
         msg = await ctx.send(embed=embed)
 
         try:
+            # Force clean install
+            if plugin.abs_path.exists():
+                shutil.rmtree(plugin.abs_path, ignore_errors=True)
+                await asyncio.sleep(1)  # Give filesystem time to update
+
             await self.manager.download_private_plugin(plugin)
+
+            # Debug: List downloaded files
+            downloaded_files = "\n".join(p.name for p in plugin.abs_path.glob("*"))
+            logger.debug(f"Downloaded files in {plugin.abs_path}:\n{downloaded_files}")
+
+            # Verify structure
+            required_files = ["__init__.py", "sadhusevana.py"]
+            missing_files = [f for f in required_files if not (plugin.abs_path / f).exists()]
+            if missing_files:
+                raise ValueError(f"Missing required files: {', '.join(missing_files)}")
+
+            # Load the plugin
             success = await self.manager.load_private_plugin(plugin)
             if success:
                 embed.description = f"✅ Successfully loaded **{plugin}**!"
+                # Add debug info to footer
+                embed.set_footer(text=f"Path: {plugin.abs_path}")
             else:
                 embed.description = f"❌ Failed to load **{plugin}**"
                 embed.color = self.bot.error_color
+
         except Exception as e:
+            # Get detailed error info
+            error_type = type(e).__name__
+            error_trace = "\n".join(
+                f"{frame.filename}:{frame.lineno}" 
+                for frame in getattr(e, "__traceback__", [])[-3:]
+            )
+
             error_msg = (f"❌ Error loading plugin:\n"
-                         f"```\n"
-                         f"Repository: {plugin.user}/{plugin.repo}\n"
-                         f"Branch: {plugin.branch}\n"
-                         f"Error: {str(e)}\n"
-                         f"```")
+                        f"```\n"
+                        f"Repository: {plugin.user}/{plugin.repo}\n"
+                        f"Branch: {plugin.branch}\n"
+                        f"Error Type: {error_type}\n"
+                        f"Error: {str(e)}\n"
+                        f"Trace: {error_trace}\n"
+                        f"```")
+
             embed.description = error_msg
             embed.color = self.bot.error_color
+
+            # Log full error with traceback
             logger.error(f"Failed to load private plugin {plugin}:", exc_info=True)
 
         await msg.edit(embed=embed)
@@ -393,8 +481,7 @@ class PrivatePlugins(commands.Cog):
             embed.description = f"✅ Successfully unloaded **{plugin}**!"
             # Clean up files
             try:
-                if plugin.abs_path.exists():
-                    shutil.rmtree(plugin.abs_path)
+                shutil.rmtree(plugin.abs_path)
             except Exception as e:
                 logger.warning(f"Failed to remove plugin files: {str(e)}")
         else:
@@ -433,9 +520,140 @@ class PrivatePlugins(commands.Cog):
     @checks.has_permissions(PermissionLevel.OWNER)
     async def loaded_plugins(self, ctx):
         """Show loaded private-plugins"""
+        if not self.manager.loaded_private_plugins:
+            embed = discord.Embed(
+                description="No private plugins loaded",
+                color=self.bot.error_color
+            )
+            return await ctx.send(embed=embed)
+
         embed = await self.manager.create_plugin_embed(page=0, interactive=False)
         await ctx.send(embed=embed)
 
+    @private_group.command(name="testtoken")
+    async def test_token(self, ctx):
+        """Test if your GitHub token is working"""
+        token = await self.manager.get_github_token()
+        if not token:
+            return await ctx.send("❌ No token configured")
+
+        headers = {"Authorization": f"token {token}"}
+        try:
+            async with self.bot.session.get(
+                "https://api.github.com/user",
+                headers=headers
+            ) as resp:
+                if resp.status == 200:
+                    data = await resp.json()
+                    return await ctx.send(f"✅ Token valid for user: {data['login']}")
+                return await ctx.send(f"❌ Token error: {resp.status}")
+        except Exception as e:
+            await ctx.send(f"❌ Connection failed: {str(e)}")
+
+    @private_group.command(name="testrepo")
+    async def test_repo(self, ctx, user: str, repo: str):
+        """Test if you can access a repository"""
+        token = await self.manager.get_github_token()
+        if not token:
+            return await ctx.send("❌ No token configured")
+
+        headers = {"Authorization": f"token {token}"}
+        try:
+            async with self.bot.session.get(
+                f"https://api.github.com/repos/{user}/{repo}",
+                headers=headers
+            ) as resp:
+                if resp.status == 200:
+                    data = await resp.json()
+                    return await ctx.send(f"✅ Access granted to {user}/{repo}\nPrivate: {data['private']}")
+                return await ctx.send(f"❌ Access denied: {resp.status}")
+        except Exception as e:
+            await ctx.send(f"❌ Connection failed: {str(e)}")
+
+    @private_group.command(name="debug")
+    async def debug_plugin(self, ctx, user: str, repo: str, branch: str = "main"):
+        """Debug repository access issues"""
+        token = await self.manager.get_github_token()
+        if not token:
+            return await ctx.send("❌ No GitHub token configured")
+
+        headers = {
+            "Authorization": f"token {token}",
+            "Accept": "application/vnd.github.v3+json"
+        }
+
+        # Test 1: Check repo access
+        repo_url = f"https://api.github.com/repos/{user}/{repo}"
+        async with self.bot.session.get(repo_url, headers=headers) as resp:
+            repo_status = resp.status
+            repo_data = await resp.json() if resp.status == 200 else None
+
+        # Test 2: Check zip download
+        zip_url = f"https://api.github.com/repos/{user}/{repo}/zipball/{branch}"
+        async with self.bot.session.get(zip_url, headers=headers) as resp:
+            zip_status = resp.status
+
+        embed = discord.Embed(title="GitHub Debug Information", color=self.bot.main_color)
+        embed.add_field(name="Repository Access", value=f"`{repo_url}`\nStatus: {repo_status}")
+
+        if repo_status == 200:
+            embed.add_field(name="Repository Info", 
+                            value=f"Name: {repo_data['full_name']}\n"
+                                f"Private: {repo_data['private']}\n"
+                                f"Default Branch: {repo_data['default_branch']}",
+                            inline=False)
+
+        embed.add_field(name="Zip Download", value=f"`{zip_url}`\nStatus: {zip_status}", inline=False)
+
+        if repo_status == 200 and zip_status == 200:
+            embed.description = "✅ All checks passed!"
+            embed.color = discord.Color.green()
+        else:
+            embed.description = "❌ Issues detected"
+            embed.color = discord.Color.red()
+
+            if repo_status == 404:
+                embed.add_field(name="Repo 404 Solution", 
+                                value="1. Check the repository exists\n"
+                                    "2. Ensure your token has `repo` scope\n"
+                                    "3. For organizations, check your access level",
+                                inline=False)
+
+            if zip_status == 404:
+                embed.add_field(name="Zip 404 Solution", 
+                                value="1. Verify the branch exists\n"
+                                    "2. Try the default branch\n"
+                                    "3. Check repository visibility",
+                                inline=False)
+
+        await ctx.send(embed=embed)
+
+    @private_group.command(name="validate")
+    async def validate_plugin(self, ctx, plugin_name: str):
+        """Validate a plugin's structure"""
+        plugin = next((p for p in self.manager.loaded_private_plugins if p.name == plugin_name), None)
+        if not plugin:
+            return await ctx.send("Plugin not found or not loaded")
+
+        try:
+            spec = importlib.util.spec_from_file_location(
+                plugin.ext_string,
+                plugin.abs_path / "__init__.py"
+            )
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+
+            if not hasattr(module, 'setup'):
+                return await ctx.send("❌ Missing 'setup' function")
+
+            await ctx.send("✅ Plugin structure is valid")
+        except Exception as e:
+            await ctx.send(f"❌ Validation failed: {str(e)}")
+
+
+    # ╔════════════════════╦════════════╦══════════════════════════╗
+    # ╠════════════════════╣COG.LISTENER╠══════════════════════════╣
+    # ╚════════════════════╩════════════╩══════════════════════════╝
     @commands.Cog.listener()
     async def on_reaction_add(self, reaction, user):
         """Handle reactions for interactive plugin updates"""
@@ -451,7 +669,7 @@ class PrivatePlugins(commands.Cog):
             return
 
         action = self.manager.emoji_map[emoji]
-        plugins = sorted(self.manager.loaded_private_plugins, key=lambda p: p.name)
+        plugins = sorted(self.manager.loaded_private_plugins)
 
         if isinstance(action, int):  # Update specific plugin
             idx = msg_info["page"] * 8 + action
@@ -484,7 +702,7 @@ class PrivatePlugins(commands.Cog):
 
         elif action in ["prev", "next"]:  # Pagination
             new_page = msg_info["page"] + (-1 if action == "prev" else 1)
-            total_pages = (len(plugins) + 7) // 8 if plugins else 1
+            total_pages = (len(plugins) + 7) // 8
 
             if 0 <= new_page < total_pages:
                 msg_info["page"] = new_page
