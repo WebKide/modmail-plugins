@@ -155,32 +155,32 @@ class PrivatePluginManager:
             if plugin_io:  # Only close if it was assigned
                 plugin_io.close()
 
-    async def load_private_plugin(self, plugin):
-        """Load a private-plugin into the Bot"""
-        req_txt = plugin.abs_path / "requirements.txt"
-        if req_txt.exists():
-            venv = hasattr(sys, "real_prefix")
-            user_install = " --user" if not venv else ""
-            proc = await asyncio.create_subprocess_shell(
-                f"{sys.executable} -m pip install --upgrade{user_install} -r {req_txt} -q -q",
-                stderr=PIPE,
-                stdout=PIPE,
-            )
-            stdout, stderr = await proc.communicate()
-            if stderr:
-                raise ValueError(f"Requirements install failed: {stderr.decode()}")
+async def load_private_plugin(self, plugin):
+    """Load a private-plugin into the Bot"""
+    req_txt = plugin.abs_path / "requirements.txt"
+    if req_txt.exists():
+        venv = hasattr(sys, "real_prefix")
+        user_install = " --user" if not venv else ""
+        proc = await asyncio.create_subprocess_shell(
+            f"{sys.executable} -m pip install --upgrade{user_install} -r {req_txt} -q -q",
+            stderr=PIPE,
+            stdout=PIPE,
+        )
+        stdout, stderr = await proc.communicate()
+        if stderr:
+            raise ValueError(f"Requirements install failed: {stderr.decode()}")
 
-        try:
-            self.bot.load_extension(plugin.ext_string)
-            self.loaded_private_plugins.add(plugin)
-            return True
-        except Exception as e:
-            raise ValueError(f"Failed to load plugin: {str(e)}")
+    try:
+        await self.bot.load_extension(plugin.ext_string)
+        self.loaded_private_plugins.add(plugin)
+        return True
+    except Exception as e:
+        raise ValueError(f"Failed to load plugin: {str(e)}")
 
     async def unload_private_plugin(self, plugin):
         """Unload a private plugin"""
         try:
-            self.bot.unload_extension(plugin.ext_string)
+            await self.bot.unload_extension(plugin.ext_string)
             self.loaded_private_plugins.discard(plugin)
             return True
         except Exception:
