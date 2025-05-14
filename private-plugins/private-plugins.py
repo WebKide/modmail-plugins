@@ -208,16 +208,23 @@ class PrivatePluginManager:
         # Handle requirements
         req_txt = plugin.abs_path / "requirements.txt"
         if req_txt.exists():
-            venv = hasattr(sys, "real_prefix")
-            user_install = " --user" if not venv else ""
-            proc = await asyncio.create_subprocess_shell(
-                f"{sys.executable} -m pip install --upgrade{user_install} -r {req_txt} -q -q",
-                stderr=PIPE,
-                stdout=PIPE,
-            )
-            stdout, stderr = await proc.communicate()
-            if stderr:
-                raise ValueError(f"Requirements install failed: {stderr.decode()}")
+            try:
+                # Don't use --user in virtualenv
+                venv = hasattr(sys, "real_prefix") or (hasattr(sys, "base_prefix") and sys.base_prefix != sys.prefix)
+                user_install = "" if venv else " --user"
+                proc = await asyncio.create_subprocess_shell(
+                    f"{sys.executable} -m pip install --upgrade{user_install} -r {req_txt}",
+                    stderr=PIPE,
+                    stdout=PIPE,
+                )
+                stdout, stderr = await proc.communicate()
+                
+                if proc.returncode != 0:
+                    error_msg = stderr.decode().strip() or stdout.decode().strip()
+                    raise ValueError(f"Requirements install failed: {error_msg}")
+                    
+            except Exception as e:
+                raise ValueError(f"Failed to install requirements: {str(e)}")
 
         try:
             # First verify the setup function exists
@@ -241,26 +248,23 @@ class PrivatePluginManager:
         except Exception as e:
             # Get detailed error info for debugging
             error_type = type(e).__name__
-            error_trace = "\n".join(
-                f"{frame.filename}:{frame.lineno}" 
-                for frame in getattr(e, "__traceback__", [])[-3:]
-            )
+            tb = getattr(e, "__traceback__", None)
+            if tb:
+                # Proper way to get frame information
+                frames = []
+                while tb:
+                    frames.append(f"{tb.tb_frame.f_code.co_filename}:{tb.tb_lineno}")
+                    tb = tb.tb_next
+                error_trace = "\n".join(frames[-3:])  # Last 3 frames
+            else:
+                error_trace = "No traceback available"
+                
             raise ValueError(
                 f"Failed to load plugin '{plugin.name}':\n"
                 f"Type: {error_type}\n"
                 f"Error: {str(e)}\n"
                 f"Trace: {error_trace}"
             )
-
-    async def unload_private_plugin(self, plugin):
-        """Unload a private plugin"""
-        try:
-            await self.bot.unload_extension(plugin.ext_string)
-            self.loaded_private_plugins.discard(plugin)
-            return True
-        except Exception as e:
-            logger.error(f"Failed to unload plugin {plugin}: {str(e)}", exc_info=True)
-            return False
 
     async def create_plugin_embed(self, page=0, interactive=False):
         """Create paginated embed of private plugins"""
@@ -434,28 +438,29 @@ class PrivatePlugins(commands.Cog):
 
         except Exception as e:
             # Get detailed error info
-            error_type = type(e).__name__
-            error_trace = "\n".join(
-                f"{frame.filename}:{frame.lineno}" 
-                for frame in getattr(e, "__traceback__", [])[-3:]
+            error_msg = str(e)
+            if isinstance(e, ValueError) and hasattr(e, "__traceback__"):
+                error_type = type(e).__name__
+                tb = e.__traceback__
+                frames = []
+                while tb:
+                    frames.append(f"{tb.tb_frame.f_code.co_filename}:{tb.tb_lineno}")
+                    tb = tb.tb_next
+                error_trace = "\n".join(frames[-3:])
+                error_msg = (f"❌ Error loading plugin:\n"
+                            f"```\n"
+                            f"Repository: {plugin.user}/{plugin.repo}\n"
+                            f"Branch: {plugin.branch}\n"
+                            f"Error Type: {error_type}\n"
+                            f"Error: {str(e)}\n"
+                            f"Trace: {error_trace}\n"
+                            f"```")
+
+            embed = discord.Embed(
+                description=error_msg,
+                color=self.bot.error_color
             )
-
-            error_msg = (f"❌ Error loading plugin:\n"
-                        f"```\n"
-                        f"Repository: {plugin.user}/{plugin.repo}\n"
-                        f"Branch: {plugin.branch}\n"
-                        f"Error Type: {error_type}\n"
-                        f"Error: {str(e)}\n"
-                        f"Trace: {error_trace}\n"
-                        f"```")
-
-            embed.description = error_msg
-            embed.color = self.bot.error_color
-
-            # Log full error with traceback
-            logger.error(f"Failed to load private plugin {plugin}:", exc_info=True)
-
-        await msg.edit(embed=embed)
+            await msg.edit(embed=embed)
 
     @private_group.command(name="unload", aliases=["remove", "delete"])
     @trigger_typing
