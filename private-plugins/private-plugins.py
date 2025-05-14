@@ -7,6 +7,7 @@ import shutil
 import sys
 import typing
 import zipfile
+import importlib
 from difflib import get_close_matches
 from pathlib import Path, PurePath
 from re import match
