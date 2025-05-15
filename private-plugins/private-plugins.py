@@ -1247,4 +1247,4 @@ class PrivatePlugins(commands.Cog):
 
 async def setup(bot):
     await bot.add_cog(PrivatePlugins(bot))
-    await cog.manager.sync_loaded_plugins()
+    # await cog.manager.sync_loaded_plugins()
