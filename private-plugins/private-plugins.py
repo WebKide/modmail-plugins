@@ -312,6 +312,19 @@ class PrivatePluginManager:
             logger.error(f"Failed to unload plugin {plugin}: {str(e)}")
             return False
 
+    async def sync_loaded_plugins(self):
+        """Sync the loaded plugins set with actually loaded extensions"""
+        loaded_extensions = set(self.bot.extensions.keys())
+        to_remove = set()
+        
+        for plugin in self.loaded_private_plugins:
+            if plugin.ext_string not in loaded_extensions:
+                to_remove.add(plugin)
+        
+        self.loaded_private_plugins -= to_remove
+        if to_remove:
+            logger.info(f"Cleaned up {len(to_remove)} untracked plugins")
+
     async def create_plugin_embed(self, page=0, interactive=False):
         """Create paginated embed of private plugins"""
         plugins = sorted(self.loaded_private_plugins, key=lambda p: p.name)
