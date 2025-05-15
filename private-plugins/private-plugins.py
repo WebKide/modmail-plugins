@@ -809,14 +809,10 @@ class PrivatePlugins(commands.Cog):
         @commands.command()
         async def repeat(self, ctx, *, msg=''):
             '''Bot repeats message'''
-            if f'{ctx.prefix}{ctx.invoked_with}' in msg:
-                return await ctx.send("Don’t ya dare spam.", delete_after=6)
-            if not msg:
-                return
+            if msg is None:
+                return await ctx.send('Nice try. (｡◝‿◜｡)', delete_after=6)
             else:
-                msg = ctx.message.content
-                said = ' '.join(msg.split("say ")[1:])
-                await ctx.send(said)
+                await ctx.send(f"\U0000200b{msg}")
 
     async def setup(bot):
         await bot.add_cog(YourPrivateCogName(bot))
