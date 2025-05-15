@@ -280,6 +280,23 @@ class PrivatePluginManager:
                 f"Trace: {error_trace}"
             )
 
+    async def unload_private_plugin(self, plugin):
+        """Unload a private plugin"""
+        try:
+            # First try to unload the extension
+            await self.bot.unload_extension(plugin.ext_string)
+            
+            # Remove from loaded plugins set
+            self.loaded_private_plugins.discard(plugin)
+            
+            return True
+        except commands.ExtensionNotLoaded:
+            # Plugin wasn't loaded, but we'll still return True since the desired state is achieved
+            return True
+        except Exception as e:
+            logger.error(f"Failed to unload plugin {plugin}: {str(e)}")
+            return False
+
     async def create_plugin_embed(self, page=0, interactive=False):
         """Create paginated embed of private plugins"""
         plugins = sorted(self.loaded_private_plugins, key=lambda p: p.name)
@@ -480,7 +497,7 @@ class PrivatePlugins(commands.Cog):
             if not m:
                 raise ValueError("Invalid format. Use: user/repo/name@branch")
             user, repo, name, branch = m.groups()
-            plugin = Plugin(user, repo, name, branch or "master")
+            plugin = Plugin(user, repo, name, branch or "main")  # Changed default to "main"
         except Exception as e:
             embed = discord.Embed(
                 description=f"❌ Invalid plugin reference: {str(e)}",
@@ -488,20 +505,30 @@ class PrivatePlugins(commands.Cog):
             )
             return await ctx.send(embed=embed)
 
-        success = await self.manager.unload_private_plugin(plugin)
-        embed = discord.Embed(color=self.bot.main_color)
-        if success:
-            embed.description = f"✅ Successfully unloaded **{plugin}**!"
-            # Clean up files
-            try:
-                shutil.rmtree(plugin.abs_path)
-            except Exception as e:
-                logger.warning(f"Failed to remove plugin files: {str(e)}")
-        else:
-            embed.description = f"❌ Plugin **{plugin}** not loaded or failed to unload"
-            embed.color = self.bot.error_color
+        try:
+            success = await self.manager.unload_private_plugin(plugin)
+            embed = discord.Embed(color=self.bot.main_color)
+            
+            if success:
+                embed.description = f"✅ Successfully unloaded **{plugin}**!"
+                # Clean up files
+                try:
+                    shutil.rmtree(plugin.abs_path)
+                    embed.set_footer(text="Plugin files were removed")
+                except Exception as e:
+                    logger.warning(f"Failed to remove plugin files: {str(e)}")
+                    embed.set_footer(text="Plugin was unloaded but files could not be removed")
+            else:
+                embed.description = f"❌ Failed to unload **{plugin}**"
+                embed.color = self.bot.error_color
 
-        await ctx.send(embed=embed)
+            await ctx.send(embed=embed)
+        except Exception as e:
+            embed = discord.Embed(
+                description=f"❌ Error unloading plugin: {str(e)}",
+                color=self.bot.error_color
+            )
+            await ctx.send(embed=embed)
 
     @private_group.command(name="update")
     @trigger_typing
