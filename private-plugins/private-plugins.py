@@ -836,12 +836,12 @@ class PrivatePlugins(commands.Cog):
             inline=False
         )
         embed.add_field(
-            name="💾 Basic __init__.py Example",
+            name="💾 Basic \_\_init\_\_.py Example",
             value=example_ini,
             inline=False
         )
         embed.add_field(
-            name="💻 Basic Cog Example",
+            name="💻 Basic Cog.py Example",
             value=example_code,
             inline=False
         )        
