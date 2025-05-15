@@ -1,3 +1,23 @@
+"""
+MIT License
+Copyright (c) 2020-2025 WebKide [d.id @323578534763298816]
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+"""
+
 import asyncio
 import io
 import json
@@ -144,21 +164,16 @@ class PrivatePluginManager:
 
                 # Get the root directory (contains commit hash)
                 root_dir = zipf.namelist()[0]
-                
-                # Special handling for sadhusevanacog structure
-                if plugin.name == "sadhusevanacog":
-                    # The plugin files are in root_dir/sadhusevanacog/
-                    plugin_dir = f"{root_dir}sadhusevanacog/"
-                else:
-                    # Try to find the plugin directory automatically
-                    plugin_dir = None
-                    for name in zipf.namelist():
-                        if name.lower().endswith(plugin.name.lower() + '/') or f'/{plugin.name.lower()}/' in name.lower():
-                            plugin_dir = name
-                            break
 
-                    if not plugin_dir:
-                        raise ValueError(f"Could not find plugin directory '{plugin.name}' in the repository")
+                # Find the plugin directory automatically
+                plugin_dir = None
+                for name in zipf.namelist():
+                    if name.lower().endswith(plugin.name.lower() + '/') or f'/{plugin.name.lower()}/' in name.lower():
+                        plugin_dir = name
+                        break
+
+                if not plugin_dir:
+                    raise ValueError(f"Could not find plugin directory '{plugin.name}' in the repository")
 
                 # Extract only the plugin files
                 for info in zipf.infolist():
@@ -186,7 +201,7 @@ class PrivatePluginManager:
                     if f.is_dir():
                         for sub_f in f.iterdir():
                             dir_contents.append(f"  - {sub_f.name} ({'dir' if sub_f.is_dir() else 'file'})")
-                
+
                 raise ValueError(
                     f"Plugin directory '{plugin.name}' does not contain required '__init__.py' file.\n"
                     f"Directory contents:\n" + "\n".join(dir_contents)
@@ -232,11 +247,11 @@ class PrivatePluginManager:
                     stdout=PIPE,
                 )
                 stdout, stderr = await proc.communicate()
-                
+
                 if proc.returncode != 0:
                     error_msg = stderr.decode().strip() or stdout.decode().strip()
                     raise ValueError(f"Requirements install failed: {error_msg}")
-                    
+
             except Exception as e:
                 raise ValueError(f"Failed to install requirements: {str(e)}")
 
@@ -272,7 +287,7 @@ class PrivatePluginManager:
                 error_trace = "\n".join(frames[-3:])  # Last 3 frames
             else:
                 error_trace = "No traceback available"
-                
+
             raise ValueError(
                 f"Failed to load plugin '{plugin.name}':\n"
                 f"Type: {error_type}\n"
@@ -283,15 +298,18 @@ class PrivatePluginManager:
     async def unload_private_plugin(self, plugin):
         """Unload a private plugin"""
         try:
+            # Detect the actual cog name
+            cog_name = self.detect_cog_name(plugin)
+            ext_string = f"plugins.private.{plugin.name}"
+
             # First try to unload the extension
-            await self.bot.unload_extension(plugin.ext_string)
-            
+            await self.bot.unload_extension(ext_string)
+
             # Remove from loaded plugins set
             self.loaded_private_plugins.discard(plugin)
-            
+
             return True
         except commands.ExtensionNotLoaded:
-            # Plugin wasn't loaded, but we'll still return True since the desired state is achieved
             return True
         except Exception as e:
             logger.error(f"Failed to unload plugin {plugin}: {str(e)}")
@@ -324,6 +342,27 @@ class PrivatePluginManager:
         if interactive:
             embed.set_footer(text="React with the corresponding emoji to update a plugin")
         return embed
+
+    def detect_cog_name(self, plugin):
+        """Detect the actual cog name by parsing the python files"""
+        init_file = plugin.abs_path / "__init__.py"
+        py_files = list(plugin.abs_path.glob("*.py"))
+
+        # Check all Python files in the plugin directory
+        for py_file in py_files:
+            try:
+                with open(py_file, 'r', encoding='utf-8') as f:
+                    for line in f:
+                        # Look for class definitions that inherit from commands.Cog
+                        if line.strip().startswith('class ') and '(commands.Cog)' in line:
+                            # Extract the class name
+                            cog_name = line.split('class ')[1].split('(')[0].strip()
+                            return cog_name
+            except Exception as e:
+                logger.warning(f"Error reading {py_file}: {str(e)}")
+
+        # Fallback to the plugin name if no cog class found
+        return plugin.name
 
     def get_plugin_description(self, plugin):
         """Get description of a loaded plugin"""
@@ -445,7 +484,7 @@ class PrivatePlugins(commands.Cog):
             # Force clean install
             if plugin.abs_path.exists():
                 shutil.rmtree(plugin.abs_path, ignore_errors=True)
-                await asyncio.sleep(1)  # Give filesystem time to update
+                await asyncio.sleep(1)
 
             await self.manager.download_private_plugin(plugin)
             embed.description = f"✅ Successfully downloaded **{plugin}**!\n\nNow loading the plugin..."
@@ -454,16 +493,18 @@ class PrivatePlugins(commands.Cog):
             # Load the plugin
             success = await self.manager.load_private_plugin(plugin)
             if success:
-                # Get the cog's help command
-                cog = self.bot.get_cog(name)
+                # Detect the actual cog name
+                cog_name = self.manager.detect_cog_name(plugin)
+                cog = self.bot.get_cog(cog_name)
+
                 if cog:
-                    # Create help embed
+                    # Create help embed using the detected cog name
                     help_embed = discord.Embed(
-                        title=f"{name} Plugin Commands",
-                        description=f"Type `{ctx.prefix}help {name}` for more details",
+                        title=f"{cog_name} Plugin Commands",
+                        description=f"Type `{ctx.prefix}help {cog_name}` for more details",
                         color=self.bot.main_color
                     )
-                    
+
                     # Get all commands from the cog
                     commands_list = []
                     for cmd in cog.get_commands():
@@ -486,17 +527,19 @@ class PrivatePlugins(commands.Cog):
                     embed.description = f"✅ Successfully loaded **{plugin}**!"
                     embed.add_field(
                         name="Plugin Ready",
-                        value=f"Type `{ctx.prefix}help {name}` for command details",
+                        value=f"Type `{ctx.prefix}help {cog_name}` for command details",
                         inline=False
                     )
                     await msg.edit(embed=embed)
                     await ctx.send(embed=help_embed)
                 else:
-                    embed.description = f"✅ Plugin loaded but no cog found with name: {name}"
+                    embed.description = f"✅ Plugin loaded but no cog found with name: {cog_name}"
                     await msg.edit(embed=embed)
             else:
-                embed.description = f"❌ Failed to load **{plugin}**"
-                embed.color = self.bot.error_color
+                embed.description = (
+                    f"✅ Plugin loaded but no cog found with name: {cog_name}\n"
+                    f"(Tried to find cog class named '{cog_name}')"
+                )
                 await msg.edit(embed=embed)
 
         except Exception as e:
@@ -547,7 +590,7 @@ class PrivatePlugins(commands.Cog):
         try:
             success = await self.manager.unload_private_plugin(plugin)
             embed = discord.Embed(color=self.bot.main_color)
-            
+
             if success:
                 embed.description = f"✅ Successfully unloaded **{plugin}**!"
                 # Clean up files
