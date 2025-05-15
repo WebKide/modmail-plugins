@@ -425,7 +425,7 @@ class PrivatePlugins(commands.Cog):
             if not m:
                 raise ValueError("Invalid format. Use: user/repo/name@branch")
             user, repo, name, branch = m.groups()
-            plugin = Plugin(user, repo, name, branch or "main")  # Changed default to "main"
+            plugin = Plugin(user, repo, name, branch or "main")
         except Exception as e:
             embed = discord.Embed(
                 description=f"❌ Invalid plugin reference: {str(e)}",
@@ -433,8 +433,10 @@ class PrivatePlugins(commands.Cog):
             )
             return await ctx.send(embed=embed)
 
+        # Create initial loading embed
         embed = discord.Embed(
-            description=f"Downloading **{plugin}**...",
+            title=f"Loading Plugin: {name}",
+            description=f"Downloading **{plugin}** from GitHub...",
             color=self.bot.main_color
         )
         msg = await ctx.send(embed=embed)
@@ -446,20 +448,56 @@ class PrivatePlugins(commands.Cog):
                 await asyncio.sleep(1)  # Give filesystem time to update
 
             await self.manager.download_private_plugin(plugin)
-
-            # Debug: List downloaded files
-            downloaded_files = "\n".join(p.name for p in plugin.abs_path.glob("*"))
-            logger.debug(f"Downloaded files in {plugin.abs_path}:\n{downloaded_files}")
+            embed.description = f"✅ Successfully downloaded **{plugin}**!\n\nNow loading the plugin..."
+            await msg.edit(embed=embed)
 
             # Load the plugin
             success = await self.manager.load_private_plugin(plugin)
             if success:
-                embed.description = f"✅ Successfully loaded **{plugin}**!"
-                # Add debug info to footer
-                embed.set_footer(text=f"Path: {plugin.abs_path}")
+                # Get the cog's help command
+                cog = self.bot.get_cog(name)
+                if cog:
+                    # Create help embed
+                    help_embed = discord.Embed(
+                        title=f"{name} Plugin Commands",
+                        description=f"Type `{ctx.prefix}help {name}` for more details",
+                        color=self.bot.main_color
+                    )
+                    
+                    # Get all commands from the cog
+                    commands_list = []
+                    for cmd in cog.get_commands():
+                        commands_list.append(f"`{ctx.prefix}{cmd.name}` - {cmd.short_doc or 'No description'}")
+
+                    if commands_list:
+                        help_embed.add_field(
+                            name="Available Commands",
+                            value="\n".join(commands_list),
+                            inline=False
+                        )
+                    else:
+                        help_embed.add_field(
+                            name="Note",
+                            value="This plugin doesn't expose any commands",
+                            inline=False
+                        )
+
+                    # Update success embed
+                    embed.description = f"✅ Successfully loaded **{plugin}**!"
+                    embed.add_field(
+                        name="Plugin Ready",
+                        value=f"Type `{ctx.prefix}help {name}` for command details",
+                        inline=False
+                    )
+                    await msg.edit(embed=embed)
+                    await ctx.send(embed=help_embed)
+                else:
+                    embed.description = f"✅ Plugin loaded but no cog found with name: {name}"
+                    await msg.edit(embed=embed)
             else:
                 embed.description = f"❌ Failed to load **{plugin}**"
                 embed.color = self.bot.error_color
+                await msg.edit(embed=embed)
 
         except Exception as e:
             # Get detailed error info
@@ -482,6 +520,7 @@ class PrivatePlugins(commands.Cog):
                             f"```")
 
             embed = discord.Embed(
+                title=f"Failed to Load: {name}",
                 description=error_msg,
                 color=self.bot.error_color
             )
