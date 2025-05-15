@@ -383,6 +383,7 @@ class PrivatePlugins(commands.Cog):
     # ╚════════════════╩══════════════════════╩════════════════════╝
     @commands.group(name="private", aliases=['pr'], invoke_without_command=True)
     @checks.has_permissions(PermissionLevel.OWNER)
+    @commands.guild_only()
     async def private_group(self, ctx):
         """Manage private GitHub plugins"""
         await ctx.send_help(ctx.command)
@@ -390,6 +391,7 @@ class PrivatePlugins(commands.Cog):
     @private_group.command(name="token")
     @trigger_typing
     @checks.has_permissions(PermissionLevel.OWNER)
+    @commands.guild_only()
     async def set_token(self, ctx, token: str = None):
         """Set or verify your GitHub TOKEN with repo access"""
         if not token:
@@ -445,6 +447,7 @@ class PrivatePlugins(commands.Cog):
     @private_group.command(name="load", aliases=["add", "install"])
     @trigger_typing
     @checks.has_permissions(PermissionLevel.OWNER)
+    @commands.guild_only()
     async def load_plugin(self, ctx, *, plugin_ref: str):
         """Load a private-plugin from GitHub"""
         # Check for token first
@@ -572,6 +575,7 @@ class PrivatePlugins(commands.Cog):
     @private_group.command(name="unload", aliases=["remove", "delete"])
     @trigger_typing
     @checks.has_permissions(PermissionLevel.OWNER)
+    @commands.guild_only()
     async def unload_plugin(self, ctx, *, plugin_ref: str):
         """Unload a private-plugin"""
         try:
@@ -615,6 +619,7 @@ class PrivatePlugins(commands.Cog):
     @private_group.command(name="update")
     @trigger_typing
     @checks.has_permissions(PermissionLevel.OWNER)
+    @commands.guild_only()
     async def update_plugins(self, ctx):
         """Interactive plugin update interface"""
         if not self.manager.loaded_private_plugins:
@@ -640,6 +645,7 @@ class PrivatePlugins(commands.Cog):
     @private_group.command(name="loaded")
     @trigger_typing
     @checks.has_permissions(PermissionLevel.OWNER)
+    @commands.guild_only()
     async def loaded_plugins(self, ctx):
         """Show loaded private-plugins"""
         if not self.manager.loaded_private_plugins:
@@ -653,6 +659,8 @@ class PrivatePlugins(commands.Cog):
         await ctx.send(embed=embed)
 
     @private_group.command(name="testtoken")
+    @checks.has_permissions(PermissionLevel.OWNER)
+    @commands.guild_only()
     async def test_token(self, ctx):
         """Test if your GitHub token is working"""
         token = await self.manager.get_github_token()
@@ -673,6 +681,8 @@ class PrivatePlugins(commands.Cog):
             await ctx.send(f"❌ Connection failed: {str(e)}")
 
     @private_group.command(name="testrepo")
+    @checks.has_permissions(PermissionLevel.OWNER)
+    @commands.guild_only()
     async def test_repo(self, ctx, user: str, repo: str):
         """Test if you can access a repository"""
         token = await self.manager.get_github_token()
@@ -693,6 +703,8 @@ class PrivatePlugins(commands.Cog):
             await ctx.send(f"❌ Connection failed: {str(e)}")
 
     @private_group.command(name="debug")
+    @checks.has_permissions(PermissionLevel.OWNER)
+    @commands.guild_only()
     async def debug_plugin(self, ctx, user: str, repo: str, branch: str = "main"):
         """Debug repository access issues"""
         token = await self.manager.get_github_token()
@@ -751,6 +763,8 @@ class PrivatePlugins(commands.Cog):
         await ctx.send(embed=embed)
 
     @private_group.command(name="validate")
+    @checks.has_permissions(PermissionLevel.OWNER)
+    @commands.guild_only()
     async def validate_plugin(self, ctx, plugin_name: str):
         """Validate a plugin's structure"""
         plugin = next((p for p in self.manager.loaded_private_plugins if p.name == plugin_name), None)
@@ -772,6 +786,76 @@ class PrivatePlugins(commands.Cog):
         except Exception as e:
             await ctx.send(f"❌ Validation failed: {str(e)}")
 
+    @private_group.command(name="guide")
+    @commands.guild_only()
+    async def plugin_guide(self, ctx):
+        """Show how to structure private plugins"""
+        example_code = """```py
+    # __init__.py
+    from .yourprivatecogname import setup
+
+    __all__ = ['setup']
+    ```
+    ```py
+    # yourprivatecogname.py
+    import discord
+    from discord.ext import commands
+
+    class YourPrivateCogName(commands.Cog):
+        '''Basic example of a plugin'''  
+        def __init__(self, bot):
+            self.bot = bot
+            
+        @commands.command()
+        async def repeat(self, ctx, *, msg=''):
+            '''Bot repeats message'''
+            if f'{ctx.prefix}{ctx.invoked_with}' in msg:
+                return await ctx.send("Don’t ya dare spam.", delete_after=6)
+            if not msg:
+                return
+            else:
+                msg = ctx.message.content
+                said = ' '.join(msg.split("say ")[1:])
+                await ctx.send(said)
+
+    async def setup(bot):
+        await bot.add_cog(YourPrivateCogName(bot))
+    ```"""
+
+        embed = discord.Embed(
+            title="📘 Example Plugin Guidelines",
+            color=discord.Color.blurple()
+        )
+        
+        embed.add_field(
+            name="📁 Private Repository Structure",
+            value=(
+                "```mathematica\n"
+                "your-private-repo/\n"
+                "╚══ pluginname/           # Must match pluginname.py\n"
+                "    ╠══ __init__.py       # Required (contains setup(bot))\n"
+                "    ╠══ pluginname.py     # Contains your cog class\n"
+                "    ╚══ requirements.txt  # Optional (third party libs)\n"
+                "```"
+            ),
+            inline=False
+        )
+        
+        embed.add_field(
+            name="💻 Basic Cog Example",
+            value=example_code,
+            inline=False
+        )
+        
+        embed.add_field(
+            name="🔧 Installation",
+            value=f"`{ctx.prefix}private load your-username/your-repo/plugin-name@branch`",
+            inline=False
+        )
+        
+        embed.set_footer(text="Remember: Your cog class name doesn’t need to match the plugin folder name")
+        
+        await ctx.send(embed=embed)
 
     # ╔════════════════════╦════════════╦══════════════════════════╗
     # ╠════════════════════╣COG.LISTENER╠══════════════════════════╣
