@@ -790,13 +790,13 @@ class PrivatePlugins(commands.Cog):
     @commands.guild_only()
     async def plugin_guide(self, ctx):
         """Show how to structure private plugins"""
-        example_code = """```py
+        example_ini = """```py
     # __init__.py
     from .yourprivatecogname import setup
 
     __all__ = ['setup']
-    ```
-    ```py
+    ```"""
+        example_code = """```py
     # yourprivatecogname.py
     import discord
     from discord.ext import commands
@@ -819,36 +819,37 @@ class PrivatePlugins(commands.Cog):
     ```"""
 
         embed = discord.Embed(
-            title="📘 Example Plugin Guidelines",
+            title="🚧 Example Plugin Guidelines",
             color=discord.Color.blurple()
         )
-        
         embed.add_field(
             name="📁 Private Repository Structure",
             value=(
                 "```mathematica\n"
                 "your-private-repo/\n"
-                "╚══ pluginname/           # Must match pluginname.py\n"
-                "    ╠══ __init__.py       # Required (contains setup(bot))\n"
-                "    ╠══ pluginname.py     # Contains your cog class\n"
-                "    ╚══ requirements.txt  # Optional (third party libs)\n"
+                "╚═ pluginname/\n"
+                "   ╠═ __init__.py       # Required\n"
+                "   ╠═ pluginname.py     # Required\n"
+                "   ╚═ requirements.txt  # Optional\n"
                 "```"
             ),
             inline=False
         )
-        
+        embed.add_field(
+            name="💾 Basic __init__.py Example",
+            value=example_ini,
+            inline=False
+        )
         embed.add_field(
             name="💻 Basic Cog Example",
             value=example_code,
             inline=False
-        )
-        
+        )        
         embed.add_field(
             name="🔧 Installation",
             value=f"`{ctx.prefix}private load your-username/your-repo/plugin-name@branch`",
             inline=False
         )
-        
         embed.set_footer(text="Remember: Your cog class name doesn’t need to match the plugin folder name")
         
         await ctx.send(embed=embed)
