@@ -45,6 +45,7 @@ from core.utils import truncate, trigger_typing
 
 
 logger = logging.getLogger("Modmail")
+__version__ = "v2.0.01"
 
 class Plugin:
     """Represents a private GitHub plugin"""
@@ -83,11 +84,7 @@ class PrivatePluginManager:
         self.db = bot.plugin_db.get_partition(self)
         self._token_cache = None
         self.loaded_private_plugins = set()
-        self.emoji_map = {
-            "1️⃣": 0, "2️⃣": 1, "3️⃣": 2, "4️⃣": 3,
-            "5️⃣": 4, "6️⃣": 5, "7️⃣": 6, "8️⃣": 7,
-            "⬅️": "prev", "➡️": "next"
-        }
+
 
     async def get_github_token(self):
         """Retrieve GitHub token from database"""
@@ -382,7 +379,7 @@ class PrivatePlugins(commands.Cog):
     # ╠════════════════╣PRIVATE GROUP COMMANDS╠════════════════════╣
     # ╚════════════════╩══════════════════════╩════════════════════╝
     @commands.group(name="private", aliases=['pr'], invoke_without_command=True)
-    @checks.has_permissions(PermissionLevel.OWNER)
+    @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
     @commands.guild_only()
     async def private_group(self, ctx):
         """Manage private GitHub plugins"""
@@ -390,7 +387,7 @@ class PrivatePlugins(commands.Cog):
 
     @private_group.command(name="token")
     @trigger_typing
-    @checks.has_permissions(PermissionLevel.OWNER)
+    @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
     @commands.guild_only()
     async def set_token(self, ctx, token: str = None):
         """Set or verify your GitHub TOKEN with repo access"""
@@ -446,7 +443,7 @@ class PrivatePlugins(commands.Cog):
 
     @private_group.command(name="load", aliases=["add", "install"])
     @trigger_typing
-    @checks.has_permissions(PermissionLevel.OWNER)
+    @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
     @commands.guild_only()
     async def load_plugin(self, ctx, *, plugin_ref: str):
         """Load a private-plugin from GitHub"""
@@ -574,7 +571,7 @@ class PrivatePlugins(commands.Cog):
 
     @private_group.command(name="unload", aliases=["remove", "delete"])
     @trigger_typing
-    @checks.has_permissions(PermissionLevel.OWNER)
+    @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
     @commands.guild_only()
     async def unload_plugin(self, ctx, *, plugin_ref: str):
         """Unload a private-plugin"""
@@ -618,33 +615,166 @@ class PrivatePlugins(commands.Cog):
 
     @private_group.command(name="update")
     @trigger_typing
-    @checks.has_permissions(PermissionLevel.OWNER)
+    @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
     @commands.guild_only()
     async def update_plugins(self, ctx):
         """Interactive plugin update interface"""
         if not self.manager.loaded_private_plugins:
             embed = discord.Embed(
-                description="No private-plugins loaded",
+                description="❌ No private plugins loaded yet",
                 color=self.bot.error_color
             )
             return await ctx.send(embed=embed)
 
-        embed = await self.manager.create_plugin_embed(page=0, interactive=True)
-        msg = await ctx.send(embed=embed)
+        plugins = sorted(self.manager.loaded_private_plugins, key=lambda p: p.name)
+        current_index = 0
 
-        for emoji in list(self.manager.emoji_map.keys())[:8]:
-            await msg.add_reaction(emoji)
-        await msg.add_reaction("⬅️")
-        await msg.add_reaction("➡️")
+        async def create_plugin_embed(plugin):
+            """Generate detailed embed for a plugin"""
+            cog_name = self.manager.detect_cog_name(plugin)
+            cog = self.bot.get_cog(cog_name)
+            
+            embed = discord.Embed(
+                title=f"🔄 Plugin Update: {plugin.name}",
+                color=self.bot.main_color
+            )
+            
+            # Add plugin description
+            if cog and cog.description:
+                embed.description = cog.description
+            else:
+                embed.description = "No description available"
+            
+            # Add command list
+            if cog:
+                commands_list = []
+                for cmd in cog.get_commands():
+                    cmd_help = cmd.help or "No description"
+                    commands_list.append(f"`{ctx.prefix}{cmd.name}` - {cmd_help}")
+                
+                if commands_list:
+                    embed.add_field(
+                        name="🤖 Available Commands",
+                        value="\n".join(commands_list)[:1024],
+                        inline=False
+                    )
+            
+            # Add plugin reference
+            embed.add_field(
+                name="🔗 Plugin Reference",
+                value=f"```bash\n{ctx.prefix}private load {plugin.user}/{plugin.repo}/{plugin.name}@{plugin.branch}```",
+                inline=False
+            )
+            
+            # Add user info
+            embed.add_field(
+                name="👤 Requested By",
+                value=f"{ctx.author.mention} (`{ctx.author.id}`)",
+                inline=False
+            )
+            
+            embed.set_footer(text="𝖳𝗁𝗂𝗌 𝗂𝗇𝗍𝖾𝗋𝖿𝖺𝖼𝖾 𝗐𝗂𝗅𝗅 𝗍𝗂𝗆𝖾𝗈𝗎𝗍 𝗂𝗇 𝖺 𝗆𝗂𝗇𝗎𝗍𝖾")
+            return embed
 
-        self.active_messages[msg.id] = {
-            "page": 0,
-            "user_id": ctx.author.id
-        }
+        # Create initial view with buttons
+        class UpdateView(discord.ui.View):
+            def __init__(self, *, timeout=60):
+                super().__init__(timeout=timeout)
+                self.message = None
+                self.index = current_index
+                
+            async def update_embed(self, interaction):
+                plugin = plugins[self.index]
+                embed = await create_plugin_embed(plugin)
+                await interaction.response.edit_message(embed=embed, view=self)
+                
+            @discord.ui.button(label="PREV", style=discord.ButtonStyle.blurple)
+            async def previous(self, interaction, button):
+                self.index = (self.index - 1) % len(plugins)
+                await self.update_embed(interaction)
+                
+            @discord.ui.button(label="Remove", style=discord.ButtonStyle.red)
+            async def remove(self, interaction, button):
+                plugin = plugins[self.index]
+                try:
+                    await self.manager.unload_private_plugin(plugin)
+                    shutil.rmtree(plugin.abs_path, ignore_errors=True)
+                    plugins.pop(self.index)
+                    
+                    if not plugins:
+                        embed = discord.Embed(
+                            description="✅ All plugins have been removed",
+                            color=self.bot.main_color
+                        )
+                        await interaction.response.edit_message(embed=embed, view=None)
+                        return
+                        
+                    self.index = min(self.index, len(plugins) - 1)
+                    await self.update_embed(interaction)
+                    
+                except Exception as e:
+                    error_embed = discord.Embed(
+                        title="❌ Removal Failed",
+                        description=f"```py\n{str(e)[:1900]}```",
+                        color=self.bot.error_color
+                    )
+                    await interaction.response.edit_message(embed=error_embed, view=None)
+                
+            @discord.ui.button(label="Update", style=discord.ButtonStyle.green)
+            async def update(self, interaction, button):
+                plugin = plugins[self.index]
+                try:
+                    # Show updating status
+                    updating_embed = discord.Embed(
+                        description=f"🔄 Updating **{plugin}**...",
+                        color=self.bot.main_color
+                    )
+                    await interaction.response.edit_message(embed=updating_embed, view=None)
+                    
+                    # Perform update
+                    await self.manager.unload_private_plugin(plugin)
+                    await self.manager.download_private_plugin(plugin)
+                    await self.manager.load_private_plugin(plugin)
+                    
+                    # Show success
+                    success_embed = discord.Embed(
+                        description=f"✅ Successfully updated **{plugin}**!",
+                        color=self.bot.main_color
+                    )
+                    await interaction.message.edit(embed=success_embed)
+                    
+                except Exception as e:
+                    # Format traceback
+                    tb = "".join(traceback.format_exception(type(e), e, e.__traceback__))
+                    error_embed = discord.Embed(
+                        title="❌ Update Failed",
+                        description=f"```py\n{tb[:1900]}```",
+                        color=self.bot.error_color
+                    )
+                    await interaction.message.edit(embed=error_embed)
+                
+            @discord.ui.button(label="NEXT", style=discord.ButtonStyle.blurple)
+            async def next(self, interaction, button):
+                self.index = (self.index + 1) % len(plugins)
+                await self.update_embed(interaction)
+                
+            async def on_timeout(self):
+                try:
+                    plugin = plugins[self.index]
+                    embed = await create_plugin_embed(plugin)
+                    embed.set_footer(text="𝖳𝗁𝗂𝗌 𝗂𝗇𝗍𝖾𝗋𝖿𝖺𝖼𝖾 𝗍𝗂𝗆𝖾𝖽 𝗈𝗎𝗍")
+                    await self.message.edit(embed=embed, view=None)
+                except Exception:
+                    pass
+
+        # Send initial message
+        view = UpdateView()
+        initial_embed = await create_plugin_embed(plugins[current_index])
+        view.message = await ctx.send(embed=initial_embed, view=view)
 
     @private_group.command(name="loaded")
     @trigger_typing
-    @checks.has_permissions(PermissionLevel.OWNER)
+    @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
     @commands.guild_only()
     async def loaded_plugins(self, ctx):
         """Show loaded private-plugins"""
@@ -659,7 +789,7 @@ class PrivatePlugins(commands.Cog):
         await ctx.send(embed=embed)
 
     @private_group.command(name="testtoken")
-    @checks.has_permissions(PermissionLevel.OWNER)
+    @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
     @commands.guild_only()
     async def test_token(self, ctx):
         """Test if your GitHub token is working"""
@@ -681,7 +811,7 @@ class PrivatePlugins(commands.Cog):
             await ctx.send(f"❌ Connection failed: {str(e)}")
 
     @private_group.command(name="testrepo")
-    @checks.has_permissions(PermissionLevel.OWNER)
+    @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
     @commands.guild_only()
     async def test_repo(self, ctx, user: str, repo: str):
         """Test if you can access a repository"""
@@ -703,7 +833,7 @@ class PrivatePlugins(commands.Cog):
             await ctx.send(f"❌ Connection failed: {str(e)}")
 
     @private_group.command(name="debug")
-    @checks.has_permissions(PermissionLevel.OWNER)
+    @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
     @commands.guild_only()
     async def debug_plugin(self, ctx, user: str, repo: str, branch: str = "main"):
         """Debug repository access issues"""
@@ -763,7 +893,7 @@ class PrivatePlugins(commands.Cog):
         await ctx.send(embed=embed)
 
     @private_group.command(name="validate")
-    @checks.has_permissions(PermissionLevel.OWNER)
+    @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
     @commands.guild_only()
     async def validate_plugin(self, ctx, plugin_name: str):
         """Validate a plugin's structure"""
