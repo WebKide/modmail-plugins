@@ -505,7 +505,7 @@ class PrivatePlugins(commands.Cog):
                     help_embed = discord.Embed(
                         title=f"{cog_name} Plugin Commands",
                         description=f"Type `{ctx.prefix}help {cog_name}` for more details",
-                        color=self.bot.main_color
+                        color=discord.Colour(0xed791d)
                     )
 
                     # Get all commands from the cog
