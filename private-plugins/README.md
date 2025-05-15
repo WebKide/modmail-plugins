@@ -10,20 +10,23 @@
 <br><br>
 </div>
 
-# 🔒 Private Plugin Manager
+# 🔒 Private Plugin Manager (v2.0)
 
-A secure system for installing and managing private GitHub plugins in your Modmail bot. Safely handle proprietary plugins with granular control and interactive updates.
+A secure system for installing and managing private GitHub plugins in your Modmail bot with enhanced features and better reliability.
 
 ## ✨ Key Features
 
 - **Token Security**: Encrypted GitHub TOKEN storage with verification
 - **Private Repo Support**: Install plugins from **private repositories**
 - **Interactive UI**: Paginated embeds with reaction controls
+- **Auto-Detection**: Smart cog name detection for better compatibility
+- **Progress Tracking**: Real-time loading status updates
+- **Help Integration**: Automatic command help display after installation
 
 ## 🚀 Installation
 
-```json
-?plugin add WebKide/modmail-plugins/private-plugins@master
+```bash
+?plugin add WebKide/modmail-plugins/private-plugins@main
 ```
 
 > Replace `?` with your bot's prefix if different
@@ -48,39 +51,66 @@ A secure system for installing and managing private GitHub plugins in your Modma
 
 - [ ] No other scopes needed
 
-4. **Expiration** `(recommended: 90 days)`
-5. <div>
+3. **Expiration** `(recommended: 90 days)`
+4. <div>
      <p>Scroll down and <b>Click:</b></p>
      <img src="https://img.shields.io/badge/-Generate_Token-Teal?style=for-the-badge" alt="Generate Token">
    </div>
-6. ⚠️ **`Make sure to copy your personal access token now. You won’t be able to see it again!`**
+5. ⚠️ **`Make sure to copy your personal access token now. You won’t be able to see it again!`**
+
 
 ### Security Notes
 - 🔐 Token grants read access to ALL private repos
 - 🚫 Never commit tokens to code
 - 🔄 Rotate tokens periodically
 
-## 🛠️ Command Reference
+## 🛠️ Command Reference (Updated)
 
 ### 🔐 Token Management
 | Command | Description | Example |
 |---------|-------------|---------|
 | `?private token <token>` | Store/verify GitHub token | `?private token ghp_abc123` |
-| `?private token` | Show token setup instructions | `?private token` |
+| `?private testtoken` | Verify token validity | `?private testtoken` |
+| `?private testrepo` | Test repository access | `?private testrepo user repo` |
 
-### 📦 Plugin Management
+### 📦 Plugin Management (Enhanced)
 | Command | Description | Example |
 |---------|-------------|---------|
-| `?private load <user/repo/name@branch>` | Install | `?private load user/repo/private-plugin-name@master` |
-| `?private unload <user/repo/name@branch>` | Remove | `?private unload user/repo/private-plugin-name@master` |
+| `?private load <user/repo/name@branch>` | Install with progress tracking | `?private load user/repo/plugin-name@branch` |
+| `?private unload <user/repo/name@branch>` | Remove plugin completely | `?private unload user/repo/plugin-name@main` |
+| `?private validate <name>` | Check plugin structure | `?private validate plugin-name` |
+| `?private guide` | Show plugin structure guide | `?private guide` |
 
 ### 🔄 Interactive Controls
 | Command | Description | UI Features |
 |---------|-------------|------------|
-| `?private update` | Updater | 1️⃣-8️⃣: Update plugins<br>⬅️➡️: Pagination |
-| `?private loaded` | View plugins | Paginated display |
+| `?private update` | Updater interface | 1️⃣-8️⃣: Update plugins<br>⬅️➡️: Pagination |
+| `?private loaded` | View installed plugins | Shows branch info |
+| `?private debug` | Repository debug tool | Checks access and structure |
 
-## 🖼️ Interface Preview
+## 🆕 New Features
+
+### Smart Loading Process
+```python
+1. User: ?private load user/repo/plugin-name@main
+2. Bot: » Downloading plugin-name@main...
+3. Bot: ✅ Downloaded! Now loading...
+4. Bot: ✅ Successfully loaded plugin-name!
+5. Bot: Shows available commands automatically
+```
+
+### Automatic Help Integration
+After loading any plugin:
+- Automatically displays available commands
+- Shows correct help command (`?help YourPrivateCogName`)
+- Handles nested plugin structures
+
+### Enhanced Error Handling
+- Detailed error messages with trace information
+- Directory structure validation
+- Requirements.txt installation feedback
+
+## 🖼️ Interface Previews
 
 ### Interactive Update Panel
 ```diff
@@ -94,45 +124,43 @@ A secure system for installing and managing private GitHub plugins in your Modma
 React with number to update private-plugin
 ```
 
-### Installation Flow
-```python
-1. User: ?private load repo/private-plugin-name@master
-2. Bot: » Verifying GitHub access...
-3. Bot: ✅ Downloaded repo/private-plugin-name@master
-4. Bot: » Installing requirements... (if any)
-5. Bot: ✅ Plugin loaded successfully!
-```
+## ❓ FAQ (Updated)
 
-## ❓ FAQ
+**Q: How are cog names detected?**  
+A: The system automatically scans for `class YourPrivateCogName(commands.Cog)` in plugin files.
 
-**Q: Can I use organization-owned private repos?**  
-A: Yes! The token owner needs read access to the repo.
+**Q: What if my plugin has a different structure?**  
+A: Use `?private guide` to see the recommended structure and addapt accordingly.
 
-**Q: How are updates handled?**  
-A: The `?private update` interface shows update status per-plugin with ✅/❌ indicators.
+**Q: Can I see plugin loading progress?**  
+A: Yes! The bot now shows real-time download and load status, with clear error messages.
 
-**Q: Where is the GitHub token stored?**  
-A: Tokens are encrypted in Modmail’s database (plugin_db partition).
-
-**Q: Can plugins access my token?**  
-A: No, tokens are only accessible to the manager cog.
+**Q: How do I troubleshoot installation issues?**  
+A: Use `?private debug user repo branch` to diagnose problems.
 
 ## 🐛 Troubleshooting
 
-**Issue: "Repository not found"**
-1. Verify token has `repo` scope
-2. Check repo exists and is accessible
-3. Ensure correct casing in repo name (CaseSensitive)
+**Issue: "Could not find plugin directory"**
+1. Check repository structure matches `?private guide`
+2. Verify branch exists, usually `@main`
+3. Use `?private debug` to test access
 
-**Issue: "Requirements install failed"**
-1. Check `requirements.txt` exists in plugin
-2. Verify package names are correct
-3. Check bot’s Python environment
+**Issue: "Missing setup function"**
+1. Ensure `__init__.py` contains `setup(bot)`
+2. Validate with `?private validate plugin-name`
 
-**Issue: "Permission denied"**
-1. Run `?private token` to verify active token
-2. Check token hasn’t expired
-3. Regenerate token if needed
+**Issue: "Commands not showing in help"**
+1. Check cog class inherits from `commands.Cog`
+2. Verify command decorators are properly used
+3. Use `?private guide` to compare your implementation
+
+## 🏗️ Plugin Structure Guide
+
+Run `?private guide` to see:
+1. Required repository structure
+2. Example cog implementation
+3. Installation command format
+4. Best practices for plugin development
 
 ---
 
