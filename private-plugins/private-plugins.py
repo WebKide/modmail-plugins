@@ -142,23 +142,30 @@ class PrivatePluginManager:
                 for name in zipf.namelist():
                     logger.debug(name)
 
-                root_dir = zipf.namelist()[0]  # Get the root directory (contains commit hash)
+                # Get the root directory (contains commit hash)
+                root_dir = zipf.namelist()[0]
+                
+                # Special handling for sadhusevanacog structure
+                if plugin.name == "sadhusevanacog":
+                    # The plugin files are in root_dir/sadhusevanacog/
+                    plugin_dir = f"{root_dir}sadhusevanacog/"
+                else:
+                    # Try to find the plugin directory automatically
+                    plugin_dir = None
+                    for name in zipf.namelist():
+                        if name.lower().endswith(plugin.name.lower() + '/') or f'/{plugin.name.lower()}/' in name.lower():
+                            plugin_dir = name
+                            break
 
-                # Find the actual plugin directory (might be nested)
-                plugin_dir = None
-                for name in zipf.namelist():
-                    if name.lower().endswith(plugin.name.lower() + '/') or f'/{plugin.name.lower()}/' in name.lower():
-                        plugin_dir = name
-                        break
-
-                if not plugin_dir:
-                    raise ValueError(f"Could not find plugin directory '{plugin.name}' in the repository")
+                    if not plugin_dir:
+                        raise ValueError(f"Could not find plugin directory '{plugin.name}' in the repository")
 
                 # Extract only the plugin files
                 for info in zipf.infolist():
                     if info.filename.startswith(plugin_dir):
-                        rel_path = Path(info.filename[len(plugin_dir):])
-                        if not rel_path.parts:  # Skip the root directory
+                        # Remove the plugin_dir prefix from the path
+                        rel_path = info.filename[len(plugin_dir):]
+                        if not rel_path:  # Skip the root directory
                             continue
 
                         plugin_path = plugin.abs_path / rel_path
@@ -172,12 +179,17 @@ class PrivatePluginManager:
 
             # Verify __init__.py exists
             if not (plugin.abs_path / "__init__.py").exists():
-                # Provide more detailed directory listing for debugging
-                dir_contents = "\n".join(f"- {f.name} ({'dir' if f.is_dir() else 'file'})" 
-                                for f in plugin.abs_path.iterdir())
+                # Provide detailed directory listing for debugging
+                dir_contents = []
+                for f in plugin.abs_path.iterdir():
+                    dir_contents.append(f"- {f.name} ({'dir' if f.is_dir() else 'file'})")
+                    if f.is_dir():
+                        for sub_f in f.iterdir():
+                            dir_contents.append(f"  - {sub_f.name} ({'dir' if sub_f.is_dir() else 'file'})")
+                
                 raise ValueError(
                     f"Plugin directory '{plugin.name}' does not contain required '__init__.py' file.\n"
-                    f"Directory contents:\n{dir_contents}"
+                    f"Directory contents:\n" + "\n".join(dir_contents)
                 )
 
         except Exception as e:
@@ -198,11 +210,13 @@ class PrivatePluginManager:
         # Check for __init__.py specifically
         init_file = plugin.abs_path / "__init__.py"
         if not init_file.exists():
-            # Debug: List all files in the directory
-            files = "\n".join(f.name for f in plugin.abs_path.iterdir())
+            # Debug: List all files in the directory recursively
+            files = []
+            for f in plugin.abs_path.rglob("*"):
+                files.append(f"- {f.relative_to(plugin.abs_path)}")
             raise ValueError(
                 f"Plugin '{plugin.name}' is missing __init__.py file.\n"
-                f"Directory contents:\n{files}"
+                f"Directory contents:\n" + "\n".join(files)
             )
 
         # Handle requirements
