@@ -374,6 +374,7 @@ class PrivatePlugins(commands.Cog):
         self.bot = bot
         self.manager = PrivatePluginManager(bot)
         self.active_messages = {}
+        self.bot.loop.create_task(self.manager.sync_loaded_plugins())
 
     # ╔════════════════╦══════════════════════╦════════════════════╗
     # ╠════════════════╣PRIVATE GROUP COMMANDS╠════════════════════╣
@@ -619,6 +620,25 @@ class PrivatePlugins(commands.Cog):
     @commands.guild_only()
     async def update_plugins(self, ctx):
         """Interactive plugin update interface"""
+        # Debug: Log currently tracked plugins
+        logger.info(f"Tracked plugins: {[str(p) for p in self.manager.loaded_private_plugins]}")
+
+        # Get actually loaded extensions for verification
+        loaded_extensions = set(self.bot.extensions.keys())
+        available_plugins = [
+            p for p in self.manager.loaded_private_plugins 
+            if p.ext_string in loaded_extensions
+        ]
+        
+        if not available_plugins:
+            embed = discord.Embed(
+                description="❌ No properly loaded private plugins found\n"
+                          f"Tracked: {len(self.manager.loaded_private_plugins)}\n"
+                          f"Loaded: {len(loaded_extensions)}",
+                color=self.bot.error_color
+            )
+            return await ctx.send(embed=embed)
+
         if not self.manager.loaded_private_plugins:
             embed = discord.Embed(
                 description="❌ No private plugins loaded yet",
@@ -626,7 +646,7 @@ class PrivatePlugins(commands.Cog):
             )
             return await ctx.send(embed=embed)
 
-        plugins = sorted(self.manager.loaded_private_plugins, key=lambda p: p.name)
+        plugins = sorted(available_plugins, key=lambda p: p.name)
         current_index = 0
 
         async def create_plugin_embed(plugin):
