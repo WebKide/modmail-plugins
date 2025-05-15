@@ -420,11 +420,13 @@ class PrivatePlugins(commands.Cog):
             downloaded_files = "\n".join(p.name for p in plugin.abs_path.glob("*"))
             logger.debug(f"Downloaded files in {plugin.abs_path}:\n{downloaded_files}")
 
+            """
             # Verify structure
             required_files = ["__init__.py", "sadhusevana.py"]
             missing_files = [f for f in required_files if not (plugin.abs_path / f).exists()]
             if missing_files:
                 raise ValueError(f"Missing required files: {', '.join(missing_files)}")
+            """
 
             # Load the plugin
             success = await self.manager.load_private_plugin(plugin)
