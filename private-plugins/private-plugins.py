@@ -312,184 +312,6 @@ class PrivatePluginManager:
             logger.error(f"Failed to unload plugin {plugin}: {str(e)}")
             return False
 
-    @private_group.command(name="update")
-    @trigger_typing
-    @checks.has_permissions(PermissionLevel.ADMINISTRATOR)
-    @commands.guild_only()
-    async def update_plugins(self, ctx):
-        """Interactive plugin update interface"""
-        # Debug: Log currently tracked plugins
-        logger.info(f"Tracked plugins: {[str(p) for p in self.manager.loaded_private_plugins]}")
-
-        # Get actually loaded extensions for verification
-        loaded_extensions = set(self.bot.extensions.keys())
-        available_plugins = [
-            p for p in self.manager.loaded_private_plugins 
-            if p.ext_string in loaded_extensions
-        ]
-        
-        if not available_plugins:
-            embed = discord.Embed(
-                description="❌ No properly loaded private plugins found\n"
-                          f"Tracked: {len(self.manager.loaded_private_plugins)}\n"
-                          f"Loaded: {len(loaded_extensions)}",
-                color=self.bot.error_color
-            )
-            return await ctx.send(embed=embed)
-
-        if not self.manager.loaded_private_plugins:
-            embed = discord.Embed(
-                description="❌ No private plugins loaded yet",
-                color=self.bot.error_color
-            )
-            return await ctx.send(embed=embed)
-
-        plugins = sorted(available_plugins, key=lambda p: p.name)
-        current_index = 0
-
-        async def create_plugin_embed(plugin):
-            """Generate detailed embed for a plugin"""
-            cog_name = self.manager.detect_cog_name(plugin)
-            cog = self.bot.get_cog(cog_name)
-            
-            embed = discord.Embed(
-                title=f"🔄 Plugin Update: {plugin.name}",
-                color=self.bot.main_color
-            )
-            
-            # Add plugin description
-            if cog and cog.description:
-                embed.description = cog.description
-            else:
-                embed.description = "No description available"
-            
-            # Add command list
-            if cog:
-                commands_list = []
-                for cmd in cog.get_commands():
-                    cmd_help = cmd.help or "No description"
-                    commands_list.append(f"`{ctx.prefix}{cmd.name}` - {cmd_help}")
-                
-                if commands_list:
-                    embed.add_field(
-                        name="🤖 Available Commands",
-                        value="\n".join(commands_list)[:1024],
-                        inline=False
-                    )
-            
-            # Add plugin reference
-            embed.add_field(
-                name="🔗 Plugin Reference",
-                value=f"```bash\n{ctx.prefix}private load {plugin.user}/{plugin.repo}/{plugin.name}@{plugin.branch}```",
-                inline=False
-            )
-            
-            # Add user info
-            embed.add_field(
-                name="👤 Requested By",
-                value=f"{ctx.author.mention} (`{ctx.author.id}`)",
-                inline=False
-            )
-            
-            embed.set_footer(text="𝖳𝗁𝗂𝗌 𝗂𝗇𝗍𝖾𝗋𝖿𝖺𝖼𝖾 𝗐𝗂𝗅𝗅 𝗍𝗂𝗆𝖾𝗈𝗎𝗍 𝗂𝗇 𝖺 𝗆𝗂𝗇𝗎𝗍𝖾")
-            return embed
-
-        # Create initial view with buttons
-        class UpdateView(discord.ui.View):
-            def __init__(self, *, timeout=60):
-                super().__init__(timeout=timeout)
-                self.message = None
-                self.index = current_index
-                
-            async def update_embed(self, interaction):
-                plugin = plugins[self.index]
-                embed = await create_plugin_embed(plugin)
-                await interaction.response.edit_message(embed=embed, view=self)
-                
-            @discord.ui.button(label="PREV", style=discord.ButtonStyle.blurple)
-            async def previous(self, interaction, button):
-                self.index = (self.index - 1) % len(plugins)
-                await self.update_embed(interaction)
-                
-            @discord.ui.button(label="Remove", style=discord.ButtonStyle.red)
-            async def remove(self, interaction, button):
-                plugin = plugins[self.index]
-                try:
-                    await self.manager.unload_private_plugin(plugin)
-                    shutil.rmtree(plugin.abs_path, ignore_errors=True)
-                    plugins.pop(self.index)
-                    
-                    if not plugins:
-                        embed = discord.Embed(
-                            description="✅ All plugins have been removed",
-                            color=self.bot.main_color
-                        )
-                        await interaction.response.edit_message(embed=embed, view=None)
-                        return
-                        
-                    self.index = min(self.index, len(plugins) - 1)
-                    await self.update_embed(interaction)
-                    
-                except Exception as e:
-                    error_embed = discord.Embed(
-                        title="❌ Removal Failed",
-                        description=f"```py\n{str(e)[:1900]}```",
-                        color=self.bot.error_color
-                    )
-                    await interaction.response.edit_message(embed=error_embed, view=None)
-                
-            @discord.ui.button(label="Update", style=discord.ButtonStyle.green)
-            async def update(self, interaction, button):
-                plugin = plugins[self.index]
-                try:
-                    # Show updating status
-                    updating_embed = discord.Embed(
-                        description=f"🔄 Updating **{plugin}**...",
-                        color=self.bot.main_color
-                    )
-                    await interaction.response.edit_message(embed=updating_embed, view=None)
-                    
-                    # Perform update
-                    await self.manager.unload_private_plugin(plugin)
-                    await self.manager.download_private_plugin(plugin)
-                    await self.manager.load_private_plugin(plugin)
-                    
-                    # Show success
-                    success_embed = discord.Embed(
-                        description=f"✅ Successfully updated **{plugin}**!",
-                        color=self.bot.main_color
-                    )
-                    await interaction.message.edit(embed=success_embed)
-                    
-                except Exception as e:
-                    # Format traceback
-                    tb = "".join(traceback.format_exception(type(e), e, e.__traceback__))
-                    error_embed = discord.Embed(
-                        title="❌ Update Failed",
-                        description=f"```py\n{tb[:1900]}```",
-                        color=self.bot.error_color
-                    )
-                    await interaction.message.edit(embed=error_embed)
-                
-            @discord.ui.button(label="NEXT", style=discord.ButtonStyle.blurple)
-            async def next(self, interaction, button):
-                self.index = (self.index + 1) % len(plugins)
-                await self.update_embed(interaction)
-                
-            async def on_timeout(self):
-                try:
-                    plugin = plugins[self.index]
-                    embed = await create_plugin_embed(plugin)
-                    embed.set_footer(text="𝖳𝗁𝗂𝗌 𝗂𝗇𝗍𝖾𝗋𝖿𝖺𝖼𝖾 𝗍𝗂𝗆𝖾𝖽 𝗈𝗎𝗍")
-                    await self.message.edit(embed=embed, view=None)
-                except Exception:
-                    pass
-
-        # Send initial message
-        view = UpdateView()
-        initial_embed = await create_plugin_embed(plugins[current_index])
-        view.message = await ctx.send(embed=initial_embed, view=view)
-
     async def create_plugin_embed(self, page=0, interactive=False):
         """Create paginated embed of private plugins"""
         plugins = sorted(self.loaded_private_plugins, key=lambda p: p.name)
@@ -552,7 +374,6 @@ class PrivatePlugins(commands.Cog):
         self.bot = bot
         self.manager = PrivatePluginManager(bot)
         self.active_messages = {}
-        self.bot.loop.create_task(self.manager.sync_loaded_plugins())
 
     # ╔════════════════╦══════════════════════╦════════════════════╗
     # ╠════════════════╣PRIVATE GROUP COMMANDS╠════════════════════╣
@@ -798,25 +619,6 @@ class PrivatePlugins(commands.Cog):
     @commands.guild_only()
     async def update_plugins(self, ctx):
         """Interactive plugin update interface"""
-        # Debug: Log currently tracked plugins
-        logger.info(f"Tracked plugins: {[str(p) for p in self.manager.loaded_private_plugins]}")
-
-        # Get actually loaded extensions for verification
-        loaded_extensions = set(self.bot.extensions.keys())
-        available_plugins = [
-            p for p in self.manager.loaded_private_plugins 
-            if p.ext_string in loaded_extensions
-        ]
-        
-        if not available_plugins:
-            embed = discord.Embed(
-                description="❌ No properly loaded private plugins found\n"
-                          f"Tracked: {len(self.manager.loaded_private_plugins)}\n"
-                          f"Loaded: {len(loaded_extensions)}",
-                color=self.bot.error_color
-            )
-            return await ctx.send(embed=embed)
-
         if not self.manager.loaded_private_plugins:
             embed = discord.Embed(
                 description="❌ No private plugins loaded yet",
@@ -824,7 +626,7 @@ class PrivatePlugins(commands.Cog):
             )
             return await ctx.send(embed=embed)
 
-        plugins = sorted(available_plugins, key=lambda p: p.name)
+        plugins = sorted(self.manager.loaded_private_plugins, key=lambda p: p.name)
         current_index = 0
 
         async def create_plugin_embed(plugin):
@@ -1247,4 +1049,3 @@ class PrivatePlugins(commands.Cog):
 
 async def setup(bot):
     await bot.add_cog(PrivatePlugins(bot))
-    # await cog.manager.sync_loaded_plugins()
