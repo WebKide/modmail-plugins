@@ -118,7 +118,7 @@ class Quote(commands.Cog):
 
         # Verify clean flag permission
         if clean:
-            if not await checks.has_permissions(PermissionLevel.ADMINISTRATOR).predicate(ctx):
+            if not await checks.has_permissions(PermissionLevel.OWNER).predicate(ctx):
                 clean = False
                 await ctx.send("⚠️ Clean mode is owner-only", delete_after=5)
 
