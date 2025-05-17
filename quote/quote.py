@@ -32,98 +32,109 @@ class Quote(commands.Cog):
     def cog_unload(self):
         self.bot.loop.create_task(self.session.close())
 
+    # ╔════════════════════╦══════════════╦════════════════════════╗
+    # ╠════════════════════╣CREATE_WEBHOOK╠════════════════════════╣
+    # ╚════════════════════╩══════════════╩════════════════════════╝
     async def create_webhook(self, channel: discord.TextChannel) -> discord.Webhook:
-        # Check if there's already a webhook we can use
         webhooks = await channel.webhooks()
         if webhooks:
             for webhook in webhooks:
                 if webhook.user == self.bot.user:
                     return webhook
-
-        # Create a new webhook if none exist
+        
         avatar = await self.bot.user.avatar.read()
-        webhook = await channel.create_webhook(
-            name=f"Quote Bot - {self.bot.user.name}",
+        return await channel.create_webhook(
+            name=f"Quote Plugin - {self.bot.user.name}",
             avatar=avatar,
             reason="Quote command requires webhook"
         )
-        return webhook
 
-    async def find_message(self, ctx: commands.Context, query: str) -> Optional[discord.Message]:
-        # Check if query is a message ID
+    # ╔════════════════════╦═════════════════════╦═════════════════╗
+    # ╠════════════════════╣RESOLVE_MESSAGE LOGIC╠═════════════════╣
+    # ╚════════════════════╩═════════════════════╩═════════════════╝
+    async def resolve_message(self, ctx: commands.Context, query: str) -> Optional[discord.Message]:
+        # Message ID lookup (current channel)
         if query.isdigit():
             try:
                 return await ctx.channel.fetch_message(int(query))
             except discord.NotFound:
                 pass
 
-        # Check if query is a message link
+        # Message URL parsing (any channel/guild)
         if query.startswith(('http://', 'https://')):
             try:
-                # Extract message ID from URL
-                parts = query.split('/')
-                message_id = int(parts[-1])
-                return await ctx.channel.fetch_message(message_id)
-            except (ValueError, IndexError, discord.NotFound):
+                # Parse Discord message URL
+                pattern = r'https?://(?:ptb\.|canary\.)?discord\.com/channels/(?P<guild_id>[0-9]+)/(?P<channel_id>[0-9]+)/(?P<message_id>[0-9]+)'
+                match = re.match(pattern, query)
+                if match:
+                    guild_id = int(match.group('guild_id'))
+                    channel_id = int(match.group('channel_id'))
+                    message_id = int(match.group('message_id'))
+                    
+                    # Check if guild is accessible
+                    guild = self.bot.get_guild(guild_id)
+                    if not guild:
+                        return None
+                    
+                    # Check if user has access to the guild
+                    if guild not in ctx.author.mutual_guilds:
+                        return None
+                    
+                    channel = guild.get_channel(channel_id)
+                    if isinstance(channel, discord.TextChannel):
+                        return await channel.fetch_message(message_id)
+            except (ValueError, discord.NotFound, discord.Forbidden):
                 pass
 
-        # Search through message history for matching content
+        # Content search (in current channel message history for matching content)
         async for message in ctx.channel.history(limit=100):
             if query.lower() in message.content.lower():
                 return message
 
         return None
 
+    # ╔════════════════════╦═════════════════════╦═════════════════╗
+    # ╠════════════════════╣QUOTE_MESSAGE COMMAND╠═════════════════╣
+    # ╚════════════════════╩═════════════════════╩═════════════════╝
     @commands.command(name="quote", aliases=["q"])
     async def quote_message(self, ctx: commands.Context, *, query: str):
-        """Quote a message by ID, link, or content search"""
-        # Delete the original command message if we have permissions
+        """Quote any message by ID, link, or content search"""
         try:
             await ctx.message.delete()
         except discord.Forbidden:
             pass
 
-        message = await self.find_message(ctx, query)
+        message = await self.resolve_message(ctx, query)
         if not message:
-            return await ctx.send("Could not find a message matching your query.", delete_after=10)
+            return await ctx.send("❌ Message not found or inaccessible", delete_after=10)
 
-        # Create or get existing webhook
         webhook = await self.create_webhook(ctx.channel)
-
-        # Prepare the webhook payload
-        files = []
-        embeds = []
-
-        # Add message content
+        
+        # Build components
         content = message.content
-
-        # Add message attachments as files
+        files = []
+        embeds = message.embeds.copy() if message.embeds else []
+        
+        # Handle attachments
         for attachment in message.attachments:
             try:
-                file = await attachment.to_file()
-                files.append(file)
+                files.append(await attachment.to_file())
             except:
-                pass
+                continue
 
-        # Add message embeds
-        if message.embeds:
-            embeds = message.embeds
-
-        # Add reference to original message
-        reference_text = f"[↑ 𝖮𝗋𝗂𝗀𝗂𝗇𝖺𝗅 𝖬𝖾𝗌𝗌𝖺𝗀𝖾]({message.jump_url})"
-        if embeds and len(embeds) < 10:  # Discord allows max 10 embeds
-            embed = discord.Embed(description=reference_text, color=message.author.color)
-            embeds.append(embed)
+        # Add reference
+        reference = f"↑ [𝖮𝗋𝗂𝗀𝗂𝗇𝖺𝗅 𝖬𝖾𝗌𝗌𝖺𝗀𝖾]({message.jump_url}) | 𝖬𝖾𝗌𝗌𝖺𝗀𝖾 𝖨𝖣: `{message.id}`"
+        if len(embeds) < 10:
+            embeds.append(discord.Embed(
+                description=reference,
+                color=message.author.color
+            ))
         else:
-            if content:
-                content += f"\n\n{reference_text}"
-            else:
-                content = reference_text
+            content = f"{content}\n\n{reference}" if content else reference
 
-        # Send the webhook
         await webhook.send(
             content=content,
-            username=message.author.display_name,
+            username=f"{message.author.display_name} (𝖰𝗎𝗈𝗍𝖾𝖽)",
             avatar_url=message.author.display_avatar.url,
             embeds=embeds,
             files=files,
