@@ -86,7 +86,7 @@ class Quote(commands.Cog):
             except (ValueError, discord.NotFound, discord.Forbidden):
                 pass
 
-        # Content search (in current channel message history for matching content)
+        # Message searc by Content (in current channel message history for matching content)
         async for message in ctx.channel.history(limit=100):
             if query.lower() in message.content.lower():
                 return message
@@ -123,7 +123,7 @@ class Quote(commands.Cog):
                 continue
 
         # Add reference
-        reference = f"↑ [𝖮𝗋𝗂𝗀𝗂𝗇𝖺𝗅 𝖬𝖾𝗌𝗌𝖺𝗀𝖾]({message.jump_url}) | 𝖬𝖾𝗌𝗌𝖺𝗀𝖾 𝖨𝖣: `{message.id}`"
+        reference = f"[↑ 𝖮𝗋𝗂𝗀𝗂𝗇𝖺𝗅 𝖬𝖾𝗌𝗌𝖺𝗀𝖾]({message.jump_url}) | `𝖨𝖣: {message.id}`"
         if len(embeds) < 10:
             embeds.append(discord.Embed(
                 description=reference,
@@ -134,7 +134,7 @@ class Quote(commands.Cog):
 
         await webhook.send(
             content=content,
-            username=f"{message.author.display_name} (𝖰𝗎𝗈𝗍𝖾𝖽)",
+            username=f"{message.author.display_name}",  # (𝖰𝗎𝗈𝗍𝖾𝖽)
             avatar_url=message.author.display_avatar.url,
             embeds=embeds,
             files=files,
