@@ -14,14 +14,17 @@
 
 A secure system for installing and managing private GitHub plugins in your Modmail bot with enhanced features and better reliability.
 
+## ⚠️ Disclaimer
+
+> You can achieve the same by placing your `GITHUB_TOKEN` inside the `.env` of your bot. Remember that you shouldn't install any plugins in your bot, since they have full control and can hack your guild and NUKE it. If you install any plugin, it must be from a dev you trust!
+
 ## ✨ Key Features
 
-- **Token Security**: Encrypted GitHub TOKEN storage with verification
-- **Private Repo Support**: Install plugins from **private repositories**
+- **Private Repo Support**: Install plugins from **private repositories** without using `.env`
 - **Interactive UI**: Paginated embeds with reaction controls
 - **Auto-Detection**: Smart cog name detection for better compatibility
 - **Progress Tracking**: Real-time loading status updates
-- **Help Integration**: Automatic command help display after installation
+- **Help Integration**: Automatic command help display after successful install
 
 ## 🚀 Installation
 
@@ -29,7 +32,7 @@ A secure system for installing and managing private GitHub plugins in your Modma
 ?plugin add WebKide/modmail-plugins/private-plugins@main
 ```
 
-> Replace `?` with your bot's prefix if different
+> Replace `?` with your bot's prefix if you changed it
 
 ## 🔑 GitHub Token Guide
 
