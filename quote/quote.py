@@ -20,9 +20,14 @@ SOFTWARE.
 
 import aiohttp
 import re
+from typing import Optional
+
 import discord
 from discord.ext import commands
-from typing import Optional
+
+from core import checks
+from core.models import PermissionLevel
+
 
 class Quote(commands.Cog):
     def __init__(self, bot):
@@ -53,10 +58,12 @@ class Quote(commands.Cog):
     # ╠════════════════════╣RESOLVE_MESSAGE LOGIC╠═════════════════╣
     # ╚════════════════════╩═════════════════════╩═════════════════╝
     async def resolve_message(self, ctx: commands.Context, query: str) -> Optional[discord.Message]:
-        # Message ID lookup (current channel)
+        # Message ID lookup (current channel) and Handle --clean flag
+        clean = '--clean' in query
+        query = query.replace('--clean', '').strip()
         if query.isdigit():
             try:
-                return await ctx.channel.fetch_message(int(query))
+                return await ctx.channel.fetch_message(int(query)), clean
             except discord.NotFound:
                 pass
 
@@ -74,7 +81,7 @@ class Quote(commands.Cog):
                     # Check if guild is accessible
                     guild = self.bot.get_guild(guild_id)
                     if not guild:
-                        return None
+                        return None, clean
                     
                     # Check if user has access to the guild
                     if guild not in ctx.author.mutual_guilds:
@@ -82,16 +89,16 @@ class Quote(commands.Cog):
                     
                     channel = guild.get_channel(channel_id)
                     if isinstance(channel, discord.TextChannel):
-                        return await channel.fetch_message(message_id)
+                        return await channel.fetch_message(message_id), clean
             except (ValueError, discord.NotFound, discord.Forbidden):
                 pass
 
         # Message searc by Content (in current channel message history for matching content)
         async for message in ctx.channel.history(limit=100):
             if query.lower() in message.content.lower():
-                return message
+                return message, clean
 
-        return None
+        return None, clean
 
     # ╔════════════════════╦═════════════════════╦═════════════════╗
     # ╠════════════════════╣QUOTE_MESSAGE COMMAND╠═════════════════╣
@@ -99,16 +106,26 @@ class Quote(commands.Cog):
     @commands.command(name="quote", aliases=["q"])
     @commands.guild_only()
     async def quote_message(self, ctx: commands.Context, *, query: str):
-        """Quote any message by ID, link, or content search"""
+        """Quote any message by ID, link, or content search
+        {prefix}quote 1234567890
+        {prefix}quote Hello World
+        {prefix}q https://discord/123/456/789
+        {prefix}q 1234567890 --clean (OWNER only)"""
         try:
             await ctx.channel.typing()
             await ctx.message.delete()
         except discord.Forbidden:
             pass
 
-        message = await self.resolve_message(ctx, query)
+        message, clean = await self.resolve_message(ctx, query)
         if not message:
             return await ctx.send("❌ Message not found or inaccessible", delete_after=10)
+
+        # Verify --clean flag permission
+        if clean:
+            if not await checks.has_permissions(PermissionLevel.OWNER).predicate(ctx):
+                clean = False
+                await ctx.send("⚠️ Clean mode is owner-only", delete_after=5)
 
         webhook = await self.create_webhook(ctx.channel)
         
