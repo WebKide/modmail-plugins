@@ -28,7 +28,6 @@ from discord.ext import commands
 from core import checks
 from core.models import PermissionLevel
 
-
 class Quote(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -58,35 +57,31 @@ class Quote(commands.Cog):
     # ╠════════════════════╣RESOLVE_MESSAGE LOGIC╠═════════════════╣
     # ╚════════════════════╩═════════════════════╩═════════════════╝
     async def resolve_message(self, ctx: commands.Context, query: str) -> Optional[discord.Message]:
-        # Message ID lookup (current channel) and Handle --clean flag
+        # Handle --clean flag
         clean = '--clean' in query
         query = query.replace('--clean', '').strip()
+
+        # Message ID lookup
         if query.isdigit():
             try:
                 return await ctx.channel.fetch_message(int(query)), clean
             except discord.NotFound:
                 pass
 
-        # Message URL parsing (any channel/guild)
+        # Message URL parsing
         if query.startswith(('http://', 'https://')):
             try:
-                # Parse Discord message URL
                 pattern = r'https?://(?:ptb\.|canary\.)?discord\.com/channels/(?P<guild_id>[0-9]+)/(?P<channel_id>[0-9]+)/(?P<message_id>[0-9]+)'
                 match = re.match(pattern, query)
                 if match:
                     guild_id = int(match.group('guild_id'))
                     channel_id = int(match.group('channel_id'))
                     message_id = int(match.group('message_id'))
-                    
                     # Check if guild is accessible
                     guild = self.bot.get_guild(guild_id)
-                    if not guild:
+                    if not guild or guild not in ctx.author.mutual_guilds:
                         return None, clean
-                    
                     # Check if user has access to the guild
-                    if guild not in ctx.author.mutual_guilds:
-                        return None
-                    
                     channel = guild.get_channel(channel_id)
                     if isinstance(channel, discord.TextChannel):
                         return await channel.fetch_message(message_id), clean
@@ -107,12 +102,12 @@ class Quote(commands.Cog):
     @commands.guild_only()
     async def quote_message(self, ctx: commands.Context, *, query: str):
         """Quote any message by ID, link, or content search
+        ```css
         {prefix}quote 1234567890
         {prefix}quote Hello World
         {prefix}q https://discord/123/456/789
-        {prefix}q 1234567890 --clean (OWNER only)"""
+        {prefix}q 1234567890 --clean (OWNER only)```"""
         try:
-            await ctx.channel.typing()
             await ctx.message.delete()
         except discord.Forbidden:
             pass
@@ -121,9 +116,9 @@ class Quote(commands.Cog):
         if not message:
             return await ctx.send("❌ Message not found or inaccessible", delete_after=10)
 
-        # Verify --clean flag permission
+        # Verify clean flag permission
         if clean:
-            if not await checks.has_permissions(PermissionLevel.OWNER).predicate(ctx):
+            if not await checks.has_permissions(PermissionLevel.ADMINISTRATOR).predicate(ctx):
                 clean = False
                 await ctx.send("⚠️ Clean mode is owner-only", delete_after=5)
 
@@ -141,19 +136,21 @@ class Quote(commands.Cog):
             except:
                 continue
 
-        # Add reference
-        reference = f"[↑ 𝖮𝗋𝗂𝗀𝗂𝗇𝖺𝗅 𝖬𝖾𝗌𝗌𝖺𝗀𝖾]({message.jump_url}) | `𝖨𝖣: {message.id}`"
-        if len(embeds) < 10:
-            embeds.append(discord.Embed(
-                description=reference,
-                color=message.author.color
-            ))
-        else:
-            content = f"{content}\n\n{reference}" if content else reference
+        # Add reference (unless --clean mode)
+        if not clean:
+            reference = f"[↑ 𝖮𝗋𝗂𝗀𝗂𝗇𝖺𝗅 𝖬𝖾𝗌𝗌𝖺𝗀𝖾]({message.jump_url}) | `𝖨𝖣: {message.id}`"
+            if len(embeds) < 10:
+                embeds.append(discord.Embed(
+                    description=reference,
+                    color=message.author.color
+                ))
+            else:
+                content = f"{content}\n\n{reference}" if content else reference
 
+        # Send message
         webhook_msg = await webhook.send(
             content=content,
-            username=f"{message.author.display_name}",  # (𝖰𝗎𝗈𝗍𝖾𝖽)
+            username=message.author.display_name,
             avatar_url=message.author.display_avatar.url,
             embeds=embeds,
             files=files,
@@ -161,18 +158,17 @@ class Quote(commands.Cog):
             wait=True
         )
 
-        # Add reactions if available
+        # Add original message’s reactions, if available
         if message.reactions:
             try:
-                # Get the actual message object in the channel
                 quoted_msg = await ctx.channel.fetch_message(webhook_msg.id)
-                for reaction in message.reactions:  # Add each reaction from original message
+                for reaction in message.reactions:
                     try:
                         await quoted_msg.add_reaction(reaction.emoji)
                     except:
                         continue
             except discord.Forbidden:
-                pass  # Missing reaction permissions
+                pass
 
 async def setup(bot):
     await bot.add_cog(Quote(bot))
