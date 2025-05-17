@@ -97,7 +97,7 @@ class Quote(commands.Cog):
     # ╠════════════════════╣QUOTE_MESSAGE COMMAND╠═════════════════╣
     # ╚════════════════════╩═════════════════════╩═════════════════╝
     @commands.command(name="quote", aliases=["q"])
-    @commands.guild_only(
+    @commands.guild_only()
     async def quote_message(self, ctx: commands.Context, *, query: str):
         """Quote any message by ID, link, or content search"""
         try:
