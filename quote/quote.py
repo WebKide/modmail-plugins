@@ -136,7 +136,7 @@ class Quote(commands.Cog):
 
         webhook_msg = await webhook.send(
             content=content,
-            username=f"[{message.author.display_name}]({message.jump_url})",  # (𝖰𝗎𝗈𝗍𝖾𝖽)
+            username=f"{message.author.display_name}",  # (𝖰𝗎𝗈𝗍𝖾𝖽)
             avatar_url=message.author.display_avatar.url,
             embeds=embeds,
             files=files,
