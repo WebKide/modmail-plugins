@@ -17,7 +17,7 @@ A Discord.py **modmail-plugin** that allows users to quote messages across diffe
 - **Advanced search logic** - Quotes messages in channel by ID or content search
 - **Enhanced URL parsing** - Supports all Discord URL formats (ptb/canary)
 - **User presence verification** - Checks mutual servers before quoting
-- **Maintains all original** - message content, attachments, and embeds
+- **Maintains all original** - message content, attachments, embeds, and reactions
 - **↑ 𝖮𝗋𝗂𝗀𝗂𝗇𝖺𝗅 𝖬𝖾𝗌𝗌𝖺𝗀𝖾 | 𝖨𝖣: 1234567890** - Adds a link back to the original message
 - **Automatically manages webhooks** - reuses existing ones when possible
 - **Improved error handling** - Better feedback for inaccessible messages
@@ -34,9 +34,9 @@ A Discord.py **modmail-plugin** that allows users to quote messages across diffe
 
 ### 📖 Basic Commands
 
-- `?quote [message ID]` - Quotes a message by its ID
-- `?quote [message URL]` - Quotes a message by its link
+- `?quote [message ID]` - Quotes a message in same channel by its ID
 - `?quote [text]` - Searches the last 100 messages for matching text
+- `?quote [message URL]` - Quotes a message by its link in shared guilds
 
 🔸 Your prefix is `?` by default, unless you changed it.
 
@@ -57,8 +57,8 @@ A Discord.py **modmail-plugin** that allows users to quote messages across diffe
 ```
 
 3. Quote by searching message content:
-```mathematica
-?quote Hello World
+```rb
+?q Hello World
 ```
 
 ### 🔰 Behavior
@@ -68,17 +68,19 @@ A Discord.py **modmail-plugin** that allows users to quote messages across diffe
 - The quoted message will appear identical to the original, including:
   - Author name and avatar
   - Message content
-  - Attachments
+  - Attachments (files, images, and media)
   - Embeds
-- A link to the original message is included at the bottom
+- A link to the original message is included at the bottom by default
 
 ## 🤖 Bot Permissions Required
 
-- [x] Manage Webhooks
-- [x] Manage Messages (to delete the command message)
-- [x] Read Message History
-- [x] Send Messages
-- [x] Attach Files
+- [x] `Manage Webhooks` - to create webhooks **!important**
+- [x] `Manage Messages` - to delete the command message
+- [x] `Read Message History` - To fetch reactions or search messages
+- [x] `Send Messages` - to send the quoted message
+- [x] `Attach Files` - to attach files of original message
+- [x] `Add Reactions` - to recreate reaction emojis of original message
+- [x] `Use External Emojis` - if quoting messages with custom emojis
 
 ## ⚙️ Configuration
 
