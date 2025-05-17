@@ -97,9 +97,11 @@ class Quote(commands.Cog):
     # ╠════════════════════╣QUOTE_MESSAGE COMMAND╠═════════════════╣
     # ╚════════════════════╩═════════════════════╩═════════════════╝
     @commands.command(name="quote", aliases=["q"])
+    @commands.guild_only(
     async def quote_message(self, ctx: commands.Context, *, query: str):
         """Quote any message by ID, link, or content search"""
         try:
+            await ctx.channel.typing()
             await ctx.message.delete()
         except discord.Forbidden:
             pass
@@ -132,14 +134,28 @@ class Quote(commands.Cog):
         else:
             content = f"{content}\n\n{reference}" if content else reference
 
-        await webhook.send(
+        webhook_msg = await webhook.send(
             content=content,
             username=f"{message.author.display_name}",  # (𝖰𝗎𝗈𝗍𝖾𝖽)
             avatar_url=message.author.display_avatar.url,
             embeds=embeds,
             files=files,
-            allowed_mentions=discord.AllowedMentions.none()
+            allowed_mentions=discord.AllowedMentions.none(),
+            wait=True
         )
+
+        # Add reactions if available
+        if message.reactions:
+            try:
+                # Get the actual message object in the channel
+                quoted_msg = await ctx.channel.fetch_message(webhook_msg.id)
+                for reaction in message.reactions:  # Add each reaction from original message
+                    try:
+                        await quoted_msg.add_reaction(reaction.emoji)
+                    except:
+                        continue
+            except discord.Forbidden:
+                pass  # Missing reaction permissions
 
 async def setup(bot):
     await bot.add_cog(Quote(bot))
