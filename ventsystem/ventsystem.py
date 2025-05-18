@@ -32,7 +32,7 @@ from discord import Webhook
 from discord.ext import commands, tasks
 
 logger = logging.getLogger("Modmail")
-__version__ = "0.1"
+__version__ = "0.2"
 
 DEFAULT_DISCLAIMER = """# Welcome to VentSystem
 -# Modmail-plugin by **WebKide**
@@ -288,7 +288,7 @@ class VentSystem(commands.Cog):
                 color=0x7289da
             )
             embed.set_thumbnail(url="https://i.imgur.com/Dym0InE.png")
-            embed.set_image(url="https://s4.anilist.co/file/anilistcdn/media/anime/banner/21459-yeVkolGKdGUV.jpg")
+            embed.set_image(url="https://i.imgur.com/Cr96Hps.png")
             embed.set_footer(text=f"Use {ctx.prefix}vent to start a new session after this one expires")
 
             # Send the embed with the confirmation view
