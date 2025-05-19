@@ -1,18 +1,24 @@
 <div align="center">
-  <p><img src="https://i.imgur.com/Cr96Hps.png" alt="Modmail / VentSystem" /></p>
-  <p><b>🔰 This is an anonymous venting system Modmail-plugin powered by VentSystem.py<br></b></p>
+   <img src="https://i.imgur.com/UsQMfCi.png" alt="transform logo" width="720" />
+</div>
+
+------
+
+<div align="center">
+   <img src="https://img.shields.io/badge/Modmail%20Plugin-by%20WebKide-8A2BE2?-black.svg?style=popout&logo=github&logoColor=white" alt="WebKide" />
+   <img src="https://img.shields.io/badge/Made%20with-Python%203.10-blue.svg?style=popout&logo=python&logoColor=yellow" alt="Python3" />
+   <img src="https://img.shields.io/badge/Library-discord%2Epy%202%2Ex-ffbb10?style=popout&logo=discord">
+   <img src="https://img.shields.io/badge/Database-MongoDB-%234ea94b.svg?style=popout&logo=mongodb&logoColor=white" alt="MongoDB" />
 </div>
 
 <div align="center">
-  <a href="https://github.com/WebKide/modmail-plugins/">
-    <img alt="WebKide" src="https://img.shields.io/badge/Modmail_Plugin-by_WebKide-8A2BE2?style=plastic">
-  </a>
-  <a href="https://www.python.org/download/releases/3.0/">
-    <img src="https://img.shields.io/badge/Made%20with-Python%203.10-blue.svg?style=popout&logo=python&logoColor=yellow" alt="Python3">
-  </a>
-  <a href="https://www.mongodb.com/cloud">
-    <img src="https://img.shields.io/badge/Database-MongoDB-%234ea94b.svg?style=popout&logo=mongodb&logoColor=white" alt="MongoDB">
-  </a>
+   <img src="http://forthebadge.com/images/badges/built-with-love.svg?style=for-the-badge" alt="built with love" />
+   <img src="http://forthebadge.com/images/badges/made-with-crayons.svg?style=for-the-badge" alt="made with crayons">
+</div>
+
+<div align="center">
+  <h1>「plugins to expand Modmail 2025's functionality 🚀🌟✨」</h1>
+  <p><b>🔰 This is an anonymous venting system Modmail-plugin powered by VentSystem.py<br></b></p>
 </div>
 
 ------
