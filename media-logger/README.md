@@ -1,3 +1,21 @@
+<div align="center">
+   <img src="https://i.imgur.com/FvjmfXC.png" alt="media-logger logo" width="720" />
+</div>
+
+------
+
+<div align="center">
+   <img src="https://img.shields.io/badge/Modmail%20Plugin-by%20WebKide-black.svg?style=popout&logo=github&logoColor=white" alt="WebKide" />
+   <img src="https://img.shields.io/badge/Made%20with-Python%203.10-blue.svg?style=popout&logo=python&logoColor=yellow" alt="Python3" />
+   <img src="https://img.shields.io/badge/Library-discord%2Epy%202%2Ex-ffbb10?style=popout&logo=discord">
+   <img src="https://img.shields.io/badge/Database-MongoDB-%234ea94b.svg?style=popout&logo=mongodb&logoColor=white" alt="MongoDB" />
+</div>
+
+<div align="center">
+   <img src="http://forthebadge.com/images/badges/built-with-love.svg?style=for-the-badge" alt="built with love" />
+   <img src="http://forthebadge.com/images/badges/made-with-crayons.svg?style=for-the-badge" alt="made with crayons">
+</div>
+
 # 📁 MediaLogger - Advanced Media Tracking for Modmail
 
 ![Banner](https://i.imgur.com/l9yCq6n.png)  
