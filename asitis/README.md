@@ -6,15 +6,33 @@
 </div>
 
 <div align="center">
-  <img src="http://forthebadge.com/images/badges/made-with-crayons.svg?style=for-the-badge" alt="made with crayons"><br>
-  <img src="https://img.shields.io/badge/python-v3.7+-12a4ff?style=for-the-badge&logo=python&logoColor=12a4ff">
-  <img src="https://img.shields.io/badge/library-discord%2Epy%202%2E3-ffbb10?style=for-the-badge&logo=discord">
-  
   <img src="https://img.shields.io/badge/Preservation-Important-red?style=for-the-badge&logo=history" alt="Preservation Important">
   <img src="https://img.shields.io/badge/Original-1972 Edition-brightgreen?style=for-the-badge" alt="1972 Edition">
   <img src="https://img.shields.io/badge/New-Navigation_Buttons-blue?style=for-the-badge" alt="Navigation Buttons">
 </div>
 <br><br>
+
+<div align="center">
+   <img src="https://i.imgur.com/hwlrLWP.png" alt="asitis logo" width="360" />
+</div>
+
+------
+
+<div align="center">
+   <img src="https://img.shields.io/badge/Modmail%20Plugin-by%20WebKide-8A2BE2?-black.svg?style=popout&logo=github&logoColor=white" alt="WebKide" />
+   <img src="https://img.shields.io/badge/Made%20with-Python%203.10-blue.svg?style=popout&logo=python&logoColor=yellow" alt="Python3" />
+   <img src="https://img.shields.io/badge/Library-discord%2Epy%202%2Ex-ffbb10?style=popout&logo=discord">
+   <img src="https://img.shields.io/badge/Database-MongoDB-%234ea94b.svg?style=popout&logo=mongodb&logoColor=white" alt="MongoDB" />
+</div>
+
+<div align="center">
+   <img src="http://forthebadge.com/images/badges/built-with-love.svg?style=for-the-badge" alt="built with love" />
+   <img src="http://forthebadge.com/images/badges/made-with-crayons.svg?style=for-the-badge" alt="made with crayons">
+</div>
+
+<div align="center">
+   <h1>「plugins to expand Modmail 2025's functionality 🚀🌟✨」</h1>
+</div>
 
 # 📖 Bhagavad Gītā — As It Is (Original 1972 edition)
 
