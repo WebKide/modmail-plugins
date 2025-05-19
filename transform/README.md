@@ -1,16 +1,23 @@
 <div align="center">
-<h1>「modmail-plugins」</h1>
-<p><b><i>plugins to expand Modmail2025's functionality 🍆💦🍑</i></b></p>
+   <img src="https://i.imgur.com/tQzb7B2.png" alt="transform logo" width="720" />
 </div>
 
+------
 
 <div align="center">
-<img src="http://forthebadge.com/images/badges/made-with-crayons.svg!style=for-the-badge" alt="made with crayons"><br>
-<img src="https://img.shields.io/badge/python-v3.7-12a4ff!style=for-the-badge&logo=python&logoColor=12a4ff">
-<img src="https://img.shields.io/badge/library-discord%2Epy-ffbb10!style=for-the-badge">
+   <img src="https://img.shields.io/badge/Modmail%20Plugin-by%20WebKide-black.svg?style=popout&logo=github&logoColor=white" alt="WebKide" />
+   <img src="https://img.shields.io/badge/Made%20with-Python%203.10-blue.svg?style=popout&logo=python&logoColor=yellow" alt="Python3" />
+   <img src="https://img.shields.io/badge/Library-discord%2Epy%202%2Ex-ffbb10?style=popout&logo=discord">
+   <img src="https://img.shields.io/badge/Database-MongoDB-%234ea94b.svg?style=popout&logo=mongodb&logoColor=white" alt="MongoDB" />
+</div>
 
-<p>🛠️ if you experience a problem with any <b>modmail-plugin</b> in this repo, please open an issue or submit a pull-request</p>
-<br><br>
+<div align="center">
+   <img src="http://forthebadge.com/images/badges/built-with-love.svg?style=for-the-badge" alt="built with love" />
+   <img src="http://forthebadge.com/images/badges/made-with-crayons.svg?style=for-the-badge" alt="made with crayons">
+</div>
+
+<div align="center">
+   <h1>「plugins to expand Modmail 2025's functionality 🚀🌟✨」</h1>
 </div>
 
 # 🪄 Transform
