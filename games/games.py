@@ -786,7 +786,7 @@ class Games(commands.Cog):
         start_time = time.time()
         limit = min(max(limit, 1), 25)  # Clamp between 1-25
         leaderboard = await self.tracker.get_leaderboard(limit)
-        user = user or ctx.author
+        user = ctx.author
         
         if not leaderboard:
             embed = await self.embed_manager.create_command_embed(
