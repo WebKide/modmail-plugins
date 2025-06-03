@@ -786,7 +786,6 @@ class Games(commands.Cog):
         start_time = time.time()
         limit = min(max(limit, 1), 25)  # Clamp between 1-25
         leaderboard = await self.tracker.get_leaderboard(limit)
-        user = ctx.author
         
         if not leaderboard:
             embed = await self.embed_manager.create_command_embed(
@@ -804,7 +803,7 @@ class Games(commands.Cog):
         
         for i, entry in enumerate(leaderboard, 1):
             embed.add_field(
-                name=f"{i}. {entry['user.display_name']}",
+                name=f"{i}. {entry['username.display_name']}",
                 value=(
                     f"Commands: {entry['total']}\n"
                     f"Different games: {entry['commands']}"
