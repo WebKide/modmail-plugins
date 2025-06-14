@@ -25,7 +25,7 @@ from .answers.tarot import card_deck
 from .answers.words import scramble_words
 
 logger = logging.getLogger("Modmail")
-__version__ = "0.2.15 — ```dsconfig\n{given_choices}```"
+__version__ = "0.2.16 — ```dsconfig\n{given_choices}```"
 
 
 class GamesTracker:
@@ -801,7 +801,7 @@ class Games(commands.Cog):
         
         for i, entry in enumerate(leaderboard, 1):
             embed.add_field(
-                name=f"{i}. {entry['username.display_name']}",
+                name=f"{i}. {entry['username']}",
                 value=(
                     f"Commands: {entry['total']}\n"
                     f"Different games: {entry['commands']}"
