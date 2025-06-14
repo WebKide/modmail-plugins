@@ -394,8 +394,6 @@ class Games(commands.Cog):
     @commands.guild_only()
     async def tarot(self, ctx):
         """Start a tarot reading session"""
-        start_time = time.time()
-        
         # Send initial message
         message = await ctx.send(GameConfig.TAROT_MESSAGES[0])
         
@@ -415,7 +413,6 @@ class Games(commands.Cog):
     @tarot.command()
     async def reading(self, ctx, *, question: str = None):
         """Perform a 3-card tarot reading"""
-        start_time = time.time()
         u = ctx.author
         
         try:
@@ -425,6 +422,7 @@ class Games(commands.Cog):
             await asyncio.sleep(random.randint(5, 9))
             
             # Draw 3 unique cards
+            start_time = time.time()
             cards = random.sample(self.card_deck, 3)
             positions = [
                 "1️⃣ **The Past:** — Influences, roots, or unresolved energies. This card reveals events or relationships that shaped your current situation.",
