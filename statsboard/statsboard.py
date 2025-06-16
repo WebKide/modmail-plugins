@@ -31,6 +31,7 @@ import psutil
 from discord.ext import commands, tasks
 
 logger = logging.getLogger("Modmail")
+__version__ = "2.01"
 
 class StatsBoard(commands.Cog):
     """Enhanced automatic Modmail bot stats display system"""
@@ -364,9 +365,11 @@ class StatsBoard(commands.Cog):
             system_stats = self.get_system_stats()
 
             # Create embed
+            d_t = datetime.datetime.utcnow()
+            up_t =f"\nLocaltime: {d_t.strftime('%H:%M, %B %d')}\n"
             embed = discord.Embed(
                 title=f"📊 {guild.name} Statistics",
-                description=f"Live server statistics • Last updated: <t:{int(datetime.datetime.utcnow().timestamp())}:R>",
+                description=f"Live server statistics • Last updated: <t:{int(datetime.datetime.utcnow().timestamp())}:R>{up_t}",
                 timestamp=datetime.datetime.utcnow(),
                 color=guild.me.color if guild.me and guild.me.color.value != 0 else discord.Color.blurple()
             )
@@ -374,7 +377,7 @@ class StatsBoard(commands.Cog):
             # Set author with status
             status_emoji = self.get_bot_status_emoji()
             embed.set_author(
-                name=f"{status_emoji} {self.bot.user.name} Statistics",
+                name=f"{status_emoji} {self.bot.user.name}",
                 icon_url=self.bot.user.display_avatar.url
             )
 
@@ -384,32 +387,32 @@ class StatsBoard(commands.Cog):
 
             # Server Information
             embed.add_field(
-                name="🏛️ Server Info",
+                name="🏛️ 𝖲𝖾𝗋𝗏𝖾𝗋 𝖨𝗇𝖿𝗈:",
                 value=(
-                    f"**Created:** {guild_info['creation_date']}\n"
-                    f"**Owner:** {guild_info['owner']}\n"
-                    f"**Verification:** {guild_info['verification_level']}"
+                    f"**𝖢𝗋𝖾𝖺𝗍𝖾𝖽:** {guild_info['creation_date']}\n"
+                    f"**𝖮𝗐𝗇𝖾𝗋:** {guild_info['owner']}\n"
+                    f"**𝖵𝖾𝗋𝗂𝖿𝗂𝖼𝖺𝗍𝗂𝗈𝗇:** {guild_info['verification_level']}"
                 ),
                 inline=True
             )
 
             embed.add_field(
-                name="💎 Boosts",
+                name="💎 𝖡𝗈𝗈𝗌𝗍𝗌:",
                 value=(
-                    f"**Level:** {guild_info['boost_level']}\n"
-                    f"**Count:** {guild_info['boost_count']}\n"
-                    f"**Members:** {guild_info['member_count']:,}"
+                    f"**𝖫𝖾𝗏𝖾𝗅:** {guild_info['boost_level']}\n"
+                    f"**𝖢𝗈𝗎𝗇𝗍:** {guild_info['boost_count']}\n"
+                    f"**𝖬𝖾𝗆𝖻𝖾𝗋𝗌:** {guild_info['member_count']:,}"
                 ),
                 inline=True
             )
 
             # Member Statistics
             embed.add_field(
-                name="👥 Members",
+                name="👥 𝖬𝖾𝗆𝖻𝖾𝗋𝗌:",
                 value=(
-                    f"**Total:** {member_stats['total']:,}\n"
-                    f"**Humans:** {member_stats['humans']:,}\n"
-                    f"**Bots:** {member_stats['bots']:,}"
+                    f"**𝖳𝗈𝗍𝖺𝗅:** {member_stats['total']:,}\n"
+                    f"**𝖧𝗎𝗆𝖺𝗇𝗌:** {member_stats['humans']:,}\n"
+                    f"**𝖡𝗈𝗍𝗌:** {member_stats['bots']:,}"
                 ),
                 inline=True
             )
@@ -417,7 +420,7 @@ class StatsBoard(commands.Cog):
             # Online Status
             status = member_stats['status']
             embed.add_field(
-                name="📶 Online Status", 
+                name="📶 𝖮𝗇𝗅𝗂𝗇𝖾 𝖲𝗍𝖺𝗍𝗎𝗌:", 
                 value=(
                     f"🟢 {status['online']:,} 🟡 {status['idle']:,}\n"
                     f"🔴 {status['dnd']:,} ⚫ {status['offline']:,}"
@@ -427,62 +430,62 @@ class StatsBoard(commands.Cog):
 
             # Channel Statistics
             embed.add_field(
-                name="💬 Channels",
+                name="💬 𝖢𝗁𝖺𝗇𝗇𝖾𝗅𝗌:",
                 value=(
-                    f"**Text:** {channel_stats['total_text']}\n"
-                    f"**Voice:** {channel_stats['total_voice']}\n"
-                    f"**Categories:** {channel_stats['total_categories']}"
+                    f"**𝖳𝖾𝗑𝗍:** {channel_stats['total_text']}\n"
+                    f"**𝖵𝗈𝗂𝖼𝖾:** {channel_stats['total_voice']}\n"
+                    f"**𝖢𝖺𝗍𝖾𝗀𝗈𝗋𝗂𝖾𝗌:** {channel_stats['total_categories']}"
                 ),
                 inline=True
             )
 
             # Voice Activity
             embed.add_field(
-                name="🎤 Voice Activity", 
+                name="🎤 𝖵𝗈𝗂𝖼𝖾 𝖠𝖼𝗍𝗂𝗏𝗂𝗍𝗒:", 
                 value=(
-                    f"**Active:** {voice_stats['active_voice']}/{voice_stats['total_voice']}\n"
-                    f"**Members:** {voice_stats['voice_members']}\n"
-                    f"**Stages:** {voice_stats['stage_channels']}"
+                    f"**𝖠𝖼𝗍𝗂𝗏𝖾:** {voice_stats['active_voice']}/{voice_stats['total_voice']}\n"
+                    f"**𝖬𝖾𝗆𝖻𝖾𝗋𝗌:** {voice_stats['voice_members']}\n"
+                    f"**𝖲𝗍𝖺𝗀𝖾𝗌:** {voice_stats['stage_channels']}"
                 ),
                 inline=True
             )
 
             # Role Information
             embed.add_field(
-                name="🎭 Roles",
+                name="🎭 𝖱𝗈𝗅𝖾𝗌:",
                 value=(
-                    f"**Total:** {role_stats['total_roles']}\n"
-                    f"**Hoisted:** {role_stats['hoisted_roles']}\n"
-                    f"**My Role:** {role_stats['bot_role']}"
+                    f"**𝖳𝗈𝗍𝖺𝗅:** {role_stats['total_roles']}\n"
+                    f"**𝖧𝗈𝗂𝗌𝗍𝖾𝖽:** {role_stats['hoisted_roles']}\n"
+                    f"**𝖬𝗒 𝖱𝗈𝗅𝖾:** {role_stats['bot_role']}"
                 ),
                 inline=True
             )
 
             # Bot Performance
             embed.add_field(
-                name="🤖 Bot Performance",
+                name="🤖 𝖡𝗈𝗍 𝖯𝖾𝗋𝖿𝗈𝗋𝗆𝖺𝗇𝖼𝖾:",
                 value=(
-                    f"**Uptime:** {self.format_uptime()}\n"
-                    f"**Latency:** {self.bot.latency*1000:.1f}ms\n"
-                    f"**Commands:** {system_stats['total_commands']:,}"
+                    f"**𝖴𝗉𝗍𝗂𝗆𝖾:** {self.format_uptime()}\n"
+                    f"**𝖫𝖺𝗍𝖾𝗇𝖼𝗒:** {self.bot.latency*1000:.1f}ms\n"
+                    f"**𝖢𝗈𝗆𝗆𝖺𝗇𝖽𝗌:** {system_stats['total_commands']:,}"
                 ),
                 inline=True
             )
 
             # System Resources
             embed.add_field(
-                name="⚙️ System Resources",
+                name="⚙️ 𝖲𝗒𝗌𝗍𝖾𝗆 𝖱𝖾𝗌𝗈𝗎𝗋𝖼𝖾𝗌:",
                 value=(
-                    f"**Memory:** {system_stats['memory_mb']:.1f} MB\n"
-                    f"**CPU:** {system_stats['cpu_percent']:.1f}%\n"
-                    f"**Threads:** {system_stats['thread_count']}"
+                    f"**𝖬𝖾𝗆𝗈𝗋𝗒:** {system_stats['memory_mb']:.1f} MB\n"
+                    f"**𝖢𝖯𝖴:** {system_stats['cpu_percent']:.1f}%\n"
+                    f"**𝖳𝗁𝗋𝖾𝖺𝖽𝗌:** {system_stats['thread_count']}"
                 ),
                 inline=True
             )
 
             # Footer
             embed.set_footer(
-                text=f"Guild ID: {guild.id} • Shard: {guild.shard_id if hasattr(guild, 'shard_id') else 'N/A'}",
+                text=f"𝖦𝗎𝗂𝗅𝖽 𝖨𝖣: {guild.id} • 𝖲𝗁𝖺𝗋𝖽: {guild.shard_id if hasattr(guild, 'shard_id') else 'N/A'}",
                 icon_url=self.bot.user.display_avatar.url
             )
 
