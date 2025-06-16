@@ -31,7 +31,7 @@ import psutil
 from discord.ext import commands, tasks
 
 logger = logging.getLogger("Modmail")
-__version__ = "2.04"
+__version__ = "2.05"
 
 class StatsBoard(commands.Cog):
     """Enhanced automatic Modmail bot stats display system"""
@@ -204,7 +204,7 @@ class StatsBoard(commands.Cog):
         """Auto-start statsboard when bot comes online"""
         if not self.config['enabled']:
             return
-            
+
         # Small delay to ensure bot is fully ready
         await asyncio.sleep(2)
 
@@ -222,13 +222,13 @@ class StatsBoard(commands.Cog):
                 if not guild:
                     logger.warning("No target guild found for auto-start")
                     return
-                    
+
                 # Get the stats channel
                 self.stats_channel = await self.get_stats_channel()
                 if not self.stats_channel:
                     logger.error("Could not get stats channel for auto-start")
                     return
-                    
+
                 # Try to get existing message (preserve previous embed)
                 if self.config['message_id']:
                     try:
@@ -239,18 +239,18 @@ class StatsBoard(commands.Cog):
                         self.stats_message = None
                         self.config['message_id'] = None
                         self.save_config()
-                
+
                 # Mark as initialized
                 self.initialized = True
-                
+
                 # Start the update task if not already running
                 if not self.update_stats.is_running():
                     self.update_stats.start()
                     logger.info("Auto-started statsboard on bot ready")
-                    
+
                 # Send a subtle "back online" indicator by updating immediately
                 await self.update_stats()
-                
+
             except Exception as e:
                 logger.error(f"Auto-start failed: {e}")
 
@@ -569,7 +569,7 @@ class StatsBoard(commands.Cog):
             '''
 
             return embed
-            
+
         except Exception as e:
             logger.error(f"Error creating stats embed: {e}")
             return discord.Embed(
@@ -743,6 +743,65 @@ class StatsBoard(commands.Cog):
                 logger.error(f"Setup failed: {e}")
                 await ctx.send(f"❌ Setup failed: {str(e)}")
 
+    @statsboard_group.command(name="start")
+    @commands.has_permissions(manage_guild=True)
+    async def start_stats(self, ctx):
+        """Start the stats board system (useful after cog reload)"""
+        if self.config['enabled'] and self.initialized and self.update_stats.is_running():
+            return await ctx.send("✅ Stats board is already running!")
+
+        try:
+            # Enable if not enabled
+            if not self.config['enabled']:
+                self.config['enabled'] = True
+                self.save_config()
+
+            # Set guild ID if not set
+            if not self.config.get('guild_id'):
+                self.config['guild_id'] = ctx.guild.id
+                self.save_config()
+
+            # Get or create channel
+            self.stats_channel = await self.get_stats_channel()
+            if not self.stats_channel:
+                return await ctx.send("❌ Failed to get/create stats channel. Check bot permissions.")
+
+            # Try to get existing message first
+            if self.config['message_id']:
+                try:
+                    self.stats_message = await self.stats_channel.fetch_message(self.config['message_id'])
+                    await ctx.send("✅ Found existing stats message, resuming updates...")
+                except (discord.NotFound, discord.HTTPException):
+                    # Message not found, will create new one
+                    self.stats_message = None
+                    self.config['message_id'] = None
+
+            # Create message if needed
+            if not self.stats_message:
+                embed = self.create_stats_embed()
+                if embed:
+                    self.stats_message = await self.stats_channel.send(embed=embed)
+                    self.config['message_id'] = self.stats_message.id
+                    self.save_config()
+
+            # Mark as initialized
+            self.initialized = True
+
+            # Start the update task
+            if not self.update_stats.is_running():
+                self.update_stats.start()
+
+            embed = discord.Embed(
+                title="✅ Stats Board Started",
+                description=f"Stats board is now active in {self.stats_channel.mention}",
+                color=discord.Color.green()
+            )
+            await ctx.send(embed=embed)
+
+        except Exception as e:
+            logger.error(f"Start command failed: {e}")
+            await ctx.send(f"❌ Failed to start stats board: {str(e)}")
+
     @statsboard_group.command(name="toggle")
     @commands.has_permissions(manage_guild=True)
     async def toggle_stats(self, ctx):
@@ -824,7 +883,7 @@ class StatsBoard(commands.Cog):
             ),
             inline=False
         )
-        
+
         await ctx.send(embed=embed)
 
     @statsboard_group.command(name="interval")
