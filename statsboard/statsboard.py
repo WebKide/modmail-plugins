@@ -31,7 +31,7 @@ import psutil
 from discord.ext import commands, tasks
 
 logger = logging.getLogger("Modmail")
-__version__ = "2.02"
+__version__ = "2.03"
 
 class StatsBoard(commands.Cog):
     """Enhanced automatic Modmail bot stats display system"""
@@ -370,7 +370,6 @@ class StatsBoard(commands.Cog):
             embed = discord.Embed(
                 title=f"📊 {guild.name} Statistics",
                 description=f"Live server statistics • Last updated: <t:{int(datetime.datetime.utcnow().timestamp())}:R>{up_t}",
-                timestamp=datetime.datetime.utcnow(),
                 color=guild.me.color if guild.me and guild.me.color.value != 0 else discord.Color.blurple()
             )
 
@@ -550,8 +549,7 @@ class StatsBoard(commands.Cog):
                         logger.warning("Configured stats message not found, creating new one")
                         pass
 
-                '''
-                if not self.stats_message:  # enable for production servers DISSABLED for testing
+                if not self.stats_message:  # enable for production servers, DISSABLED for testing
                     # Clean up old messages before creating new one
                     try:
                         async for message in self.stats_channel.history(limit=10):
@@ -565,7 +563,6 @@ class StatsBoard(commands.Cog):
                     self.config['message_id'] = self.stats_message.id
                     self.save_config()
                     logger.info("Created new stats message")
-                '''
             else:
                 await self.stats_message.edit(embed=embed)
 
