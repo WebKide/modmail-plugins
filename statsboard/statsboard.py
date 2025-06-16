@@ -31,7 +31,7 @@ import psutil
 from discord.ext import commands, tasks
 
 logger = logging.getLogger("Modmail")
-__version__ = "2.05"
+__version__ = "2.06"
 
 class StatsBoard(commands.Cog):
     """Enhanced automatic Modmail bot stats display system"""
@@ -745,7 +745,7 @@ class StatsBoard(commands.Cog):
 
     @statsboard_group.command(name="start")
     @commands.has_permissions(manage_guild=True)
-    async def start_stats(self, ctx):
+    async def restart_stats(self, ctx):
         """Start the stats board system (useful after cog reload)"""
         if self.config['enabled'] and self.initialized and self.update_stats.is_running():
             return await ctx.send("✅ Stats board is already running!")
