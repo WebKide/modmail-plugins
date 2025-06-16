@@ -31,7 +31,7 @@ import psutil
 from discord.ext import commands, tasks
 
 logger = logging.getLogger("Modmail")
-__version__ = "2.01"
+__version__ = "2.02"
 
 class StatsBoard(commands.Cog):
     """Enhanced automatic Modmail bot stats display system"""
@@ -382,8 +382,10 @@ class StatsBoard(commands.Cog):
             )
 
             # Set thumbnail
+            '''
             if guild.icon:
                 embed.set_thumbnail(url=guild.icon.url)
+            '''
 
             # Server Information
             embed.add_field(
@@ -484,10 +486,20 @@ class StatsBoard(commands.Cog):
             )
 
             # Footer
+            try:
+                if guild.icon:
+                    embed.set_footer(
+                        text=f"𝖦𝗎𝗂𝗅𝖽 𝖨𝖣: {guild.id} • 𝖲𝗁𝖺𝗋𝖽: {guild.shard_id if hasattr(guild, 'shard_id') else 'N/A'}",
+                        icon_url=guild.icon.url
+                        )
+            except discord.HTTPException as e:
+                embed.set_footer(text=f"𝖦𝗎𝗂𝗅𝖽 𝖨𝖣: {guild.id} • 𝖲𝗁𝖺𝗋𝖽: {guild.shard_id if hasattr(guild, 'shard_id') else 'N/A'}")
+            '''
             embed.set_footer(
                 text=f"𝖦𝗎𝗂𝗅𝖽 𝖨𝖣: {guild.id} • 𝖲𝗁𝖺𝗋𝖽: {guild.shard_id if hasattr(guild, 'shard_id') else 'N/A'}",
                 icon_url=self.bot.user.display_avatar.url
             )
+            '''
 
             return embed
             
