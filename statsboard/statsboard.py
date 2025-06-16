@@ -31,7 +31,7 @@ import psutil
 from discord.ext import commands, tasks
 
 logger = logging.getLogger("Modmail")
-__version__ = "2.03"
+__version__ = "2.04"
 
 class StatsBoard(commands.Cog):
     """Enhanced automatic Modmail bot stats display system"""
@@ -62,6 +62,8 @@ class StatsBoard(commands.Cog):
 
         # Configuration validation
         self._validate_config()
+        self.bot_restarts = 0
+        self.last_restart = None
 
     # region Core Functions
     def _validate_config(self):
@@ -197,6 +199,61 @@ class StatsBoard(commands.Cog):
     # endregion
 
     # region Event Listeners
+    @commands.Cog.listener()
+    async def on_ready(self):
+        """Auto-start statsboard when bot comes online"""
+        if not self.config['enabled']:
+            return
+            
+        # Small delay to ensure bot is fully ready
+        await asyncio.sleep(2)
+
+        # Track actual bot restarts (not just on_ready calls)
+        if not hasattr(self, '_session_started'):
+            # First time this session
+            self._session_started = True
+            self.bot_restarts += 1
+            self.last_restart = datetime.datetime.utcnow()
+
+        async with self._initialization_lock:
+            try:
+                # Get the configured guild
+                guild = self.target_guild
+                if not guild:
+                    logger.warning("No target guild found for auto-start")
+                    return
+                    
+                # Get the stats channel
+                self.stats_channel = await self.get_stats_channel()
+                if not self.stats_channel:
+                    logger.error("Could not get stats channel for auto-start")
+                    return
+                    
+                # Try to get existing message (preserve previous embed)
+                if self.config['message_id']:
+                    try:
+                        self.stats_message = await self.stats_channel.fetch_message(self.config['message_id'])
+                        logger.info("Found existing stats message, will update it")
+                    except (discord.NotFound, discord.HTTPException):
+                        logger.info("Previous stats message not found, will create new one")
+                        self.stats_message = None
+                        self.config['message_id'] = None
+                        self.save_config()
+                
+                # Mark as initialized
+                self.initialized = True
+                
+                # Start the update task if not already running
+                if not self.update_stats.is_running():
+                    self.update_stats.start()
+                    logger.info("Auto-started statsboard on bot ready")
+                    
+                # Send a subtle "back online" indicator by updating immediately
+                await self.update_stats()
+                
+            except Exception as e:
+                logger.error(f"Auto-start failed: {e}")
+
     @commands.Cog.listener()
     async def on_command_completion(self, ctx):
         """Track command usage statistics"""
@@ -472,6 +529,17 @@ class StatsBoard(commands.Cog):
                 ),
                 inline=True
             )
+
+            # Method to include Restart Info
+            if hasattr(self, 'bot_restarts') and self.bot_restarts > 0:
+                embed.add_field(
+                    name="🔄 𝖱𝖾𝗌𝗍𝖺𝗋𝗍 𝖨𝗇𝖿𝗈:",
+                    value=(
+                        f"**𝖢𝗈𝗎𝗇𝗍:** {self.bot_restarts}\n"
+                        f"**𝖫𝖺𝗌𝗍:** {self.last_restart.strftime('%H:%M %b %d') if self.last_restart else 'N/A'}"
+                    ),
+                    inline=True
+                )
 
             # System Resources
             embed.add_field(
