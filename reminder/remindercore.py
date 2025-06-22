@@ -82,7 +82,7 @@ class ReminderPaginator(View):
             )
 
             # Set thumbnail
-            embed.set_thumbnail(url="https://cdn.discordapp.com/embed/avatars/0.png")
+            embed.set_thumbnail(url="https://i.imgur.com/677JpTl.png")
 
             # Add formatted time field
             embed.add_field(
