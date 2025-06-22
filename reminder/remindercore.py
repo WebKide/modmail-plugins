@@ -350,46 +350,38 @@ class RecurringView(View):
 
         # Add recurring option buttons
         recurring_options = [
-            ("daily", "Daily", "🔄"),
-            ("weekly", "Weekly", "📅"), 
-            ("monthly", "Monthly", "🗓️"),
-            ("none", "One-time", "⏰")
+            ("daily", "Daily", "🔄", discord.ButtonStyle.secondary),
+            ("weekly", "Weekly", "📅", discord.ButtonStyle.secondary), 
+            ("monthly", "Monthly", "🗓️", discord.ButtonStyle.secondary),
+            ("none", "One-time", "⏰", discord.ButtonStyle.primary)
         ]
 
-        for freq, label, emoji in recurring_options:
+        for freq, label, emoji, style in recurring_options:
             button = Button(
                 label=f"{emoji} {label}",
-                custom_id=f"recurring_{freq}_{user_id}_{datetime.now().timestamp()}",
-                style=discord.ButtonStyle.secondary if freq != "none" else discord.ButtonStyle.primary
+                style=style,
+                custom_id=f"recurring_{freq}_{user_id}_{datetime.now().timestamp()}"
             )
             button.callback = self.create_recurring_callback(freq)
             self.add_item(button)
 
     def create_recurring_callback(self, frequency: str):
         """Create callback for specific recurring frequency"""
-        async def recurring_callback(interaction: discord.Interaction):
+        async def callback(interaction: discord.Interaction):
             try:
-                # Generate unique ID for reminder
-                import uuid
-                reminder_id = str(uuid.uuid4())
-
-                # Prepare reminder document
-                reminder_doc = {
-                    "_id": reminder_id,
+                # Update reminder data
+                reminder_data = {
                     "user_id": self.user_id,
                     "channel_id": self.reminder_data["channel_id"],
                     "text": self.reminder_data["text"],
                     "due": self.reminder_data["due"],
                     "created": datetime.now(pytz.UTC),
-                    "status": "active"
+                    "status": "active",
+                    "recurring": frequency if frequency != "none" else None
                 }
 
-                # Add recurring field if not one-time
-                if frequency != "none":
-                    reminder_doc["recurring"] = frequency
-
                 # Save to database
-                await self.cog.db.insert_one(reminder_doc)
+                await self.cog.db.insert_one(reminder_data)
 
                 # Format confirmation message
                 time_str = await self.cog.timezone_manager.format_time_with_timezone(
@@ -400,10 +392,10 @@ class RecurringView(View):
 
                 embed = discord.Embed(
                     description=(
-                        f"# ✅ **Reminder set!**\n\n"
+                        f"✅ **Reminder set!**\n\n"
                         f"**When:** {time_str}\n"
                         f"**Reminder:** {self.reminder_data['text']}"
-                        f"> {recurring_text}"
+                        f"{recurring_text}"
                     ),
                     color=discord.Color.green()
                 )
@@ -415,11 +407,11 @@ class RecurringView(View):
                 await interaction.response.edit_message(embed=embed, view=self)
 
             except Exception as e:
-                log.error(f"Error setting reminder: {e}")
                 await interaction.response.send_message(
                     f"❌ Error setting reminder: {str(e)[:100]}",
                     ephemeral=True
                 )
+        return callback
 
     async def on_timeout(self):
         """Disable buttons when view times out"""
