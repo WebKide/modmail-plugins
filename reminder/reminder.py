@@ -16,7 +16,7 @@ from core import checks
 from core.models import PermissionLevel
 
 from .remindertimezone import ReminderTimezone, TimezoneConverter
-from .remindercore import ReminderPaginator, SnoozeView, RecurringView
+from .remindercore import ReminderPaginator, SnoozeView, RecurringView, DualDeliveryView
 
 log = logging.getLogger("Modmail")
 __version__ = "3.03"
