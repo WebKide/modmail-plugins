@@ -76,6 +76,8 @@ class Reminder(commands.Cog):
                 ),
                 color=discord.Color.green()
             )
+            # Set thumbnail
+            embed.set_thumbnail(url="https://i.imgur.com/677JpTl.png")
 
             await ctx.send(embed=embed)
 
@@ -103,6 +105,8 @@ class Reminder(commands.Cog):
                 ),
                 color=discord.Color.blue()
             )
+            # Set thumbnail
+            embed.set_thumbnail(url="https://i.imgur.com/677JpTl.png")
 
             await ctx.send(embed=embed)
 
@@ -191,6 +195,8 @@ class Reminder(commands.Cog):
                 value=f"```cs\n{time_str}\n```",
                 inline=False
             )
+            # Set thumbnail
+            embed.set_thumbnail(url="https://i.imgur.com/677JpTl.png")
 
             # Create snooze view
             view = SnoozeView(self, reminder["_id"], reminder["user_id"])
@@ -407,6 +413,8 @@ class Reminder(commands.Cog):
                 ),
                 color=discord.Color.blue()
             )
+            # Set thumbnail
+            embed.set_thumbnail(url="https://i.imgur.com/677JpTl.png")
 
             view = RecurringView(self, ctx.author.id, reminder_data)
             await ctx.send(embed=embed, view=view)
@@ -436,6 +444,8 @@ class Reminder(commands.Cog):
                     description="## ⏰ You have no active reminders!",
                     color=0x00ff00
                 )
+                # Set thumbnail
+                embed.set_thumbnail(url="https://i.imgur.com/677JpTl.png")
                 return await ctx.send(embed=embed)
 
             # Create embeds data for paginator
@@ -466,7 +476,8 @@ class Reminder(commands.Cog):
                     icon_url=ctx.author.avatar.url if ctx.author.avatar else ctx.author.default_avatar.url
                 )
 
-                embed.set_thumbnail(url="https://cdn.discordapp.com/embed/avatars/0.png")
+                # Set thumbnail
+                embed.set_thumbnail(url="https://i.imgur.com/677JpTl.png")
 
                 embed.add_field(
                     name="📆 When:",
