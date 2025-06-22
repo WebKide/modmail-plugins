@@ -99,20 +99,36 @@ class ReminderTimezone:
             return dt.strftime('%d %B %Y %H:%M UTC')
 
     def get_timezone_display(self, timezone: pytz.BaseTzInfo) -> str:
-        """Get human-readable timezone display"""
-        if isinstance(timezone, pytz._FixedOffset):  # Check if it's a FixedOffset timezone
-            offset_minutes = timezone._offset.seconds // 60
-            hours = offset_minutes // 60
-            # Handle UTC±0 case
-            if hours == 0:
-                return "UTC±0"
-            # Format with proper sign
-            sign = '-' if offset_minutes < 0 else '+'
-            abs_hours = abs(hours)
-            return f"UTC{sign}{abs_hours}"
-        elif isinstance(timezone, pytz.tzinfo.BaseTzInfo):  # For named timezones
-            return str(timezone)
-        return "UTC"  # Fallback
+        """Get human-readable timezone display with proper UTC offset"""
+        try:
+            # Handle FixedOffset timezones (user-set UTC offsets)
+            if hasattr(timezone, '_offset'):  # Works for both pytz.FixedOffset and newer zoneinfo
+                total_seconds = timezone._offset.total_seconds()
+                offset_hours = int(total_seconds / 3600)
+
+                # Handle UTC±0 case
+                if offset_hours == 0:
+                    return "UTC±0"
+
+                # Format with proper sign
+                sign = '-' if offset_hours < 0 else '+'
+                abs_hours = abs(offset_hours)
+
+                # Validate offset range (UTC-12 to UTC+14)
+                if abs_hours > 14:
+                    log.warning(f"Invalid timezone offset: {offset_hours} hours")
+                    return "UTC±0"  # Fallback to UTC
+
+                return f"UTC{sign}{abs_hours}"
+
+            # Handle named timezones (like 'America/New_York')
+            elif hasattr(timezone, 'zone'):
+                return str(timezone.zone)
+
+        except Exception as e:
+            log.error(f"Error formatting timezone display: {e}")
+
+        return "UTC"  # Final fallback
 
 class TimezoneConverter(commands.Converter):
     async def convert(self, ctx, argument):
