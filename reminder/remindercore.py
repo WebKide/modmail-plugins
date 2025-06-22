@@ -14,6 +14,7 @@ from discord.ext import commands
 from discord.ui import View, Button
 
 log = logging.getLogger("Modmail")
+logo = "https://i.imgur.com/677JpTl.png"
 
 class ReminderPaginator(View):
     """Enhanced paginator for reminder lists with delete functionality"""
@@ -115,7 +116,7 @@ class ReminderPaginator(View):
             )
 
             # Set thumbnail
-            embed.set_thumbnail(url="https://i.imgur.com/677JpTl.png")
+            embed.set_thumbnail(url=logo)
 
             # Add formatted time field
             embed.add_field(
@@ -144,7 +145,7 @@ class ReminderPaginator(View):
                 description=f"### 📝 Reminder:\n{reminder_data['text']}",
                 color=discord.Color.red()
             )
-            embed.set_thumbnail(url="https://i.imgur.com/677JpTl.png")
+            embed.set_thumbnail(url=logo)
             embed.set_footer(text=f"ID: {reminder_data['_id']} (Error: {str(e)[:50]})")
             return embed
 
@@ -204,7 +205,7 @@ class ReminderPaginator(View):
                     color=discord.Color.green()
                 )
                 # Set thumbnail
-                embed.set_thumbnail(url="https://i.imgur.com/677JpTl.png")
+                embed.set_thumbnail(url=logo)
                 self.deleted = True
                 await interaction.response.edit_message(embed=embed, view=None)
                 return
@@ -362,7 +363,7 @@ class SnoozeView(View):
                         color=discord.Color.green()
                     )
                     # Set thumbnail
-                    embed.set_thumbnail(url="https://i.imgur.com/677JpTl.png")
+                    embed.set_thumbnail(url=logo)
                     # Disable all buttons
                     for item in self.children:
                         item.disabled = True
@@ -505,7 +506,7 @@ class RecurringView(View):
                     color=discord.Color.green()
                 )
                 # Set thumbnail
-                embed.set_thumbnail(url="https://i.imgur.com/677JpTl.png")
+                embed.set_thumbnail(url=logo)
 
                 # Disable all buttons
                 for item in self.children:

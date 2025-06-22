@@ -20,6 +20,7 @@ from .remindercore import ReminderPaginator, SnoozeView, RecurringView
 
 log = logging.getLogger("Modmail")
 __version__ = "3.03"
+logo = "https://i.imgur.com/677JpTl.png"
 
 class Reminder(commands.Cog):
     """Reminder plugin with timezone support"""
@@ -79,7 +80,7 @@ class Reminder(commands.Cog):
                 color=discord.Color.green()
             )
             # Set thumbnail
-            embed.set_thumbnail(url="https://i.imgur.com/677JpTl.png")
+            embed.set_thumbnail(url=logo)
 
             msg = await ctx.send(embed=embed)
             await msg.delete(delay=60)  # delete embed after a minute
@@ -103,14 +104,14 @@ class Reminder(commands.Cog):
 
             embed = discord.Embed(
                 description=(
-                    f"### ⏰ **Your current time:**\n"
+                    f"## ⏰ **Your current time:**\n"
                     f"# {current_time}\n"
-                    f"**Timezone:** `{tz_display}`"
+                    f"**Timezone:** `{tz_display}` set by user"
                 ),
                 color=discord.Color.blue()
             )
             # Set thumbnail
-            embed.set_thumbnail(url="https://i.imgur.com/677JpTl.png")
+            embed.set_thumbnail(url=logo)
 
             msg = await ctx.send(embed=embed)
             await msg.delete(delay=60)  # delete embed after a minute
@@ -191,7 +192,7 @@ class Reminder(commands.Cog):
                 value=f"```cs\n{time_str}\n```",
                 inline=False
             )
-            embed.set_thumbnail(url="https://i.imgur.com/677JpTl.png")
+            embed.set_thumbnail(url=logo)
 
             # Create view with Snooze and OFF buttons
             view = DualDeliveryView(self, reminder["_id"], reminder["user_id"])
@@ -454,7 +455,7 @@ class Reminder(commands.Cog):
                 color=discord.Color.blue()
             )
             # Set thumbnail
-            embed.set_thumbnail(url="https://i.imgur.com/677JpTl.png")
+            embed.set_thumbnail(url=logo)
             embed.set_footer(text="Choose One-time or Recurring")
 
             view = RecurringView(self, ctx.author.id, reminder_data)
@@ -487,7 +488,7 @@ class Reminder(commands.Cog):
                     color=0x00ff00
                 )
                 # Set thumbnail
-                embed.set_thumbnail(url="https://i.imgur.com/677JpTl.png")
+                embed.set_thumbnail(url=logo)
                 return await ctx.send(embed=embed)
 
             # Create embeds data for paginator
@@ -519,7 +520,7 @@ class Reminder(commands.Cog):
                 )
 
                 # Set thumbnail
-                embed.set_thumbnail(url="https://i.imgur.com/677JpTl.png")
+                embed.set_thumbnail(url=logo)
 
                 embed.add_field(
                     name="📆 When:",
