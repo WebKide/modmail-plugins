@@ -19,7 +19,7 @@ from .remindertimezone import ReminderTimezone, TimezoneConverter
 from .remindercore import ReminderPaginator, SnoozeView, RecurringView
 
 log = logging.getLogger("Modmail")
-__version__ = "3.01"
+__version__ = "3.02"
 
 class Reminder(commands.Cog):
     """Reminder plugin with timezone support"""
@@ -154,29 +154,19 @@ class Reminder(commands.Cog):
             yield batch
 
     async def _process_single_reminder(self, reminder: dict, now: datetime):
-        """Process a single reminder delivery"""
+        """Process a single reminder delivery to both DM and channel with fallback"""
         try:
-            # Get user and channel
+            # Get user
             user = self.bot.get_user(reminder["user_id"])
             if not user:
                 try:
                     user = await self.bot.fetch_user(reminder["user_id"])
                 except discord.NotFound:
-                    await self.db.update_one(
-                        {"_id": reminder["_id"]},
-                        {"$set": {"status": "failed", "error": "user_not_found"}}
-                    )
+                    # User not found - delete all reminders for this user
+                    await self.db.delete_many({"user_id": reminder["user_id"], "status": "active"})
                     return
 
-            channel = self.bot.get_channel(reminder["channel_id"])
-            if not channel:
-                try:
-                    channel = await self.bot.fetch_channel(reminder["channel_id"])
-                except discord.NotFound:
-                    # Fallback to DM
-                    channel = user
-
-            # Create reminder embed
+            # Prepare the reminder embed
             time_str = await self.timezone_manager.format_time_with_timezone(
                 reminder["due"], reminder["user_id"]
             )
@@ -195,25 +185,64 @@ class Reminder(commands.Cog):
                 value=f"```cs\n{time_str}\n```",
                 inline=False
             )
-            # Set thumbnail
             embed.set_thumbnail(url="https://i.imgur.com/677JpTl.png")
 
-            # Create snooze view
-            view = SnoozeView(self, reminder["_id"], reminder["user_id"])
+            # Create view with Snooze and OFF buttons
+            view = DualDeliveryView(self, reminder["_id"], reminder["user_id"])
 
-            # Send reminder
+            # Track delivery status
+            delivery_status = {
+                "dm_success": False,
+                "channel_success": False,
+                "dm_error": None,
+                "channel_error": None
+            }
+
+            # Try DM delivery first
             try:
-                await channel.send(f"{user.mention}", embed=embed, view=view)
+                await user.send(embed=embed, view=view)
+                delivery_status["dm_success"] = True
             except discord.Forbidden:
-                # Try DM as fallback
-                try:
-                    await user.send(embed=embed, view=view)
-                except discord.Forbidden:
-                    await self.db.update_one(
-                        {"_id": reminder["_id"]},
-                        {"$set": {"status": "failed", "error": "cannot_message_user"}}
-                    )
-                    return
+                delivery_status["dm_error"] = "User disabled DMs"
+            except Exception as e:
+                delivery_status["dm_error"] = str(e)[:100]
+
+            # Try original channel delivery
+            channel = None
+            try:
+                channel = self.bot.get_channel(reminder["channel_id"])
+                if not channel:
+                    channel = await self.bot.fetch_channel(reminder["channel_id"])
+
+                await channel.send(f"{user.mention}", embed=embed, view=view)
+                delivery_status["channel_success"] = True
+            except discord.Forbidden:
+                delivery_status["channel_error"] = "Missing permissions in channel"
+            except discord.NotFound:
+                delivery_status["channel_error"] = "Channel not found"
+            except Exception as e:
+                delivery_status["channel_error"] = str(e)[:100]
+
+            # Fallback to main guild channel if both failed and user is in guild
+            if not delivery_status["dm_success"] and not delivery_status["channel_success"]:
+                guild = self.bot.get_guild(reminder.get("guild_id"))
+                if guild:
+                    try:
+                        # Find first text channel we can send to
+                        for ch in guild.text_channels:
+                            if ch.permissions_for(guild.me).send_messages:
+                                # Modify embed to show delivery issues
+                                footer_text = []
+                                if delivery_status["dm_error"]:
+                                    footer_text.append(f"DM failed: {delivery_status['dm_error']}")
+                                if delivery_status["channel_error"]:
+                                    footer_text.append(f"Original channel failed: {delivery_status['channel_error']}")
+
+                                embed.set_footer(text=" | ".join(footer_text))
+                                await ch.send(f"{user.mention}", embed=embed, view=view)
+                                break
+                    except Exception:
+                        pass
 
             # Handle recurring or mark as completed
             if reminder.get("recurring"):
@@ -226,7 +255,6 @@ class Reminder(commands.Cog):
 
         except Exception as e:
             log.error(f"Failed to process reminder {reminder.get('_id')}: {e}")
-            # Mark as failed with retry logic
             retry_count = reminder.get("retry_count", 0)
             if retry_count < 3:
                 await self.db.update_one(
@@ -398,6 +426,7 @@ class Reminder(commands.Cog):
             reminder_data = {
                 "user_id": ctx.author.id,
                 "channel_id": ctx.channel.id,
+                "guild_id": ctx.guild.id if ctx.guild else None,  # Add this line
                 "text": reminder_text,
                 "due": due
             }

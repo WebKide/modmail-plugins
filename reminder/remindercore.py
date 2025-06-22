@@ -30,15 +30,13 @@ class ReminderPaginator(View):
 
     def add_buttons(self):
         """Dynamically add buttons based on page count"""
-        # Clear existing buttons
         self.clear_items()
 
         # Previous button
         if len(self.embeds) > 1:
             prev_button = Button(
                 emoji="⬅️",
-                style=discord.ButtonStyle.blurple,
-                custom_id=f"prev_{self.user_id}_{datetime.now().timestamp()}"
+                style=discord.ButtonStyle.blurple
             )
             prev_button.callback = self.previous_page
             self.add_item(prev_button)
@@ -46,18 +44,25 @@ class ReminderPaginator(View):
         # Delete button
         delete_button = Button(
             emoji="🗑️",
-            style=discord.ButtonStyle.red,
-            custom_id=f"delete_{self.user_id}_{datetime.now().timestamp()}"
+            style=discord.ButtonStyle.red
         )
         delete_button.callback = self.delete_reminder
         self.add_item(delete_button)
+
+        # OFF button
+        off_button = Button(
+            label="OFF",
+            emoji="🔇",
+            style=discord.ButtonStyle.danger
+        )
+        off_button.callback = self.off_reminder
+        self.add_item(off_button)
 
         # Next button
         if len(self.embeds) > 1:
             next_button = Button(
                 emoji="➡️",
-                style=discord.ButtonStyle.blurple,
-                custom_id=f"next_{self.user_id}_{datetime.now().timestamp()}"
+                style=discord.ButtonStyle.blurple
             )
             next_button.callback = self.next_page
             self.add_item(next_button)
@@ -250,6 +255,20 @@ class ReminderPaginator(View):
                 ephemeral=True
             )
 
+    async def off_reminder(self, interaction: discord.Interaction):
+        """Turn off the reminder display without deleting the reminder"""
+        try:
+            await interaction.response.edit_message(
+                content="🔇 Reminder display turned off",
+                embed=None,
+                view=None
+            )
+        except Exception as e:
+            await interaction.response.send_message(
+                f"❌ Error turning off reminder: {str(e)[:100]}",
+                ephemeral=True
+            )
+
     async def on_timeout(self):
         """Gracefully disable buttons when view times out"""
         if not self.deleted:
@@ -369,6 +388,60 @@ class RecurringView(View):
             button.callback = self.create_recurring_callback(freq)
             self.add_item(button)
 
+    async def recurring_callback(interaction: discord.Interaction):
+        try:
+            # Generate unique ID for reminder
+            import uuid
+            reminder_id = str(uuid.uuid4())
+
+            # Prepare reminder document
+            reminder_doc = {
+                "_id": reminder_id,
+                "user_id": self.user_id,
+                "channel_id": self.reminder_data["channel_id"],
+                "text": self.reminder_data["text"],
+                "due": self.reminder_data["due"],
+                "created": datetime.now(pytz.UTC),
+                "status": "active"
+            }
+            
+            # Add recurring field if not one-time
+            if frequency != "none":
+                reminder_doc["recurring"] = frequency
+
+            # Save to database
+            await self.cog.db.insert_one(reminder_doc)
+
+            # Format confirmation message
+            time_str = await self.cog.timezone_manager.format_time_with_timezone(
+                self.reminder_data["due"], self.user_id
+            )
+
+            recurring_text = "" if frequency == "none" else f"\n🔄 **Recurring:** {frequency.title()}"
+
+            embed = discord.Embed(
+                description=(
+                    f"✅ **Reminder set!**\n\n"
+                    f"**When:** {time_str}\n"
+                    f"**Reminder:** {self.reminder_data['text']}"
+                    f"{recurring_text}"
+                ),
+                color=discord.Color.green()
+            )
+
+            # Disable all buttons
+            for item in self.children:
+                item.disabled = True
+
+            await interaction.response.edit_message(embed=embed, view=self)
+
+        except Exception as e:
+            log.error(f"Error setting reminder: {e}")
+            await interaction.response.send_message(
+                f"❌ Error setting reminder: {str(e)[:100]}",
+                ephemeral=True
+            )
+
     def create_recurring_callback(self, frequency: str):
         """Create callback for specific recurring frequency"""
         async def callback(interaction: discord.Interaction):
@@ -423,6 +496,84 @@ class RecurringView(View):
         """Disable buttons when view times out"""
         for item in self.children:
             item.disabled = True
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        return interaction.user.id == self.user_id
+
+class DualDeliveryView(View):
+    """View with both Snooze and OFF buttons for reminders"""
+
+    def __init__(self, cog, reminder_id: str, user_id: int):
+        super().__init__(timeout=600)  # 10 minute timeout
+        self.cog = cog
+        self.reminder_id = reminder_id
+        self.user_id = user_id
+
+        # Snooze buttons
+        snooze_options = [
+            (30, "30m", discord.ButtonStyle.secondary),
+            (60, "1h", discord.ButtonStyle.primary),
+            (1440, "1d", discord.ButtonStyle.success)
+        ]
+
+        for minutes, label, style in snooze_options:
+            button = Button(
+                label=label,
+                custom_id=f"snooze_{minutes}_{user_id}_{datetime.now().timestamp()}",
+                style=style
+            )
+            button.callback = self.create_snooze_callback(minutes)
+            self.add_item(button)
+
+        # OFF button
+        off_button = Button(
+            label="OFF",
+            emoji="🔇",
+            style=discord.ButtonStyle.danger,
+            custom_id=f"off_{user_id}_{datetime.now().timestamp()}"
+        )
+        off_button.callback = self.off_callback
+        self.add_item(off_button)
+
+    def create_snooze_callback(self, minutes: int):
+        """Create callback for specific snooze duration"""
+        async def callback(interaction: discord.Interaction):
+            try:
+                new_due = datetime.now(pytz.UTC) + timedelta(minutes=minutes)
+                await self.cog.db.update_one(
+                    {"_id": self.reminder_id},
+                    {"$set": {"due": new_due}}
+                )
+
+                time_str = await self.cog.timezone_manager.format_time_with_timezone(
+                    new_due, self.user_id
+                )
+
+                await interaction.response.edit_message(
+                    content=f"⏰ Reminder snoozed until {time_str}",
+                    embed=None,
+                    view=None
+                )
+            except Exception as e:
+                await interaction.response.send_message(
+                    f"❌ Error snoozing reminder: {str(e)[:100]}",
+                    ephemeral=True
+                )
+        return callback
+
+    async def off_callback(self, interaction: discord.Interaction):
+        """Delete the reminder message without affecting the reminder itself"""
+        try:
+            await interaction.response.edit_message(
+                content="🔇 Reminder message turned off",
+                embed=None,
+                view=None
+            )
+        except Exception as e:
+            await interaction.response.send_message(
+                f"❌ Error turning off reminder: {str(e)[:100]}",
+                ephemeral=True
+            )
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         return interaction.user.id == self.user_id

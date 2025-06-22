@@ -83,6 +83,12 @@ class ReminderTimezone:
         """Format time for display in user's timezone"""
         try:
             user_tz = await self.get_user_timezone(user_id)
+            # Ensure dt is timezone-aware (UTC)
+            if dt.tzinfo is None:
+                dt = pytz.UTC.localize(dt)
+            else:
+                dt = dt.astimezone(pytz.UTC)
+
             local_dt = dt.astimezone(user_tz)
             return (
                 f"{local_dt.strftime('%d %B %Y %H:%M %Z')}\n"
