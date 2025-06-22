@@ -179,7 +179,7 @@ class ReminderPaginator(View):
             if not self.embeds:
                 # No reminders left
                 embed = discord.Embed(
-                    description="🗑️ **Reminder deleted!**\n\nYou have no more reminders.",
+                    description="## 🗑️ **Reminder deleted!**\n\nYou have no more reminders.",
                     color=discord.Color.green()
                 )
                 self.deleted = True
@@ -330,7 +330,7 @@ class SnoozeView(View):
                     )
 
                     embed = discord.Embed(
-                        description=f"⏰ **Reminder snoozed!**\n\nNew time: {time_str}",
+                        description=f"## ⏰ **Reminder snoozed!**\n\nNew time: {time_str}",
                         color=discord.Color.green()
                     )
 
@@ -422,10 +422,10 @@ class RecurringView(View):
 
                 embed = discord.Embed(
                     description=(
-                        f"✅ **Reminder set!**\n\n"
+                        f"# ✅ **Reminder set!**\n\n"
                         f"**When:** {time_str}\n"
                         f"**Reminder:** {self.reminder_data['text']}"
-                        f"{recurring_text}"
+                        f"> {recurring_text}"
                     ),
                     color=discord.Color.green()
                 )
