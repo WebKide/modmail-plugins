@@ -12,9 +12,7 @@ from discord import Interaction
 from discord.ext import commands
 from discord.ui import View, Button
 
-
 log = logging.getLogger("Modmail")
-
 
 class ReminderPaginator(View):
     """Enhanced paginator for reminder lists with delete functionality"""
@@ -292,7 +290,7 @@ class SnoozeView(View):
             button.callback = self.create_snooze_callback(minutes)
             self.add_item(button)
 
-    def create_snooze_callback(self, minutes: int) -> Callable[[Interaction], Awaitable[None]]:
+    def create_snooze_callback(self, minutes: int) -> Callable[[discord.Interaction], Awaitable[None]]:
         """Create callback for specific snooze duration"""
         async def snooze_callback(interaction: discord.Interaction):
             try:
@@ -310,7 +308,7 @@ class SnoozeView(View):
                     )
 
                     embed = discord.Embed(
-                        description=f"## ⏰ **Reminder snoozed!**\n\nNew time: {time_str}",
+                        description=f"⏰ **Reminder snoozed!**\n\nNew time: {time_str}",
                         color=discord.Color.green()
                     )
 
