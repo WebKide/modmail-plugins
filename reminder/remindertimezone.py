@@ -100,11 +100,19 @@ class ReminderTimezone:
 
     def get_timezone_display(self, timezone: pytz.BaseTzInfo) -> str:
         """Get human-readable timezone display"""
-        if hasattr(timezone, '_FixedOffset__offset'):
-            offset_seconds = timezone._FixedOffset__offset.total_seconds()
-            hours = int(offset_seconds // 3600)
-            return f"UTC{'+' if hours >= 0 else ''}{hours}"
-        return str(timezone)
+        if isinstance(timezone, pytz._FixedOffset):  # Check if it's a FixedOffset timezone
+            offset_minutes = timezone._offset.seconds // 60
+            hours = offset_minutes // 60
+            # Handle UTC±0 case
+            if hours == 0:
+                return "UTC±0"
+            # Format with proper sign
+            sign = '-' if offset_minutes < 0 else '+'
+            abs_hours = abs(hours)
+            return f"UTC{sign}{abs_hours}"
+        elif isinstance(timezone, pytz.tzinfo.BaseTzInfo):  # For named timezones
+            return str(timezone)
+        return "UTC"  # Fallback
 
 class TimezoneConverter(commands.Converter):
     async def convert(self, ctx, argument):

@@ -1,4 +1,5 @@
 # remindercore.py
+import asyncio
 import logging
 from datetime import datetime, timedelta
 from typing import List, Dict, Optional, Callable, Awaitable
@@ -24,9 +25,36 @@ class ReminderPaginator(View):
         self.original_message = original_message
         self.deleted = False
         self.cog = cog  # Reference to the main cog for DB access
-
-        # Add buttons
+        self.delete_task = None
         self.add_buttons()
+
+        # Start delete timer if not in DMs
+        if not isinstance(original_message.channel, (discord.DMChannel, discord.PartialMessageable)):
+            self.delete_task = self.cog.bot.loop.create_task(self.delete_after_delay())
+
+    async def delete_after_delay(self, delay=60):
+        """Delete the message after delay if not in DMs"""
+        await asyncio.sleep(delay)
+        if not self.deleted:
+            try:
+                await self.original_message.delete()
+                self.deleted = True
+            except:
+                pass
+
+    async def on_timeout(self):
+        """Gracefully disable buttons when view times out"""
+        if not self.deleted:
+            try:
+                for item in self.children:
+                    item.disabled = True
+                await self.original_message.edit(view=self)
+                if self.delete_task:
+                    self.delete_task.cancel()
+            except discord.NotFound:
+                pass
+            except Exception as e:
+                log.error(f"Error in ReminderPaginator timeout: {e}")
 
     def add_buttons(self):
         """Dynamically add buttons based on page count"""

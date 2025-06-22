@@ -19,7 +19,7 @@ from .remindertimezone import ReminderTimezone, TimezoneConverter
 from .remindercore import ReminderPaginator, SnoozeView, RecurringView
 
 log = logging.getLogger("Modmail")
-__version__ = "3.02"
+__version__ = "3.03"
 
 class Reminder(commands.Cog):
     """Reminder plugin with timezone support"""
@@ -62,6 +62,8 @@ class Reminder(commands.Cog):
                     "Use `UTC±HH` format (e.g., `UTC+2`, `UTC-5`)\n"
                     "Offset must be between UTC-12 and UTC+14"
                 )
+                await msg.delete(delay=60)  # delete embed after a minute
+                return
 
             tz_display = self.timezone_manager.get_timezone_display(timezone)
             current_time = await self.timezone_manager.format_time_with_timezone(
@@ -79,10 +81,12 @@ class Reminder(commands.Cog):
             # Set thumbnail
             embed.set_thumbnail(url="https://i.imgur.com/677JpTl.png")
 
-            await ctx.send(embed=embed)
+            msg = await ctx.send(embed=embed)
+            await msg.delete(delay=60)  # delete embed after a minute
 
         except Exception as e:
-            await ctx.send(f"❌ Error setting timezone: {str(e)[:100]}")
+            msg = await ctx.send(f"❌ Error setting timezone: {str(e)[:100]}")
+            await msg.delete(delay=60)  # delete embed after a minute
 
     # ╔════════════════════════════════════════════════════════════╗
     # ║░░░░░░░░░░░░░░░░░ SHOW_CURRENT_TIMEZONE ░░░░░░░░░░░░░░░░░░░░║
@@ -108,10 +112,12 @@ class Reminder(commands.Cog):
             # Set thumbnail
             embed.set_thumbnail(url="https://i.imgur.com/677JpTl.png")
 
-            await ctx.send(embed=embed)
+            msg = await ctx.send(embed=embed)
+            await msg.delete(delay=60)  # delete embed after a minute
 
         except Exception as e:
-            await ctx.send(f"❌ Error fetching time: {str(e)[:100]}")
+            msg = await ctx.send(f"❌ Error fetching time: {str(e)[:100]}")
+            await msg.delete(delay=60)  # delete embed after a minute
 
     # ┌──────────────────────┬──────────────┬──────────────────────┐
     # ├──────────────────────┤ TASK_LOOP_60 ├──────────────────────┤
@@ -214,7 +220,12 @@ class Reminder(commands.Cog):
                 if not channel:
                     channel = await self.bot.fetch_channel(reminder["channel_id"])
 
-                await channel.send(f"{user.mention}", embed=embed, view=view)
+                if isinstance(channel, (discord.DMChannel, discord.PartialMessageable)):
+                    await channel.send(f"{user.mention}", embed=embed, view=view)
+                else:
+                    msg = await channel.send(f"{user.mention}", embed=embed, view=view)
+                    await msg.delete(delay=60)
+                # await channel.send(f"{user.mention}", embed=embed, view=view)
                 delivery_status["channel_success"] = True
             except discord.Forbidden:
                 delivery_status["channel_error"] = "Missing permissions in channel"
@@ -447,14 +458,15 @@ class Reminder(commands.Cog):
             embed.set_footer(text="Choose One-time or Recurring")
 
             view = RecurringView(self, ctx.author.id, reminder_data)
-            await ctx.send(embed=embed, view=view)
+            msg = await ctx.send(embed=embed, view=view)
+            await msg.delete(delay=60)  # delete embed after a minute
 
         except Exception as e:
             await ctx.send(
                 f"❌ **Error setting reminder:** {str(e)[:100]}\n\n"
                 "**Proper Usage Examples:**\n"
                 "• `!remind in 2 hours | take out the trash`\n"
-                "• `!remind tomorrow at 3pm - buy groceries`"
+                "• `!remind tomorrow at 3pm - buy groceries`", delete_after=15
             )
 
     # ╔════════════════════════════════════════════════════════════╗
@@ -529,6 +541,7 @@ class Reminder(commands.Cog):
             message = await ctx.send(embed=embeds[0])
             paginator = ReminderPaginator(embeds, ctx.author.id, message, self)
             await message.edit(view=paginator)
+            await message.delete(delay=60)  # delete embed after a minute
 
         except Exception as e:
             log.error(f"Error in reminders command: {e}")
