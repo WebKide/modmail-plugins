@@ -409,12 +409,13 @@ class Reminder(commands.Cog):
                     f"# ⏰ **Set reminder for:**\n"
                     f"**When:** {time_str}\n"
                     f"**Reminder:** {reminder_text}\n\n"
-                    f"**Choose frequency:**"
+                    f"Your reminder is almost ready"
                 ),
                 color=discord.Color.blue()
             )
             # Set thumbnail
             embed.set_thumbnail(url="https://i.imgur.com/677JpTl.png")
+            embed.set_footer(text="Choose One-time or Recurring")
 
             view = RecurringView(self, ctx.author.id, reminder_data)
             await ctx.send(embed=embed, view=view)
