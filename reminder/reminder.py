@@ -1,4 +1,4 @@
-# remind.py
+# reminder.py
 import logging
 from datetime import datetime, timedelta
 from typing import List, Dict, Optional
@@ -23,8 +23,8 @@ log = logging.getLogger("Modmail")
 __version__ = "3.00"
 
 
-class Remind(commands.Cog):
-    """Remind plugin with timezone support"""
+class Reminder(commands.Cog):
+    """Reminder plugin with timezone support"""
 
     def __init__(self, bot):
         self.bot = bot
@@ -72,7 +72,7 @@ class Remind(commands.Cog):
 
             embed = discord.Embed(
                 description=(
-                    f"⏰ **Timezone updated!**\n\n"
+                    f"# ⏰ **Timezone updated!**\n"
                     f"**Timezone:** `{tz_display}`\n"
                     f"**Current time:** {current_time}"
                 ),
@@ -99,7 +99,7 @@ class Remind(commands.Cog):
 
             embed = discord.Embed(
                 description=(
-                    f"⏰ **Your current time:**\n\n"
+                    f"# ⏰ **Your current time:**\n"
                     f"{current_time}\n"
                     f"**Timezone:** `{tz_display}`"
                 ),
@@ -174,7 +174,7 @@ class Remind(commands.Cog):
             )
 
             embed = discord.Embed(
-                description=f"⏰ **Reminder!**\n\n{reminder['text']}",
+                description=f"# ⏰ **Reminder!**\n{reminder['text']}",
                 color=discord.Color.orange(),
                 timestamp=reminder["due"]
             )
@@ -399,7 +399,7 @@ class Remind(commands.Cog):
 
             embed = discord.Embed(
                 description=(
-                    f"⏰ **Set reminder for:**\n\n"
+                    f"# ⏰ **Set reminder for:**\n"
                     f"**When:** {time_str}\n"
                     f"**Reminder:** {reminder_text}\n\n"
                     f"**Choose frequency:**"
@@ -432,7 +432,7 @@ class Remind(commands.Cog):
 
             if not reminders:
                 embed = discord.Embed(
-                    description="⏰ You have no active reminders!",
+                    description="## ⏰ You have no active reminders!",
                     color=0x00ff00
                 )
                 return await ctx.send(embed=embed)
@@ -455,7 +455,7 @@ class Remind(commands.Cog):
                 )
 
                 embed = discord.Embed(
-                    description=f"### 📝 Reminder:\n{rem_data['text']}",
+                    description=f"## 📝 Reminder:\n{rem_data['text']}",
                     color=discord.Color(0xd0d88f),
                     timestamp=rem_data["due"]
                 )
@@ -498,4 +498,4 @@ class Remind(commands.Cog):
             await ctx.send(embed=error_embed)
 
 async def setup(bot):
-    await bot.add_cog(Remind(bot))
+    await bot.add_cog(Reminder(bot))
