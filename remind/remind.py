@@ -7,433 +7,35 @@ import re
 import dateparser
 import pytz
 from dateutil.parser import parse
+from dateutil.relativedelta import relativedelta
 
 import discord
 from discord.ext import commands, tasks
 from discord.ui import View, Button
+from core import checks
+from core.models import PermissionLevel
+
+from .remindertimezone import ReminderTimezone, TimezoneConverter
+from .remindercore import ReminderPaginator, SnoozeView, RecurringView
 
 
 log = logging.getLogger("Modmail")
+__version__ = "3.00"
 
-# Timezone validation regex
-UTC_OFFSET_PATTERN = re.compile(r'^UTC([+-])(\d{1,2})$', re.IGNORECASE)
-
-class ReminderPaginator(View):
-    """Enhanced paginator for reminder lists with delete functionality"""
-    def __init__(self, embeds: List[discord.Embed], user_id: int, original_message: discord.Message, cog):
-        super().__init__(timeout=120)
-        self.embeds = embeds
-        self.current_page = 0
-        self.user_id = user_id
-        self.original_message = original_message
-        self.deleted = False
-        self.cog = cog  # Reference to the main cog for DB access
-
-        # Add buttons
-        self.add_buttons()
-
-    def add_buttons(self):
-        """Dynamically add buttons based on page count"""
-        # Clear existing buttons
-        self.clear_items()
-
-        # Previous button
-        if len(self.embeds) > 1:
-            prev_button = Button(
-                emoji="⬅️",
-                style=discord.ButtonStyle.blurple,
-                custom_id=f"prev_{self.user_id}_{datetime.now().timestamp()}"
-            )
-            prev_button.callback = self.previous_page
-            self.add_item(prev_button)
-
-        # Delete button
-        delete_button = Button(
-            emoji="🗑️",
-            style=discord.ButtonStyle.red,
-            custom_id=f"delete_{self.user_id}_{datetime.now().timestamp()}"
-        )
-        delete_button.callback = self.delete_reminder
-        self.add_item(delete_button)
-
-        # Next button
-        if len(self.embeds) > 1:
-            next_button = Button(
-                emoji="➡️",
-                style=discord.ButtonStyle.blurple,
-                custom_id=f"next_{self.user_id}_{datetime.now().timestamp()}"
-            )
-            next_button.callback = self.next_page
-            self.add_item(next_button)
-
-    # ┌──────────────────────┬──────────────┬──────────────────────┐
-    # ├──────────────────────┤ CREATE_EMBED ├──────────────────────┤
-    # └──────────────────────┴──────────────┴──────────────────────┘
-    async def create_embed(self, reminder_data: dict, user: discord.User) -> discord.Embed:
-        """Create a styled embed for a reminder using centralized timezone handling"""
-        try:
-            time_str = await self.cog.timezone_manager.format_time_with_timezone(
-                reminder_data["due"], self.user_id
-            )
-
-            embed = discord.Embed(
-                description=f"### 📝 Reminder:\n{reminder_data['text']}",
-                color=discord.Color(0xd0d88f),
-                timestamp=reminder_data["due"]
-            )
-
-            # Set author with user's avatar
-            embed.set_author(
-                name=f"⏰ Reminder #{self.current_page + 1} for {user.display_name}",
-                icon_url=user.avatar.url if user.avatar else user.default_avatar.url
-            )
-
-            # Set thumbnail
-            embed.set_thumbnail(url="https://cdn.discordapp.com/embed/avatars/0.png")
-
-            # Add formatted time field
-            embed.add_field(
-                name="📆 When:",
-                value=f"```cs\n{time_str}\n```",
-                inline=False
-            )
-
-            # Add recurring info if applicable
-            if reminder_data.get("recurring"):
-                embed.add_field(
-                    name="🔄 Recurring:",
-                    value=f"`{reminder_data['recurring'].title()}`",
-                    inline=True
-                )
-
-            # Add footer with ID
-            embed.set_footer(text=f"ID: {reminder_data['_id']}")
-
-            return embed
-
-        except Exception as e:
-            # Fallback embed if formatting fails
-            embed = discord.Embed(
-                description=f"### 📝 Reminder:\n{reminder_data['text']}",
-                color=discord.Color.red()
-            )
-            embed.set_footer(text=f"ID: {reminder_data['_id']} (Error: {str(e)[:50]})")
-            return embed
-
-    # ┌──────────────────────┬───────────────┬─────────────────────┐
-    # ├──────────────────────┤ PREVIOUS_PAGE ├─────────────────────┤
-    # └──────────────────────┴───────────────┴─────────────────────┘
-    async def previous_page(self, interaction: discord.Interaction):
-        if self.current_page > 0:
-            self.current_page -= 1
-            await self.update_embed(interaction)
-
-    # ┌──────────────────────┬───────────┬─────────────────────────┐
-    # ├──────────────────────┤ NEXT_PAGE ├─────────────────────────┤
-    # └──────────────────────┴───────────┴─────────────────────────┘
-    async def next_page(self, interaction: discord.Interaction):
-        if self.current_page < len(self.embeds) - 1:
-            self.current_page += 1
-            await self.update_embed(interaction)
-
-    # ┌─────────────────────┬─────────────────┬────────────────────┐
-    # ├─────────────────────┤ DELETE_REMINDER ├────────────────────┤
-    # └─────────────────────┴─────────────────┴────────────────────┘
-    async def delete_reminder(self, interaction: discord.Interaction):
-        """Handle reminder deletion with atomic database operations"""
-        try:
-            reminder_id = self.embeds[self.current_page].footer.text.split("ID: ")[1]
-
-            # Atomic delete operation
-            result = await self.cog.db.delete_one({"_id": reminder_id})
-
-            if result.deleted_count == 0:
-                await interaction.response.send_message(
-                    "❌ Reminder not found (may have been already deleted)",
-                    ephemeral=True
-                )
-                return
-
-            # Remove from local list
-            del self.embeds[self.current_page]
-
-            if not self.embeds:
-                # No reminders left
-                embed = discord.Embed(
-                    description="🗑️ **Reminder deleted!**\n\nYou have no more reminders.",
-                    color=discord.Color.green()
-                )
-                self.deleted = True
-                await interaction.response.edit_message(embed=embed, view=None)
-                return
-
-            # Adjust current page if needed
-            if self.current_page >= len(self.embeds):
-                self.current_page = len(self.embeds) - 1
-
-            # Update buttons and embed
-            self.add_buttons()
-
-            # Get current reminder data for display
-            current_embed = self.embeds[self.current_page]
-            reminder_data = {
-                "_id": current_embed.footer.text.split("ID: ")[1],
-                "due": current_embed.timestamp,
-                "text": current_embed.description.split("### 📝 Reminder:\n")[1],
-                "recurring": None
-            }
-
-            # Check if reminder is recurring
-            for field in current_embed.fields:
-                if field.name == "🔄 Recurring:":
-                    reminder_data["recurring"] = field.value.strip("`").lower()
-                    break
-
-            user = await self.cog.bot.fetch_user(self.user_id)
-            embed = await self.create_embed(reminder_data, user)
-            embed.set_footer(text=f"🗑️ Reminder deleted!\n{embed.footer.text}")
-
-            await interaction.response.edit_message(embed=embed, view=self)
-
-        except Exception as e:
-            await interaction.response.send_message(
-                f"❌ Error deleting reminder: {str(e)[:100]}",
-                ephemeral=True
-            )
-
-    # ┌──────────────────────┬──────────────┬──────────────────────┐
-    # ├──────────────────────┤ UPDATE_EMBED ├──────────────────────┤
-    # └──────────────────────┴──────────────┴──────────────────────┘
-    async def update_embed(self, interaction: discord.Interaction, confirmation: str = None):
-        """Update the embed with current page and optional confirmation message"""
-        user = await self.cog.bot.fetch_user(self.user_id)
-        embed = await self.create_embed({
-            "_id": self.embeds[self.current_page].footer.text.split("ID: ")[1],
-            "due": self.embeds[self.current_page].timestamp,
-            "text": self.embeds[self.current_page].description.split("### 📝 Reminder:\n")[1]
-        }, user)
-
-        if confirmation:
-            embed.set_footer(text=f"{confirmation}\n{embed.footer.text}")
-
-        await interaction.response.edit_message(embed=embed, view=self)
-
-    # ┌───────────────────────┬────────────┬───────────────────────┐
-    # ├───────────────────────┤ ON_TIMEOUT ├───────────────────────┤
-    # └───────────────────────┴────────────┴───────────────────────┘
-    async def on_timeout(self):
-        """Gracefully disable buttons when view times out"""
-        if not self.deleted:
-            try:
-                # Disable all buttons
-                for item in self.children:
-                    item.disabled = True
-
-                # Update message with disabled buttons
-                await self.original_message.edit(view=self)
-            except discord.NotFound:
-                pass  # Message was deleted
-            except Exception as e:
-                log.error(f"Error in ReminderPaginator timeout: {e}")
-
-    # ┌───────────────────┬───────────────────┬────────────────────┐
-    # ├───────────────────┤ INTERACTION_CHECK ├────────────────────┤
-    # └───────────────────┴───────────────────┴────────────────────┘
-    async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        return interaction.user.id == self.user_id
-
-class TimezoneConverter(commands.Converter):
-    # ┌──────────────────────┬──────────────┬──────────────────────┐
-    # ├──────────────────────┤ CONVERT_FUNC ├──────────────────────┤
-    # └──────────────────────┴──────────────┴──────────────────────┘
-    async def convert(self, ctx, argument):
-        match = UTC_OFFSET_PATTERN.match(argument.strip())
-        if not match:
-            raise commands.BadArgument("Invalid timezone format. Use `UTC±HH` (e.g., `UTC+2`, `UTC-5`)")
-
-        sign, hours = match.groups()
-        try:
-            hours = int(hours)
-            if hours > 14 or hours < -12:
-                raise commands.BadArgument("Timezone offset must be between UTC-12 and UTC+14")
-
-            # Create a fixed offset timezone
-            offset = hours * 60 * 60
-            if sign == '-':
-                offset = -offset
-            return pytz.FixedOffset(offset / 60)
-        except ValueError:
-            raise commands.BadArgument("Invalid timezone format. Use `UTC±HH` (e.g., `UTC+2`, `UTC-5`)")
-
-class SnoozeView(View):
-    """Snooze buttons for delivered reminders"""
-
-    def __init__(self, cog, reminder_id: str, user_id: int):
-        super().__init__(timeout=600)  # 10 minute timeout
-        self.cog = cog
-        self.reminder_id = reminder_id
-        self.user_id = user_id
-
-        # Add snooze buttons with different durations
-        snooze_options = [
-            (30, "30m", discord.ButtonStyle.secondary),
-            (60, "1h", discord.ButtonStyle.primary),
-            (1440, "1d", discord.ButtonStyle.success)
-        ]
-
-        for minutes, label, style in snooze_options:
-            button = Button(
-                label=label,
-                custom_id=f"snooze_{minutes}_{user_id}_{datetime.now().timestamp()}",
-                style=style
-            )
-            button.callback = self.create_snooze_callback(minutes)
-            self.add_item(button)
-
-    def create_snooze_callback(self, minutes: int):
-        """Create callback for specific snooze duration"""
-        async def snooze_callback(interaction: discord.Interaction):
-            try:
-                new_due = datetime.now(pytz.UTC) + timedelta(minutes=minutes)
-
-                # Update reminder in database atomically
-                result = await self.cog.db.update_one(
-                    {"_id": self.reminder_id, "status": "active"},
-                    {"$set": {"due": new_due, "status": "active"}}
-                )
-
-                if result.modified_count > 0:
-                    time_str = await self.cog.timezone_manager.format_time_with_timezone(
-                        new_due, self.user_id
-                    )
-
-                    embed = discord.Embed(
-                        description=f"⏰ **Reminder snoozed!**\n\nNew time: {time_str}",
-                        color=discord.Color.green()
-                    )
-
-                    # Disable all buttons
-                    for item in self.children:
-                        item.disabled = True
-
-                    await interaction.response.edit_message(embed=embed, view=self)
-                else:
-                    await interaction.response.send_message(
-                        "❌ Failed to snooze reminder (may have been deleted)",
-                        ephemeral=True
-                    )
-            except Exception as e:
-                await interaction.response.send_message(
-                    f"❌ Error snoozing reminder: {str(e)[:100]}",
-                    ephemeral=True
-                )
-
-        return snooze_callback
-
-    async def on_timeout(self):
-        """Disable buttons when view times out"""
-        for item in self.children:
-            item.disabled = True
-
-    async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        return interaction.user.id == self.user_id
-
-
-class RecurringView(View):
-    """View for setting recurring reminder options"""
-
-    def __init__(self, cog, user_id: int, reminder_data: dict):
-        super().__init__(timeout=300)  # 5 minute timeout
-        self.cog = cog
-        self.user_id = user_id
-        self.reminder_data = reminder_data
-
-        # Add recurring option buttons
-        recurring_options = [
-            ("daily", "Daily", "🔄"),
-            ("weekly", "Weekly", "📅"), 
-            ("monthly", "Monthly", "🗓️"),
-            ("none", "One-time", "⏰")
-        ]
-
-        for freq, label, emoji in recurring_options:
-            button = Button(
-                label=f"{emoji} {label}",
-                custom_id=f"recurring_{freq}_{user_id}_{datetime.now().timestamp()}",
-                style=discord.ButtonStyle.secondary if freq != "none" else discord.ButtonStyle.primary
-            )
-            button.callback = self.create_recurring_callback(freq)
-            self.add_item(button)
-
-    def create_recurring_callback(self, frequency: str):
-        """Create callback for specific recurring frequency"""
-        async def recurring_callback(interaction: discord.Interaction):
-            try:
-                # Update reminder data
-                if frequency != "none":
-                    self.reminder_data["recurring"] = frequency
-
-                # Save to database
-                await self.cog.db.insert_one({
-                    "user_id": self.user_id,
-                    "channel_id": self.reminder_data["channel_id"],
-                    "text": self.reminder_data["text"],
-                    "due": self.reminder_data["due"],
-                    "created": datetime.now(pytz.UTC),
-                    "status": "active",
-                    "recurring": frequency if frequency != "none" else None
-                })
-
-                # Format confirmation message
-                time_str = await self.cog.timezone_manager.format_time_with_timezone(
-                    self.reminder_data["due"], self.user_id
-                )
-
-                recurring_text = "" if frequency == "none" else f"\n🔄 **Recurring:** {frequency.title()}"
-
-                embed = discord.Embed(
-                    description=(
-                        f"✅ **Reminder set!**\n\n"
-                        f"**When:** {time_str}\n"
-                        f"**Reminder:** {self.reminder_data['text']}"
-                        f"{recurring_text}"
-                    ),
-                    color=discord.Color.green()
-                )
-
-                # Disable all buttons
-                for item in self.children:
-                    item.disabled = True
-
-                await interaction.response.edit_message(embed=embed, view=self)
-
-            except Exception as e:
-                await interaction.response.send_message(
-                    f"❌ Error setting reminder: {str(e)[:100]}",
-                    ephemeral=True
-                )
-
-        return recurring_callback
-
-    async def on_timeout(self):
-        """Disable buttons when view times out"""
-        for item in self.children:
-            item.disabled = True
-
-    async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        return interaction.user.id == self.user_id
 
 class Remind(commands.Cog):
     """Remind plugin with timezone support"""
 
-    async def __init__(self, bot):
+    def __init__(self, bot):
         self.bot = bot
         self.db = bot.plugin_db.get_partition(self)
-        from .remindertimezone import ReminderTimezone
         self.timezone_manager = ReminderTimezone(self.db)
         self.reminder_loop.start()
 
         # Create database indexes for performance
+        self.bot.loop.create_task(self._create_indexes())
+
+    async def _create_indexes(self):
         try:
             await self.db.create_index([("user_id", 1), ("status", 1)])
             await self.db.create_index([("due", 1), ("status", 1)])
@@ -443,34 +45,9 @@ class Remind(commands.Cog):
     def cog_unload(self):
         self.reminder_loop.cancel()
 
-    # ┌──────────────────────┬──────────────┬──────────────────────┐
-    # ├──────────────────────┤ GET_USER_TZ  ├──────────────────────┤
-    # └──────────────────────┴──────────────┴──────────────────────┘
-    async def get_user_timezone(self, user_id: int) -> pytz.FixedOffset:
-        """Get user's timezone from DB or cache"""
-        if user_id in self.user_timezones:
-            return self.user_timezones[user_id]
-
-        user_data = await self.db.find_one({"_id": f"timezone_{user_id}"})
-        if user_data:
-            tz = pytz.FixedOffset(user_data["offset_minutes"])
-            self.user_timezones[user_id] = tz
-            return tz
-
-        # Default to UTC if not set
-        return pytz.UTC
-
-    # ┌──────────────────────┬──────────────┬──────────────────────┐
-    # ├──────────────────────┤ FORMAT_TIMEZ ├──────────────────────┤
-    # └──────────────────────┴──────────────┴──────────────────────┘
-    async def format_time_with_timezone(self, dt: datetime, user_id: int) -> str:
-        """Format time for display in user's timezone"""
-        user_tz = await self.get_user_timezone(user_id)
-        local_dt = dt.astimezone(user_tz)
-        return (
-            f"{discord.utils.format_dt(local_dt, 'f')}\n"
-            f"({discord.utils.format_dt(local_dt, 'R')})"
-        )
+    async def get_user_timezone(self, user_id: int):
+        """Get user timezone - wrapper for timezone manager"""
+        return await self.timezone_manager.get_user_timezone(user_id)
 
     # ╔════════════════════════════════════════════════════════════╗
     # ║░░░░░░░░░░░░░░░░░░░ SET_TIMEZONE_COMMAND ░░░░░░░░░░░░░░░░░░░║
@@ -536,101 +113,139 @@ class Remind(commands.Cog):
 
     @tasks.loop(seconds=60.0)
     async def reminder_loop(self):
-        """Check reminders every minute with dual delivery system"""
+        """Check reminders every minute with batch processing"""
         try:
+            await self.bot.wait_until_ready()  # Ensure bot is ready
+
             now = datetime.now(pytz.UTC)
-            # Query with index-optimized filter
-            reminders = await self.db.find({
-                "due": {"$lte": now}, 
-                "status": "active"
-            }).to_list(100)  # Limit batch size
+            # Batch process reminders in chunks
+            async for batch in self._get_reminder_batches(now):
+                await self._process_reminder_batch(batch, now)
 
-            for reminder in reminders:
-                try:
-                    user = self.bot.get_user(reminder["user_id"])
-                    if not user:
-                        # Mark as failed if user not found
-                        await self.db.update_one(
-                            {"_id": reminder["_id"]},
-                            {"$set": {"status": "failed", "error": "user_not_found"}}
-                        )
-                        continue
-
-                    # Format message with user's timezone
-                    time_str = await self.timezone_manager.format_time_with_timezone(
-                        reminder["due"], reminder["user_id"]
-                    )
-
-                    message = (
-                        f"⏰ **Reminder** ({time_str})\n"
-                        f"{reminder['text']}"
-                    )
-
-                    # Dual delivery system: try channel first, then DM
-                    delivery_success = False
-
-                    # Try original channel
-                    if reminder.get("channel_id"):
-                        try:
-                            channel = self.bot.get_channel(reminder["channel_id"])
-                            if channel:
-                                # Create snooze view for channel delivery
-                                snooze_view = SnoozeView(self, str(reminder["_id"]), reminder["user_id"])
-                                await channel.send(f"{user.mention} {message}", view=snooze_view)
-                                delivery_success = True
-                        except Exception as channel_error:
-                            log.warning(f"Channel delivery failed for reminder {reminder['_id']}: {channel_error}")
-
-                    # Fallback to DM if channel failed or unavailable
-                    if not delivery_success:
-                        try:
-                            snooze_view = SnoozeView(self, str(reminder["_id"]), reminder["user_id"])
-                            await user.send(message, view=snooze_view)
-                            delivery_success = True
-                        except Exception as dm_error:
-                            log.warning(f"DM delivery failed for reminder {reminder['_id']}: {dm_error}")
-
-                    # Handle post-delivery actions
-                    if delivery_success:
-                        if reminder.get("recurring"):
-                            await self._reschedule_recurring(reminder)
-                        else:
-                            await self.db.update_one(
-                                {"_id": reminder["_id"]},
-                                {"$set": {"status": "completed", "delivered": now}}
-                            )
-                    else:
-                        # Mark as failed with retry logic
-                        retry_count = reminder.get("retry_count", 0)
-                        if retry_count < 3:
-                            # Retry in 5 minutes
-                            await self.db.update_one(
-                                {"_id": reminder["_id"]},
-                                {
-                                    "$set": {
-                                        "due": now + timedelta(minutes=5),
-                                        "retry_count": retry_count + 1
-                                    }
-                                }
-                            )
-                        else:
-                            await self.db.update_one(
-                                {"_id": reminder["_id"]},
-                                {"$set": {"status": "failed", "error": "delivery_failed"}}
-                            )
-
-                except Exception as reminder_error:
-                    log.error(f"Error processing reminder {reminder.get('_id', 'unknown')}: {reminder_error}")
-
-            # Clean timezone cache every hour (when minute is 0)
+            # Clean cache hourly
             if now.minute == 0:
-                active_users = set()
-                async for reminder in self.db.find({"status": "active"}, {"user_id": 1}):
-                    active_users.add(reminder["user_id"])
-                self.timezone_manager.clean_cache(active_users)
+                await self._clean_timezone_cache()
 
         except Exception as e:
-            log.error(f"Reminder loop error: {e}")
+            log.error(f"Reminder loop error: {e}", exc_info=True)
+
+    @reminder_loop.before_loop
+    async def before_reminder_loop(self):
+        """Wait for bot to be ready before starting reminder loop"""
+        await self.bot.wait_until_ready()
+
+    async def _get_reminder_batches(self, now: datetime):
+        """Yield batches of 50 reminders at a time"""
+        query = {"due": {"$lte": now}, "status": "active"}
+        cursor = self.db.find(query).sort("due", 1).batch_size(50)
+
+        while True:
+            batch = await cursor.to_list(length=50)
+            if not batch:
+                break
+            yield batch
+
+    async def _process_single_reminder(self, reminder: dict, now: datetime):
+        """Process a single reminder delivery"""
+        try:
+            # Get user and channel
+            user = self.bot.get_user(reminder["user_id"])
+            if not user:
+                try:
+                    user = await self.bot.fetch_user(reminder["user_id"])
+                except discord.NotFound:
+                    await self.db.update_one(
+                        {"_id": reminder["_id"]},
+                        {"$set": {"status": "failed", "error": "user_not_found"}}
+                    )
+                    return
+
+            channel = self.bot.get_channel(reminder["channel_id"])
+            if not channel:
+                try:
+                    channel = await self.bot.fetch_channel(reminder["channel_id"])
+                except discord.NotFound:
+                    # Fallback to DM
+                    channel = user
+
+            # Create reminder embed
+            time_str = await self.timezone_manager.format_time_with_timezone(
+                reminder["due"], reminder["user_id"]
+            )
+
+            embed = discord.Embed(
+                description=f"⏰ **Reminder!**\n\n{reminder['text']}",
+                color=discord.Color.orange(),
+                timestamp=reminder["due"]
+            )
+            embed.set_author(
+                name=f"Reminder for {user.display_name}",
+                icon_url=user.avatar.url if user.avatar else user.default_avatar.url
+            )
+            embed.add_field(
+                name="📅 Originally set for:",
+                value=f"```cs\n{time_str}\n```",
+                inline=False
+            )
+
+            # Create snooze view
+            view = SnoozeView(self, reminder["_id"], reminder["user_id"])
+
+            # Send reminder
+            try:
+                await channel.send(f"{user.mention}", embed=embed, view=view)
+            except discord.Forbidden:
+                # Try DM as fallback
+                try:
+                    await user.send(embed=embed, view=view)
+                except discord.Forbidden:
+                    await self.db.update_one(
+                        {"_id": reminder["_id"]},
+                        {"$set": {"status": "failed", "error": "cannot_message_user"}}
+                    )
+                    return
+
+            # Handle recurring or mark as completed
+            if reminder.get("recurring"):
+                await self._reschedule_recurring(reminder)
+            else:
+                await self.db.update_one(
+                    {"_id": reminder["_id"]},
+                    {"$set": {"status": "completed", "delivered": now}}
+                )
+
+        except Exception as e:
+            log.error(f"Failed to process reminder {reminder.get('_id')}: {e}")
+            # Mark as failed with retry logic
+            retry_count = reminder.get("retry_count", 0)
+            if retry_count < 3:
+                await self.db.update_one(
+                    {"_id": reminder["_id"]},
+                    {
+                        "$set": {"retry_count": retry_count + 1},
+                        "$inc": {"due": 300}  # Retry in 5 minutes
+                    }
+                )
+            else:
+                await self.db.update_one(
+                    {"_id": reminder["_id"]},
+                    {"$set": {"status": "failed", "error": str(e)[:200]}}
+                )
+
+    async def _process_reminder_batch(self, batch: list, now: datetime):
+        """Process a batch of reminders"""
+        for reminder in batch:
+            try:
+                await self._process_single_reminder(reminder, now)
+            except Exception as e:
+                log.error(f"Error processing reminder {reminder.get('_id')}: {e}")
+
+    async def _clean_timezone_cache(self):
+        """Clean timezone cache for inactive users"""
+        active_users = set()
+        async for reminder in self.db.find({"status": "active"}, {"user_id": 1}):
+            active_users.add(reminder["user_id"])
+        self.timezone_manager.clean_cache(active_users)
 
     # ┌──────────────────┬──────────────────────┬──────────────────┐
     # ├──────────────────┤ RESCHEDULE_RECURRING ├──────────────────┤
@@ -719,18 +334,40 @@ class Remind(commands.Cog):
                 return await ctx.send("⚠️ Reminder text cannot be empty!")
 
             # Parse time with user's timezone
-            user_tz = await self.timezone_manager.get_user_timezone(ctx.author.id)
-            settings = {
-                'RELATIVE_BASE': datetime.now(user_tz),
-                'TIMEZONE': str(user_tz),
-                'TO_TIMEZONE': 'UTC'
-            }
-            due = dateparser.parse(time_part, settings=settings)
+            try:
+                user_tz = await self.timezone_manager.get_user_timezone(ctx.author.id)
+                settings = {
+                    'RELATIVE_BASE': datetime.now(user_tz),
+                    'TIMEZONE': str(user_tz),
+                    'TO_TIMEZONE': 'UTC',
+                    'PREFER_DATES_FROM': 'future'
+                }
+                due = dateparser.parse(time_part, settings=settings)
 
-            if not due:
+                if not due:
+                    raise ValueError("Could not parse time")
+
+                # Ensure UTC timezone
+                due = pytz.UTC.localize(due) if due.tzinfo is None else due.astimezone(pytz.UTC)
+
+                # Validate future time
+                if due <= datetime.now(pytz.UTC) + timedelta(seconds=10):  # 10 second buffer
+                    current_time_str = await self.timezone_manager.format_time_with_timezone(
+                        datetime.now(pytz.UTC), ctx.author.id
+                    )
+                    entered_time_str = await self.timezone_manager.format_time_with_timezone(
+                        due, ctx.author.id
+                    )
+                    return await ctx.send(
+                        f"⏳ **Time must be in the future!**\n"
+                        f"You entered: `{entered_time_str}`\n"
+                        f"Current time: `{current_time_str}`"
+                    )
+            except Exception as e:
                 return await ctx.send(
                     "⚠️ Couldn't understand the time. Try formats like:\n"
-                    "• `in 5 minutes`\n• `tomorrow at 3pm`\n• `next monday`"
+                    "• `in 5 minutes`\n• `tomorrow at 3pm`\n• `next monday`\n"
+                    f"Error: {str(e)[:100]}"
                 )
 
             # Ensure UTC timezone
@@ -791,7 +428,7 @@ class Remind(commands.Cog):
             # Fetch reminders from database
             reminders = await self.db.find(
                 {"user_id": ctx.author.id, "status": "active"}
-            ).sort("due", 1).to_list(None)  # Sort by due date ascending
+            ).sort("due", 1).to_list(None)
 
             if not reminders:
                 embed = discord.Embed(
@@ -800,44 +437,50 @@ class Remind(commands.Cog):
                 )
                 return await ctx.send(embed=embed)
 
-            # Create paginated embeds
+            # Create embeds data for paginator
+            embeds_data = []
+            for rem in reminders:
+                embeds_data.append({
+                    "_id": rem["_id"],
+                    "text": rem["text"],
+                    "due": rem["due"],
+                    "recurring": rem.get("recurring")
+                })
+
+            # Create actual embeds
             embeds = []
-            for idx, rem in enumerate(reminders, 1):
-                # Get user's timezone for display
-                user_tz = await self.get_user_timezone(ctx.author.id)
-                local_dt = rem["due"].astimezone(user_tz)
+            for idx, rem_data in enumerate(embeds_data, 1):
+                time_str = await self.timezone_manager.format_time_with_timezone(
+                    rem_data["due"], ctx.author.id
+                )
 
                 embed = discord.Embed(
-                    description=f"### 📝 Reminder:\n{rem['text']}",
+                    description=f"### 📝 Reminder:\n{rem_data['text']}",
                     color=discord.Color(0xd0d88f),
-                    timestamp=rem["due"]
+                    timestamp=rem_data["due"]
                 )
 
-                # Set author with user's avatar
                 embed.set_author(
                     name=f"⏰ Reminder #{idx} for {ctx.author.display_name}",
-                    icon_url=ctx.author.avatar.url
+                    icon_url=ctx.author.avatar.url if ctx.author.avatar else ctx.author.default_avatar.url
                 )
 
-                # Set thumbnail
                 embed.set_thumbnail(url="https://cdn.discordapp.com/embed/avatars/0.png")
 
-                # Add formatted time field
-                time_str = (
-                    f"```cs\n"
-                    f"{local_dt.strftime('%d %B %Y %H:%M')}\n"
-                    f"[{discord.utils.format_dt(rem['due'], 'R')}]\n"
-                    f"```"
-                )
                 embed.add_field(
                     name="📆 When:",
-                    value=time_str,
+                    value=f"```cs\n{time_str}\n```",
                     inline=False
                 )
 
-                # Add footer with ID
-                embed.set_footer(text=f"ID: {rem['_id']}")
+                if rem_data.get("recurring"):
+                    embed.add_field(
+                        name="🔄 Recurring:",
+                        value=f"`{rem_data['recurring'].title()}`",
+                        inline=True
+                    )
 
+                embed.set_footer(text=f"ID: {rem_data['_id']}")
                 embeds.append(embed)
 
             # Send paginated view
@@ -846,9 +489,10 @@ class Remind(commands.Cog):
             await message.edit(view=paginator)
 
         except Exception as e:
+            log.error(f"Error in reminders command: {e}")
             error_embed = discord.Embed(
                 title="❌ Error fetching reminders",
-                description=f"```{str(e)[:1000]}```",  # Truncate long errors
+                description=f"```{str(e)[:1000]}```",
                 color=0xff0000
             )
             await ctx.send(embed=error_embed)

@@ -5,8 +5,12 @@ from typing import Dict, Optional, Set
 import re
 import logging
 
+from discord.ext import commands
+
+
 log = logging.getLogger("Modmail")
 
+# Timezone validation regex
 UTC_OFFSET_PATTERN = re.compile(r'^UTC([+-])(\d{1,2})$', re.IGNORECASE)
 
 class ReminderTimezone:
@@ -95,3 +99,38 @@ class ReminderTimezone:
             hours = int(offset_seconds // 3600)
             return f"UTC{'+' if hours >= 0 else ''}{hours}"
         return str(timezone)
+
+class TimezoneConverter(commands.Converter):
+    async def convert(self, ctx, argument):
+        """Convert string to timezone with enhanced validation"""
+        argument = argument.strip()
+        match = UTC_OFFSET_PATTERN.match(argument)
+
+        if not match:
+            raise commands.BadArgument(
+                "Invalid timezone format. Use `UTC±HH` (e.g., `UTC+2`, `UTC-5`)\n"
+                "Examples: `UTC+0`, `UTC+5`, `UTC-3`, `UTC+10`"
+            )
+
+        sign, hours = match.groups()
+        try:
+            hours = int(hours)
+            if hours > 14 or hours < 0:
+                raise commands.BadArgument(
+                    "Timezone offset must be between UTC+0 and UTC+14 or UTC-0 to UTC-12"
+                )
+
+            # Create a fixed offset timezone
+            offset_minutes = hours * 60
+            if sign == '-':
+                if hours > 12:
+                    raise commands.BadArgument("Negative timezone offset cannot exceed UTC-12")
+                offset_minutes = -offset_minutes
+
+            return pytz.FixedOffset(offset_minutes)
+
+        except ValueError:
+            raise commands.BadArgument(
+                "Invalid timezone format. Hours must be a number.\n"
+                "Use `UTC±HH` (e.g., `UTC+2`, `UTC-5`)"
+            )
