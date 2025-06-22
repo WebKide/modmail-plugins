@@ -52,18 +52,23 @@ class Reminder(commands.Cog):
     # ║░░░░░░░░░░░░░░░░░░░ SET_TIMEZONE_COMMAND ░░░░░░░░░░░░░░░░░░░║
     # ╚════════════════════════════════════════════════════════════╝
     @commands.command(name="mytimezone", aliases=["settimezone", "settz"])
+    @commands.guild_only()
     async def set_timezone(self, ctx, *, timezone_str: str):
         """Set your timezone (e.g., `!mytimezone UTC+2`)"""
         try:
+            try:
+                await ctx.message.delete()
+            except discord.Forbidden:
+                pass
+
             timezone = await self.timezone_manager.set_user_timezone(ctx.author.id, timezone_str)
 
             if not timezone:
                 return await ctx.send(
                     "❌ **Invalid timezone format!**\n"
                     "Use `UTC±HH` format (e.g., `UTC+2`, `UTC-5`)\n"
-                    "Offset must be between UTC-12 and UTC+14"
+                    "Offset must be between UTC-12 and UTC+14", delete_after=9
                 )
-                await msg.delete(delay=60)  # delete embed after a minute
                 return
 
             tz_display = self.timezone_manager.get_timezone_display(timezone)
@@ -93,9 +98,15 @@ class Reminder(commands.Cog):
     # ║░░░░░░░░░░░░░░░░░ SHOW_CURRENT_TIMEZONE ░░░░░░░░░░░░░░░░░░░░║
     # ╚════════════════════════════════════════════════════════════╝
     @commands.command(name="mytime")
+    @commands.guild_only()
     async def show_current_time(self, ctx):
         """Show your current time based on your timezone setting"""
         try:
+            try:
+                await ctx.message.delete()
+            except discord.Forbidden:
+                pass
+
             user_tz = await self.timezone_manager.get_user_timezone(ctx.author.id)
             current_time = await self.timezone_manager.format_time_with_timezone(
                 datetime.now(pytz.UTC), ctx.author.id
@@ -346,10 +357,11 @@ class Reminder(commands.Cog):
     # ║░░░░░░░░░░░░░░░░░░░ REMINDME_COMMAND ░░░░░░░░░░░░░░░░░░░░░░░║
     # ╚════════════════════════════════════════════════════════════╝
     @commands.command(aliases=["remindme"])
+    @commands.guild_only()
     async def remind(self, ctx, *, input_string: str):
         """Set a reminder - Usage: `!remind [time] SEPARATOR [text]`
 
-        Supported separators: | , - . / > [ to
+        Supported separators: | - / > [ —
         Examples:
         • `!remind in 2 hours | take out the trash`
         • `!remind tomorrow at 3pm - buy groceries`
@@ -371,14 +383,14 @@ class Reminder(commands.Cog):
                     "Please split the time and reminder text with one of these:\n"
                     "`|` `-` `/` `>` `[` `—`\n\n"
                     "**Example:**\n"
-                    "`!remind in 2 hours | take out the trash`"
+                    "`!remind in 2 hours | take out the trash`", delete_after=9
                 )
 
             time_part, reminder_text = input_string.split(separator, 1)
             reminder_text = reminder_text.strip()
 
             if not reminder_text:
-                return await ctx.send("⚠️ Reminder text cannot be empty!")
+                return await ctx.send("⚠️ Reminder text cannot be empty!", delete_after=9)
 
             # Parse time with user's timezone
             try:
@@ -408,13 +420,13 @@ class Reminder(commands.Cog):
                     return await ctx.send(
                         f"### ⏳ **Time must be in the future!**\n"
                         f"You entered: `{entered_time_str}`\n"
-                        f"Current time: `{current_time_str}`"
+                        f"Current time: `{current_time_str}`", delete_after=9
                     )
             except Exception as e:
                 return await ctx.send(
                     "### ⚠️ Couldn't understand the time.\nTry formats like:\n"
                     "• `in 5 minutes`\n• `tomorrow at 3pm`\n• `next monday`\n\n"
-                    f"Error: {str(e)[:100]}"
+                    f"Error: {str(e)[:100]}", delete_after=9
                 )
 
             # Ensure UTC timezone
@@ -431,7 +443,7 @@ class Reminder(commands.Cog):
                 return await ctx.send(
                     f"### ⏳ **Time must be in the future!**\n"
                     f"You entered: `{entered_time_str}`\n"
-                    f"Current time: `{current_time_str}`"
+                    f"Current time: `{current_time_str}`", delete_after=9
                 )
 
             # Show recurring options
@@ -474,9 +486,14 @@ class Reminder(commands.Cog):
     # ║░░░░░░░░░░░░░░░░░░░░░░░ REMINDERS ░░░░░░░░░░░░░░░░░░░░░░░░░░║
     # ╚════════════════════════════════════════════════════════════╝
     @commands.command(aliases=["myreminders", "mr"])
+    @commands.guild_only()
     async def reminders(self, ctx):
         """List your active reminders in a paginated embed"""
         try:
+            try:
+                await ctx.message.delete()
+            except discord.Forbidden:
+                pass
             # Fetch reminders from database
             reminders = await self.db.find(
                 {"user_id": ctx.author.id, "status": "active"}
@@ -489,7 +506,7 @@ class Reminder(commands.Cog):
                 )
                 # Set thumbnail
                 embed.set_thumbnail(url=logo)
-                return await ctx.send(embed=embed)
+                return await ctx.send(embed=embed, delete_after=10)
 
             # Create embeds data for paginator
             embeds_data = []
@@ -542,7 +559,7 @@ class Reminder(commands.Cog):
             message = await ctx.send(embed=embeds[0])
             paginator = ReminderPaginator(embeds, ctx.author.id, message, self)
             await message.edit(view=paginator)
-            await message.delete(delay=60)  # delete embed after a minute
+            await message.delete(delay=120)  # delete embed after two minutes
 
         except Exception as e:
             log.error(f"Error in reminders command: {e}")
@@ -551,7 +568,8 @@ class Reminder(commands.Cog):
                 description=f"```{str(e)[:1000]}```",
                 color=0xff0000
             )
-            await ctx.send(embed=error_embed)
+            msg = await ctx.send(embed=error_embed)
+            await msg.delete(delay=60)  # delete embed after a minute
 
 async def setup(bot):
     """Discord.py Setup function"""
