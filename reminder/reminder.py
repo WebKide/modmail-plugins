@@ -70,8 +70,8 @@ class Reminder(commands.Cog):
 
             embed = discord.Embed(
                 description=(
-                    f"# ⏰ **Timezone updated!**\n"
-                    f"**Timezone:** `{tz_display}`\n"
+                    f"### ⏰ **Timezone updated!**\n"
+                    f"# **Timezone:** `{tz_display}`\n"
                     f"**Current time:** {current_time}"
                 ),
                 color=discord.Color.green()
@@ -99,8 +99,8 @@ class Reminder(commands.Cog):
 
             embed = discord.Embed(
                 description=(
-                    f"# ⏰ **Your current time:**\n"
-                    f"{current_time}\n"
+                    f"### ⏰ **Your current time:**\n"
+                    f"# {current_time}\n"
                     f"**Timezone:** `{tz_display}`"
                 ),
                 color=discord.Color.blue()
@@ -182,7 +182,7 @@ class Reminder(commands.Cog):
             )
 
             embed = discord.Embed(
-                description=f"# ⏰ **Reminder!**\n{reminder['text']}",
+                description=f"### ⏰ **Reminder!**\n# {reminder['text']}",
                 color=discord.Color.orange(),
                 timestamp=reminder["due"]
             )
@@ -317,7 +317,7 @@ class Reminder(commands.Cog):
         """
         try:
             # Parse input (existing logic)
-            SEPARATORS = [" to ", " | ", " - ", " / ", " > ", " [", " — ", ", "]
+            SEPARATORS = [" | ", " - ", " / ", " > ", " [", " — "]
 
             separator = None
             for sep in SEPARATORS:
@@ -327,9 +327,9 @@ class Reminder(commands.Cog):
 
             if not separator:
                 return await ctx.send(
-                    "⚠️ **Missing separator!**\n"
+                    "# ⚠️ Missing separator!\n"
                     "Please split the time and reminder text with one of these:\n"
-                    "`|` `-` `,` `.` `/` `>` `[` `to`\n\n"
+                    "`|` `-` `/` `>` `[` `—`\n\n"
                     "**Example:**\n"
                     "`!remind in 2 hours | take out the trash`"
                 )
@@ -366,14 +366,14 @@ class Reminder(commands.Cog):
                         due, ctx.author.id
                     )
                     return await ctx.send(
-                        f"⏳ **Time must be in the future!**\n"
+                        f"### ⏳ **Time must be in the future!**\n"
                         f"You entered: `{entered_time_str}`\n"
                         f"Current time: `{current_time_str}`"
                     )
             except Exception as e:
                 return await ctx.send(
-                    "⚠️ Couldn't understand the time. Try formats like:\n"
-                    "• `in 5 minutes`\n• `tomorrow at 3pm`\n• `next monday`\n"
+                    "### ⚠️ Couldn't understand the time.\nTry formats like:\n"
+                    "• `in 5 minutes`\n• `tomorrow at 3pm`\n• `next monday`\n\n"
                     f"Error: {str(e)[:100]}"
                 )
 
@@ -389,7 +389,7 @@ class Reminder(commands.Cog):
                     due, ctx.author.id
                 )
                 return await ctx.send(
-                    f"⏳ **Time must be in the future!**\n"
+                    f"### ⏳ **Time must be in the future!**\n"
                     f"You entered: `{entered_time_str}`\n"
                     f"Current time: `{current_time_str}`"
                 )
@@ -466,7 +466,7 @@ class Reminder(commands.Cog):
                 )
 
                 embed = discord.Embed(
-                    description=f"## 📝 Reminder:\n{rem_data['text']}",
+                    description=f"### 📝 Saved Reminder:\n# {rem_data['text']}",
                     color=discord.Color(0xd0d88f),
                     timestamp=rem_data["due"]
                 )
