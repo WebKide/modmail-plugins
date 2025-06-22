@@ -8,6 +8,7 @@ import pytz
 from dateutil.relativedelta import relativedelta
 
 import discord
+from discord import Interaction
 from discord.ext import commands
 from discord.ui import View, Button
 
@@ -63,9 +64,6 @@ class ReminderPaginator(View):
             next_button.callback = self.next_page
             self.add_item(next_button)
 
-    # ┌──────────────────────┬──────────────┬──────────────────────┐
-    # ├──────────────────────┤ CREATE_EMBED ├──────────────────────┤
-    # └──────────────────────┴──────────────┴──────────────────────┘
     async def create_embed(self, reminder_data: dict, user: discord.User) -> discord.Embed:
         """Create a styled embed for a reminder using centralized timezone handling"""
         try:
@@ -118,25 +116,16 @@ class ReminderPaginator(View):
             embed.set_footer(text=f"ID: {reminder_data['_id']} (Error: {str(e)[:50]})")
             return embed
 
-    # ┌──────────────────────┬───────────────┬─────────────────────┐
-    # ├──────────────────────┤ PREVIOUS_PAGE ├─────────────────────┤
-    # └──────────────────────┴───────────────┴─────────────────────┘
     async def previous_page(self, interaction: discord.Interaction):
         if self.current_page > 0:
             self.current_page -= 1
             await self.update_embed(interaction)
 
-    # ┌──────────────────────┬───────────┬─────────────────────────┐
-    # ├──────────────────────┤ NEXT_PAGE ├─────────────────────────┤
-    # └──────────────────────┴───────────┴─────────────────────────┘
     async def next_page(self, interaction: discord.Interaction):
         if self.current_page < len(self.embeds) - 1:
             self.current_page += 1
             await self.update_embed(interaction)
 
-    # ┌─────────────────────┬─────────────────┬────────────────────┐
-    # ├─────────────────────┤ DELETE_REMINDER ├────────────────────┤
-    # └─────────────────────┴─────────────────┴────────────────────┘
     async def delete_reminder(self, interaction: discord.Interaction):
         """Handle reminder deletion with atomic database operations"""
         try:
@@ -220,9 +209,6 @@ class ReminderPaginator(View):
                 ephemeral=True
             )
 
-    # ┌──────────────────────┬──────────────┬──────────────────────┐
-    # ├──────────────────────┤ UPDATE_EMBED ├──────────────────────┤
-    # └──────────────────────┴──────────────┴──────────────────────┘
     async def update_embed(self, interaction: discord.Interaction, confirmation: str = None):
         """Update the embed with current page and optional confirmation message"""
         try:
@@ -263,9 +249,6 @@ class ReminderPaginator(View):
                 ephemeral=True
             )
 
-    # ┌───────────────────────┬────────────┬───────────────────────┐
-    # ├───────────────────────┤ ON_TIMEOUT ├───────────────────────┤
-    # └───────────────────────┴────────────┴───────────────────────┘
     async def on_timeout(self):
         """Gracefully disable buttons when view times out"""
         if not self.deleted:
@@ -281,9 +264,6 @@ class ReminderPaginator(View):
             except Exception as e:
                 log.error(f"Error in ReminderPaginator timeout: {e}")
 
-    # ┌───────────────────┬───────────────────┬────────────────────┐
-    # ├───────────────────┤ INTERACTION_CHECK ├────────────────────┤
-    # └───────────────────┴───────────────────┴────────────────────┘
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         return interaction.user.id == self.user_id
 

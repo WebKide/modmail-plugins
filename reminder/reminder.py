@@ -18,10 +18,8 @@ from core.models import PermissionLevel
 from .remindertimezone import ReminderTimezone, TimezoneConverter
 from .remindercore import ReminderPaginator, SnoozeView, RecurringView
 
-
 log = logging.getLogger("Modmail")
-__version__ = "3.00"
-
+__version__ = "3.01"
 
 class Reminder(commands.Cog):
     """Reminder plugin with timezone support"""
@@ -85,7 +83,7 @@ class Reminder(commands.Cog):
             await ctx.send(f"❌ Error setting timezone: {str(e)[:100]}")
 
     # ╔════════════════════════════════════════════════════════════╗
-    # ║░░░░░░░░░░░░░░░░░░░ SHOW_TIMEZONE_CMD  ░░░░░░░░░░░░░░░░░░░░░║
+    # ║░░░░░░░░░░░░░░░░░ SHOW_CURRENT_TIMEZONE ░░░░░░░░░░░░░░░░░░░░║
     # ╚════════════════════════════════════════════════════════════╝
     @commands.command(name="mytime")
     async def show_current_time(self, ctx):
@@ -111,6 +109,9 @@ class Reminder(commands.Cog):
         except Exception as e:
             await ctx.send(f"❌ Error fetching time: {str(e)[:100]}")
 
+    # ┌──────────────────────┬──────────────┬──────────────────────┐
+    # ├──────────────────────┤ TASK_LOOP_60 ├──────────────────────┤
+    # └──────────────────────┴──────────────┴──────────────────────┘
     @tasks.loop(seconds=60.0)
     async def reminder_loop(self):
         """Check reminders every minute with batch processing"""
@@ -129,6 +130,9 @@ class Reminder(commands.Cog):
         except Exception as e:
             log.error(f"Reminder loop error: {e}", exc_info=True)
 
+    # ┌─────────────────────┬───────────────┬──────────────────────┐
+    # ├─────────────────────┤ REMINDER_LOOP ├──────────────────────┤
+    # └─────────────────────┴───────────────┴──────────────────────┘
     @reminder_loop.before_loop
     async def before_reminder_loop(self):
         """Wait for bot to be ready before starting reminder loop"""
@@ -247,9 +251,6 @@ class Reminder(commands.Cog):
             active_users.add(reminder["user_id"])
         self.timezone_manager.clean_cache(active_users)
 
-    # ┌──────────────────┬──────────────────────┬──────────────────┐
-    # ├──────────────────┤ RESCHEDULE_RECURRING ├──────────────────┤
-    # └──────────────────┴──────────────────────┴──────────────────┘
     async def _reschedule_recurring(self, reminder: dict):
         """Reschedule recurring reminders maintaining original time-of-day"""
         try:
@@ -296,7 +297,7 @@ class Reminder(commands.Cog):
             )
 
     # ╔════════════════════════════════════════════════════════════╗
-    # ║░░░░░░░░░░░░░░░░░░░ REMINDME_COMMAND   ░░░░░░░░░░░░░░░░░░░░░║
+    # ║░░░░░░░░░░░░░░░░░░░ REMINDME_COMMAND ░░░░░░░░░░░░░░░░░░░░░░░║
     # ╚════════════════════════════════════════════════════════════╝
     @commands.command(aliases=["remindme"])
     async def remind(self, ctx, *, input_string: str):
@@ -419,7 +420,7 @@ class Reminder(commands.Cog):
             )
 
     # ╔════════════════════════════════════════════════════════════╗
-    # ║░░░░░░░░░░░░░░░░░░░ REMINDERS          ░░░░░░░░░░░░░░░░░░░░░║
+    # ║░░░░░░░░░░░░░░░░░░░░░░░ REMINDERS ░░░░░░░░░░░░░░░░░░░░░░░░░░║
     # ╚════════════════════════════════════════════════════════════╝
     @commands.command(aliases=["myreminders", "mr"])
     async def reminders(self, ctx):
@@ -498,4 +499,5 @@ class Reminder(commands.Cog):
             await ctx.send(embed=error_embed)
 
 async def setup(bot):
+    """Discord.py Setup function"""
     await bot.add_cog(Reminder(bot))
