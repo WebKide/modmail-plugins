@@ -1,0 +1,97 @@
+# remindertimezone.py
+import pytz
+from datetime import datetime
+from typing import Dict, Optional, Set
+import re
+import logging
+
+log = logging.getLogger("Modmail")
+
+UTC_OFFSET_PATTERN = re.compile(r'^UTC([+-])(\d{1,2})$', re.IGNORECASE)
+
+class ReminderTimezone:
+    """Centralized timezone management for reminders"""
+
+    def __init__(self, db_partition):
+        self.db = db_partition
+        self.user_timezones: Dict[int, pytz.BaseTzInfo] = {}
+
+    async def get_user_timezone(self, user_id: int) -> pytz.BaseTzInfo:
+        """Get cached timezone or fetch from DB"""
+        if user_id in self.user_timezones:
+            return self.user_timezones[user_id]
+
+        try:
+            user_data = await self.db.find_one({"_id": f"timezone_{user_id}"})
+            if user_data:
+                tz = pytz.FixedOffset(user_data["offset_minutes"])
+                self.user_timezones[user_id] = tz
+                return tz
+        except Exception as e:
+            log.error(f"Failed to fetch timezone for user {user_id}: {e}")
+
+        # Default to UTC if not set or error
+        return pytz.UTC
+
+    async def set_user_timezone(self, user_id: int, timezone_str: str) -> Optional[pytz.BaseTzInfo]:
+        """Validate and set user's timezone"""
+        try:
+            # Parse UTC offset format
+            match = UTC_OFFSET_PATTERN.match(timezone_str.strip())
+            if not match:
+                return None
+
+            sign, hours = match.groups()
+            hours = int(hours)
+
+            if hours > 14 or hours < -12:
+                return None
+
+            # Create fixed offset timezone
+            offset_minutes = hours * 60
+            if sign == '-':
+                offset_minutes = -offset_minutes
+
+            timezone = pytz.FixedOffset(offset_minutes)
+
+            # Atomic database update
+            await self.db.update_one(
+                {"_id": f"timezone_{user_id}"},
+                {"$set": {"offset_minutes": offset_minutes}},
+                upsert=True
+            )
+
+            # Update cache
+            self.user_timezones[user_id] = timezone
+            return timezone
+
+        except Exception as e:
+            log.error(f"Failed to set timezone for user {user_id}: {e}")
+            return None
+
+    def clean_cache(self, active_user_ids: Set[int]):
+        """Remove cached timezones for inactive users"""
+        inactive_users = set(self.user_timezones.keys()) - active_user_ids
+        for user_id in inactive_users:
+            del self.user_timezones[user_id]
+
+    async def format_time_with_timezone(self, dt: datetime, user_id: int) -> str:
+        """Format time for display in user's timezone"""
+        try:
+            user_tz = await self.get_user_timezone(user_id)
+            local_dt = dt.astimezone(user_tz)
+            return (
+                f"{local_dt.strftime('%d %B %Y %H:%M %Z')}\n"
+                f"({local_dt.strftime('%A')} - {local_dt.strftime('%H:%M')})"
+            )
+        except Exception as e:
+            log.error(f"Failed to format time for user {user_id}: {e}")
+            return dt.strftime('%d %B %Y %H:%M UTC')
+
+    def get_timezone_display(self, timezone: pytz.BaseTzInfo) -> str:
+        """Get human-readable timezone display"""
+        if hasattr(timezone, '_FixedOffset__offset'):
+            offset_seconds = timezone._FixedOffset__offset.total_seconds()
+            hours = int(offset_seconds // 3600)
+            return f"UTC{'+' if hours >= 0 else ''}{hours}"
+        return str(timezone)
