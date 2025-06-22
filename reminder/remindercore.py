@@ -111,6 +111,7 @@ class ReminderPaginator(View):
                 description=f"### 📝 Reminder:\n{reminder_data['text']}",
                 color=discord.Color.red()
             )
+            embed.set_thumbnail(url="https://i.imgur.com/677JpTl.png")
             embed.set_footer(text=f"ID: {reminder_data['_id']} (Error: {str(e)[:50]})")
             return embed
 
@@ -169,6 +170,8 @@ class ReminderPaginator(View):
                     description="## 🗑️ **Reminder deleted!**\n\nYou have no more reminders.",
                     color=discord.Color.green()
                 )
+                # Set thumbnail
+                embed.set_thumbnail(url="https://i.imgur.com/677JpTl.png")
                 self.deleted = True
                 await interaction.response.edit_message(embed=embed, view=None)
                 return
@@ -311,7 +314,8 @@ class SnoozeView(View):
                         description=f"⏰ **Reminder snoozed!**\n\nNew time: {time_str}",
                         color=discord.Color.green()
                     )
-
+                    # Set thumbnail
+                    embed.set_thumbnail(url="https://i.imgur.com/677JpTl.png")
                     # Disable all buttons
                     for item in self.children:
                         item.disabled = True
@@ -399,6 +403,8 @@ class RecurringView(View):
                     ),
                     color=discord.Color.green()
                 )
+                # Set thumbnail
+                embed.set_thumbnail(url="https://i.imgur.com/677JpTl.png")
 
                 # Disable all buttons
                 for item in self.children:
