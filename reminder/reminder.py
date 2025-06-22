@@ -115,14 +115,17 @@ class Reminder(commands.Cog):
 
             embed = discord.Embed(
                 description=(
-                    f"## ⏰ **Your current time:**\n"
                     f"# {current_time}\n"
-                    f"**Timezone:** `{tz_display}` set by user"
+                    f"**Timezone:** `{tz_display}` set by {ctx.author.display_name}"
                 ),
                 color=discord.Color.blue()
             )
             # Set thumbnail
             embed.set_thumbnail(url=logo)
+            embed.set_author(
+                name=f"⏰ Your current time: {ctx.author.display_name}",
+                icon_url=ctx.author.avatar.url if ctx.author.avatar else ctx.author.default_avatar.url
+            )
 
             msg = await ctx.send(embed=embed)
             await msg.delete(delay=60)  # delete embed after a minute
