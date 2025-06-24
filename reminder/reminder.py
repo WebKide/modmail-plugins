@@ -24,8 +24,9 @@ logo = "https://i.imgur.com/677JpTl.png"
 
 class Reminder(commands.Cog):
     """Reminder plugin with timezone support*
-    █▀█ █▀▀ █▀▄▀█ █ █▄░█ █▀▄ █▀▀ █▀█ 
-    █▀▄ ██▄ █░█░█ █ █░▀█ █▄▀ ██▄ █▀▄ 
+    ```
+    █▀█ █▀▀ █▀▄▀█ █ █▄░█ █▀▄ █▀▀ █▀█
+    █▀▄ ██▄ █░█░█ █ █░▀█ █▄▀ ██▄ █▀▄```
 
     **Commands:**
     - `!mytimezone` - Set your timezone (`!mytimezone UTC+2`)
