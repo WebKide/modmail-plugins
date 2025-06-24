@@ -1,4 +1,5 @@
 # reminder.py
+import asyncio
 import logging
 from datetime import datetime, timedelta
 from typing import List, Dict, Optional
@@ -27,12 +28,6 @@ class Reminder(commands.Cog):
     ```
     █▀█ █▀▀ █▀▄▀█ █ █▄░█ █▀▄ █▀▀ █▀█
     █▀▄ ██▄ █░█░█ █ █░▀█ █▄▀ ██▄ █▀▄```
-
-    **Commands:**
-    - `!mytimezone` - Set your timezone (`!mytimezone UTC+2`)
-    - `!mytime` - Show your current time for reminders
-    - `!remind [time] | [text]` - Set a reminder with separator
-    - `!reminders` - List your active reminders in a paginated embed
     """
 
     def __init__(self, bot):
@@ -64,7 +59,7 @@ class Reminder(commands.Cog):
     @commands.command(name="mytimezone", aliases=["settimezone", "settz"])
     @commands.guild_only()
     async def set_timezone(self, ctx, *, timezone_str: str):
-        """Set your timezone (e.g., `!mytimezone UTC+2`)"""
+        """Set your timezone (`!mytimezone UTC+2`)"""
         try:
             try:
                 await ctx.message.delete()
@@ -374,11 +369,11 @@ class Reminder(commands.Cog):
     async def remind(self, ctx, *, input_string: str):
         """Set a reminder - Usage: `!remind [time] SEPARATOR [text]`
 
-        Supported separators: | - / > [ —
+        Supported separators: **| - / > [ —**
         Examples:
         • `!remind in 2 hours | take out the trash`
         • `!remind tomorrow at 3pm - buy groceries`
-        • `!remind next monday, finish the report`
+        • `!remind in 3 days / finish the report`
         """
         try:
             # Parse input (existing logic)
@@ -494,6 +489,13 @@ class Reminder(commands.Cog):
                 "• `!remind in 2 hours | take out the trash`\n"
                 "• `!remind tomorrow at 3pm - buy groceries`", delete_after=15
             )
+
+        finally:
+            await asyncio.sleep(69)
+            try:
+                await ctx.message.delete()
+            except discord.Forbidden:
+                pass
 
     # ╔════════════════════════════════════════════════════════════╗
     # ║░░░░░░░░░░░░░░░░░░░░░░░ REMINDERS ░░░░░░░░░░░░░░░░░░░░░░░░░░║
