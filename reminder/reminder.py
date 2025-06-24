@@ -23,7 +23,16 @@ __version__ = "3.03"
 logo = "https://i.imgur.com/677JpTl.png"
 
 class Reminder(commands.Cog):
-    """Reminder plugin with timezone support"""
+    """Reminder plugin with timezone support*
+    █▀█ █▀▀ █▀▄▀█ █ █▄░█ █▀▄ █▀▀ █▀█ 
+    █▀▄ ██▄ █░█░█ █ █░▀█ █▄▀ ██▄ █▀▄ 
+
+    **Commands:**
+    - `!mytimezone` - Set your timezone (`!mytimezone UTC+2`)
+    - `!mytime` - Show your current time for reminders
+    - `!remind [time] | [text]` - Set a reminder with separator
+    - `!reminders` - List your active reminders in a paginated embed
+    """
 
     def __init__(self, bot):
         self.bot = bot
