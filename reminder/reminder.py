@@ -20,7 +20,7 @@ from .remindertimezone import ReminderTimezone, TimezoneConverter
 from .remindercore import ReminderPaginator, SnoozeView, RecurringView, DualDeliveryView
 
 log = logging.getLogger("Modmail")
-__version__ = "3.03"
+__version__ = "3.04"
 logo = "https://i.imgur.com/677JpTl.png"
 
 class Reminder(commands.Cog):
@@ -35,9 +35,8 @@ class Reminder(commands.Cog):
         self.db = bot.plugin_db.get_partition(self)
         self.timezone_manager = ReminderTimezone(self.db)
         self.reminder_loop.start()
-
-        # Create database indexes for performance
-        self.bot.loop.create_task(self._create_indexes())
+        self.bot.loop.create_task(self._create_indexes())  # Create database indexes for performance
+        self.checkmark_emoji = "☑️"
 
     async def _create_indexes(self):
         try:
@@ -226,15 +225,16 @@ class Reminder(commands.Cog):
 
             # Try DM delivery first
             try:
-                await user.send(embed=embed, view=view)
+                dm_message = await user.send(embed=embed, view=view)
+                # Store the message reference in the view for later cleanup
+                view.message = dm_message
                 delivery_status["dm_success"] = True
             except discord.Forbidden:
                 delivery_status["dm_error"] = "User disabled DMs"
             except Exception as e:
                 delivery_status["dm_error"] = str(e)[:100]
 
-            # Try original channel delivery
-            channel = None
+            # Try original channel delivery (with auto-delete for guild channels)
             try:
                 channel = self.bot.get_channel(reminder["channel_id"])
                 if not channel:
@@ -245,7 +245,7 @@ class Reminder(commands.Cog):
                 else:
                     msg = await channel.send(f"{user.mention}", embed=embed, view=view)
                     await msg.delete(delay=60)
-                # await channel.send(f"{user.mention}", embed=embed, view=view)
+
                 delivery_status["channel_success"] = True
             except discord.Forbidden:
                 delivery_status["channel_error"] = "Missing permissions in channel"
@@ -585,6 +585,38 @@ class Reminder(commands.Cog):
             )
             msg = await ctx.send(embed=error_embed)
             await msg.delete(delay=60)  # delete embed after a minute
+
+    @commands.Cog.listener()
+    async def on_raw_reaction_add(self, payload):
+        """Handle checkmark reactions to clean up DMs"""
+        # Ignore reactions from the bot itself
+        if payload.user_id == self.bot.user.id:
+            return
+
+        # Only process in DMs
+        if not isinstance(payload.channel_id, int):
+            return
+
+        try:
+            channel = self.bot.get_channel(payload.channel_id)
+            if not channel or not isinstance(channel, discord.DMChannel):
+                return
+
+            # Get the message
+            message = await channel.fetch_message(payload.message_id)
+
+            # Check if it's our reminder message with the checkmark
+            if (message.author.id == self.bot.user.id and 
+                str(payload.emoji) == self.checkmark_emoji and
+                len(message.embeds) > 0 and 
+                message.embeds[0].title == "⏰ Reminder!"):
+
+                await message.delete()
+
+        except discord.NotFound:
+            pass  # Message already deleted
+        except Exception as e:
+            log.error(f"Error processing reaction in DMs: {e}")
 
 async def setup(bot):
     """Discord.py Setup function"""
