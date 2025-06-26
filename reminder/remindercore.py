@@ -604,5 +604,15 @@ class DualDeliveryView(View):
                 ephemeral=True
             )
 
+    async def on_timeout(self):
+        """When buttons time out, convert to checkmark reaction"""
+        try:
+            # Edit message to remove buttons
+            await self.message.edit(view=None)
+            # Add checkmark reaction
+            await self.message.add_reaction(self.cog.checkmark_emoji)
+        except Exception as e:
+            log.error(f"Error in DualDeliveryView timeout: {e}")
+
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         return interaction.user.id == self.user_id
