@@ -585,14 +585,22 @@ class Reminder(commands.Cog):
         if str(payload.emoji) != self.checkmark_emoji:
             return
 
+        # Explicitly ignore thread channels to prevent the warning
+        if hasattr(payload, 'channel_type') and payload.channel_type in [discord.ChannelType.public_thread, discord.ChannelType.private_thread]:
+            return
+
         try:
-            # Get the channel (works for both DM and guild channels)
+            # Get the channel - only process DM and text channels
             channel = self.bot.get_channel(payload.channel_id)
             if not channel:
                 try:
                     channel = await self.bot.fetch_channel(payload.channel_id)
                 except discord.NotFound:
                     return
+
+            # Skip if it's a thread channel (additional safety check)
+            if isinstance(channel, discord.Thread):
+                return
 
             # Get the message
             try:
@@ -606,7 +614,6 @@ class Reminder(commands.Cog):
                 message.embeds[0].title == "⏰ Reminder!"):
 
                 # Only delete if the reaction is from the reminder recipient
-                # Check if the user reacting is mentioned in the message or is the embed author
                 user_can_dismiss = False
 
                 # Check if user is mentioned in message content
@@ -624,7 +631,7 @@ class Reminder(commands.Cog):
         except discord.Forbidden:
             pass  # No permission to delete
         except Exception as e:
-            log.error(f"Error processing reaction: {e}")
+            log.error(f"Error processing reaction in reminder: {e}")
 
 async def setup(bot):
     """Discord.py Setup function"""
