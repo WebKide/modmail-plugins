@@ -20,15 +20,11 @@ from .remindertimezone import ReminderTimezone, TimezoneConverter
 from .remindercore import ReminderPaginator, SnoozeView, RecurringView, DualDeliveryView
 
 log = logging.getLogger("Modmail")
-__version__ = "3.04"
+__version__ = "3.05"
 logo = "https://i.imgur.com/677JpTl.png"
 
 class Reminder(commands.Cog):
-    """Reminder plugin with timezone support*
-    ```
-    █▀█ █▀▀ █▀▄▀█ █ █▄░█ █▀▄ █▀▀ █▀█
-    █▀▄ ██▄ █░█░█ █ █░▀█ █▄▀ ██▄ █▀▄```
-    """
+    """Reminder plugin with timezone support"""
 
     def __init__(self, bot):
         self.bot = bot
@@ -52,9 +48,6 @@ class Reminder(commands.Cog):
         """Get user timezone - wrapper for timezone manager"""
         return await self.timezone_manager.get_user_timezone(user_id)
 
-    # ╔════════════════════════════════════════════════════════════╗
-    # ║░░░░░░░░░░░░░░░░░░░ SET_TIMEZONE_COMMAND ░░░░░░░░░░░░░░░░░░░║
-    # ╚════════════════════════════════════════════════════════════╝
     @commands.command(name="mytimezone", aliases=["settimezone", "settz"])
     @commands.guild_only()
     async def set_timezone(self, ctx, *, timezone_str: str):
@@ -98,9 +91,6 @@ class Reminder(commands.Cog):
             msg = await ctx.send(f"❌ Error setting timezone: {str(e)[:100]}")
             await msg.delete(delay=60)  # delete embed after a minute
 
-    # ╔════════════════════════════════════════════════════════════╗
-    # ║░░░░░░░░░░░░░░░░░ SHOW_CURRENT_TIMEZONE ░░░░░░░░░░░░░░░░░░░░║
-    # ╚════════════════════════════════════════════════════════════╝
     @commands.command(name="mytime")
     @commands.guild_only()
     async def show_current_time(self, ctx):
@@ -138,9 +128,6 @@ class Reminder(commands.Cog):
             msg = await ctx.send(f"❌ Error fetching time: {str(e)[:100]}")
             await msg.delete(delay=60)  # delete embed after a minute
 
-    # ┌──────────────────────┬──────────────┬──────────────────────┐
-    # ├──────────────────────┤ TASK_LOOP_60 ├──────────────────────┤
-    # └──────────────────────┴──────────────┴──────────────────────┘
     @tasks.loop(seconds=60.0)
     async def reminder_loop(self):
         """Check reminders every minute with batch processing"""
@@ -159,9 +146,6 @@ class Reminder(commands.Cog):
         except Exception as e:
             log.error(f"Reminder loop error: {e}", exc_info=True)
 
-    # ┌─────────────────────┬───────────────┬──────────────────────┐
-    # ├─────────────────────┤ REMINDER_LOOP ├──────────────────────┤
-    # └─────────────────────┴───────────────┴──────────────────────┘
     @reminder_loop.before_loop
     async def before_reminder_loop(self):
         """Wait for bot to be ready before starting reminder loop"""
@@ -361,9 +345,6 @@ class Reminder(commands.Cog):
                 {"$set": {"status": "failed", "error": "reschedule_failed"}}
             )
 
-    # ╔════════════════════════════════════════════════════════════╗
-    # ║░░░░░░░░░░░░░░░░░░░ REMINDME_COMMAND ░░░░░░░░░░░░░░░░░░░░░░░║
-    # ╚════════════════════════════════════════════════════════════╝
     @commands.command(aliases=["remindme"])
     @commands.guild_only()
     async def remind(self, ctx, *, input_string: str):
@@ -497,9 +478,6 @@ class Reminder(commands.Cog):
             except discord.Forbidden:
                 pass
 
-    # ╔════════════════════════════════════════════════════════════╗
-    # ║░░░░░░░░░░░░░░░░░░░░░░░ REMINDERS ░░░░░░░░░░░░░░░░░░░░░░░░░░║
-    # ╚════════════════════════════════════════════════════════════╝
     @commands.command(aliases=["myreminders", "mr"])
     @commands.guild_only()
     async def reminders(self, ctx):
