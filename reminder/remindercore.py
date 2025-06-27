@@ -25,7 +25,7 @@ class ReminderPaginator(View):
         self.user_id = user_id
         self.original_message = original_message
         self.deleted = False
-        self.cog = cog  # Reference to the main cog for DB access
+        self.cog = cog
         self.delete_task = None
         self.add_buttons()
 
@@ -35,178 +35,82 @@ class ReminderPaginator(View):
 
     async def delete_after_delay(self, delay=60):
         """Delete the message after delay if not in DMs"""
-        await asyncio.sleep(delay)
-        if not self.deleted:
-            try:
+        try:
+            await asyncio.sleep(delay)
+            if not self.deleted:
                 await self.original_message.delete()
                 self.deleted = True
-            except:
-                pass
+        except asyncio.CancelledError:
+            pass  # Task was cancelled, this is expected
+        except Exception as e:
+            log.error(f"Error in delete_after_delay: {e}")
 
     async def on_timeout(self):
         """Gracefully disable buttons when view times out"""
-        if not self.deleted:
-            try:
-                for item in self.children:
-                    item.disabled = True
-                await self.original_message.edit(view=self)
-                if self.delete_task:
-                    self.delete_task.cancel()
-            except discord.NotFound:
-                pass
-            except Exception as e:
-                log.error(f"Error in ReminderPaginator timeout: {e}")
+        if self.deleted:
+            return
 
-    def add_buttons(self):
-        """Dynamically add buttons based on page count"""
-        self.clear_items()
-
-        # Previous button
-        if len(self.embeds) > 1:
-            prev_button = Button(
-                emoji="⬅️",
-                style=discord.ButtonStyle.blurple
-            )
-            prev_button.callback = self.previous_page
-            self.add_item(prev_button)
-
-        # Delete button
-        delete_button = Button(
-            emoji="🗑️",
-            style=discord.ButtonStyle.red
-        )
-        delete_button.callback = self.delete_reminder
-        self.add_item(delete_button)
-
-        # OFF button
-        off_button = Button(
-            label="OFF",
-            emoji="🔇",
-            style=discord.ButtonStyle.danger
-        )
-        off_button.callback = self.off_reminder
-        self.add_item(off_button)
-
-        # Next button
-        if len(self.embeds) > 1:
-            next_button = Button(
-                emoji="➡️",
-                style=discord.ButtonStyle.blurple
-            )
-            next_button.callback = self.next_page
-            self.add_item(next_button)
-
-    async def create_embed(self, reminder_data: dict, user: discord.User) -> discord.Embed:
-        """Create a styled embed for a reminder using centralized timezone handling"""
         try:
-            time_str = await self.cog.timezone_manager.format_time_with_timezone(
-                reminder_data["due"], self.user_id
-            )
+            # Cancel delete task if it exists
+            if self.delete_task and not self.delete_task.done():
+                self.delete_task.cancel()
 
-            embed = discord.Embed(
-                description=f"### 📝 Reminder:\n{reminder_data['text']}",
-                color=discord.Color(0xd0d88f),
-                timestamp=reminder_data["due"]
-            )
+            # Disable all buttons
+            for item in self.children:
+                item.disabled = True
 
-            # Set author with user's avatar
-            embed.set_author(
-                name=f"⏰ Reminder #{self.current_page + 1} for {user.display_name}",
-                icon_url=user.avatar.url if user.avatar else user.default_avatar.url
-            )
-
-            # Set thumbnail
-            embed.set_thumbnail(url=logo)
-
-            # Add formatted time field
-            embed.add_field(
-                name="📆 When:",
-                value=f"```cs\n{time_str}\n```",
-                inline=False
-            )
-
-            # Add recurring info if applicable
-            if reminder_data.get("recurring"):
-                embed.add_field(
-                    name="🔄 Recurring:",
-                    value=f"`{reminder_data['recurring'].title()}`",
-                    inline=True
-                )
-
-            # Add footer with ID
-            embed.set_footer(text=f"ID: {reminder_data['_id']}")
-
-            return embed
-
+            await self.original_message.edit(view=self)
+        except discord.NotFound:
+            pass  # Message was already deleted
         except Exception as e:
-            log.error(f"Error creating reminder embed: {e}")
-            # Fallback embed if formatting fails
-            embed = discord.Embed(
-                description=f"### 📝 Reminder:\n{reminder_data['text']}",
-                color=discord.Color.red()
-            )
-            embed.set_thumbnail(url=logo)
-            embed.set_footer(text=f"ID: {reminder_data['_id']} (Error: {str(e)[:50]})")
-            return embed
+            log.error(f"Error in ReminderPaginator timeout: {e}")
 
-    async def previous_page(self, interaction: discord.Interaction):
-        if self.current_page > 0:
-            self.current_page -= 1
-            await self.update_embed(interaction)
-
-    async def next_page(self, interaction: discord.Interaction):
-        if self.current_page < len(self.embeds) - 1:
-            self.current_page += 1
-            await self.update_embed(interaction)
-
+    # replace entire "async def delete_reminder" inside "class ReminderPaginator"
     async def delete_reminder(self, interaction: discord.Interaction):
-        """Handle reminder deletion with atomic database operations"""
+        """Handle reminder deletion with proper atomic operations and error handling"""
         try:
             if not self.embeds:
-                await interaction.response.send_message(
-                    "❌ No reminders to delete",
-                    ephemeral=True
-                )
+                await interaction.response.send_message("❌ No reminders to delete", ephemeral=True)
                 return
 
+            # Extract reminder ID safely
             try:
-                reminder_id = self.embeds[self.current_page].footer.text.split("ID: ")[1]
-            except (IndexError, AttributeError):
-                await interaction.response.send_message(
-                    "❌ Could not find reminder ID",
-                    ephemeral=True
-                )
+                footer_text = self.embeds[self.current_page].footer.text
+                if not footer_text or "ID: " not in footer_text:
+                    raise ValueError("Invalid footer format")
+                reminder_id = footer_text.split("ID: ")[1].split(" ")[0]  # Handle additional text
+            except (IndexError, AttributeError, ValueError):
+                await interaction.response.send_message("❌ Could not find reminder ID", ephemeral=True)
                 return
 
-            # Atomic delete operation
+            # Atomic delete operation with proper error handling
             try:
-                result = await self.cog.db.delete_one({"_id": reminder_id})
+                result = await self.cog.db.delete_one({"_id": reminder_id, "status": "active"})
             except Exception as e:
-                await interaction.response.send_message(
-                    f"❌ Database error: {str(e)[:100]}",
-                    ephemeral=True
-                )
+                log.error(f"Database error deleting reminder {reminder_id}: {e}")
+                await interaction.response.send_message(f"❌ Database error: Connection failed", ephemeral=True)
                 return
 
             if result.deleted_count == 0:
-                await interaction.response.send_message(
-                    "❌ Reminder not found (may have been already deleted)",
-                    ephemeral=True
-                )
+                await interaction.response.send_message("❌ Reminder not found (may have been already deleted)", ephemeral=True)
                 return
 
             # Remove from local list
             del self.embeds[self.current_page]
 
             if not self.embeds:
-                # No reminders left
+                # No reminders left - create final embed
                 embed = discord.Embed(
                     description="## 🗑️ **Reminder deleted!**\n\nYou have no more reminders.",
                     color=discord.Color.green()
                 )
-                # Set thumbnail
                 embed.set_thumbnail(url=logo)
+
+                # Cancel delete task and mark as deleted
+                if self.delete_task and not self.delete_task.done():
+                    self.delete_task.cancel()
                 self.deleted = True
+
                 await interaction.response.edit_message(embed=embed, view=None)
                 return
 
@@ -214,35 +118,15 @@ class ReminderPaginator(View):
             if self.current_page >= len(self.embeds):
                 self.current_page = len(self.embeds) - 1
 
-            # Update buttons and embed
+            # Update buttons for new page count
             self.add_buttons()
 
-            # Get current reminder data for display
-            current_embed = self.embeds[self.current_page]
-            reminder_data = {
-                "_id": current_embed.footer.text.split("ID: ")[1],
-                "due": current_embed.timestamp,
-                "text": current_embed.description.split("### 📝 Reminder:\n")[1],
-                "recurring": None
-            }
-
-            # Check if reminder is recurring
-            for field in current_embed.fields:
-                if field.name == "🔄 Recurring:":
-                    reminder_data["recurring"] = field.value.strip("`").lower()
-                    break
-
-            user = await self.cog.bot.fetch_user(self.user_id)
-            embed = await self.create_embed(reminder_data, user)
-            embed.set_footer(text=f"🗑️ Reminder deleted!\n{embed.footer.text}")
-
-            await interaction.response.edit_message(embed=embed, view=self)
+            # Update display with current page
+            await self.update_embed(interaction, "🗑️ Reminder deleted!")
 
         except Exception as e:
-            await interaction.response.send_message(
-                f"❌ Error deleting reminder: {str(e)[:100]}",
-                ephemeral=True
-            )
+            log.error(f"Unexpected error in delete_reminder: {e}")
+            await interaction.response.send_message(f"❌ Unexpected error: Please try again", ephemeral=True)
 
     async def update_embed(self, interaction: discord.Interaction, confirmation: str = None):
         """Update the embed with current page and optional confirmation message"""
@@ -417,77 +301,36 @@ class RecurringView(View):
             button.callback = self.create_recurring_callback(freq)
             self.add_item(button)
 
-    async def recurring_callback(interaction: discord.Interaction):
-        try:
-            # Generate unique ID for reminder
-            import uuid
-            reminder_id = str(uuid.uuid4())
-
-            # Prepare reminder document
-            reminder_doc = {
-                "_id": reminder_id,
-                "user_id": self.user_id,
-                "channel_id": self.reminder_data["channel_id"],
-                "text": self.reminder_data["text"],
-                "due": self.reminder_data["due"],
-                "created": datetime.now(pytz.UTC),
-                "status": "active"
-            }
-            
-            # Add recurring field if not one-time
-            if frequency != "none":
-                reminder_doc["recurring"] = frequency
-
-            # Save to database
-            await self.cog.db.insert_one(reminder_doc)
-
-            # Format confirmation message
-            time_str = await self.cog.timezone_manager.format_time_with_timezone(
-                self.reminder_data["due"], self.user_id
-            )
-
-            recurring_text = "" if frequency == "none" else f"\n🔄 **Recurring:** {frequency.title()}"
-
-            embed = discord.Embed(
-                description=(
-                    f"✅ **Reminder set!**\n\n"
-                    f"**When:** {time_str}\n"
-                    f"**Reminder:** {self.reminder_data['text']}"
-                    f"{recurring_text}"
-                ),
-                color=discord.Color.green()
-            )
-
-            # Disable all buttons
-            for item in self.children:
-                item.disabled = True
-
-            await interaction.response.edit_message(embed=embed, view=self)
-
-        except Exception as e:
-            log.error(f"Error setting reminder: {e}")
-            await interaction.response.send_message(
-                f"❌ Error setting reminder: {str(e)[:100]}",
-                ephemeral=True
-            )
-
     def create_recurring_callback(self, frequency: str):
         """Create callback for specific recurring frequency"""
         async def callback(interaction: discord.Interaction):
             try:
-                # Update reminder data
-                reminder_data = {
+                # Generate unique ID for reminder
+                import uuid
+                reminder_id = str(uuid.uuid4())
+
+                # Prepare reminder document
+                reminder_doc = {
+                    "_id": reminder_id,
                     "user_id": self.user_id,
                     "channel_id": self.reminder_data["channel_id"],
                     "text": self.reminder_data["text"],
                     "due": self.reminder_data["due"],
                     "created": datetime.now(pytz.UTC),
-                    "status": "active",
-                    "recurring": frequency if frequency != "none" else None
+                    "status": "active"
                 }
 
-                # Save to database
-                await self.cog.db.insert_one(reminder_data)
+                # Add recurring field if not one-time
+                if frequency != "none":
+                    reminder_doc["recurring"] = frequency
+
+                # Atomic database operation
+                try:
+                    await self.cog.db.insert_one(reminder_doc)
+                except Exception as e:
+                    log.error(f"Database error creating reminder: {e}")
+                    await interaction.response.send_message("❌ Database error: Could not save reminder", ephemeral=True)
+                    return
 
                 # Format confirmation message
                 time_str = await self.cog.timezone_manager.format_time_with_timezone(
@@ -505,7 +348,6 @@ class RecurringView(View):
                     ),
                     color=discord.Color.green()
                 )
-                # Set thumbnail
                 embed.set_thumbnail(url=logo)
 
                 # Disable all buttons
@@ -515,16 +357,21 @@ class RecurringView(View):
                 await interaction.response.edit_message(embed=embed, view=self)
 
             except Exception as e:
-                await interaction.response.send_message(
-                    f"❌ Error setting reminder: {str(e)[:100]}",
-                    ephemeral=True
-                )
+                log.error(f"Unexpected error in recurring callback: {e}")
+                await interaction.response.send_message("❌ Unexpected error: Please try again", ephemeral=True)
+
         return callback
 
     async def on_timeout(self):
         """Disable buttons when view times out"""
-        for item in self.children:
-            item.disabled = True
+        try:
+            for item in self.children:
+                item.disabled = True
+            # Don't try to edit if we can't find the original message
+            if hasattr(self, 'message') and self.message:
+                await self.message.edit(view=self)
+        except Exception as e:
+            log.error(f"Error in RecurringView timeout: {e}")
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         return interaction.user.id == self.user_id
@@ -605,12 +452,33 @@ class DualDeliveryView(View):
             )
 
     async def on_timeout(self):
-        """When buttons time out, convert to checkmark reaction"""
+        """When buttons time out, safely handle message cleanup"""
         try:
-            # Edit message to remove buttons
-            await self.message.edit(view=None)
-            # Add checkmark reaction
-            await self.message.add_reaction(self.cog.checkmark_emoji)
+            # Check if we have a valid message reference
+            if not hasattr(self, 'message') or not self.message:
+                return
+
+            # Disable all buttons first
+            for item in self.children:
+                item.disabled = True
+
+            # Try to edit the message to remove buttons
+            try:
+                await self.message.edit(view=self)
+            except discord.NotFound:
+                # Message was deleted, that's fine
+                return
+            except discord.HTTPException:
+                # Other HTTP errors, log but continue
+                log.warning(f"Could not edit message in DualDeliveryView timeout")
+
+            # Only add reaction if we're not in DMs and message still exists
+            if not isinstance(self.message.channel, discord.DMChannel):
+                try:
+                    await self.message.add_reaction("✅")
+                except Exception as e:
+                    log.debug(f"Could not add reaction in DualDeliveryView: {e}")
+
         except Exception as e:
             log.error(f"Error in DualDeliveryView timeout: {e}")
 
