@@ -162,6 +162,7 @@ class Reminder(commands.Cog):
                 break
             yield batch
 
+    # Better method
     async def _process_single_reminder(self, reminder: dict, now: datetime):
         """Process a single reminder delivery to both DM and channel with fallback"""
         try:
@@ -181,7 +182,8 @@ class Reminder(commands.Cog):
             )
 
             embed = discord.Embed(
-                description=f"### ⏰ **Reminder!**\n# {reminder['text']}",
+                title="⏰ Reminder!",  # Changed from description to title for proper identification
+                description=f"# {reminder['text']}",
                 color=discord.Color.orange(),
                 timestamp=reminder["due"]
             )
@@ -195,6 +197,7 @@ class Reminder(commands.Cog):
                 inline=False
             )
             embed.set_thumbnail(url=logo)
+            embed.set_footer(text=f"React with {self.checkmark_emoji} to dismiss")
 
             # Create view with Snooze and OFF buttons
             view = DualDeliveryView(self, reminder["_id"], reminder["user_id"])
@@ -210,6 +213,8 @@ class Reminder(commands.Cog):
             # Try DM delivery first
             try:
                 dm_message = await user.send(embed=embed, view=view)
+                # Add checkmark reaction for manual dismissal
+                await dm_message.add_reaction(self.checkmark_emoji)
                 # Store the message reference in the view for later cleanup
                 view.message = dm_message
                 delivery_status["dm_success"] = True
@@ -225,9 +230,11 @@ class Reminder(commands.Cog):
                     channel = await self.bot.fetch_channel(reminder["channel_id"])
 
                 if isinstance(channel, (discord.DMChannel, discord.PartialMessageable)):
-                    await channel.send(f"{user.mention}", embed=embed, view=view)
+                    channel_msg = await channel.send(f"{user.mention}", embed=embed, view=view)
+                    await channel_msg.add_reaction(self.checkmark_emoji)
                 else:
                     msg = await channel.send(f"{user.mention}", embed=embed, view=view)
+                    await msg.add_reaction(self.checkmark_emoji)
                     await msg.delete(delay=60)
 
                 delivery_status["channel_success"] = True
@@ -254,7 +261,8 @@ class Reminder(commands.Cog):
                                     footer_text.append(f"Original channel failed: {delivery_status['channel_error']}")
 
                                 embed.set_footer(text=" | ".join(footer_text))
-                                await ch.send(f"{user.mention}", embed=embed, view=view)
+                                fallback_msg = await ch.send(f"{user.mention}", embed=embed, view=view)
+                                await fallback_msg.add_reaction(self.checkmark_emoji)
                                 break
                     except Exception:
                         pass
@@ -306,24 +314,26 @@ class Reminder(commands.Cog):
             frequency = reminder["recurring"]
             original_due = reminder["due"]
 
+            # Get user timezone for proper scheduling
+            user_tz = await self.timezone_manager.get_user_timezone(reminder["user_id"])
+
+            # Convert to user timezone for calculation
+            user_time = original_due.astimezone(user_tz)
+
             # Calculate next occurrence maintaining time-of-day
             if frequency == "daily":
-                next_due = original_due + timedelta(days=1)
+                next_user_time = user_time + timedelta(days=1)
             elif frequency == "weekly":
-                next_due = original_due + timedelta(weeks=1)
+                next_user_time = user_time + timedelta(weeks=1)
             elif frequency == "monthly":
-                # Handle month boundaries properly
-                if original_due.month == 12:
-                    next_due = original_due.replace(year=original_due.year + 1, month=1)
-                else:
-                    try:
-                        next_due = original_due.replace(month=original_due.month + 1)
-                    except ValueError:
-                        # Handle cases like Jan 31 -> Feb (no 31st)
-                        next_due = original_due.replace(month=original_due.month + 1, day=28)
+                # Use relativedelta for proper month handling
+                next_user_time = user_time + relativedelta(months=1)
             else:
                 log.error(f"Unknown recurring frequency: {frequency}")
                 return
+
+            # Convert back to UTC
+            next_due = next_user_time.astimezone(pytz.UTC)
 
             # Atomic update to reschedule
             await self.db.update_one(
@@ -345,7 +355,7 @@ class Reminder(commands.Cog):
                 {"$set": {"status": "failed", "error": "reschedule_failed"}}
             )
 
-    @commands.command(aliases=["remindme"])
+    @commands.command(aliases=["remindme", "reminder"], description="Powered by PYTZ")
     @commands.guild_only()
     async def remind(self, ctx, *, input_string: str):
         """Set a reminder - Usage: `!remind [time] SEPARATOR [text]`
@@ -571,30 +581,50 @@ class Reminder(commands.Cog):
         if payload.user_id == self.bot.user.id:
             return
 
-        # Only process in DMs
-        if not isinstance(payload.channel_id, int):
+        # Only process checkmark emoji
+        if str(payload.emoji) != self.checkmark_emoji:
             return
 
         try:
+            # Get the channel (works for both DM and guild channels)
             channel = self.bot.get_channel(payload.channel_id)
-            if not channel or not isinstance(channel, discord.DMChannel):
-                return
+            if not channel:
+                try:
+                    channel = await self.bot.fetch_channel(payload.channel_id)
+                except discord.NotFound:
+                    return
 
             # Get the message
-            message = await channel.fetch_message(payload.message_id)
+            try:
+                message = await channel.fetch_message(payload.message_id)
+            except discord.NotFound:
+                return  # Message already deleted
 
-            # Check if it's our reminder message with the checkmark
+            # Check if it's our reminder message
             if (message.author.id == self.bot.user.id and 
-                str(payload.emoji) == self.checkmark_emoji and
                 len(message.embeds) > 0 and 
                 message.embeds[0].title == "⏰ Reminder!"):
 
-                await message.delete()
+                # Only delete if the reaction is from the reminder recipient
+                # Check if the user reacting is mentioned in the message or is the embed author
+                user_can_dismiss = False
 
-        except discord.NotFound:
-            pass  # Message already deleted
+                # Check if user is mentioned in message content
+                if message.content and f"<@{payload.user_id}>" in message.content:
+                    user_can_dismiss = True
+
+                # For DM channels, the recipient is the other user in the conversation
+                elif isinstance(channel, discord.DMChannel):
+                    if channel.recipient and channel.recipient.id == payload.user_id:
+                        user_can_dismiss = True
+
+                if user_can_dismiss:
+                    await message.delete()
+
+        except discord.Forbidden:
+            pass  # No permission to delete
         except Exception as e:
-            log.error(f"Error processing reaction in DMs: {e}")
+            log.error(f"Error processing reaction: {e}")
 
 async def setup(bot):
     """Discord.py Setup function"""
