@@ -10,8 +10,8 @@ from discord.ext import commands
 
 log = logging.getLogger("Modmail")
 
-# Timezone validation regex
-UTC_OFFSET_PATTERN = re.compile(r'^UTC([+-])(\d{1,2})$', re.IGNORECASE)
+# Timezone validation regex UTC_OFFSET_PATTERN = re.compile(r'^UTC([+-])(\d{1,2})$', re.IGNORECASE)
+UTC_OFFSET_PATTERN = re.compile(r'^UTC([+-])(\d{1,2})(?::(\d{2}))?$', re.IGNORECASE)
 
 class ReminderTimezone:
     """Centralized timezone management for reminders"""
