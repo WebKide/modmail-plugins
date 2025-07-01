@@ -386,6 +386,9 @@ class Reminder(commands.Cog):
                 )
 
             time_part, reminder_text = input_string.split(separator, 1)
+            # --- PARSING FIX BLOCK ---
+            time_part = re.sub(r'^!remind\s*', '', time_part).strip()
+            # -------------------------
             reminder_text = reminder_text.strip()
 
             if not reminder_text:
