@@ -1,6 +1,6 @@
 """
 MIT License
-Copyright (c) 2020 WebKide [d.id @323578534763298816]
+Copyright (c) 2020-2025 WebKide [d.id @323578534763298816]
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
@@ -68,7 +68,7 @@ class WordMeaning(commands.Cog):
     @commands.command(aliases=['ud'])
     @commands.guild_only()
     async def urban(self, ctx, *, search_terms: str = None):
-        """(∩｀-´)⊃━☆ﾟ.*･｡ﾟ Urban Dictionary search with pagination
+        """Urban Dictionary search with pagination
 
         Usage:
         {prefix}urban <query>
@@ -199,7 +199,7 @@ class WordMeaning(commands.Cog):
     @commands.command(aliases=['wikipedia'])
     @commands.guild_only()
     async def wiki(self, ctx, *, search: str = None):
-        """(∩｀-´)⊃━☆ﾟ.*･｡ﾟ Search Wikipedia with numbered disambiguation"""
+        """Search Wikipedia with numbered disambiguation"""
         if not search:
             return await ctx.send(f"Usage: `{ctx.prefix}wiki <search term>`")
 
