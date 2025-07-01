@@ -63,9 +63,10 @@ class WordMeaning(commands.Cog):
             await self.session.close()
 
     # +------------------------------------------------------------+
-    # |                   URBAN DICTIONARY                         |
+    # |                       URBAN                                |
     # +------------------------------------------------------------+
     @commands.command(aliases=['ud'])
+    @commands.guild_only()
     async def urban(self, ctx, *, search_terms: str = None):
         """(∩｀-´)⊃━☆ﾟ.*･｡ﾟ Urban Dictionary search with pagination
 
@@ -74,7 +75,7 @@ class WordMeaning(commands.Cog):
         {prefix}ud oof
         """
         if search_terms is None:
-            return await ctx.send('What should I search for you?', delete_after=15)
+            return await ctx.send('What should I search for you?')
 
         await ctx.channel.typing()
 
@@ -91,7 +92,7 @@ class WordMeaning(commands.Cog):
         url = "http://api.urbandictionary.com/v0/define?term=" + search_query
 
         if not terms:
-            return await ctx.send('Please provide a search term along with a definition number', delete_after=15)
+            return await ctx.send('Please provide a search term along with a definition number')
 
         search_query = '+'.join(terms)
         url = 'https://api.urbandictionary.com/v0/define?term=' + search_query
@@ -101,13 +102,13 @@ class WordMeaning(commands.Cog):
             session = self.session or self.bot.session
             async with session.get(url) as r:
                 if r.status != 200:
-                    return await ctx.send(f"Urban Dictionary API returned error {r.status}", delete_after=15)
+                    return await ctx.send(f"Urban Dictionary API returned error {r.status}")
                 result = await r.json()
         except Exception as e:
-            return await ctx.send(f"Error connecting to Urban Dictionary: {str(e)}", delete_after=15)
+            return await ctx.send(f"Error connecting to Urban Dictionary: {str(e)}")
 
         if not result.get('list'):
-            return await ctx.send(f"Didn't find anything for *{' '.join(terms)}*", delete_after=15)
+            return await ctx.send(f"Didn't find anything for *{' '.join(terms)}*")
 
         definitions = result['list']
         total_defs = len(definitions)
@@ -196,13 +197,13 @@ class WordMeaning(commands.Cog):
     # |                          WIKIPEDIA                         |
     # +------------------------------------------------------------+
     @commands.command(aliases=['wikipedia'])
+    @commands.guild_only()
     async def wiki(self, ctx, *, search: str = None):
         """(∩｀-´)⊃━☆ﾟ.*･｡ﾟ Search Wikipedia with numbered disambiguation"""
         if not search:
             return await ctx.send(f"Usage: `{ctx.prefix}wiki <search term>`")
 
         try:
-            await ctx.channel.typing()
             wikipedia.set_lang("en")
 
             # Try to get the page directly first
@@ -213,7 +214,7 @@ class WordMeaning(commands.Cog):
                 # Handle disambiguation pages with numbered options
                 options = e.options[:9]  # Limit to first 9 options
                 if not options:
-                    return await ctx.send("No results found. Try a different search term.", delete_after=15)
+                    return await ctx.send("No results found. Try a different search term.")
 
                 # Create disambiguation embed
                 embed = discord.Embed(
@@ -241,7 +242,7 @@ class WordMeaning(commands.Cog):
                     for i in range(len(options)):
                         await message.add_reaction(number_emojis[i])
                 except discord.Forbidden:
-                    return await ctx.send("I need permission to add reactions for disambiguation.", delete_after=15)
+                    return await ctx.send("I need permission to add reactions for disambiguation.")
 
                 # Wait for user reaction
                 def check(reaction, user):
@@ -262,7 +263,7 @@ class WordMeaning(commands.Cog):
                         if selected_index >= len(options):
                             raise IndexError("Invalid selection")
                     except (ValueError, IndexError):
-                        return await ctx.send("Invalid selection. Please try again.", delete_after=15)
+                        return await ctx.send("Invalid selection. Please try again.")
 
                     selected_option = options[selected_index]
 
@@ -272,9 +273,9 @@ class WordMeaning(commands.Cog):
                         await message.delete()
                         return await self.send_wiki_result(ctx, selected_page)
                     except wikipedia.PageError:
-                        await ctx.send(f"Couldn't find a page for '{selected_option}'. Please try another option.", delete_after=15)
+                        await ctx.send(f"Couldn't find a page for '{selected_option}'. Please try another option.")
                     except wikipedia.DisambiguationError:
-                        await ctx.send(f"'{selected_option}' is still ambiguous. Please try a more specific search.", delete_after=15)
+                        await ctx.send(f"'{selected_option}' is still ambiguous. Please try a more specific search.")
 
                 except asyncio.TimeoutError:
                     try:
@@ -284,10 +285,10 @@ class WordMeaning(commands.Cog):
                     return
 
             except wikipedia.PageError:
-                return await ctx.send("Couldn't find a specific page for that term. Try a different search.", delete_after=15)
+                return await ctx.send("Couldn't find a specific page for that term. Try a different search.")
 
         except Exception as e:
-            await ctx.send(f"An error occurred while searching Wikipedia: {str(e)}", delete_after=15)
+            await ctx.send(f"An error occurred while searching Wikipedia: {str(e)}")
 
     async def send_wiki_result(self, ctx, page):
         """Helper function to send wiki results"""
@@ -307,6 +308,7 @@ class WordMeaning(commands.Cog):
     # |               Oxford English Dictionary                    |
     # +------------------------------------------------------------+
     @commands.group(name='dict', aliases=['oed'], invoke_without_command=True)
+    @commands.guild_only()
     async def dictionary(self, ctx, *, term: str = None):
         """Base dictionary command with subcommands"""
         if term is None or ctx.invoked_subcommand is not None:
@@ -328,16 +330,19 @@ class WordMeaning(commands.Cog):
         await self._lookup_word(ctx, term)
 
     @dictionary.command(name='examples')
+    @commands.guild_only()
     async def dict_examples(self, ctx, *, term: str):
         """Show dictionary examples for a word"""
         await self._lookup_word(ctx, term, show_examples=True)
 
     @dictionary.command(name='synonyms')
+    @commands.guild_only()
     async def dict_synonyms(self, ctx, *, term: str):
         """Show synonyms for a word"""
         await self._lookup_word(ctx, term, show_synonyms=True)
 
     @dictionary.command(name='proverbs')
+    @commands.guild_only()
     async def dict_proverbs(self, ctx, *, term: str):
         """Show proverbs/idioms for a word"""
         await self._lookup_word(ctx, term, show_proverbs=True)
@@ -356,10 +361,10 @@ class WordMeaning(commands.Cog):
             session = self.session or self.bot.session
             async with session.get(url, headers=_HEADERS) as response:
                 if response.status == 404:
-                    return await ctx.send(f"Couldn't find a definition for *{query.replace('-', ' ')}*. Please check the spelling.", delete_after=15)
+                    return await ctx.send(f"Couldn't find a definition for *{query.replace('-', ' ')}*. Please check the spelling.")
                 elif response.status != 200:
-                    return await ctx.send(f"Dictionary service returned error {response.status}", delete_after=15)
-
+                    return await ctx.send(f"Dictionary service returned error {response.status}")
+                    
                 html_content = await response.text()
 
             soup = bs(html_content, 'html.parser')
@@ -392,7 +397,7 @@ class WordMeaning(commands.Cog):
                 senses = soup.find_all('div', class_='def-block') or soup.find_all('span', class_='def')
                 
             if not senses:
-                return await ctx.send(f"Found the word but couldn't extract definitions. Try visiting: {url}", delete_after=15)
+                return await ctx.send(f"Found the word but couldn't extract definitions. Try visiting: {url}")
 
             # Add first 3 definitions with better parsing
             definition_text = ""
@@ -409,7 +414,7 @@ class WordMeaning(commands.Cog):
             if definition_text:
                 embed.description = definition_text.strip()[:2048]  # Respect embed limits
             else:
-                return await ctx.send(f"Found the word but couldn't extract definitions. Try visiting: {url}", delete_after=15)
+                return await ctx.send(f"Found the word but couldn't extract definitions. Try visiting: {url}")
 
             # Examples (only if requested or in base command)
             if show_examples or (not any([show_examples, show_synonyms, show_proverbs])):
@@ -446,20 +451,21 @@ class WordMeaning(commands.Cog):
 
             # Fix: Ensure embed has content before sending
             if not embed.description and not embed.fields:
-                return await ctx.send(f"Found the word but couldn't extract any usable content. Try visiting: {url}", delete_after=15)
+                return await ctx.send(f"Found the word but couldn't extract any usable content. Try visiting: {url}")
 
             await ctx.send(embed=embed)
 
         except asyncio.TimeoutError:
-            await ctx.send(f"Request timed out while looking up '{query}'. Please try again.", delete_after=15)
+            await ctx.send(f"Request timed out while looking up '{query}'. Please try again.")
         except Exception as e:
-            await ctx.send(f"An error occurred while looking up '{query}': {str(e)}", delete_after=15)
+            await ctx.send(f"An error occurred while looking up '{query}': {str(e)}")
 
     # +------------------------------------------------------------+
     # |              Rhyme Finder RhymeZone API                    |
     # +------------------------------------------------------------+
-    @commands.command(aliases=['rhyme', 'rhymes'])
-    async def rhymefinder(self, ctx, *, phrase: str = None):
+    @commands.command(aliases=['rhymefinder', 'rhymes'])
+    @commands.guild_only()
+    async def rhyme(self, ctx, *, phrase: str = None):
         """Find rhymes for the last word in a phrase
 
         Usage:
@@ -676,6 +682,7 @@ class WordMeaning(commands.Cog):
 
         except Exception:
             return []
+
 
 async def setup(bot):
     await bot.add_cog(WordMeaning(bot))
