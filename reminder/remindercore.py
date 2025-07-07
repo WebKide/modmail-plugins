@@ -33,6 +33,68 @@ class ReminderPaginator(View):
         if not isinstance(original_message.channel, (discord.DMChannel, discord.PartialMessageable)):
             self.delete_task = self.cog.bot.loop.create_task(self.delete_after_delay())
 
+    def add_buttons(self):
+        """Add navigation and action buttons based on current state"""
+        self.clear_items()  # Clear existing buttons
+
+        # Navigation buttons (only if multiple pages)
+        if len(self.embeds) > 1:
+            # Previous button
+            prev_button = Button(
+                label="◀",
+                style=discord.ButtonStyle.secondary,
+                disabled=self.current_page == 0
+            )
+            prev_button.callback = self.previous_page
+            self.add_item(prev_button)
+
+            # Page indicator
+            page_button = Button(
+                label=f"{self.current_page + 1}/{len(self.embeds)}",
+                style=discord.ButtonStyle.secondary,
+                disabled=True
+            )
+            self.add_item(page_button)
+
+            # Next button
+            next_button = Button(
+                label="▶",
+                style=discord.ButtonStyle.secondary,
+                disabled=self.current_page == len(self.embeds) - 1
+            )
+            next_button.callback = self.next_page
+            self.add_item(next_button)
+
+        # Action buttons
+        delete_button = Button(
+            label="🗑️ Delete",
+            style=discord.ButtonStyle.danger
+        )
+        delete_button.callback = self.delete_reminder
+        self.add_item(delete_button)
+
+        off_button = Button(
+            label="OFF",
+            emoji="🔇",
+            style=discord.ButtonStyle.secondary
+        )
+        off_button.callback = self.off_reminder
+        self.add_item(off_button)
+
+    async def previous_page(self, interaction: discord.Interaction):
+        """Navigate to previous page"""
+        if self.current_page > 0:
+            self.current_page -= 1
+            self.add_buttons()
+            await interaction.response.edit_message(embed=self.embeds[self.current_page], view=self)
+
+    async def next_page(self, interaction: discord.Interaction):
+        """Navigate to next page"""
+        if self.current_page < len(self.embeds) - 1:
+            self.current_page += 1
+            self.add_buttons()
+            await interaction.response.edit_message(embed=self.embeds[self.current_page], view=self)
+
     async def delete_after_delay(self, delay=60):
         """Delete the message after delay if not in DMs"""
         try:
