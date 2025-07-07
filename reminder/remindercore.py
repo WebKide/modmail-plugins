@@ -140,7 +140,7 @@ class ReminderPaginator(View):
                 footer_text = self.embeds[self.current_page].footer.text
                 if not footer_text or "ID: " not in footer_text:
                     raise ValueError("Invalid footer format")
-                reminder_id = footer_text.split("ID: ")[1].split(" ")[0]  # Handle additional text
+                reminder_id = footer_text.split("ID: ")[1].strip()  # Handle additional text  .split(" ")[0]
             except (IndexError, AttributeError, ValueError):
                 await interaction.response.send_message("❌ Could not find reminder ID", ephemeral=True)
                 return
