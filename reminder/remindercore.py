@@ -127,7 +127,7 @@ class ReminderPaginator(View):
         except Exception as e:
             log.error(f"Error in ReminderPaginator timeout: {e}")
 
-    # replace entire "async def delete_reminder" inside "class ReminderPaginator"
+    # Updated delete_reminder block
     async def delete_reminder(self, interaction: discord.Interaction):
         """Handle reminder deletion with proper atomic operations and error handling"""
         try:
@@ -135,24 +135,22 @@ class ReminderPaginator(View):
                 await interaction.response.send_message("❌ No reminders to delete", ephemeral=True)
                 return
 
-            # Extract reminder ID safely
+            # Get reminder ID from stored data (safer than parsing footer)
+            reminder_data = self.embeds[self.current_page].footer.text
+            reminder_id = reminder_data.split("ID: ")[1].split(" ")[0]  # Fallback parsing
             try:
-                footer_text = self.embeds[self.current_page].footer.text
-                if not footer_text or "ID: " not in footer_text:
-                    raise ValueError("Invalid footer format")
-                reminder_id = footer_text.split("ID: ")[1].strip()  # Handle additional text  .split(" ")[0]
-            except (IndexError, AttributeError, ValueError):
-                await interaction.response.send_message("❌ Could not find reminder ID", ephemeral=True)
-                return
-
-            # Atomic delete operation with proper error handling
-            try:
-                result = await self.cog.db.delete_one({"_id": reminder_id, "status": "active"})
+                # Fetch reminder from database to verify existence
+                reminder = await self.cog.db.find_one({"_id": reminder_id, "status": "active"})
+                if not reminder:
+                    await interaction.response.send_message("❌ Reminder not found (may have been already deleted)", ephemeral=True)
+                    return
             except Exception as e:
-                log.error(f"Database error deleting reminder {reminder_id}: {e}")
+                log.error(f"Database error fetching reminder {reminder_id}: {e}")
                 await interaction.response.send_message(f"❌ Database error: Connection failed", ephemeral=True)
                 return
 
+            # Atomic delete operation
+            result = await self.cog.db.delete_one({"_id": reminder_id, "status": "active"})
             if result.deleted_count == 0:
                 await interaction.response.send_message("❌ Reminder not found (may have been already deleted)", ephemeral=True)
                 return
@@ -376,6 +374,7 @@ class RecurringView(View):
                     "_id": reminder_id,
                     "user_id": self.user_id,
                     "channel_id": self.reminder_data["channel_id"],
+                    "guild_id": self.reminder_data.get("guild_id"),
                     "text": self.reminder_data["text"],
                     "due": self.reminder_data["due"],
                     "created": datetime.now(pytz.UTC),
