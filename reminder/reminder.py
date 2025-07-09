@@ -337,17 +337,31 @@ class Reminder(commands.Cog):
             # Convert to user timezone for calculation
             user_time = original_due.astimezone(user_tz)
 
-            # Calculate next occurrence maintaining time-of-day
+            # Extract original time components
+            original_hour = user_time.hour
+            original_minute = user_time.minute
+
+            # Calculate next occurrence date
             if frequency == "daily":
-                next_user_time = user_time + timedelta(days=1)
+                next_date = user_time + timedelta(days=1)
             elif frequency == "weekly":
-                next_user_time = user_time + timedelta(weeks=1)
+                next_date = user_time + timedelta(weeks=1)
             elif frequency == "monthly":
-                # Use relativedelta for proper month handling
-                next_user_time = user_time + relativedelta(months=1)
+                next_date = user_time + relativedelta(months=1)
             else:
                 log.error(f"Unknown recurring frequency: {frequency}")
                 return
+
+            # Set the new date with original time
+            next_user_time = user_tz.localize(
+                datetime(
+                    next_date.year,
+                    next_date.month,
+                    next_date.day,
+                    original_hour,
+                    original_minute
+                )
+            )
 
             # Convert back to UTC
             next_due = next_user_time.astimezone(pytz.UTC)
@@ -366,7 +380,6 @@ class Reminder(commands.Cog):
 
         except Exception as e:
             log.error(f"Failed to reschedule recurring reminder {reminder.get('_id')}: {e}")
-            # Mark as failed if rescheduling fails
             await self.db.update_one(
                 {"_id": reminder["_id"]},
                 {"$set": {"status": "failed", "error": "reschedule_failed"}}
@@ -425,7 +438,7 @@ class Reminder(commands.Cog):
                 # Ensure UTC timezone
                 due = pytz.UTC.localize(due) if due.tzinfo is None else due.astimezone(pytz.UTC)
 
-                # Validate future time, consolidated
+                # Validate future time
                 if due <= datetime.now(pytz.UTC) + timedelta(seconds=10):  # 10 second buffer
                     current_time_str = await self.timezone_manager.format_time_with_timezone(
                         datetime.now(pytz.UTC), ctx.author.id
@@ -438,6 +451,12 @@ class Reminder(commands.Cog):
                         f"You entered: `{entered_time_str}`\n"
                         f"Current time: `{current_time_str}`", delete_after=9
                     )
+            except Exception as e:
+                return await ctx.send(
+                    f"### ⚠️ Couldn't understand the time.\nTry formats like:\n"
+                    "• `in 5 minutes`\n• `tomorrow at 3pm`\n• `next monday`\n\n"
+                    f"Error: {str(e)[:100]}", delete_after=9
+                )
 
             # Show recurring options
             reminder_data = {
@@ -476,7 +495,6 @@ class Reminder(commands.Cog):
             )
 
         finally:
-            # await asyncio.sleep(69)
             try:
                 await ctx.message.delete()
             except discord.Forbidden:
