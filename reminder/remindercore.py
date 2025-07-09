@@ -136,8 +136,7 @@ class ReminderPaginator(View):
                 return
 
             # Get reminder ID from stored data (safer than parsing footer)
-            reminder_data = self.embeds[self.current_page].footer.text
-            reminder_id = reminder_data.split("ID: ")[1].split(" ")[0]  # Fallback parsing
+            reminder_id = self.embeds[self.current_page].footer.text.split("ID: ")[1].split(" ")[0]
             try:
                 # Fetch reminder from database to verify existence
                 reminder = await self.cog.db.find_one({"_id": reminder_id, "status": "active"})
