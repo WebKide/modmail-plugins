@@ -3,6 +3,7 @@ import asyncio
 import logging
 from datetime import datetime, timedelta
 from typing import List, Dict, Optional
+import pymongo
 import re
 
 import dateparser
@@ -20,7 +21,7 @@ from .remindertimezone import ReminderTimezone, TimezoneConverter
 from .remindercore import ReminderPaginator, SnoozeView, RecurringView, DualDeliveryView
 
 log = logging.getLogger("Modmail")
-__version__ = "3.05"
+__version__ = "3.06"
 logo = "https://i.imgur.com/677JpTl.png"
 
 class Reminder(commands.Cog):
@@ -35,11 +36,27 @@ class Reminder(commands.Cog):
         self.checkmark_emoji = "☑️"
 
     async def _create_indexes(self):
+        """Relies on pymongo"""
+        max_retries = 3
+        for attempt in range(max_retries):
+            try:
+                await self.db.create_index([("user_id", 1), ("status", 1)], name="user_status_index", sparse=True)
+                await self.db.create_index([("due", 1), ("status", 1)], name="due_status_index", sparse=True)
+                return
+            except pymongo.errors.OperationFailure as e:
+                if attempt == max_retries - 1:
+                    log.error(f"Failed to create indexes after {max_retries} attempts: {e}")
+                    raise
+                await asyncio.sleep(1)  # Wait before retrying
+    '''
+    # old method without pymongo
+    async def _create_indexes(self):
         try:
             await self.db.create_index([("user_id", 1), ("status", 1)])
             await self.db.create_index([("due", 1), ("status", 1)])
         except Exception as e:
             log.error(f"Failed to create indexes: {e}")
+    '''
 
     def cog_unload(self):
         self.reminder_loop.cancel()
@@ -408,7 +425,7 @@ class Reminder(commands.Cog):
                 # Ensure UTC timezone
                 due = pytz.UTC.localize(due) if due.tzinfo is None else due.astimezone(pytz.UTC)
 
-                # Validate future time
+                # Validate future time, consolidated
                 if due <= datetime.now(pytz.UTC) + timedelta(seconds=10):  # 10 second buffer
                     current_time_str = await self.timezone_manager.format_time_with_timezone(
                         datetime.now(pytz.UTC), ctx.author.id
@@ -421,35 +438,12 @@ class Reminder(commands.Cog):
                         f"You entered: `{entered_time_str}`\n"
                         f"Current time: `{current_time_str}`", delete_after=9
                     )
-            except Exception as e:
-                return await ctx.send(
-                    "### ⚠️ Couldn't understand the time.\nTry formats like:\n"
-                    "• `in 5 minutes`\n• `tomorrow at 3pm`\n• `next monday`\n\n"
-                    f"Error: {str(e)[:100]}", delete_after=9
-                )
-
-            # Ensure UTC timezone
-            due = pytz.UTC.localize(due) if due.tzinfo is None else due.astimezone(pytz.UTC)
-
-            # Validate future time
-            if due <= datetime.now(pytz.UTC):
-                current_time_str = await self.timezone_manager.format_time_with_timezone(
-                    datetime.now(pytz.UTC), ctx.author.id
-                )
-                entered_time_str = await self.timezone_manager.format_time_with_timezone(
-                    due, ctx.author.id
-                )
-                return await ctx.send(
-                    f"### ⏳ **Time must be in the future!**\n"
-                    f"You entered: `{entered_time_str}`\n"
-                    f"Current time: `{current_time_str}`", delete_after=9
-                )
 
             # Show recurring options
             reminder_data = {
                 "user_id": ctx.author.id,
                 "channel_id": ctx.channel.id,
-                "guild_id": ctx.guild.id if ctx.guild else None,  # Add this line
+                "guild_id": ctx.guild.id,
                 "text": reminder_text,
                 "due": due
             }
@@ -482,7 +476,7 @@ class Reminder(commands.Cog):
             )
 
         finally:
-            await asyncio.sleep(69)
+            # await asyncio.sleep(69)
             try:
                 await ctx.message.delete()
             except discord.Forbidden:
@@ -583,10 +577,6 @@ class Reminder(commands.Cog):
 
         # Only process checkmark emoji
         if str(payload.emoji) != self.checkmark_emoji:
-            return
-
-        # Explicitly ignore thread channels to prevent the warning
-        if hasattr(payload, 'channel_type') and payload.channel_type in [discord.ChannelType.public_thread, discord.ChannelType.private_thread]:
             return
 
         try:
