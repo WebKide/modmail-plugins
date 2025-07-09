@@ -38,30 +38,42 @@ class ReminderTimezone:
         return pytz.UTC
 
     async def set_user_timezone(self, user_id: int, timezone_str: str) -> Optional[pytz.BaseTzInfo]:
-        """Validate and set user's timezone"""
+        """Validate and set user's timezone, supporting UTC offsets and named timezones"""
         try:
-            # Parse UTC offset format
-            match = UTC_OFFSET_PATTERN.match(timezone_str.strip())
-            if not match:
-                return None
+            timezone_str = timezone_str.strip()
+            # Try parsing as UTC offset first
+            match = UTC_OFFSET_PATTERN.match(timezone_str)
+            if match:
+                sign, hours, minutes = match.groups()
+                hours = int(hours)
+                minutes = int(minutes) if minutes else 0
 
-            sign, hours = match.groups()
-            hours = int(hours)
+                # Validate offset range
+                if hours > 14 or (hours == 14 and minutes > 0) or hours < -12:
+                    return None
 
-            if hours > 14 or hours < -12:
-                return None
+                # Calculate total offset in minutes
+                offset_minutes = hours * 60 + minutes
+                if sign == '-':
+                    offset_minutes = -offset_minutes
 
-            # Create fixed offset timezone
-            offset_minutes = hours * 60
-            if sign == '-':
-                offset_minutes = -offset_minutes
-
-            timezone = pytz.FixedOffset(offset_minutes)
+                timezone = pytz.FixedOffset(offset_minutes)
+            else:
+                # Try as a named timezone (e.g., America/New_York)
+                if timezone_str in pytz.all_timezones:
+                    timezone = pytz.timezone(timezone_str)
+                else:
+                    return None
 
             # Atomic database update
             await self.db.update_one(
                 {"_id": f"timezone_{user_id}"},
-                {"$set": {"offset_minutes": offset_minutes}},
+                {"$set": {
+                    "offset_minutes": timezone.utcoffset(datetime.now()).total_seconds() / 60
+                    if isinstance(timezone, pytz.FixedOffset)
+                    else None,
+                    "timezone_name": timezone.zone if hasattr(timezone, 'zone') else None
+                }},
                 upsert=True
             )
 
@@ -72,7 +84,6 @@ class ReminderTimezone:
         except Exception as e:
             log.error(f"Failed to set timezone for user {user_id}: {e}")
             return None
-
     def clean_cache(self, active_user_ids: Set[int]):
         """Remove cached timezones for inactive users"""
         inactive_users = set(self.user_timezones.keys()) - active_user_ids
@@ -101,27 +112,20 @@ class ReminderTimezone:
     def get_timezone_display(self, timezone: pytz.BaseTzInfo) -> str:
         """Get human-readable timezone display with proper UTC offset"""
         try:
-            # Handle FixedOffset timezones (user-set UTC offsets)
-            if hasattr(timezone, '_offset'):  # Works for both pytz.FixedOffset and newer zoneinfo
-                total_seconds = timezone._offset.total_seconds()
-                offset_hours = int(total_seconds / 3600)
+            if isinstance(timezone, pytz.FixedOffset):
+                total_minutes = int(timezone.utcoffset(datetime.now()).total_seconds() / 60)
+                hours = abs(total_minutes) // 60
+                minutes = abs(total_minutes) % 60
+                sign = '-' if total_minutes < 0 else '+'
 
-                # Handle UTC±0 case
-                if offset_hours == 0:
+                if hours > 14 or (hours == 14 and minutes > 0):
+                    log.warning(f"Invalid timezone offset: {total_minutes} minutes")
                     return "UTC±0"
 
-                # Format with proper sign
-                sign = '-' if offset_hours < 0 else '+'
-                abs_hours = abs(offset_hours)
+                if minutes == 0:
+                    return f"UTC{sign}{hours}"
+                return f"UTC{sign}{hours}:{minutes:02d}"
 
-                # Validate offset range (UTC-12 to UTC+14)
-                if abs_hours > 14:
-                    log.warning(f"Invalid timezone offset: {offset_hours} hours")
-                    return "UTC±0"  # Fallback to UTC
-
-                return f"UTC{sign}{abs_hours}"
-
-            # Handle named timezones (like 'America/New_York')
             elif hasattr(timezone, 'zone'):
                 return str(timezone.zone)
 
