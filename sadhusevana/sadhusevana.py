@@ -746,6 +746,8 @@ class SadhuSevana(commands.Cog):
         _bot_logs_channel = discord.utils.get(guild.text_channels, name="bot-logs")
         for guild_id in self._config_cache:
             try:
+                return  # early finish
+
                 log.info(f"Checking voice cleanup for guild {guild_id}")
                 config = await self.get_guild_config(guild_id)
                 voice_channel_id = config.get('voice_channel')
