@@ -586,6 +586,60 @@ class Reminder(commands.Cog):
             msg = await ctx.send(embed=error_embed)
             await msg.delete(delay=60)  # delete embed after a minute
 
+    @commands.command(aliases=["clearcompleted", "dropreminders"])
+    @commands.guild_only()
+    async def clearreminders(self, ctx):
+        """Delete all your completed reminders from the database"""
+        try:
+            try:
+                await ctx.message.delete()
+            except discord.Forbidden:
+                pass
+
+            # Count completed reminders before deletion
+            count = await self.db.count_documents({
+                "user_id": ctx.author.id,
+                "status": "completed"
+            })
+
+            if count == 0:
+                embed = discord.Embed(
+                    description="## ✅ No completed reminders to clear!",
+                    color=discord.Color.blue()
+                )
+                embed.set_thumbnail(url=logo)
+                msg = await ctx.send(embed=embed)
+                await msg.delete(delay=10)
+                return
+
+            # Delete all completed reminders for the user
+            result = await self.db.delete_many({
+                "user_id": ctx.author.id,
+                "status": "completed"
+            })
+
+            embed = discord.Embed(
+                description=(
+                    f"## 🗑️ **Cleared {result.deleted_count} completed reminder{'s' if result.deleted_count != 1 else ''}!**\n"
+                    f"Your database has been cleaned."
+                ),
+                color=discord.Color.green()
+            )
+            embed.set_thumbnail(url=logo)
+
+            msg = await ctx.send(embed=embed)
+            await msg.delete(delay=260)
+
+        except Exception as e:
+            log.error(f"Error clearing completed reminders: {e}")
+            error_embed = discord.Embed(
+                title="❌ Error clearing reminders",
+                description=f"```{str(e)[:1000]}```",
+                color=discord.Color.red()
+            )
+            msg = await ctx.send(embed=error_embed)
+            await msg.delete(delay=60)
+
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
         """Handle checkmark reactions to clean up DMs"""
@@ -644,3 +698,4 @@ class Reminder(commands.Cog):
 async def setup(bot):
     """Discord.py Setup function"""
     await bot.add_cog(Reminder(bot))
+
