@@ -37,7 +37,12 @@ class SadhuUI:
         join_text = random.choice(HardCoded["JOIN"])
         outro = random.choice(HardCoded["OUTRO"])
 
-        intro_text = f'\u200b{intro_base}where we explore the teachings of {teachings}. Join our host {speaker} for a thought-provoking discussion{join_text} your spiritual journey through the path of Rūpānuga Ujjvala Mādhurya-prema.\n\n{outro}.'
+        intro_text = (
+            f"\u200b{intro_base}where we explore {teachings}. "
+            f"Join our host {speaker} for a thought-provoking discussion{join_text} "
+            f"the path of Rūpānuga Ujjvala Mādhurya-prema.\n\n{outro}."
+            )
+        # your spiritual journey through the path of Rūpānuga Ujjvala Mādhurya-prema.
         return intro_text.encode('utf-8').decode('utf-8')
 
     @staticmethod
