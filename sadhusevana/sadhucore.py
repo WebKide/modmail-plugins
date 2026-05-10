@@ -38,7 +38,7 @@ class SadhuUI:
         outro = random.choice(HardCoded["OUTRO"])
 
         intro_text = (
-            f"\u200b{intro_base}where we explore {teachings}. "
+            f"\u200b{intro_base}where we explore {teachings}.\n\n"
             f"Join our host {speaker} for a thought-provoking discussion{join_text} "
             f"the path of Rūpānuga Ujjvala Mādhurya-prema.\n\n{outro}."
             )
