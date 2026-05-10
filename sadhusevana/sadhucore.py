@@ -53,8 +53,11 @@ class SadhuUI:
                 suffix = SadhuUI.get_ordinal_suffix(t_now.day)
 
                 flag_emoji = SadhuUI.EMOJI_MAP.get(code, f":flag_{code.lower()}:")
-                date_str = t_now.strftime('**%H**:%M | %A, %b %d')  # date_str = t_now.strftime('**%H**:%M:%S — %A, %b %d, %Y')
-                date_str = date_str.replace(f"{t_now.day}", f"{t_now.day}{suffix}")
+                #  date_str = t_now.strftime('**%H**:%M:%S — %A, %b %d, %Y')
+                time_part = t_now.strftime('**%H**:%M')
+                date_part = t_now.strftime('%A, %b')
+                day_val = t_now.day
+                date_str = f"{time_part} | {date_part} {day_val}{suffix}"
 
                 city_name = tz_path.split("/")[-1].replace("Kolkata", "Māyāpura").replace("La_Paz", "Cochabamba").replace("_", " ")  # NEW VALUE
                 t_str.append(f"{flag_emoji} {date_str} in {city_name}")
