@@ -25,7 +25,7 @@ HardCoded = {
         "the Six Gosvāmīs of Vṛndāvana",
         "the followers of Śrī Śrī Rūpa-Sanātana",
         "the Gauḍīya Vaiṣṇava tradition",
-        "the Gauḍīya Sampradāya-ācāryas",
+        "the Brahmā Madhva Gauḍīya Sampradāya-ācāryas",
         "the teachings of Śrīman Mahāprabhu",
         "the rasika-śiromaṇīs of our line"
     ],
@@ -42,7 +42,7 @@ HardCoded = {
         ", making it a lively encounter within",
         ", to relish the mellows of",
         ", to dive head-first into",
-        ", to relish the mellows of",
+        ", to taste the mellows of",
         ", to be enlivened by"
     ],
 
@@ -52,10 +52,10 @@ HardCoded = {
         "Without further ado, sit back, relax and, listen attentively",
         "Hold on to your chairs, and simply “lend us your ears”",
         "You’ve been eagerly waiting for this, and so have we. Sit back, relax and, listen attentively",
-        "From the monk-mobile to your ears: let these pastimes fill your heart",
-        "Connect to the voice-channel, close your eyes, and let the pastimes and narrations carry you home",
-        "The spiritual frequency is set —tune in and travel to Vṛndāvana by mind",
-        "Your seat is reserved in the sound-booth of Hari-Katha —come and, listen"
+        "Directly from the **monk-mobile** to your ears: let these pastimes fill your heart",
+        "Connect to the voice-channel, close your eyes, and let the pastimes and narrations carry you back home",
+        "The spiritual frequency is set. Just tune in and travel to Vṛndāvana by mind",
+        "Your seat is reserved in the sound-booth of Hari-Katha, simply come and, listen"
     ],
 
     "NOTIFICATION_BANNERS": [
