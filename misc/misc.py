@@ -236,7 +236,7 @@ class Misc(commands.Cog):
     # +------------------------------------------------------------+
     @commands.command(description='Use only to rename the bot from a text-channel', no_pm=True)
     @commands.has_permissions(administrator=True)
-    async def botname(self, ctx, text: str = None):
+    async def botname(self, ctx, *, text: str = None):
         """ Change Bot’s name """
         if ctx.author.id not in dev_list:
             return
@@ -248,7 +248,7 @@ class Misc(commands.Cog):
             try:
                 await ctx.channel.typing()
                 await asyncio.sleep(6)
-                await ctx.bot.user.edit(username=str(text[6:]))
+                await ctx.bot.user.edit(username=text)
                 await ctx.send(f'Thanks for renaming me: {text}')
                 await ctx.message.delete()
             except Exception as e:
