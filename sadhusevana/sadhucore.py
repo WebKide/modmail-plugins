@@ -53,14 +53,14 @@ class SadhuUI:
                 suffix = SadhuUI.get_ordinal_suffix(t_now.day)
 
                 flag_emoji = SadhuUI.EMOJI_MAP.get(code, f":flag_{code.lower()}:")
-                date_str = t_now.strftime('**%H**:%M:%S — %A %b %d, %Y')
+                date_str = t_now.strftime('**%H**:%M:%S — %A, %b %d, %Y')
                 date_str = date_str.replace(f"{t_now.day},", f"{t_now.day}{suffix},")
 
-                city_name = tz_path.split("/")[-1].replace("_", " ").replace("Kolkata", "Māyāpura").replace("La_Paz", "Cochabamba")  # NEW VALUE
+                city_name = tz_path.split("/")[-1].replace("Kolkata", "Māyāpura").replace("La_Paz", "Cochabamba").replace("_", " ")  # NEW VALUE
                 t_str.append(f"{flag_emoji} {date_str} in {city_name}")
             except Exception as e:
                 print(f"Error processing timezone {code}: {str(e)}")
-                t_str.append(f"⚠️ {code} — Timezone Error")
+                t_str.append(f"⚠️ {code} — Timezone Error!")
                 continue
         return "\n".join(t_str)
 
