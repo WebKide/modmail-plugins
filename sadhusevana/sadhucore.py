@@ -54,7 +54,8 @@ class SadhuUI:
                 date_str = t_now.strftime('**%H**:%M:%S — %A %b %d, %Y')
                 date_str = date_str.replace(f"{t_now.day},", f"{t_now.day}{suffix},")
 
-                t_str.append(f"{flag_emoji} {date_str} 「{code}」")
+                city_name = city_data["tz"].split("/")[-1].replace("_", " ")  # NEW VALUE TO BE USED IN THE RESULT
+                t_str.append(f"{flag_emoji} {date_str} in {city_name}")
             except Exception as e:
                 print(f"Error processing timezone {code}: {str(e)}")
                 t_str.append(f"⚠️ {code} — Timezone Error")
