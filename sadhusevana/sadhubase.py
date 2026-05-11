@@ -20,14 +20,15 @@ HardCoded = {
     "TEACHINGS": [
         "the teachings of our Rūpānuga Guru-varga",
         "the wisdom of our Vaiṣṇava Ācāryas",
-        "the Śrī Gauḍīya Vaiṣṇava Ācāryas",
-        "Śrīla Rūpa Gosvāmī and his followers",
-        "the Six Gosvāmīs of Vṛndāvana",
-        "the followers of Śrī Śrī Rūpa-Sanātana",
-        "the Gauḍīya Vaiṣṇava tradition",
-        "the Brahmā Madhva Gauḍīya Sampradāya-ācāryas",
+        "the teachings of Śrī Gauḍīya Vaiṣṇava Ācāryas",
+        "teachings of Śrīla Rūpa Gosvāmī and his followers",
+        "the teachings of the Six Gosvāmīs of Vṛndāvana",
+        "the teachings of followers of Śrī Śrī Rūpa-Sanātana",
+        "the Gauḍīya Vaiṣṇava tradition’s teachings",
+        "the teachings of Brahmā Madhva Gauḍīya Sampradāya-ācāryas",
         "the teachings of Śrīman Mahāprabhu",
-        "the rasika-śiromaṇīs of our line"
+        "the teachings of the paramahaṁsa-kula-cūḍāmaṇi-ācāryas of our line",
+        "the teachings of the rasika-śiromaṇīs of our line"
     ],
 
     "JOIN": [
