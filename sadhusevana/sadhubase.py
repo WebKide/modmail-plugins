@@ -14,7 +14,25 @@ HardCoded = {
         "Prepare for a blissful day ahead with the **{guild_name}** Podcast, ",
         "Let the beautiful narrations resonate through the **{guild_name}** Podcast, ",
         "Get ready to drink these drops of nectar with the **{guild_name}** Podcast, ",
-        "Experience the nectar of Hari-kathā on the **{guild_name}** Podcast, "
+        "Experience the nectar of Hari-kathā on the **{guild_name}** Podcast, ",
+        "Reclaim your spiritual rhythm today with the **{guild_name}** Podcast, ",
+        "Transcend the mundane atmosphere through the **{guild_name}** Podcast, ",
+        "Let the light of transcendental knowledge shine via the **{guild_name}** Podcast, ",
+        "Cool the fire of material existence with the **{guild_name}** Podcast, ",
+        "Dive deep into the ocean of devotion with the **{guild_name}** Podcast, ",
+        "Your daily source of divine inspiration is HERE at the **{guild_name}** Podcast, ",
+        "Journey to the spiritual world through the sound of the **{guild_name}** Podcast, ",
+        "Cleanse the mirror of your mind with the **{guild_name}** Podcast, ",
+        "The gates to Goloka Vṛndāvana are open here on the **{guild_name}** Podcast, ",
+        "Elevate your consciousness to new heights with the **{guild_name}** Podcast, ",
+        "Immerse yourself in the flow of kṛpā with the **{guild_name}** Podcast, ",
+        "The wait is over, welcome back to the **{guild_name}** Podcast, ",
+        "Settle into a mood of deep meditation with the **{guild_name}** Podcast, ",
+        "Nourish your inner self today through the **{guild_name}** Podcast, ",
+        "Step away from the noise and into the **{guild_name}** Podcast, ",
+        "Refresh your spirit with the nectar of the **{guild_name}** Podcast, ",
+        "Connect with the lineage of pure bhakti on the **{guild_name}** Podcast, ",
+        "Welcome to a new episode of sat-chit-ānanda on the **{guild_name}** Podcast, "
     ],
 
     "TEACHINGS": [
@@ -28,7 +46,18 @@ HardCoded = {
         "the teachings of Brahmā Madhva Gauḍīya Sampradāya-ācāryas",
         "the teachings of Śrīman Mahāprabhu",
         "the teachings of the paramahaṁsa-kula-cūḍāmaṇi-ācāryas of our line",
-        "the teachings of the rasika-śiromaṇīs of our line"
+        "the teachings of the rasika-śiromaṇīs of our line",
+        "the revolutionary spirit of the Bhaktivinoda-dhārā",
+        "the instructions of the nitya-siddhas",
+        "the foundational truths of the tattva-siddhānta found it śāstra",
+        "the path of unalloyed service to the dust of the lotus feet of the guru-varga",
+        "the beauty of the confidential rāgānuga teachings",
+        "the nectar of the confidential Rūpānuga teachings",
+        "the internal moods of the vraja-parikaras",
+        "the instructions to achieve the parama-puruṣārtha",
+        "the path of exclusive devotion to Śrī Śrī Guru and Gaurāṅga",
+        "the secret treasure of the parama-puruṣārtha",
+        "the transformative power of the śuddha-nāma-saṅkīrtana"
     ],
 
     "JOIN": [
@@ -56,7 +85,22 @@ HardCoded = {
         "Directly from the **monk-mobile** to your ears: let these pastimes fill your heart",
         "Connect to the voice-channel, close your eyes, and let the pastimes and narrations carry you back home",
         "The spiritual frequency is set. Just tune in and travel to Vṛndāvana by mind",
-        "Your seat is reserved in the sound-booth of Hari-Katha, simply come and, listen"
+        "Your seat is reserved in the sound-booth of Harikathā, simply come and, listen",
+        "The doors to Vraja-dhāma are opening through the medium of sound; simply step inside and listen",
+        "Take a deep breath, leave the world behind, and immerse yourself in this divine Harikathā",
+        "Let the sound vibration carry you to the banks of the Yamunā for this sacred meditation",
+        "The assembly of devotees is gathered; let us now drink the nectar of these transcendental topics",
+        "Tune your consciousness to the frequency of Harikathā and let the transformation begin",
+        "Silence the mind, awaken the soul, and join us in this journey beyond the material sky",
+        "A feast for the soul has been served; please take your seat and relish every sound bite",
+        "The path is clear and the guide is ready; let us walk together following the footsteps of Śrīla Gurudeva",
+        "The nectar-stream is flowing; simply open the cup of your ears and drink to your heart’s content",
+        "Step out of the mundane and into the eternal as we listen this sacred narration",
+        "Let these words be the lamp that guides you out of the forest of material existence and suffering",
+        "Enter the grove of divine contemplation and leave the noise of the world at the door",
+        "The spiritual transmission is starting now; stay connected and let your heart be filled",
+        "We are traveling by the power of transcendental sound; keep your focus sharp and your heart open",
+        "The journey back to our eternal home begins with a single moment of attentive hearing"
     ],
 
     "NOTIFICATION_BANNERS": [
