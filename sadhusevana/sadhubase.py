@@ -62,12 +62,12 @@ HardCoded = {
 
     "JOIN": [
         ", to delve deeper into",
-        ", to explore and connect with",
+        ", to explore and connect in",
         ", so that you can learn, grow, and connect personally on",
         ", inviting you to immerse yourself in",
         ", taking you on an intimate journey through",
         ", to experience the sweetness of",
-        ", to awaken your inner bhakti with",
+        ", to awaken your inner bhakti in",
         ", to taste the nectar of",
         ", to relish the mellows of",
         ", to dive head-first into",
