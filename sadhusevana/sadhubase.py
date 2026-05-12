@@ -68,9 +68,9 @@ HardCoded = {
         ", to experience the sweetness of",
         ", to awaken your inner bhakti in",
         ", to taste the nectar of",
-        ", to relish the mellows of",
+        ", to relish the sweetness of",
         ", to dive head-first into",
-        ", to taste the mellows of",
+        ", to taste the beauty of",
         ", to be enlivened by"
     ],
 
