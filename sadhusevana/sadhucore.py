@@ -81,7 +81,7 @@ class SadhuUI:
         # Build the final string
         final_output = []
         for date_str, locations in grouped_times.items():
-            final_output.append(f"{date_str}")
+            final_output.append(f"**{date_str}**")
             final_output.extend(locations)
             final_output.append("") # Empty line between date groups
 
@@ -267,3 +267,4 @@ class TimezoneView(discord.ui.View):
             await self.ctx.send("Timezone setup timed out.", delete_after=15)
         except (discord.NotFound, AttributeError):
             pass  # Message was deleted or ctx is unavailable
+
