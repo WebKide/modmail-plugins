@@ -51,7 +51,7 @@ class SadhuUI:
         full_options_map = {item["code"]: item["tz"] for item in HardCoded["TIMEZONE_OPTIONS"]}
 
         # Dictionary to group locations by their date string
-        # Key: "Monday, May 11th", Value: List of formatted city strings
+        # Key: "day, month number Nᵗʰ", Value: List of formatted city strings
         grouped_times = {}
 
         for code, tz_name in timezones.items():
@@ -60,7 +60,7 @@ class SadhuUI:
                 tz = z(tz_name)
                 t_now = t.now(tz)
 
-                # Create the Date Header (e.g., Monday, May 11th)
+                # Create the Date Header (e.g., Monday, May 27th)
                 suffix = SadhuUI.get_ordinal_suffix(t_now.day)
                 date_header = t_now.strftime(f'%A, %B {t_now.day}{suffix}')
 
@@ -81,7 +81,7 @@ class SadhuUI:
         # Build the final string
         final_output = []
         for date_str, locations in grouped_times.items():
-            final_output.append(f"**{date_str}**")
+            final_output.append(f"### {date_str}")
             final_output.extend(locations)
             final_output.append("") # Empty line between date groups
 
