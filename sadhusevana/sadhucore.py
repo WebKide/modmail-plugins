@@ -99,14 +99,14 @@ class SadhuUI:
             what = ' '.join(event_today.split(' ')[1:])
             notif_image = 'https://cdn.discordapp.com/attachments/375179500604096512/1079876674235154442/flyerdesign_27022023_172353.png'
 
-            em = discord.Embed(colour=discord.Colour(0xf9b517), description=SadhuUI.format_timezones(timezones))
+            em = discord.Embed(colour=discord.Colour(0xff7722), description=SadhuUI.format_timezones(timezones))
             em.set_author(name='𝖧𝖺𝗋𝗂-𝗄𝖺𝗍𝗁𝖺̄ 𝗋𝖾𝗆𝗂𝗇𝖽𝖾𝗋', icon_url=avatar_img)
             em.add_field(name='Event today:', value=what, inline=False)
             em.add_field(name='Attentive Listeners', value=SadhuUI.generate_intro_text(guild_name, speaker), inline=False)
             em.set_thumbnail(url=notif_image)
             em.set_footer(text=f'⇐ Join the Voice Channel NOW! — {bot_latency*1000:.2f}ms')
         else:
-            em = discord.Embed(colour=discord.Colour(0xf9b517), description=SadhuUI.format_timezones(timezones))
+            em = discord.Embed(colour=discord.Colour(0xff7722), description=SadhuUI.format_timezones(timezones))
             em.set_author(name='𝖧𝖺𝗋𝗂-𝗄𝖺𝗍𝗁𝖺̄ 𝗋𝖾𝗆𝗂𝗇𝖽𝖾𝗋', icon_url=avatar_img)
             em.add_field(name='Attentive Listeners', value=SadhuUI.generate_intro_text(guild_name, speaker), inline=False)
             em.set_image(url=random.choice(HardCoded['NOTIFICATION_BANNERS']))
@@ -122,7 +122,7 @@ class SadhuUI:
         em = discord.Embed(
             title="Harikatha",
             description=f"Seems that {user_list} {'is' if len(users_in_voice) == 1 else 'are'} still connected to the Harikatha.",
-            colour=discord.Colour(0xf9b517)
+            colour=discord.Colour(0xff7722)
         )
         em.set_thumbnail(url=guild.icon.url if guild.icon else None)
         em.set_footer(text="Cancel disconnection for Mods and Admins")
