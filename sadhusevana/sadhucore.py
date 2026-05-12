@@ -83,7 +83,7 @@ class SadhuUI:
         for date_str, locations in grouped_times.items():
             final_output.append(f"### {date_str}")
             final_output.extend(locations)
-            final_output.append("") # Empty line between date groups
+            # final_output.append("") # Empty line between date groups
 
         return "\n".join(final_output).strip()
 
