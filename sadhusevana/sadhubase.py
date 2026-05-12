@@ -36,7 +36,7 @@ HardCoded = {
     ],
 
     "TEACHINGS": [
-        "the teachings of our Guru-varga",
+        "the teachings of our topmost Gauḍīya Guru-varga",
         "the wisdom of our Vaiṣṇava Ācāryas",
         "the writings of Śrī Gauḍīya Vaiṣṇava Ācāryas",
         "the writings of the Six Gosvāmīs of Vṛndāvana",
@@ -51,7 +51,7 @@ HardCoded = {
         "the foundational truths of the tattva-siddhānta found in śāstra",
         "the path of unalloyed service to the dust of the lotus feet of the guru-varga",
         "the beauty of the confidential rāgānuga teachings",
-        "the nectar of the confidential teachings",
+        "the nectar of the confidential writings",
         "the internal moods of the vraja-parikaras",
         "the instructions to achieve the parama-puruṣārtha",
         "the path of exclusive devotion to Śrī Śrī Guru and Gaurāṅga",
@@ -82,7 +82,7 @@ HardCoded = {
         "You’ve been eagerly waiting for this, and so have we. Sit back, relax and, listen attentively",
         "Directly from the **monk-mobile** to your ears: let these pastimes fill your heart",
         "Connect to the voice-channel, close your eyes, and let the pastimes and narrations carry you back home",
-        "The spiritual frequency is set. Just tune in and travel to Vṛndāvana by mind",
+        "The spiritual frequency is set. Just tune in, listen, and travel to Vṛndāvana by mind",
         "Your seat is reserved in the sound-booth of Harikathā, simply come and, listen",
         "The doors to Vraja-dhāma are opening through the medium of sound; simply step inside and listen",
         "Take a deep breath, leave the world behind, and immerse yourself in this divine Harikathā",
