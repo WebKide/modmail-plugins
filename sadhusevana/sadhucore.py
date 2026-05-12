@@ -47,30 +47,45 @@ class SadhuUI:
 
     @staticmethod
     def format_timezones(timezones):
-        """Format timezone strings for display"""
-        t_str = []
+        """Format timezone strings grouped by date"""
         full_options_map = {item["code"]: item["tz"] for item in HardCoded["TIMEZONE_OPTIONS"]}
+
+        # Dictionary to group locations by their date string
+        # Key: "Monday, May 11th", Value: List of formatted city strings
+        grouped_times = {}
+
         for code, tz_name in timezones.items():
             try:
-                tz_path = full_options_map.get(code, tz_name)  # actual route
+                tz_path = full_options_map.get(code, tz_name)
                 tz = z(tz_name)
                 t_now = t.now(tz)
+
+                # Create the Date Header (e.g., Monday, May 11th)
                 suffix = SadhuUI.get_ordinal_suffix(t_now.day)
+                date_header = t_now.strftime(f'%A, %B {t_now.day}{suffix}')
 
+                if date_header not in grouped_times:
+                    grouped_times[date_header] = []
+
+                # Format the City line
                 flag_emoji = SadhuUI.EMOJI_MAP.get(code, f":flag_{code.lower()}:")
-                #  date_str = t_now.strftime('**%H**:%M:%S — %A, %b %d, %Y')
                 time_part = t_now.strftime('**%H**:%M')
-                date_part = t_now.strftime('%A, %b')
-                day_val = t_now.day
-                date_str = f"{time_part} | {date_part} {day_val}{suffix}"
+                city_name = tz_path.split("/")[-1].replace("Kolkata", "Māyāpura").replace("La_Paz", "Cochabamba").replace("_", " ")
 
-                city_name = tz_path.split("/")[-1].replace("Kolkata", "Māyāpura").replace("La_Paz", "Cochabamba").replace("_", " ")  # NEW VALUE
-                t_str.append(f"{flag_emoji} {date_str} in {city_name}")
+                grouped_times[date_header].append(f"{flag_emoji} {time_part} in {city_name}")
+
             except Exception as e:
                 print(f"Error processing timezone {code}: {str(e)}")
-                t_str.append(f"⚠️ {code} — Timezone Error!")
                 continue
-        return "\n".join(t_str)
+
+        # Build the final string
+        final_output = []
+        for date_str, locations in grouped_times.items():
+            final_output.append(f"{date_str}")
+            final_output.extend(locations)
+            final_output.append("") # Empty line between date groups
+
+        return "\n".join(final_output).strip()
 
     @staticmethod
     def create_notification_embed(guild, author, config, event_today=None, bot_latency=0):
