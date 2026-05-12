@@ -40,7 +40,7 @@ class SadhuUI:
         intro_text = (
             f"\u200b{intro_base}where we explore {teachings}.\n\n"
             f"Join our host {speaker} for a thought-provoking discussion{join_text} "
-            f"the Rūpānuga Ujjvala Mādhurya-prema.\n\n{outro}."
+            f"the Rūpānuga Ujjvala Mādhurya-prema mellows.\n\n{outro}."
             )
         # your spiritual journey through the path of Rūpānuga Ujjvala Mādhurya-prema.
         return intro_text.encode('utf-8').decode('utf-8')
