@@ -36,7 +36,7 @@ HardCoded = {
     ],
 
     "TEACHINGS": [
-        "the teachings of our Rūpānuga Guru-varga",
+        "the teachings of our Guru-varga",
         "the wisdom of our Vaiṣṇava Ācāryas",
         "the teachings of Śrī Gauḍīya Vaiṣṇava Ācāryas",
         "teachings of Śrīla Rūpa Gosvāmī and his followers",
@@ -52,7 +52,7 @@ HardCoded = {
         "the foundational truths of the tattva-siddhānta found it śāstra",
         "the path of unalloyed service to the dust of the lotus feet of the guru-varga",
         "the beauty of the confidential rāgānuga teachings",
-        "the nectar of the confidential Rūpānuga teachings",
+        "the nectar of the confidential teachings",
         "the internal moods of the vraja-parikaras",
         "the instructions to achieve the parama-puruṣārtha",
         "the path of exclusive devotion to Śrī Śrī Guru and Gaurāṅga",
