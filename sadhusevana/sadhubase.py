@@ -32,7 +32,7 @@ HardCoded = {
         "Step away from the noise and into the **{guild_name}** Podcast, ",
         "Refresh your spirit with the nectar of the **{guild_name}** Podcast, ",
         "Connect with the lineage of pure bhakti on the **{guild_name}** Podcast, ",
-        "Welcome to a new episode of sat-chit-ānanda on the **{guild_name}** Podcast, "
+        "Welcome to a new episode of acintya-bhedābheda-tattva on the **{guild_name}** Podcast, "
     ],
 
     "TEACHINGS": [
