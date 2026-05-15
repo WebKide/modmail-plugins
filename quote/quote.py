@@ -30,13 +30,13 @@ from core.models import PermissionLevel
 
 class Quote(commands.Cog):
     """
-    This plugin will search up to 100 messages back in the same channel
+    *This plugin will search up to 100 messages back in the same channel
     For content searches, it will quote the first matching message found
     The quoted message will appear identical to the original, including:
-        Author name and avatar
-        Message content
-        Attachments (files, images, and media)
-        Embeds
+    ├ Author name and avatar
+    ├ Message content
+    ├ Attachments (files, images, and media)
+    └ Embeds
     A link to the original message is included at the bottom by default
     """
     def __init__(self, bot):
