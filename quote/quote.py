@@ -30,7 +30,7 @@ from core.models import PermissionLevel
 
 class Quote(commands.Cog):
     """
-    *This plugin will search up to 100 messages back in the same channel
+    Quote* plugin will search up to 100 messages back in the same channel
     For content searches, it will quote the first matching message found
     The quoted message will appear identical to the original, including:
     ├ Author name and avatar
