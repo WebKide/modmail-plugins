@@ -1,6 +1,6 @@
 """
 MIT License
-Copyright (c) 2020-2025 WebKide [d.id @323578534763298816]
+Copyright (c) 2020-2026 WebKide [d.id @323578534763298816]
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
@@ -20,7 +20,7 @@ SOFTWARE.
 
 import aiohttp
 import re
-from typing import Optional
+from typing import Optional, Tuple
 
 import discord
 from discord.ext import commands
@@ -55,7 +55,7 @@ class Quote(commands.Cog):
             for webhook in webhooks:
                 if webhook.user == self.bot.user:
                     return webhook
-        
+
         avatar = await self.bot.user.avatar.read()
         return await channel.create_webhook(
             name=f"Quote Plugin - {self.bot.user.name}",
@@ -66,15 +66,30 @@ class Quote(commands.Cog):
     # ╔════════════════════╦═════════════════════╦═════════════════╗
     # ╠════════════════════╣RESOLVE_MESSAGE LOGIC╠═════════════════╣
     # ╚════════════════════╩═════════════════════╩═════════════════╝
-    async def resolve_message(self, ctx: commands.Context, query: str) -> Optional[discord.Message]:
-        # Handle --clean flag
-        clean = '--clean' in query
+    async def resolve_message(self, ctx: commands.Context, query: str) -> Tuple[Optional[discord.Message], bool, Optional[discord.TextChannel], bool]:
+        # Track if user explicitly supplied the flags "--clean" OR "--channel"
+        has_channel_flag = False
+        target_channel = None
+
+        # Check and resolve custom destination target via --channel flag
+        channel_match = re.search(r'--channel\s+(?:<#)?([0-9]+)>?', query)
+        if channel_match:
+            has_channel_flag = True
+            chan_id = int(channel_match.group(1))
+            target_channel = ctx.guild.get_channel(chan_id)
+            # Remove the whole flag pattern from the query parameter
+            query = re.sub(r'--channel\s+(?:<#)?[0-9]+>?', '', query).strip()
+
+        # Handle --clean flag (implicitly True if cross-channel)
+        has_clean_flag = '--clean' in query
+        clean = has_clean_flag or target_channel is not None
         query = query.replace('--clean', '').strip()
 
         # Message ID lookup
         if query.isdigit():
             try:
-                return await ctx.channel.fetch_message(int(query)), clean
+                msg = await ctx.channel.fetch_message(int(query))
+                return msg, clean, target_channel, has_channel_flag
             except discord.NotFound:
                 pass
 
@@ -90,25 +105,26 @@ class Quote(commands.Cog):
                     # Check if guild is accessible
                     guild = self.bot.get_guild(guild_id)
                     if not guild or guild not in ctx.author.mutual_guilds:
-                        return None, clean
+                        return None, clean, target_channel, has_channel_flag
                     # Check if user has access to the guild
                     channel = guild.get_channel(channel_id)
                     if isinstance(channel, discord.TextChannel):
-                        return await channel.fetch_message(message_id), clean
+                        msg = await channel.fetch_message(message_id)
+                        return msg, clean, target_channel, has_channel_flag
             except (ValueError, discord.NotFound, discord.Forbidden):
                 pass
 
-        # Message searc by Content (in current channel message history for matching content)
+        # Message search by Content (in current channel message history for matching content)
         async for message in ctx.channel.history(limit=100):
             if query.lower() in message.content.lower():
-                return message, clean
+                return message, clean, target_channel, has_channel_flag
 
-        return None, clean
+        return None, clean, target_channel, has_channel_flag
 
     # ╔════════════════════╦═════════════════════╦═════════════════╗
     # ╠════════════════════╣QUOTE_MESSAGE COMMAND╠═════════════════╣
-    # ╚════════════════════╩═════════════════════╩═════════════════╝
-    @commands.command(name="quote", aliases=["q"])
+    # ╚════════════════════╩═════════════════════╩═════════════════╗
+    @commands.command(name="quote", aliases=["q"], description="Quote messages using WebHooks")
     @commands.guild_only()
     async def quote_message(self, ctx: commands.Context, *, query: str):
         """Quote any message by ID, link, or content search
@@ -116,29 +132,39 @@ class Quote(commands.Cog):
         {prefix}quote 1234567890
         {prefix}quote Hello World
         {prefix}q https://discord/123/456/789
-        {prefix}q 1234567890 --clean (OWNER only)```"""
+        {prefix}q 1234567890 --clean (OWNER only)
+        {prefix}q 1234567890 --channel #general (OWNER only)```"""
         try:
             await ctx.message.delete()
         except discord.Forbidden:
             pass
 
-        message, clean = await self.resolve_message(ctx, query)
+        message, clean, target_channel, has_channel_flag = await self.resolve_message(ctx, query)
         if not message:
             return await ctx.send("❌ Message not found or inaccessible", delete_after=10)
 
-        # Verify clean flag permission
-        if clean:
-            if not await checks.has_permissions(PermissionLevel.OWNER).predicate(ctx):
+        is_owner = await checks.has_permissions(PermissionLevel.OWNER).predicate(ctx)
+
+        # Enforce owner restrictions on the --channel flag
+        if has_channel_flag and not is_owner:
+            return await ctx.send("⚠️ The `--channel` option is restricted to the bot OWNER.", delete_after=10)
+
+        # Setup destination channel
+        destination = target_channel if target_channel else ctx.channel
+
+        # Verify clean flag permission ONLY if not explicitly routing to an external channel
+        if clean and not target_channel:
+            if not is_owner:
                 clean = False
                 await ctx.send("⚠️ Clean mode is owner-only", delete_after=5)
 
-        webhook = await self.create_webhook(ctx.channel)
-        
+        webhook = await self.create_webhook(destination)
+
         # Build components
         content = message.content
         files = []
         embeds = message.embeds.copy() if message.embeds else []
-        
+
         # Handle attachments
         for attachment in message.attachments:
             try:
@@ -168,10 +194,18 @@ class Quote(commands.Cog):
             wait=True
         )
 
+        # Send confirmation message if cross-channel quoting occurred
+        if target_channel and target_channel != ctx.channel:
+            author_name = ctx.message.author.display_name
+            await ctx.send(
+                f"✅ Success {author_name}! The quote has been delivered to {target_channel.mention}. "
+                f"[**Jump to View Quote here**]({webhook_msg.jump_url})"
+            )
+
         # Add original message’s reactions, if available
         if message.reactions:
             try:
-                quoted_msg = await ctx.channel.fetch_message(webhook_msg.id)
+                quoted_msg = await destination.fetch_message(webhook_msg.id)
                 for reaction in message.reactions:
                     try:
                         await quoted_msg.add_reaction(reaction.emoji)
