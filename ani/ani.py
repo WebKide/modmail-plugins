@@ -185,7 +185,12 @@ class PaginatorView(View):
         self.stop()
 
 class Ani(commands.Cog):
-    """(∩｀-´)⊃━☆ﾟ.*･｡ﾟ Kawaii Anirisuto (AniList) sagashi komando, uwu """
+    """
+    (∩｀-´)⊃━☆ﾟ.*･｡ﾟ Kawaii Anirisuto (AniList) sagashi komando, uwu
+    
+    A powerful AniList.co integration for Discord that fetches anime, manga, and character info with rich embeds.
+    Search directly from Discord with paginated results and detailed metadata.
+    """
     def __init__(self, bot):
         self.bot = bot
         self.url = "https://graphql.anilist.co"
