@@ -1,6 +1,6 @@
 """
 MIT License
-Copyright (c) 2020-2025 WebKide [d.id @323578534763298816]
+Copyright (c) 2020-2026 WebKide [d.id @323578534763298816]
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
@@ -18,40 +18,80 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-import asyncio, io, random, textwrap, traceback, inspect2
+import asyncio
+import inspect2
+import io
+import random
+import textwrap
+import traceback
 
-import aiohttp, discord
+import aiohttp
+import discord
 from aiohttp import ClientSession, ClientResponseError
 from discord import File
 from discord.ext import commands
 
-dev_list = [1094090021914554510, 323578534763298816]
+dev_list = [1094090021914554510, 323578534763298816, 1437031434723397662, 354780332081414154]
 
 
 class Misc(commands.Cog):
-    """Useful commands to make your life easier
+    """Useful commands to make your life easier v2.0
     - Only works with Admin perms, and a few commands require dev_list to be modified if you wish to use
-    - This cog was made to keep a few commands that are no longer common but are useful to run a server
+    - This cog was made to keep a few commands that are no longer common, but are useful to run a server
     """
     def __init__(self, bot):
         self.bot = bot
         self.mod_color = discord.Colour(0x7289da)  # Blurple
         self.user_color = discord.Colour(0xed791d)  # Orange
+        self.IMGUR_THUMBNAIL_KICK = "https://i.imgur.com/BjhBoyc.png"
+        self.IMGUR_THUMBNAIL_BAN = "https://i.imgur.com/1tqFp0N.png"
+        self.IMGUR_THUMBNAIL_HACKBAN = "https://i.imgur.com/85qlkKU.png"
         self.allowed_file_types = ['.png', '.jpg', '.jpeg', '.pdf', '.doc', '.docx', '.txt', '.gif', '.mp3']
+        self._internal_session = None
+
+    async def cog_unload(self):
+        """Cleanup session on cog unload if internal session was created"""
+        if self._internal_session:
+            await self._internal_session.close()
+
+    async def _get_session(self):
+        """Safely fetch bot HTTP session or provision an internal fallback"""
+        if hasattr(self.bot, 'session') and isinstance(self.bot.session, aiohttp.ClientSession):
+            return self.bot.session
+        if not self._internal_session or self._internal_session.closed:
+            self._internal_session = aiohttp.ClientSession()
+        return self._internal_session
 
     async def format_mod_embed(self, ctx, user, success, method):
         """ Helper func to format an embed to prevent extra code """
         emb = discord.Embed()
-        emb.set_author(name=method.title(), icon_url=user.avatar_url)
-        emb.colour = (discord.Colour(0xed791d))
-        emb.set_footer(text=f'User ID: {user.id}')
-        if success:
-            if method == 'ban':
-                emb.description = f'{user} was just {method}ned.'
-            else:
-                emb.description = f'{user} was just {method}ed.'
+        emb.colour = self.mod_color
+
+        # Handle both Member objects and raw user IDs
+        user_id = getattr(user, "id", user)
+        emb.set_footer(text=f'User ID: {user_id}')
+
+        if isinstance(user, int):
+            emb.set_author(name=method.title())
+            user_display = f"User with ID `{user}`"
         else:
-            emb.description = f"You do not have the permissions to {method} users."
+            emb.set_author(name=method.title(), icon_url=user.display_avatar.url)
+            user_display = f"**{user}**"
+
+        # Handle past tense properly
+        past_tense = {
+            'kick': 'kicked',
+            'ban': 'banned',
+            'hackban': 'hackbanned'
+        }
+
+        if success:
+            emb.description = f'{user_display} was successfully {past_tense.get(method, method+"ed")}.'
+        else:
+            # Dynamically state why the action failed rather than guessing it was permission-based
+            reason = error_msg or "Internal API Exception or missing Bot Permissions."
+            emb.description = f"❌ Failed to {method} {user_display}.\n**Reason:** {reason}"
+            emb.colour = discord.Colour.red() # Shift to red on failure states
 
         return emb
 
@@ -59,7 +99,9 @@ class Misc(commands.Cog):
     # +------------------------------------------------------------+
     # |                     CLEAR BOT DMs                          |
     # +------------------------------------------------------------+
-    @commands.command(description='WARNING! advanced command', name='clear_bot_dms', no_pm=True)
+    @commands.command(description='WARNING! advanced command', name='clear_bot_dms')
+    @commands.has_any_role('Admin', 'Mod', 'Moderator')
+    @commands.guild_only()
     async def _clear_bot_dms(self, ctx, limit: int):
         """WARNING!! Deletes the bot’s own messages in your DMs
         - Can be invoked from any text-channel. Limit applies to checked messages.
@@ -138,103 +180,210 @@ class Misc(commands.Cog):
              await ctx.send(f"An API error occurred while fetching history:\n{e}", delete_after=23)
 
     # +------------------------------------------------------------+
+    # |             MANAGE GUILD COMMANDS GROUP                    |
+    # +------------------------------------------------------------+
+    @commands.group(description='Kick, Ban or Hackban', invoke_without_command=True)
+    @commands.guild_only()
+    async def manageguild(self, ctx):
+        """ Kick, Ban or Hackban users with command + Reason """
+        msg = f'Command for Admins and Mods to Kick, Ban or Hackban user with ID or @nametag + Reason.'
+        await ctx.send(msg, delete_after=23)
+
+    # +------------------------------------------------------------+
+    # |                        KICK                                |
+    # +------------------------------------------------------------+
+    @manageguild.command()
+    @commands.guild_only()
+    @commands.has_any_role('Admin', 'Mod', 'Moderator')
+    @commands.bot_has_permissions(kick_members=True)
+    async def kick(self, ctx, member: discord.Member, *, reason: str = None):
+        """ Kick a member from the server """
+        reason = reason or "No reason provided"
+        error_msg = None
+
+        try:
+            await member.kick(reason=reason)
+            success = True
+        except discord.Forbidden:
+            success = False
+            error_msg = "The bot lacks permissions or the user holds a higher role hierarchy."
+        except discord.HTTPException:
+            success = False
+            error_msg = "Network connection issues with Discord API."
+
+        # Format embed using the helper function
+        emb = await self.format_mod_embed(ctx, member, success, 'kick', error_msg)
+        emb.set_thumbnail(url=self.IMGUR_THUMBNAIL_KICK)
+
+        try:
+            await ctx.send(embed=emb)
+        except discord.HTTPException as e:
+            if ctx.author.id in DEV_LIST:
+                await ctx.send(f'```py\n{e}```', delete_after=120)
+
+    # +------------------------------------------------------------+
+    # |                        BAN                                 |
+    # +------------------------------------------------------------+
+    @manageguild.command()
+    @commands.guild_only()
+    @commands.has_any_role('Admin', 'Mod', 'Moderator')
+    @commands.bot_has_permissions(ban_members=True)
+    async def ban(self, ctx, member: discord.Member, *, reason: str = None):
+        """ Ban a member from the server """
+        reason = reason or "No reason provided"
+        error_msg = None
+
+        try:
+            await member.ban(reason=reason)
+            success = True
+        except discord.Forbidden:
+            success = False
+            error_msg = "The bot lacks permissions or the user holds a higher role hierarchy."
+        except discord.HTTPException:
+            success = False
+            error_msg = "Network connection issues with Discord API."
+
+        emb = await self.format_mod_embed(ctx, member, success, 'ban', error_msg)
+        emb.set_thumbnail(url=self.IMGUR_THUMBNAIL_BAN)
+
+        try:
+            await ctx.send(embed=emb)
+        except discord.HTTPException as e:
+            if ctx.author.id in DEV_LIST:
+                await ctx.send(f'```py\n{e}```', delete_after=120)
+
+    # +------------------------------------------------------------+
     # |                        HACKBAN                             |
     # +------------------------------------------------------------+
-    @commands.command(description='Ban using ID if they are no longer in server', no_pm=True)
+    @manageguild.command(description='Ban using ID if they are no longer in server')
     @commands.has_permissions(administrator=True)
-    async def hackban(self, ctx, userid, *, reason=None):
+    @commands.bot_has_permissions(ban_members=True)
+    @commands.guild_only()
+    async def hackban(self, ctx, userid: int, *, reason: str = None):
         """ Ban someone using ID """
         if ctx.author.id not in dev_list:
             return
 
-        try:
-            userid = int(userid)
-        except:
-            await ctx.send('Invalid ID!', delete_after=3)
+        reason = reason or "No reason provided"
+        error_msg = None
 
         try:
-            await ctx.guild.ban(discord.Object(userid), reason=reason)
-        except:
-            success = False
-        else:
+            await ctx.guild.ban(user=discord.Object(id=userid), reason=reason)
             success = True
+        except discord.Forbidden:
+            success = False
+            error_msg = "The bot does not have Ban permissions."
+        except discord.HTTPException:
+            success = False
+            error_msg = "Invalid User ID or API network failure."
 
+        emb = None
         if success:
-            async for entry in ctx.guild.audit_logs(limit=1, user=ctx.guild.me, action=discord.AuditLogAction.ban):
-                emb = await self.format_mod_embed(ctx, entry.target, success, 'hackban')
+            try:
+                async for entry in ctx.guild.audit_logs(limit=5, action=discord.AuditLogAction.ban):
+                    if entry.target and entry.target.id == userid:
+                        emb = await self.format_mod_embed(ctx, entry.target, success, 'hackban')
+                        break
+
+            except discord.Forbidden:
+                # Bot can ban, but might lack separate view_audit_log permissions
+                pass
+
+            if not emb:
+                emb = await self.format_mod_embed(ctx, userid, success, 'hackban')
         else:
             emb = await self.format_mod_embed(ctx, userid, success, 'hackban')
+
+        emb.set_thumbnail(url=self.IMGUR_THUMBNAIL_HACKBAN)
+
         try:
-            return await ctx.send(embed=emb)
+            await ctx.send(embed=emb)
         except discord.HTTPException as e:
-            if ctx.author.id == 323578534763298816:    return await ctx.error(f'​`​`​`py\n{e}​`​`​`')
-            else:
-                pass
+            if ctx.author.id == 1094090021914554510:
+                await ctx.send(f'```py\n{e}```', delete_after=120)
 
     # +------------------------------------------------------------+
     # |                ADD/REMOVE ROLE GROUP                       |
     # +------------------------------------------------------------+
-    @commands.group(description='Give or remove roles',  invoke_without_command=True)
-    async def guildrole(self, ctx: str = None):
+    @commands.group(description='Give or remove roles', invoke_without_command=True)
+    @commands.guild_only()
+    async def guildrole(self, ctx): # FIX: Removed string type hint
         """ Add or Remove a role for any member """
-        msg = f'Command for Mods to give or remove roles for others.\n\nguildrole add @name RoleName\nguildrole remove @name RoleName'
-        return await ctx.send(msg, delete_after=23)
+        msg = (
+            'Command for Mods to give or remove roles for others.\n\n'
+            '`guildrole add @name RoleName`\n'
+            '`guildrole remove @name RoleName`'
+        )
+        await ctx.send(msg, delete_after=23)
 
     # +------------------------------------------------------------+
     # |                        ADD ROLE                            |
     # +------------------------------------------------------------+
-    @guildrole.command(no_pm=True)
+    @guildrole.command(name="add")
+    @commands.guild_only()
     @commands.has_any_role('Admin', 'Mod', 'Moderator')
-    async def add(self, ctx, member: discord.Member, *, rolename: str = None):
-        """ Add a role to someone else
-        
-        Usage:
-        {prefix}guildrole add @name Listener
-        """
-        if not member and rolename is None:
-            return await ctx.send('To **whom** do I add **which** role? ╰(⇀ᗣ↼‶)╯', delete_after=23)
+    @commands.bot_has_permissions(manage_roles=True) # FIX: Proactively checks bot perms
+    async def add_role(self, ctx, member: discord.Member, *, rolename: str = None):
+        """ Add a role to someone else """
+        if not rolename: # FIX: Clean handling of missing role name string
+            return await ctx.send('Please specify the role you want me to give them. ╰(⇀ᗣ↼‶)╯', delete_after=23)
 
-        if rolename is not None:
-            role = discord.utils.find(lambda m: rolename.lower() in m.name.lower(), ctx.message.guild.roles)
-            if not role:
-                return await ctx.send(f'That role `{rolename}` does not exist. ╰(⇀ᗣ↼‶)╯', delete_after=23)
+        # Optimization: case-insensitive search through guild roles
+        role = discord.utils.find(lambda r: rolename.lower() in r.name.lower(), ctx.guild.roles)
 
+        if not role:
+            return await ctx.send(f'That role `{rolename}` does not exist. ╰(⇀ᗣ↼‶)╯', delete_after=23)
+
+        try:
+            await member.add_roles(role)
+
+            # Clean up the invoking message if possible
             try:
-                await member.add_roles(role)
                 await ctx.message.delete()
-                await ctx.send(f'Added: **`{role.name}`** role to *{member.display_name}*')
-            except:
-                await ctx.send("I don’t have the perms to add that role. ╰(⇀ᗣ↼‶)╯", delete_after=23)
+            except discord.Forbidden:
+                pass # Fail silently if bot lacks 'Manage Messages' permission
 
-        else:
-            return await ctx.send('Please mention the member and role you want me to give them. ╰(⇀ᗣ↼‶)╯', delete_after=23)
+            await ctx.send(f'Added: **`{role.name}`** role to *{member.display_name}*')
+
+        except discord.Forbidden: # FIX: Target role hierarchy check
+            await ctx.send("I don’t have the perms to add that role (it might be higher than my own role hierarchy). ╰(⇀ᗣ↼‶)╯", delete_after=23)
+        except discord.HTTPException:
+            await ctx.send("Failed to update roles due to a Discord API error.", delete_after=23)
 
     # +------------------------------------------------------------+
     # |                     REMOVE ROLE                            |
     # +------------------------------------------------------------+
-    @guildrole.command(no_pm=True)
+    @guildrole.command(name="remove")
+    @commands.guild_only()
     @commands.has_any_role('Admin', 'Mod', 'Moderator')
-    async def remove(self, ctx, member: discord.Member, *, rolename: str):
-        """ Remove a role from someone else
-        
-        Usage:
-        {prefix}guildrole remove @name Listener
-        """
-        role = discord.utils.find(lambda m: rolename.lower() in m.name.lower(), ctx.message.guild.roles)
+    @commands.bot_has_permissions(manage_roles=True) # FIX: Proactively checks bot perms
+    async def remove_role(self, ctx, member: discord.Member, *, rolename: str):
+        """ Remove a role from someone else """
+        role = discord.utils.find(lambda r: rolename.lower() in r.name.lower(), ctx.guild.roles)
+
         if not role:
             return await ctx.send(f'That role `{rolename}` does not exist. ╰(⇀ᗣ↼‶)╯', delete_after=23)
 
         try:
             await member.remove_roles(role)
-            await ctx.message.delete()
+
+            try:
+                await ctx.message.delete()
+            except discord.Forbidden:
+                pass
+
             await ctx.send(f'Removed: `{role.name}` role from *{member.display_name}*')
-        except:
-            await ctx.send("I don’t have the perms to remove that role. ╰(⇀ᗣ↼‶)╯", delete_after=23)
+
+        except discord.Forbidden: # FIX: Target role hierarchy check
+            await ctx.send("I don’t have the perms to remove that role (it might be higher than my own role hierarchy). ╰(⇀ᗣ↼‶)╯", delete_after=23)
+        except discord.HTTPException:
+            await ctx.send("Failed to update roles due to a Discord API error.", delete_after=23)
 
     # +------------------------------------------------------------+
     # |                     NAME                                   |
     # +------------------------------------------------------------+
-    @commands.command(description='Use only to rename the bot from a text-channel', no_pm=True)
+    @commands.command(description='Use only to rename the bot from a text-channel')
+    @commands.guild_only()
     @commands.has_permissions(administrator=True)
     async def botname(self, ctx, *, text: str = None):
         """ Change Bot’s name """
@@ -242,29 +391,35 @@ class Misc(commands.Cog):
             return
 
         if text is None:
-            return await ctx.send("What’s my new name going to be?")
+            return await ctx.send("What’s my new name going to be?", delete_after=35)
 
-        if text is not None:
-            try:
-                await ctx.channel.typing()
-                await asyncio.sleep(6)
-                await ctx.bot.user.edit(username=text)
-                await ctx.send(f'Thanks for renaming me: {text}')
-                await ctx.message.delete()
-            except Exception as e:
-                await ctx.send(f'Failed to change my name!\n```{e}```')
-                pass
+        try:
+            async with ctx.channel.typing():
+                await asyncio.sleep(6) 
+                await self.bot.user.edit(username=text)
+                await ctx.send(f'✅ Thanks for renaming me: **{text}**')
+                try:
+                    await ctx.message.delete()
+                except discord.Forbidden:
+                    pass
+        except discord.HTTPException as e:
+            # Catching explicit Discord rate limits (Max 2 name changes per hour)
+            if e.status == 429:
+                await ctx.send("❌ Failed! Discord is rate-limiting username changes. Try again in an hour.", delete_after=23)
+            else:
+                await ctx.send(f'❌ Failed to change my name!\n```py\n{e}```', delete_after=23)
 
     # +------------------------------------------------------------+
     # |                       LOGO                                 |
     # +------------------------------------------------------------+
-    @commands.command(description='Change the bot’s avatar', no_pm=True)
+    @commands.command(description='Change the bot’s avatar')
+    @commands.guild_only()
     @commands.has_permissions(administrator=True)
     async def botlogo(self, ctx, link: str = None):
         """ Change the Bot’s avatar (admins only) """
         if ctx.author.id not in dev_list:
             return await ctx.send("❌ You don't have permission to use this command.", delete_after=23)
-        
+
         if not link:
             return await ctx.send("❌ Please provide a direct image URL (e.g., `https://i.imgur.com/abc123.png`)", delete_after=23)
 
@@ -273,41 +428,49 @@ class Misc(commands.Cog):
             link = f"https://i.imgur.com/{link.split('/')[-1]}.png"  # Convert to direct URL
 
         headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
         }
 
         try:
-            await ctx.channel.typing()
-            for attempt in range(3):  # Retry up to 3 times if rate-limited
-                try:
-                    async with self.bot.session.get(link, headers=headers) as response:
-                        if response.status == 429:  # Rate-limited
-                            retry_after = int(response.headers.get('Retry-After', 5))
-                            await ctx.send(f"⚠️ Rate-limited. Retrying in {retry_after} seconds...", delete_after=23)
-                            await asyncio.sleep(retry_after)
+            async with ctx.channel.typing():
+                session = await self._get_session()
+
+                for attempt in range(3):
+                    try:
+                        async with session.get(link, headers=headers) as response:
+                            if response.status == 429:
+                                retry_after = int(response.headers.get('Retry-After', 5))
+                                await ctx.send(f"⚠️ External host rate-limited. Retrying in {retry_after}s...", delete_after=10)
+                                await asyncio.sleep(retry_after)
+                                continue
+
+                            if response.status != 200:
+                                return await ctx.send(f"❌ Failed to download image (HTTP {response.status})", delete_after=23)
+
+                            content_type = response.headers.get('Content-Type', '').lower()
+                            if not content_type.startswith('image/'):
+                                return await ctx.send(f"❌ URL does not point to a valid image profile.", delete_after=23)
+
+                            image_data = await response.read()
+
+                            if len(image_data) > 10 * 1024 * 1024:
+                                return await ctx.send("❌ Image size exceeds maximum limit of 10MB.", delete_after=23)
+
+                            # Push update to Discord
+                            await self.bot.user.edit(avatar=image_data)
+                            return await ctx.send("✅ Avatar updated successfully!")
+
+                    except aiohttp.ClientResponseError:
+                        if attempt < 2:
+                            await asyncio.sleep(3)
                             continue
+                        raise
 
-                        if response.status != 200:
-                            return await ctx.send(f"❌ Failed to download image (HTTP {response.status})", delete_after=23)
-
-                        content_type = response.headers.get('Content-Type', '').lower()
-                        if not content_type.startswith('image/'):
-                            return await ctx.send(f"❌ URL does not point to an image (Content-Type: {content_type})", delete_after=23)
-
-                        image_data = await response.read()
-
-                        if len(image_data) > 10 * 1024 * 1024:  # 10MB limit
-                            return await ctx.send("❌ Image is too large (max 10MB).", delete_after=23)
-
-                        await self.bot.user.edit(avatar=image_data)
-                        return await ctx.send("✅ Avatar updated successfully!")
-
-                except ClientResponseError as e:
-                    if e.status == 429 and attempt < 2:  # Retry on rate limit
-                        await asyncio.sleep(5)
-                        continue
-                    raise
-
+        except discord.HTTPException as e:
+            if e.status == 429:
+                await ctx.send("❌ Discord API rate-limit hit. You are changing avatars too fast!", delete_after=23)
+            else:
+                await ctx.send(f"❌ Discord API error: `{e.text}`", delete_after=23)
         except Exception as e:
             await ctx.send(f"❌ Failed to update avatar: `{str(e)}`", delete_after=23)
             traceback.print_exc()
@@ -315,7 +478,8 @@ class Misc(commands.Cog):
     # +------------------------------------------------------------+
     # |                     SAUCE                                  |
     # +------------------------------------------------------------+
-    @commands.command(no_pm=True)
+    @commands.command()
+    @commands.guild_only()
     @commands.has_permissions(administrator=True)
     async def sauce(self, ctx, *, command: str = None):
         """ Show source code for any command """
@@ -330,11 +494,11 @@ class Misc(commands.Cog):
 
             if len(i) < 1980:
                 source_full = i.replace('```', '`\u200b`\u200b`')
-                await ctx.send('```py\n' + source_full + '```', delete_after=23)
+                await ctx.send('```py\n' + source_full + '```', delete_after=64)
 
             if len(i) > 1981:
                 source_trim = i.replace('```', '`\u200b`\u200b`')[:1980]
-                await ctx.send('```py\n' + source_trim + '```', delete_after=23)
+                await ctx.send('```py\n' + source_trim + '```', delete_after=64)
 
         else:
             await ctx.send(f"Tell me what cmd's source code you want to see.", delete_after=23)
@@ -342,7 +506,8 @@ class Misc(commands.Cog):
     # +------------------------------------------------------------+
     # |                          SAY                               |
     # +------------------------------------------------------------+
-    @commands.command(no_pm=True)
+    @commands.command()
+    @commands.guild_only()
     @commands.has_permissions(administrator=True)
     async def say(self, ctx, *, msg=''):
         """ Bot repeats message """
@@ -360,7 +525,8 @@ class Misc(commands.Cog):
     # +------------------------------------------------------------+
     # |                     SAY DELET                              |
     # +------------------------------------------------------------+
-    @commands.command(no_pm=True)
+    @commands.command()
+    @commands.guild_only()
     @commands.has_permissions(administrator=True)
     async def sayd(self, ctx, *, msg=''):
         """ Bot sends message and deletes original """
@@ -386,7 +552,8 @@ class Misc(commands.Cog):
     # +------------------------------------------------------------+
     # |                      GEN                                   |
     # +------------------------------------------------------------+
-    @commands.command(aliases=['general'], no_pm=True)
+    @commands.command(aliases=['general'])
+    @commands.guild_only()
     @commands.has_permissions(administrator=True)
     async def g(self, ctx, channel: discord.TextChannel, *, message: str = None):
         """ Send a msg to another channel """
@@ -422,7 +589,8 @@ class Misc(commands.Cog):
     # +------------------------------------------------------------+
     # |                       PURGE                                |
     # +------------------------------------------------------------+
-    @commands.command(aliases=['del', 'p', 'prune'], bulk=True, no_pm=True)
+    @commands.command(aliases=['del', 'p', 'prune'], bulk=True)
+    @commands.guild_only()
     @commands.has_permissions(administrator=True)
     async def purge(self, ctx, limit: int):
         """ Delete x number of messages in text-channel """
