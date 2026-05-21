@@ -620,7 +620,149 @@ class Reminder(commands.Cog):
             await msg.delete(delay=60)
 
     # +------------------------------------------------------------+
-    # |    Reaction listener                                       |
+    # |    !remindadm GROUP                                        |
+    # +------------------------------------------------------------+
+
+    @commands.group(name="remindadm", invoke_without_command=True)
+    @commands.guild_only()
+    @commands.has_permissions(administrator=True)
+    async def remindadm(self, ctx: commands.Context):
+        """Administrative command group for managing the Reminder plugin system."""
+        await ctx.send_help(ctx.command)
+
+    # +------------------------------------------------------------+
+    # |    !remindadm view                                         |
+    # +------------------------------------------------------------+
+
+    @remindadm.command(name="view")
+    @commands.guild_only()
+    @commands.has_permissions(administrator=True)
+    async def remindadm_view(self, ctx: commands.Context, target: discord.User):
+        """
+        View and manage a specific user's active reminders.
+        Usage: !remindadm view @member OR !remindadm view 123456789012345
+        """
+        try:
+            try:
+                await ctx.message.delete()
+            except discord.Forbidden:
+                pass
+
+            raw_reminders = await self.db.find(
+                {"user_id": target.id, "status": "active"}
+            ).sort([("due", 1)]).to_list(length=100)
+
+            if not raw_reminders:
+                embed = discord.Embed(
+                    title="🛡️ Admin Control Panel",
+                    description=f"### **Clean Slate!**\nUser {target.mention} does not have any pending reminders scheduled.",
+                    color=discord.Color.blue()
+                )
+                embed.set_thumbnail(url=logo)
+                await ctx.send(embed=embed, delete_after=15.0)
+                return
+
+            embeds = []
+            for idx, rem in enumerate(raw_reminders, 1):
+                time_str = await self.timezone_manager.format_time_with_timezone(
+                    rem["due"], rem["user_id"]
+                )
+                embed = discord.Embed(
+                    description=f"### 📝 Saved Reminder:\n# {rem['text']}",
+                    color=discord.Color(0xD0D88F),
+                    timestamp=rem["due"]
+                )
+                embed.set_author(
+                    name=f"🛡️ Admin Managing: {target.display_name} — Reminder #{idx}",
+                    icon_url=target.avatar.url if target.avatar else target.default_avatar.url
+                )
+                embed.set_thumbnail(url=logo)
+                embed.add_field(name="📆 When:", value=f"```cs\n{time_str}\n```", inline=False)
+                if rem.get("recurring"):
+                    embed.add_field(
+                        name="🔄 Recurring:",
+                        value=f"`{rem['recurring'].title()}`",
+                        inline=True
+                    )
+                embed.set_footer(text=f"ID: {rem['_id']}")
+                embeds.append(embed)
+
+            menu_msg = await ctx.send(embed=embeds[0])
+            paginator = ReminderPaginator(embeds, raw_reminders, ctx.author.id, menu_msg, self)
+            await menu_msg.edit(view=paginator)
+
+        except Exception as e:
+            log.error(f"Admin view command failed for user {target.id}: {e}")
+            await ctx.send("❌ Admin Error: Unable to safely generate user reminder display panel.", delete_after=10.0)
+
+    # +------------------------------------------------------------+
+    # |    !remindadm purge                                        |
+    # +------------------------------------------------------------+
+
+    @remindadm.command(name="purge")
+    @commands.guild_only()
+    @commands.has_permissions(administrator=True)
+    async def remindadm_purge(self, ctx: commands.Context, flag: Optional[str] = None):
+        """
+        Purge reminder records from the plugin database partition.
+        Usage: !remindadm purge (Clears all reminder records)
+        Usage: !remindadm purge --drop (Wipes ALL data including user timezones for a clean install)
+        """
+        try:
+            try:
+                await ctx.message.delete()
+            except discord.Forbidden:
+                pass
+
+            confirm_embed = discord.Embed(
+                title="⚠️ Critical Database Purge Warning",
+                description="Are you absolutely sure you want to perform this operation?\n"
+                            "This action will permanently alter or erase stored data.",
+                color=discord.Color.red()
+            )
+
+            if flag == "--drop":
+                confirm_embed.description += "\n\n🔥 **CRITICAL:** You used `--drop`. This will completely flush **ALL** tables including user timezone configurations for a factory reset."
+            else:
+                confirm_embed.description += "\n\n🧹 This will delete **all** reminders (active, completed, and failed) across the entire bot partition."
+
+            confirm_embed.set_footer(text="Type 'confirm' within 15 seconds to proceed. Anything else cancels.")
+            prompt_msg = await ctx.send(embed=confirm_embed)
+
+            def check(m):
+                return m.author == ctx.author and m.channel == ctx.channel and m.content.lower() == 'confirm'
+
+            try:
+                await self.bot.wait_for('message', check=check, timeout=15.0)
+            except asyncio.TimeoutError:
+                await prompt_msg.edit(content="❌ **Purge Operation Aborted:** Confirmation timed out.", embed=None, view=None)
+                return
+
+            if flag == "--drop":
+                await self.db.drop()
+                await self._create_indexes()
+                self.timezone_manager.user_timezones.clear()
+                result_text = "💥 **Database Partition Completely Dropped and Re-Indexed!**\nAll reminders and user timezone configs have been wiped cleanly for a fresh install."
+            else:
+                result_active = await self.db.delete_many({"status": {"$in": ["active", "completed", "failed"]}})
+                result_fallback = await self.db.delete_many({"_id": {"$regex": "^(?!(timezone_)).*$"}})
+                total_deleted = result_active.deleted_count + result_fallback.deleted_count
+                result_text = f"🗑️ **Reminders Purge Complete!**\nSuccessfully deleted **{total_deleted}** total reminder logs across the entire partition. User timezones remain preserved."
+
+            success_embed = discord.Embed(
+                title="🛡️ Admin System Maintenance",
+                description=result_text,
+                color=discord.Color.green()
+            )
+            success_embed.set_thumbnail(url=logo)
+            await prompt_msg.edit(embed=success_embed)
+
+        except Exception as e:
+            log.error(f"Critical administrative purge execution routine failed: {e}")
+            await ctx.send("❌ Admin Error: Database execution transaction failed abruptly.", delete_after=15.0)
+
+    # +------------------------------------------------------------+
+    # |    @ Reaction listener                                     |
     # +------------------------------------------------------------+
 
     @commands.Cog.listener()
