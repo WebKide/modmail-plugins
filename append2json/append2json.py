@@ -2,7 +2,7 @@
 
 """
 MIT License
-Copyright (c) 2020-2025 WebKide [d.id @323578534763298816]
+Copyright (c) 2020-2026 WebKide [d.id @323578534763298816]
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
@@ -30,7 +30,7 @@ from discord.ext import commands
 
 
 class Append2Json(commands.Cog):
-    """Append missing Purport fields to existing Bhagavad Gita JSON"""
+    """Append missing Purport fields to existing Bhagavad Gita JSON with real-time status updates."""
 
     def __init__(self, bot):
         self.bot = bot
@@ -43,7 +43,6 @@ class Append2Json(commands.Cog):
         !append2json <raw_json_url>
         OR attach a JSON file
         """
-
         try:
             # -------------------------
             # STEP 1: LOAD JSON
@@ -53,54 +52,42 @@ class Append2Json(commands.Cog):
                 if not data:
                     return await ctx.send("❌ Failed to fetch or parse JSON from URL.")
                 filename = "downloaded.json"
-
             elif ctx.message.attachments:
                 attachment = ctx.message.attachments[0]
-
                 if not attachment.filename.endswith('.json'):
-                    return await ctx.send("Please attach a JSON file")
-
+                    return await ctx.send("❌ Please attach a valid .json file.")
+                
                 json_content = (await attachment.read()).decode('utf-8')
                 data = json.loads(json_content)
                 filename = attachment.filename
-
             else:
-                return await ctx.send("Provide a JSON URL or attach a file.")
+                return await ctx.send("❓ Provide a JSON URL or attach a file.")
 
             # -------------------------
             # STEP 2: EXTRACT CHAPTER
             # -------------------------
-            chapter_num = self.extract_chapter_number(
-                data.get("Chapter-Desc", "")
-            )
-
+            chapter_num = self.extract_chapter_number(data.get("Chapter-Desc", ""))
             if not chapter_num:
-                return await ctx.send(
-                    "❌ Could not extract chapter number from Chapter-Desc."
-                )
+                return await ctx.send("❌ Could not extract chapter number from 'Chapter-Desc'.")
 
-            status_msg = await ctx.send(
-                f"Fetching Purport data for Chapter {chapter_num}..."
-            )
+            # Create an initial message that we will edit in real-time
+            status_msg = await ctx.send(f"⏳ **[1/3]** Initializing extraction for Chapter {chapter_num}...")
 
             # -------------------------
-            # STEP 3: FETCH PURPORTS
+            # STEP 3: FETCH PURPORTS (WITH REAL-TIME STATUS)
             # -------------------------
-            purport_data = await self.fetch_purport_data(chapter_num)
-
-            if not purport_data:
-                return await status_msg.edit(
-                    content="❌ Failed to fetch purport data."
-                )
-
-            verses = data.get("Verses", [])
+            purport_data = await self.fetch_purport_data_with_status(chapter_num, status_msg)
+            if not purport_data or not purport_data["purports"]:
+                return await status_msg.edit(content=f"❌ Failed to extract purport data for Chapter {chapter_num}.")
 
             # -------------------------
             # STEP 4: MERGE DATA
             # -------------------------
+            await status_msg.edit(content="⏳ **[2/3]** Merging site data into original JSON...")
+            verses = data.get("Verses", [])
+
             for idx, verse in enumerate(verses):
                 verse["Purport-title"] = "PURPORT"
-
                 if idx < len(purport_data["purports"]):
                     text = purport_data["purports"][idx]
                     verse["Purport-En"] = text or "No purport for this śloka."
@@ -114,10 +101,11 @@ class Append2Json(commands.Cog):
             # -------------------------
             # STEP 5: OUTPUT
             # -------------------------
+            await status_msg.edit(content="⏳ **[3/3]** Compiling enhanced JSON output file...")
             output_json = json.dumps(data, ensure_ascii=False, indent=2)
 
-            await status_msg.edit(content="✅ Done!")
-
+            await status_msg.edit(content=f"✅ **Success!** Processed Chapter {chapter_num} ({len(verses)} verses).")
+            
             await ctx.send(
                 file=discord.File(
                     io.StringIO(output_json),
@@ -126,27 +114,19 @@ class Append2Json(commands.Cog):
             )
 
         except json.JSONDecodeError:
-            await ctx.send("❌ Invalid JSON.")
+            await ctx.send("❌ Invalid JSON format provided.")
         except Exception as e:
-            await ctx.send(f"❌ Error: {str(e)}")
+            await ctx.send(f"❌ Error encountered: {str(e)}")
 
-    # -------------------------
-    # NEW: FETCH JSON FROM URL
-    # -------------------------
     async def fetch_json_from_url(self, url):
         if not re.match(r'^https?://', url):
             return None
-
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.get(url, timeout=20) as resp:
                     if resp.status != 200:
                         return None
-
-                    text = await resp.text()
-
-                    return json.loads(text)
-
+                    return json.loads(await resp.text())
         except Exception:
             return None
 
@@ -154,7 +134,8 @@ class Append2Json(commands.Cog):
         match = re.match(r'^(\d+)\.', chapter_desc.strip())
         return match.group(1) if match else None
 
-    async def fetch_purport_data(self, chapter_num):
+    async def fetch_purport_data_with_status(self, chapter_num, status_msg: discord.Message):
+        """Scrapes web data and updates the Discord user interface in real-time."""
         url = f"{self.base_url}/bg/{chapter_num}?d=1"
 
         async with aiohttp.ClientSession() as session:
@@ -166,15 +147,21 @@ class Append2Json(commands.Cog):
                 soup = BeautifulSoup(html, 'html.parser')
 
                 textnum_elements = soup.find_all('div', class_='Textnum')
-                if not textnum_elements:
+                total_verses = len(textnum_elements)
+                if total_verses == 0:
                     return None
 
                 purports = []
 
-                for textnum in textnum_elements:
+                for i, textnum in enumerate(textnum_elements, start=1):
+                    # Periodically update Discord status to keep user informed and avoid rate limits
+                    if i == 1 or i % 5 == 0 or i == total_verses:
+                        await status_msg.edit(
+                            content=f"⏳ **[1/3]** Scraping Chapter {chapter_num}: Processing verse **{i}/{total_verses}**..."
+                        )
+
                     purport_text = []
                     current = textnum.find_next_sibling()
-
                     found_purport = False
 
                     while current:
@@ -187,13 +174,12 @@ class Append2Json(commands.Cog):
                                 current = current.find_next_sibling()
                                 continue
 
-                        if found_purport:
-                            if current.get('class'):
-                                classes = current.get('class')
-                                if 'Purport' in classes or 'Normal-Level' in classes:
-                                    text = self.extract_clean_text(current)
-                                    if text:
-                                        purport_text.append(text)
+                        if found_purport and current.get('class'):
+                            classes = current.get('class')
+                            if 'Purport' in classes or 'Normal-Level' in classes:
+                                text = self.extract_clean_text(current)
+                                if text:
+                                    purport_text.append(text)
 
                         current = current.find_next_sibling()
 
@@ -211,13 +197,9 @@ class Append2Json(commands.Cog):
 
     def extract_chapter_end(self, soup, chapter_num):
         thus_end = soup.find('div', class_='Thus-end')
-
         if thus_end:
-            text = self.extract_clean_text(thus_end)
-        else:
-            text = f"Thus end the Bhaktivedanta Purports to Chapter {chapter_num}"
-
-        return text
+            return self.extract_clean_text(thus_end)
+        return f"Thus end the Bhaktivedanta Purports to Chapter {chapter_num}"
 
 
 async def setup(bot):
