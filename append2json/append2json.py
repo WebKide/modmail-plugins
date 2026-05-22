@@ -30,7 +30,7 @@ from discord.ext import commands
 
 
 class Append2Json(commands.Cog):
-    """Append missing Purport fields to existing Bhagavad Gita JSON using timeline index mapping."""
+    """Append missing Purport fields to existing Bhagavad Gita JSON using anchor exclusion mapping."""
 
     def __init__(self, bot):
         self.bot = bot
@@ -70,7 +70,7 @@ class Append2Json(commands.Cog):
             if not chapter_num:
                 return await ctx.send("❌ Could not extract chapter number from 'Chapter-Desc'.")
 
-            status_msg = await ctx.send(f"⏳ **[1/3]** Initializing precise document layout map for Chapter {chapter_num}...")
+            status_msg = await ctx.send(f"⏳ **[1/3]** Initializing anchor isolation maps for Chapter {chapter_num}...")
 
             # -------------------------
             # STEP 3 & 4: MAP & MERGE
@@ -80,7 +80,7 @@ class Append2Json(commands.Cog):
             if not purport_map:
                 return await status_msg.edit(content=f"❌ Failed to extract structural map for Chapter {chapter_num}.")
 
-            await status_msg.edit(content="⏳ **[2/3]** Aligning timeline blocks and merging missing data variants...")
+            await status_msg.edit(content="⏳ **[2/3]** Merging precise multi-class paragraphs into JSON positions...")
             verses = data.get("Verses", [])
 
             for idx, verse in enumerate(verses, start=1):
@@ -102,13 +102,13 @@ class Append2Json(commands.Cog):
             await status_msg.edit(content="⏳ **[3/3]** Saving and encoding output file stream...")
             output_json = json.dumps(data, ensure_ascii=False, indent=2)
 
-            await status_msg.edit(content=f"✅ **Success!** Fixed timeline loops. Verified all {len(verses)} verses.")
+            await status_msg.edit(content=f"✅ **Success!** Verified and filled all {len(verses)} verses with full paragraphs.")
             await ctx.send(file=discord.File(io.StringIO(output_json), filename=filename.replace(".json", "_enhanced.json")))
 
         except json.JSONDecodeError:
             await ctx.send("❌ Invalid JSON format provided.")
         except Exception as e:
-            await ctx.send(f"❌ Structural Timeline Error: {str(e)}")
+            await ctx.send(f"❌ Structural Anchor Error: {str(e)}")
 
     async def fetch_json_from_url(self, url):
         if not re.match(r'^https?://', url):
@@ -135,11 +135,10 @@ class Append2Json(commands.Cog):
                 if response.status != 200:
                     return None, ""
 
-                # Load entire webpage elements into a flat timeline structure list
                 soup = BeautifulSoup(await response.text(), 'html.parser')
                 all_elements = list(soup.find_all(True))
 
-                # Locate and index the exact array layout positions of all verse headers
+                # Locate where each Textnum boundary block begins
                 textnum_indices = [idx for idx, el in enumerate(all_elements) if el.name == 'div' and el.get('class') and 'Textnum' in el.get('class')]
 
                 purport_map = {}
@@ -147,30 +146,44 @@ class Append2Json(commands.Cog):
 
                 for i, current_timeline_idx in enumerate(textnum_indices):
                     if i == 0 or (i + 1) % 5 == 0 or (i + 1) == total_sections:
-                        await status_msg.edit(content=f"⏳ **[1/3]** Mapping timeline slices: Section **{i+1}/{total_sections}**...")
+                        await status_msg.edit(content=f"⏳ **[1/3]** Extracting text slices: Section **{i+1}/{total_sections}**...")
 
-                    # Determine the structural boundary end index for the current text section chunk
                     next_timeline_idx = textnum_indices[i + 1] if i + 1 < len(textnum_indices) else len(all_elements)
-
-                    # Isolate all HTML elements that live inside this specific structural slice block
                     section_slice = all_elements[current_timeline_idx:next_timeline_idx]
 
                     header_element = all_elements[current_timeline_idx]
                     range_text = header_element.get_text(strip=True)
                     verses_covered = self.parse_verse_range(range_text, chapter_num)
 
-                    # Extract all text paragraphs designated under class='Purport' inside this isolated structural slice
+                    # --- ANCHOR EXCLUSION MECHANISM ---
                     purport_paragraphs = []
+                    found_purport_title_anchor = False
+
                     for el in section_slice:
-                        if el.name == 'div' and el.get('class') and 'Purport' in el.get('class'):
-                            text = ' '.join(el.get_text(strip=True).split())
-                            if text and text not in purport_paragraphs: # Deduplicate element tree layers
-                                purport_paragraphs.append(text)
+                        # Detect the explicit header marking the start of the Purport section
+                        if el.name == 'div' and el.get('class') and 'Titles' in el.get('class'):
+                            if 'PURPORT' in el.get_text(strip=True).upper():
+                                found_purport_title_anchor = True
+                                continue # Skip the title itself
+
+                        # Once the anchor is passed, gather everything until the end of the timeline slice
+                        if found_purport_title_anchor:
+                            # Filter out tracking anchor elements or empty blocks
+                            if el.name in ['div', 'p'] and el.get('class'):
+                                # Skip if it accidentally reads a sub-title or link list wrapper at the very bottom
+                                if 'Titles' in el.get('class') or 'Textnum' in el.get('class'):
+                                    continue
+
+                                # Extract, sanitize inner HTML elements out, and normalize text spaces
+                                clean_text = el.get_text(separator=" ", strip=True)
+                                clean_text = ' '.join(clean_text.split())
+
+                                if clean_text and clean_text not in purport_paragraphs and not clean_text.startswith("Link to this page"):
+                                    purport_paragraphs.append(clean_text)
 
                     full_purport_string = '\n\n'.join(purport_paragraphs)
 
                     for v_num in verses_covered:
-                        # Append text blocks dynamically if verses map over split compound locations
                         if str(v_num) in purport_map and purport_map[str(v_num)]:
                             purport_map[str(v_num)] += f"\n\n{full_purport_string}"
                         else:
@@ -190,12 +203,13 @@ class Append2Json(commands.Cog):
             if not numbers:
                 numbers = re.findall(r'\.(\d+)', clean_text)
         elif "TEXT" in clean_text:
-            numbers = re.findall(r'TEXT\s+(\d+)', clean_text)
+            # Handle ranges inside TEXT strings like "TEXTS 16-18"
+            numbers = re.findall(r'(\d+)', clean_text)
 
         if not numbers:
             return []
 
-        if '-' in clean_text or '–' in clean_text:
+        if '-' in clean_text or '–' in clean_text or 'TEXTS' in clean_text:
             try:
                 start = int(numbers[0])
                 end = int(numbers[-1])
