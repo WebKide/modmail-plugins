@@ -8,6 +8,7 @@ import re
 
 import pytz
 from dateutil.relativedelta import relativedelta
+from discord.ui import Select
 
 import discord
 from discord import Interaction
@@ -63,6 +64,10 @@ class ReminderPaginator(View):
             next_button.callback = self.next_page
             self.add_item(next_button)
 
+        shift_button = Button(label="⏱️ Shift Time", style=discord.ButtonStyle.primary)
+        shift_button.callback = self.shift_time
+        self.add_item(shift_button)
+
         delete_button = Button(label="🗑️ Delete", style=discord.ButtonStyle.danger)
         delete_button.callback = self.delete_reminder
         self.add_item(delete_button)
@@ -85,6 +90,29 @@ class ReminderPaginator(View):
             self.current_page += 1
             self.add_buttons()
             await interaction.response.edit_message(embed=self.embeds[self.current_page], view=self)
+
+
+    async def shift_time(self, interaction: discord.Interaction):
+        """Replace current view with the ShiftTimeView dropdown"""
+        try:
+            current = self.reminders[self.current_page]
+            view = ShiftTimeView(
+                self.cog,
+                reminder_id=current["_id"],
+                user_id=self.user_id,
+                current_due=current["due"],
+                recurring=current.get("recurring")
+            )
+            await interaction.response.edit_message(
+                embed=self.embeds[self.current_page],
+                view=view
+            )
+        except Exception as e:
+            log.error(f"Error opening ShiftTimeView: {e}")
+            await interaction.response.send_message(
+                f"❌ Error opening time shift menu: {str(e)[:100]}",
+                ephemeral=True
+            )
 
     async def delete_after_delay(self, delay=60):
         try:
@@ -252,6 +280,109 @@ class SnoozeView(View):
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         return interaction.user.id == self.user_id
+
+
+class ShiftTimeSelect(discord.ui.Select):
+    """Dropdown to shift a reminder's due time forward or backward"""
+
+    def __init__(self, cog, reminder_id: str, user_id: int, current_due: datetime, recurring: Optional[str]):
+        self.cog = cog
+        self.reminder_id = reminder_id
+        self.user_id = user_id
+        self.current_due = current_due
+        self.recurring = recurring
+
+        options = [
+            discord.SelectOption(label="Increase 1 day",    value="+1440", emoji="📅"),
+            discord.SelectOption(label="Increase 6 hrs",    value="+360",  emoji="⏳"),
+            discord.SelectOption(label="Increase 3 hrs",    value="+180",  emoji="⏩"),
+            discord.SelectOption(label="Increase 60 min",   value="+60",   emoji="▶️"),
+            discord.SelectOption(label="Increase 10 min",   value="+10",   emoji="🔼"),
+            discord.SelectOption(label="Decrease 30 min",   value="-30",   emoji="🔽"),
+            discord.SelectOption(label="Decrease 45 min",   value="-45",   emoji="⏪"),
+        ]
+        super().__init__(
+            placeholder="▼ Choose new delay increment...",
+            min_values=1,
+            max_values=1,
+            options=options
+        )
+
+    async def callback(self, interaction: discord.Interaction):
+        try:
+            delta_minutes = int(self.values[0])
+            now = datetime.now(pytz.UTC)
+            new_due = self.current_due + timedelta(minutes=delta_minutes)
+
+            if delta_minutes < 0:
+                if self.recurring:
+                    # For recurring reminders: step forward through the recurrence
+                    # cycle until the new_due lands cleanly in the future
+                    while new_due <= now:
+                        if self.recurring == "daily":
+                            new_due += timedelta(days=1)
+                        elif self.recurring == "weekly":
+                            new_due += timedelta(weeks=1)
+                        elif self.recurring == "monthly":
+                            new_due += relativedelta(months=1)
+                        else:
+                            break
+                else:
+                    # For one-off reminders: silently block if result is in the past
+                    # but allow if there is at least 10 seconds of buffer remaining
+                    if new_due <= now + timedelta(seconds=10):
+                        await interaction.response.send_message(
+                            "⚠️ That shift would place this reminder in the past. "
+                            "No changes were made.",
+                            ephemeral=True
+                        )
+                        return
+
+            result = await self.cog.db.update_one(
+                {"_id": self.reminder_id, "status": "active"},
+                {"$set": {"due": new_due}}
+            )
+
+            if result.modified_count == 0:
+                await interaction.response.send_message(
+                    "❌ Could not update reminder (may have already fired or been deleted).",
+                    ephemeral=True
+                )
+                return
+
+            time_str = await self.cog.timezone_manager.format_time_with_timezone(
+                new_due, self.user_id
+            )
+            direction = "pushed forward" if delta_minutes > 0 else "pulled back"
+            embed = discord.Embed(
+                description=f"✅ **Reminder {direction}!**\n\nNew scheduled time: {time_str}",
+                color=discord.Color.green()
+            )
+            embed.set_thumbnail(url=logo)
+            await interaction.response.edit_message(embed=embed, view=None)
+
+        except Exception as e:
+            log.error(f"ShiftTimeSelect error for reminder {self.reminder_id}: {e}")
+            await interaction.response.send_message(
+                f"❌ Error shifting reminder: {str(e)[:100]}",
+                ephemeral=True
+            )
+
+
+class ShiftTimeView(View):
+    """Wrapper view that holds the ShiftTimeSelect dropdown"""
+
+    def __init__(self, cog, reminder_id: str, user_id: int, current_due: datetime, recurring: Optional[str]):
+        super().__init__(timeout=60)
+        self.user_id = user_id
+        self.add_item(ShiftTimeSelect(cog, reminder_id, user_id, current_due, recurring))
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        return interaction.user.id == self.user_id
+
+    async def on_timeout(self):
+        for item in self.children:
+            item.disabled = True
 
 
 class RecurringView(View):
