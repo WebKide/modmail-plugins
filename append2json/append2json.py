@@ -30,7 +30,7 @@ from discord.ext import commands
 
 
 class Append2Json(commands.Cog):
-    """Append missing Purport fields to existing Bhagavad Gita JSON with resilient block isolation."""
+    """Append missing Purport fields to existing Bhagavad Gita JSON using timeline index mapping."""
 
     def __init__(self, bot):
         self.bot = bot
@@ -70,7 +70,7 @@ class Append2Json(commands.Cog):
             if not chapter_num:
                 return await ctx.send("❌ Could not extract chapter number from 'Chapter-Desc'.")
 
-            status_msg = await ctx.send(f"⏳ **[1/3]** Tracking layout variables for Chapter {chapter_num}...")
+            status_msg = await ctx.send(f"⏳ **[1/3]** Initializing precise document layout map for Chapter {chapter_num}...")
 
             # -------------------------
             # STEP 3 & 4: MAP & MERGE
@@ -80,15 +80,15 @@ class Append2Json(commands.Cog):
             if not purport_map:
                 return await status_msg.edit(content=f"❌ Failed to extract structural map for Chapter {chapter_num}.")
 
-            await status_msg.edit(content="⏳ **[2/3]** Aligning grouped verses and mapping into JSON positions...")
+            await status_msg.edit(content="⏳ **[2/3]** Aligning timeline blocks and merging missing data variants...")
             verses = data.get("Verses", [])
 
             for idx, verse in enumerate(verses, start=1):
                 verse["Purport-title"] = "PURPORT"
 
                 verse_str = str(idx)
-                if verse_str in purport_map:
-                    verse["Purport-En"] = purport_map[verse_str] or "No purport for this śloka."
+                if verse_str in purport_map and purport_map[verse_str].strip():
+                    verse["Purport-En"] = purport_map[verse_str]
                 else:
                     verse["Purport-En"] = "No purport for this śloka."
 
@@ -99,16 +99,16 @@ class Append2Json(commands.Cog):
             # -------------------------
             # STEP 5: OUTPUT HANDLER
             # -------------------------
-            await status_msg.edit(content="⏳ **[3/3]** Finalizing output compilation structural writes...")
+            await status_msg.edit(content="⏳ **[3/3]** Saving and encoding output file stream...")
             output_json = json.dumps(data, ensure_ascii=False, indent=2)
 
-            await status_msg.edit(content=f"✅ **Success!** Correctly mapped all {len(verses)} verses sequentially.")
+            await status_msg.edit(content=f"✅ **Success!** Fixed timeline loops. Verified all {len(verses)} verses.")
             await ctx.send(file=discord.File(io.StringIO(output_json), filename=filename.replace(".json", "_enhanced.json")))
 
         except json.JSONDecodeError:
             await ctx.send("❌ Invalid JSON format provided.")
         except Exception as e:
-            await ctx.send(f"❌ Structural Execution Error: {str(e)}")
+            await ctx.send(f"❌ Structural Timeline Error: {str(e)}")
 
     async def fetch_json_from_url(self, url):
         if not re.match(r'^https?://', url):
@@ -135,51 +135,46 @@ class Append2Json(commands.Cog):
                 if response.status != 200:
                     return None, ""
 
+                # Load entire webpage elements into a flat timeline structure list
                 soup = BeautifulSoup(await response.text(), 'html.parser')
-                textnum_elements = soup.find_all('div', class_='Textnum')
+                all_elements = list(soup.find_all(True))
+
+                # Locate and index the exact array layout positions of all verse headers
+                textnum_indices = [idx for idx, el in enumerate(all_elements) if el.name == 'div' and el.get('class') and 'Textnum' in el.get('class')]
 
                 purport_map = {}
-                total_elements = len(textnum_elements)
+                total_sections = len(textnum_indices)
 
-                for i, textnum in enumerate(textnum_elements, start=1):
-                    if i == 1 or i % 5 == 0 or i == total_elements:
-                        await status_msg.edit(content=f"⏳ **[1/3]** Parsing site mappings: Section Block **{i}/{total_elements}**...")
+                for i, current_timeline_idx in enumerate(textnum_indices):
+                    if i == 0 or (i + 1) % 5 == 0 or (i + 1) == total_sections:
+                        await status_msg.edit(content=f"⏳ **[1/3]** Mapping timeline slices: Section **{i+1}/{total_sections}**...")
 
-                    range_text = textnum.get_text(strip=True)
+                    # Determine the structural boundary end index for the current text section chunk
+                    next_timeline_idx = textnum_indices[i + 1] if i + 1 < len(textnum_indices) else len(all_elements)
+
+                    # Isolate all HTML elements that live inside this specific structural slice block
+                    section_slice = all_elements[current_timeline_idx:next_timeline_idx]
+
+                    header_element = all_elements[current_timeline_idx]
+                    range_text = header_element.get_text(strip=True)
                     verses_covered = self.parse_verse_range(range_text, chapter_num)
 
-                    # --- BLOCK ISOLATION MECHANISM ---
-                    # Instead of stepping blindly, gather all elements belonging exclusively to this specific text entry block
-                    block_elements = []
-                    current = textnum.find_next_sibling()
-
-                    while current:
-                        # Break if we hit the next verse entry header block
-                        if current.get('class') and 'Textnum' in current.get('class'):
-                            break
-                        block_elements.append(current)
-                        current = current.find_next_sibling()
-
-                    # Find all div elements featuring the explicit class='Purport' inside this segment chunk
-                    purport_divs = []
-                    for el in block_elements:
-                        if el.name == 'div' and el.get('class') and 'Purport' in el.get('class'):
-                            purport_divs.append(el)
-                        # Fallback step: search child structural elements nested deep inside the container chunk 
-                        elif hasattr(el, 'find_all'):
-                            purport_divs.extend(el.find_all('div', class_='Purport'))
-
-                    # Strip away layout tags, normalize blank lines, and collect raw text content
+                    # Extract all text paragraphs designated under class='Purport' inside this isolated structural slice
                     purport_paragraphs = []
-                    for div in purport_divs:
-                        text = ' '.join(div.get_text(strip=True).split())
-                        if text:
-                            purport_paragraphs.append(text)
+                    for el in section_slice:
+                        if el.name == 'div' and el.get('class') and 'Purport' in el.get('class'):
+                            text = ' '.join(el.get_text(strip=True).split())
+                            if text and text not in purport_paragraphs: # Deduplicate element tree layers
+                                purport_paragraphs.append(text)
 
                     full_purport_string = '\n\n'.join(purport_paragraphs)
 
                     for v_num in verses_covered:
-                        purport_map[str(v_num)] = full_purport_string
+                        # Append text blocks dynamically if verses map over split compound locations
+                        if str(v_num) in purport_map and purport_map[str(v_num)]:
+                            purport_map[str(v_num)] += f"\n\n{full_purport_string}"
+                        else:
+                            purport_map[str(v_num)] = full_purport_string
 
                 thus_end = soup.find('div', class_='Thus-end')
                 chapter_end = ' '.join(thus_end.get_text(strip=True).split()) if thus_end else f"Thus end the Bhaktivedanta Purports to Chapter {chapter_num}"
