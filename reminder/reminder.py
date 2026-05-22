@@ -20,25 +20,30 @@ from .remindertimezone import ReminderTimezone, TimezoneConverter
 from .remindercore import ReminderPaginator, SnoozeView, RecurringView, DualDeliveryView
 
 log = logging.getLogger("Modmail")
-__version__ = "4.01"
+__version__ = "4.02"
 logo = "https://i.imgur.com/677JpTl.png"
 
-# BUG FIX (🐛 Rigid Separator Flanking Space Rules):
-# The old code used a plain list of strings that required exact surrounding spaces,
-# so "2h|trash" was rejected. A compiled regex handles optional whitespace on both
-# sides of any supported separator character.
+# BUG FIX (🐛 Rigid Separator Flanking Space Rules)
 SEPARATOR_PATTERN = re.compile(r'\s*(?:\||-|/|>|\[|—)\s*')
 
 
 class Reminder(commands.Cog):
     """
-    Reminder plugin with timezone support
-    - `!remind [time] [sep] | [text]` -> Starts the multi-step `RecurringView` registration wizard.
-    - `!reminders` (Aliases: `myreminders`, `mr`) -> Displays the stateful, multi-page `ReminderPaginator` active management panel.
-    - `!mytimezone [string]` (Aliases: `settimezone`, `settz`) -> Validates and saves profile time configurations.
-    - `!mytime` -> Returns current system time mapped directly to saved user location tables.
-    - `!clearreminders` (Aliases: `clearcompleted`, `dropreminders`) -> Bulk purges historical completed log records.
-    - **Raw Reaction Watcher:** `on_raw_reaction_add` scans for the `☑️` emoji on messages sent by the bot titled `"⏰ Reminder Alert!"` to allow recipients to dismiss them.
+    Reminder plugin* with timezone support
+    ```
+    ┬─╮┌─┐┌┬┐┬┌╮┌┌─╮┌─┐┬─╮
+    ┟┰┘┟┧ ╽╽╽╽╽╽╽╽ ╽┟┧ ┟┰┘
+    ┻┗━┗━┛┻ ┻┻┛┗┛┻━┛┗━┛┻┗━```
+    **Usage:**
+    - !clearreminders -> Delete all your completed reminders from the database
+    - !mytime -> Show your current saved time based on your timezone setting
+    - !mytimezone -> Set your timezone (!mytimezone UTC+2)
+    - !remind -> Set a reminder - Usage: !remind [time] SEPARATOR [reminder text]
+    - !remindadm -> Administrative command group for managing the Reminder plugin system.
+        ├─ purge -> Purge all reminders from the plugin database partition.
+        |    └─ purge --drop -> Wipes ALL data, clean install.
+        └─ view @member -> View and manage a specific user’s active reminders.
+    - !reminders -> List your active reminders in a paginated embed to edit or delete.
     """
 
     def __init__(self, bot):
@@ -640,6 +645,10 @@ class Reminder(commands.Cog):
     async def remindadm_view(self, ctx: commands.Context, target: discord.User):
         """
         View and manage a specific user's active reminders.
+        - !remindadm -> Administrative command group for managing the Reminder plugin system.
+            ├─ purge -> Purge all reminders from the plugin database partition.
+            |    └─ purge --drop -> Wipes ALL data, clean install.
+            └─ view @member -> View and manage a specific user’s active reminders.
         Usage: !remindadm view @member OR !remindadm view 123456789012345
         """
         try:
