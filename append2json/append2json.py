@@ -87,10 +87,13 @@ class Append2Json(commands.Cog):
                 verse["Purport-title"] = "PURPORT"
 
                 verse_str = str(idx)
+                verse["Purport-En"] = purport_map.get(verse_str, "No purport for this śloka.")
+                """
                 if verse_str in purport_map and purport_map[verse_str].strip():
                     verse["Purport-En"] = purport_map[verse_str]
                 else:
                     verse["Purport-En"] = "No purport for this śloka."
+                """
 
                 if idx == len(verses):
                     verse["Chapter-end"] = "Chapter End"
@@ -156,80 +159,57 @@ class Append2Json(commands.Cog):
 
         return [int(numbers[0])] if numbers else []
 
+    # NEW fetch_purport_map()
     async def fetch_purport_map(self, chapter_num, status_msg: discord.Message):
-        """Fetches Purport text mapping with slice processing and contextual deduplication."""
+        """Fetches Purport text mapping for a chapter."""
         url = f"{self.base_url}/bg/{chapter_num}?d=1"
-        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0"}
+        headers = {"User-Agent": "Mozilla/5.0"}
 
         purport_map = {}
         chapter_end_text = ""
 
         try:
             async with aiohttp.ClientSession(headers=headers) as session:
-                async with session.get(url, timeout=30) as response:
-                    if response.status != 200:
+                async with session.get(url, timeout=30) as resp:
+                    if resp.status != 200:
                         return None, ""
 
-                    soup = BeautifulSoup(await response.text(), 'html.parser')
-                    all_elements = list(soup.find_all(True))
+                    soup = BeautifulSoup(await resp.text(), 'html.parser')
+                    # Find all 'Textnum' divs for verses
+                    textnum_divs = soup.find_all('div', class_='Textnum')
 
-                    textnum_indices = [
-                        idx for idx, el in enumerate(all_elements)
-                        if el.name == 'div' and el.get('class') and 'Textnum' in el.get('class')
-                    ]
+                    for div in textnum_divs:
+                        textnum = div.get_text(strip=True).replace("TEXT ", "")
+                        # Look for the next 'PURPORT' section
+                        purport_divs = []
+                        sibling = div.find_next_sibling()
+                        while sibling:
+                            classes = sibling.get('class', [])
+                            # Stop if we hit another textnum
+                            if 'Textnum' in classes:
+                                break
+                            if 'Titles' in classes and 'PURPORT' in sibling.get_text(strip=True).upper():
+                                sibling = sibling.find_next_sibling()
+                                while sibling:
+                                    cls = sibling.get('class', [])
+                                    if 'Textnum' in cls or 'Titles' in cls or 'Synonyms-Section' in cls or 'Translation' in cls:
+                                        break
+                                    clean_text = ' '.join(sibling.get_text(separator=" ", strip=True).split())
+                                    if clean_text:
+                                        purport_divs.append(clean_text)
+                                    sibling = sibling.find_next_sibling()
+                                break
+                            sibling = sibling.find_next_sibling()
 
-                    total_sections = len(textnum_indices)
+                        full_purport = "\n\n".join(purport_divs)
+                        if full_purport:
+                            purport_map[textnum] = full_purport
 
-                    for i, current_idx in enumerate(textnum_indices):
-                        if i == 0 or (i + 1) % 5 == 0 or (i + 1) == total_sections:
-                            await status_msg.edit(content=f"⏳ Extracting text slices: Section {i+1}/{total_sections}...")
-
-                        next_idx = textnum_indices[i + 1] if i + 1 < total_sections else len(all_elements)
-                        section_slice = all_elements[current_idx:next_idx]
-
-                        header_text = section_slice[0].get_text(strip=True)
-                        verses_covered = self.parse_verse_range(header_text, chapter_num)
-                        if not verses_covered:
-                            continue
-
-                        purport_paragraphs = []
-                        found_purport_anchor = False
-                        
-                        # FIX 1: Reset deduplication per individual verse block context
-                        seen_texts = set()
-
-                        for el in section_slice:
-                            if el.name == 'div' and el.get('class') and 'Titles' in el.get('class'):
-                                if 'PURPORT' in el.get_text(strip=True).upper():
-                                    found_purport_anchor = True
-                                    continue
-
-                            if not found_purport_anchor:
-                                continue
-
-                            # FIX 2: Relax type validation restrictions to prevent tag skipping
-                            if el.name not in ['div', 'p', 'span']:
-                                continue
-                            if el.get('class') and any(c in ['Titles', 'Textnum', 'Synonyms-Section', 'Synonyms', 'Translation'] for c in el.get('class')):
-                                continue
-
-                            clean_text = ' '.join(el.get_text(separator=" ", strip=True).split())
-                            if clean_text and clean_text not in seen_texts and not clean_text.startswith("Link to this page"):
-                                purport_paragraphs.append(clean_text)
-                                seen_texts.add(clean_text)
-
-                        full_purport = '\n\n'.join(purport_paragraphs)
-                        for v_num in verses_covered:
-                            if str(v_num) in purport_map and purport_map[str(v_num)]:
-                                purport_map[str(v_num)] += f"\n\n{full_purport}"
-                            else:
-                                purport_map[str(v_num)] = full_purport
-
+                    # Chapter-end
                     thus_end = soup.find('div', class_='Thus-end')
                     chapter_end_text = ' '.join(thus_end.get_text(strip=True).split()) if thus_end else f"Thus end the Bhaktivedanta Purports to Chapter {chapter_num}"
 
             return purport_map, chapter_end_text
-
         except Exception:
             return None, ""
 
