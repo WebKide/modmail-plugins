@@ -56,7 +56,7 @@ class Append2Json(commands.Cog):
                 attachment = ctx.message.attachments[0]
                 if not attachment.filename.endswith('.json'):
                     return await ctx.send("❌ Please attach a valid .json file.")
-                
+
                 json_content = (await attachment.read()).decode('utf-8')
                 data = json.loads(json_content)
                 filename = attachment.filename
@@ -105,7 +105,7 @@ class Append2Json(commands.Cog):
             output_json = json.dumps(data, ensure_ascii=False, indent=2)
 
             await status_msg.edit(content=f"✅ **Success!** Processed Chapter {chapter_num} ({len(verses)} verses).")
-            
+
             await ctx.send(
                 file=discord.File(
                     io.StringIO(output_json),
@@ -135,62 +135,78 @@ class Append2Json(commands.Cog):
         return match.group(1) if match else None
 
     async def fetch_purport_data_with_status(self, chapter_num, status_msg: discord.Message):
-        """Scrapes web data and updates the Discord user interface in real-time."""
+        """Scrapes web data using proper browser headers and provides live feedback."""
         url = f"{self.base_url}/bg/{chapter_num}?d=1"
 
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url, timeout=30) as response:
-                if response.status != 200:
-                    return None
+        # CRITICAL FIX
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        }
 
-                html = await response.text()
-                soup = BeautifulSoup(html, 'html.parser')
+        try:
+            async with aiohttp.ClientSession(headers=headers) as session:
+                async with session.get(url, timeout=30) as response:
+                    # Print status to server console for debugging
+                    print(f"[Scraper Log] Connecting to {url} - Status Code: {response.status}")
 
-                textnum_elements = soup.find_all('div', class_='Textnum')
-                total_verses = len(textnum_elements)
-                if total_verses == 0:
-                    return None
+                    if response.status != 200:
+                        print(f"[Scraper Log] Connection rejected by host. HTTP Code: {response.status}")
+                        return None
 
-                purports = []
+                    html = await response.text()
+                    soup = BeautifulSoup(html, 'html.parser')
 
-                for i, textnum in enumerate(textnum_elements, start=1):
-                    # Periodically update Discord status to keep user informed and avoid rate limits
-                    if i == 1 or i % 5 == 0 or i == total_verses:
-                        await status_msg.edit(
-                            content=f"⏳ **[1/3]** Scraping Chapter {chapter_num}: Processing verse **{i}/{total_verses}**..."
-                        )
+                    textnum_elements = soup.find_all('div', class_='Textnum')
+                    total_verses = len(textnum_elements)
 
-                    purport_text = []
-                    current = textnum.find_next_sibling()
-                    found_purport = False
+                    if total_verses == 0:
+                        print("[Scraper Log] Connection succeeded, but 0 verses found. The page structure may have changed or blocked the script.")
+                        return None
 
-                    while current:
-                        if current.get('class') and 'Textnum' in current.get('class'):
-                            break
+                    purports = []
 
-                        if current.get('class') and 'Titles' in current.get('class'):
-                            if 'PURPORT' in current.get_text(strip=True).upper():
-                                found_purport = True
-                                current = current.find_next_sibling()
-                                continue
+                    for i, textnum in enumerate(textnum_elements, start=1):
+                        # Throttled status updates to avoid Discord rate limiting
+                        if i == 1 or i % 5 == 0 or i == total_verses:
+                            await status_msg.edit(
+                                content=f"⏳ **[1/3]** Scraping Chapter {chapter_num}: Processing verse **{i}/{total_verses}**..."
+                            )
 
-                        if found_purport and current.get('class'):
-                            classes = current.get('class')
-                            if 'Purport' in classes or 'Normal-Level' in classes:
-                                text = self.extract_clean_text(current)
-                                if text:
-                                    purport_text.append(text)
+                        purport_text = []
+                        current = textnum.find_next_sibling()
+                        found_purport = False
 
-                        current = current.find_next_sibling()
+                        while current:
+                            if current.get('class') and 'Textnum' in current.get('class'):
+                                break
 
-                    purports.append('\n\n'.join(purport_text))
+                            if current.get('class') and 'Titles' in current.get('class'):
+                                if 'PURPORT' in current.get_text(strip=True).upper():
+                                    found_purport = True
+                                    current = current.find_next_sibling()
+                                    continue
 
-                chapter_end = self.extract_chapter_end(soup, chapter_num)
+                            if found_purport and current.get('class'):
+                                classes = current.get('class')
+                                if 'Purport' in classes or 'Normal-Level' in classes:
+                                    text = self.extract_clean_text(current)
+                                    if text:
+                                        purport_text.append(text)
 
-                return {
-                    "purports": purports,
-                    "chapter_end": chapter_end
-                }
+                            current = current.find_next_sibling()
+
+                        purports.append('\n\n'.join(purport_text))
+
+                    chapter_end = self.extract_chapter_end(soup, chapter_num)
+
+                    return {
+                        "purports": purports,
+                        "chapter_end": chapter_end
+                    }
+        except Exception as scraping_error:
+            # Fallback error logger to catch structural failures or timeouts
+            print(f"[Scraper Critical Error] {str(scraping_error)}")
+            return None
 
     def extract_clean_text(self, element):
         return ' '.join(element.get_text(strip=True).split())
