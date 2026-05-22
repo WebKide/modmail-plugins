@@ -39,10 +39,10 @@ class Reminder(commands.Cog):
     - !mytime -> Show your current saved time based on your timezone setting
     - !mytimezone -> Set your timezone (!mytimezone UTC+2)
     - !remind -> Set a reminder - Usage: !remind [time] SEPARATOR [reminder text]
-    - !remindadm -> Administrative command group for managing the Reminder plugin system.
-        ├─ purge -> Purge all reminders from the plugin database partition.
-        |    └─ purge --drop -> Wipes ALL data, clean install.
-        └─ view @member -> View and manage a specific user’s active reminders.
+    - !remindadm -> Admin cmd group to manage the Reminder plugin system.
+    - ├─ purge -> Purge all reminders from the plugin database partition.
+    - |  └─ purge --drop -> Wipes ALL data, clean install.
+    - └─ view @member -> View and manage a specific user’s active reminders.
     - !reminders -> List your active reminders in a paginated embed to edit or delete.
     """
 
@@ -630,7 +630,7 @@ class Reminder(commands.Cog):
 
     @commands.group(name="remindadm", invoke_without_command=True)
     @commands.guild_only()
-    @commands.has_permissions(administrator=True)
+    @checks.has_permissions(PermissionLevel.ADMIN)
     async def remindadm(self, ctx: commands.Context):
         """Administrative command group for managing the Reminder plugin system."""
         await ctx.send_help(ctx.command)
@@ -641,7 +641,7 @@ class Reminder(commands.Cog):
 
     @remindadm.command(name="view")
     @commands.guild_only()
-    @commands.has_permissions(administrator=True)
+    @checks.has_permissions(PermissionLevel.ADMIN)
     async def remindadm_view(self, ctx: commands.Context, target: discord.User):
         """
         View and manage a specific user's active reminders.
