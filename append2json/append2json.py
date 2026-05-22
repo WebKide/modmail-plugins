@@ -24,13 +24,14 @@ import discord
 import json
 import re
 import io
+import html
 import aiohttp
 from bs4 import BeautifulSoup
 from discord.ext import commands
 
 
 class Append2Json(commands.Cog):
-    """Append missing Purport fields to existing Bhagavad Gita JSON using anchor exclusion mapping."""
+    """Append missing Purport fields to existing Bhagavad Gita JSON using direct sibling element flow."""
 
     def __init__(self, bot):
         self.bot = bot
@@ -85,15 +86,8 @@ class Append2Json(commands.Cog):
 
             for idx, verse in enumerate(verses, start=1):
                 verse["Purport-title"] = "PURPORT"
-
                 verse_str = str(idx)
                 verse["Purport-En"] = purport_map.get(verse_str, "No purport for this śloka.")
-                """
-                if verse_str in purport_map and purport_map[verse_str].strip():
-                    verse["Purport-En"] = purport_map[verse_str]
-                else:
-                    verse["Purport-En"] = "No purport for this śloka."
-                """
 
                 if idx == len(verses):
                     verse["Chapter-end"] = "Chapter End"
@@ -126,14 +120,12 @@ class Append2Json(commands.Cog):
             return None
 
     def extract_chapter_number(self, chapter_desc):
-        """Extracts chapter number from varying description configurations."""
         if not chapter_desc:
             return None
         match = re.search(r'(\d+)', chapter_desc)
         return match.group(1) if match else None
 
     def parse_verse_range(self, range_text, chapter_num):
-        """Converts text layout headings into explicit verse index scopes."""
         if not range_text:
             return []
 
@@ -145,7 +137,6 @@ class Append2Json(commands.Cog):
 
         if '-' in clean_text or '–' in clean_text or 'TEXTS' in clean_text:
             try:
-                # Capture everything following a dot if found (e.g. 1.16-18)
                 sub_numbers = re.findall(rf'(?:BG\s+{chapter_num}\.|\.)(\d+)', clean_text)
                 if len(sub_numbers) >= 2:
                     start = int(sub_numbers[0])
@@ -159,58 +150,78 @@ class Append2Json(commands.Cog):
 
         return [int(numbers[0])] if numbers else []
 
-    # NEW fetch_purport_map()
     async def fetch_purport_map(self, chapter_num, status_msg: discord.Message):
-        """Fetches Purport text mapping for a chapter."""
         url = f"{self.base_url}/bg/{chapter_num}?d=1"
-        headers = {"User-Agent": "Mozilla/5.0"}
+        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0"}
 
         purport_map = {}
-        chapter_end_text = ""
+        chapter_end_text = f"Thus end the Bhaktivedanta Purports to Chapter {chapter_num}"
 
         try:
             async with aiohttp.ClientSession(headers=headers) as session:
-                async with session.get(url, timeout=30) as resp:
-                    if resp.status != 200:
+                async with session.get(url, timeout=30) as response:
+                    if response.status != 200:
                         return None, ""
 
-                    soup = BeautifulSoup(await resp.text(), 'html.parser')
-                    # Find all 'Textnum' divs for verses
-                    textnum_divs = soup.find_all('div', class_='Textnum')
+                    soup = BeautifulSoup(await response.text(), 'html.parser')
+                    text_num_divs = soup.find_all("div", class_="Textnum")
+                    total_sections = len(text_num_divs)
 
-                    for div in textnum_divs:
-                        textnum = div.get_text(strip=True).replace("TEXT ", "")
-                        # Look for the next 'PURPORT' section
-                        purport_divs = []
-                        sibling = div.find_next_sibling()
-                        while sibling:
-                            classes = sibling.get('class', [])
-                            # Stop if we hit another textnum
-                            if 'Textnum' in classes:
-                                break
-                            if 'Titles' in classes and 'PURPORT' in sibling.get_text(strip=True).upper():
+                    if not text_num_divs:
+                        return None, ""
+
+                    for i, current_div in enumerate(text_num_divs):
+                        if i == 0 or (i + 1) % 5 == 0 or (i + 1) == total_sections:
+                            await status_msg.edit(content=f"⏳ Extracting purports: Section {i+1}/{total_sections}...")
+
+                        header_text = current_div.get_text(strip=True)
+                        verses_covered = self.parse_verse_range(header_text, chapter_num)
+                        if not verses_covered:
+                            continue
+
+                        next_text_num = text_num_divs[i + 1] if i + 1 < total_sections else None
+
+                        found_purport_header = False
+                        purport_paragraphs = []
+
+                        # Navigate using exact DOM sibling adjacency instead of a flattened list
+                        sibling = current_div.find_next_sibling()
+                        while sibling and sibling != next_text_num:
+                            if sibling.name == "a" or not sibling.get_text(strip=True):
                                 sibling = sibling.find_next_sibling()
-                                while sibling:
-                                    cls = sibling.get('class', [])
-                                    if 'Textnum' in cls or 'Titles' in cls or 'Synonyms-Section' in cls or 'Translation' in cls:
-                                        break
-                                    clean_text = ' '.join(sibling.get_text(separator=" ", strip=True).split())
-                                    if clean_text:
-                                        purport_divs.append(clean_text)
-                                    sibling = sibling.find_next_sibling()
-                                break
+                                continue
+
+                            classes = sibling.get("class", [])
+
+                            # Trigger active extraction phase once the PURPORT title is identified
+                            if "Titles" in classes and sibling.get_text(strip=True) == "PURPORT":
+                                found_purport_header = True
+                                sibling = sibling.find_next_sibling()
+                                continue
+
+                            if found_purport_header:
+                                # Captures transition blocks changing layout types on legacy pages
+                                if "Purport" in classes or "Normal-Level" in classes:
+                                    clean_p = ' '.join(html.unescape(sibling.get_text(strip=True)).split())
+                                    if clean_p and clean_p not in ["SYNONYMS", "TRANSLATION", "PURPORT"] and not clean_p.startswith("Link to this page"):
+                                        purport_paragraphs.append(clean_p)
+
                             sibling = sibling.find_next_sibling()
 
-                        full_purport = "\n\n".join(purport_divs)
-                        if full_purport:
-                            purport_map[textnum] = full_purport
+                        full_purport = "\n\n".join(purport_paragraphs) if purport_paragraphs else "No purport for this śloka."
 
-                    # Chapter-end
+                        for v_num in verses_covered:
+                            purport_map[str(v_num)] = full_purport
+
+                    # Track explicit global footer note if visible
                     thus_end = soup.find('div', class_='Thus-end')
-                    chapter_end_text = ' '.join(thus_end.get_text(strip=True).split()) if thus_end else f"Thus end the Bhaktivedanta Purports to Chapter {chapter_num}"
+                    if thus_end:
+                        chapter_end_text = ' '.join(thus_end.get_text(strip=True).split())
 
             return purport_map, chapter_end_text
-        except Exception:
+
+        except Exception as e:
+            print(f"Error fetching purports: {e}")
             return None, ""
 
 
