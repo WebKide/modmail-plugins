@@ -30,7 +30,7 @@ from discord.ext import commands
 
 
 class Append2Json(commands.Cog):
-    """Append missing Purport fields to existing Bhagavad Gita JSON with real-time status updates."""
+    """Append missing Purport fields to existing Bhagavad Gita JSON with resilient block isolation."""
 
     def __init__(self, bot):
         self.bot = bot
@@ -70,53 +70,45 @@ class Append2Json(commands.Cog):
             if not chapter_num:
                 return await ctx.send("❌ Could not extract chapter number from 'Chapter-Desc'.")
 
-            # Create an initial message that we will edit in real-time
-            status_msg = await ctx.send(f"⏳ **[1/3]** Initializing extraction for Chapter {chapter_num}...")
+            status_msg = await ctx.send(f"⏳ **[1/3]** Tracking layout variables for Chapter {chapter_num}...")
 
             # -------------------------
-            # STEP 3: FETCH PURPORTS (WITH REAL-TIME STATUS)
+            # STEP 3 & 4: MAP & MERGE
             # -------------------------
-            purport_data = await self.fetch_purport_data_with_status(chapter_num, status_msg)
-            if not purport_data or not purport_data["purports"]:
-                return await status_msg.edit(content=f"❌ Failed to extract purport data for Chapter {chapter_num}.")
+            purport_map, chapter_end_text = await self.fetch_purport_map(chapter_num, status_msg)
 
-            # -------------------------
-            # STEP 4: MERGE DATA
-            # -------------------------
-            await status_msg.edit(content="⏳ **[2/3]** Merging site data into original JSON...")
+            if not purport_map:
+                return await status_msg.edit(content=f"❌ Failed to extract structural map for Chapter {chapter_num}.")
+
+            await status_msg.edit(content="⏳ **[2/3]** Aligning grouped verses and mapping into JSON positions...")
             verses = data.get("Verses", [])
 
-            for idx, verse in enumerate(verses):
+            for idx, verse in enumerate(verses, start=1):
                 verse["Purport-title"] = "PURPORT"
-                if idx < len(purport_data["purports"]):
-                    text = purport_data["purports"][idx]
-                    verse["Purport-En"] = text or "No purport for this śloka."
+
+                verse_str = str(idx)
+                if verse_str in purport_map:
+                    verse["Purport-En"] = purport_map[verse_str] or "No purport for this śloka."
                 else:
                     verse["Purport-En"] = "No purport for this śloka."
 
-                if idx == len(verses) - 1:
+                if idx == len(verses):
                     verse["Chapter-end"] = "Chapter End"
-                    verse["Chapter-En"] = purport_data.get("chapter_end", "")
+                    verse["Chapter-En"] = chapter_end_text
 
             # -------------------------
-            # STEP 5: OUTPUT
+            # STEP 5: OUTPUT HANDLER
             # -------------------------
-            await status_msg.edit(content="⏳ **[3/3]** Compiling enhanced JSON output file...")
+            await status_msg.edit(content="⏳ **[3/3]** Finalizing output compilation structural writes...")
             output_json = json.dumps(data, ensure_ascii=False, indent=2)
 
-            await status_msg.edit(content=f"✅ **Success!** Processed Chapter {chapter_num} ({len(verses)} verses).")
-
-            await ctx.send(
-                file=discord.File(
-                    io.StringIO(output_json),
-                    filename=filename.replace(".json", "_enhanced.json")
-                )
-            )
+            await status_msg.edit(content=f"✅ **Success!** Correctly mapped all {len(verses)} verses sequentially.")
+            await ctx.send(file=discord.File(io.StringIO(output_json), filename=filename.replace(".json", "_enhanced.json")))
 
         except json.JSONDecodeError:
             await ctx.send("❌ Invalid JSON format provided.")
         except Exception as e:
-            await ctx.send(f"❌ Error encountered: {str(e)}")
+            await ctx.send(f"❌ Structural Execution Error: {str(e)}")
 
     async def fetch_json_from_url(self, url):
         if not re.match(r'^https?://', url):
@@ -134,88 +126,89 @@ class Append2Json(commands.Cog):
         match = re.match(r'^(\d+)\.', chapter_desc.strip())
         return match.group(1) if match else None
 
-    async def fetch_purport_data_with_status(self, chapter_num, status_msg: discord.Message):
-        """Scrapes web data using proper browser headers and provides live feedback."""
+    async def fetch_purport_map(self, chapter_num, status_msg: discord.Message):
         url = f"{self.base_url}/bg/{chapter_num}?d=1"
+        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0"}
 
-        # CRITICAL FIX
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-        }
+        async with aiohttp.ClientSession(headers=headers) as session:
+            async with session.get(url, timeout=30) as response:
+                if response.status != 200:
+                    return None, ""
 
-        try:
-            async with aiohttp.ClientSession(headers=headers) as session:
-                async with session.get(url, timeout=30) as response:
-                    # Print status to server console for debugging
-                    print(f"[Scraper Log] Connecting to {url} - Status Code: {response.status}")
+                soup = BeautifulSoup(await response.text(), 'html.parser')
+                textnum_elements = soup.find_all('div', class_='Textnum')
 
-                    if response.status != 200:
-                        print(f"[Scraper Log] Connection rejected by host. HTTP Code: {response.status}")
-                        return None
+                purport_map = {}
+                total_elements = len(textnum_elements)
 
-                    html = await response.text()
-                    soup = BeautifulSoup(html, 'html.parser')
+                for i, textnum in enumerate(textnum_elements, start=1):
+                    if i == 1 or i % 5 == 0 or i == total_elements:
+                        await status_msg.edit(content=f"⏳ **[1/3]** Parsing site mappings: Section Block **{i}/{total_elements}**...")
 
-                    textnum_elements = soup.find_all('div', class_='Textnum')
-                    total_verses = len(textnum_elements)
+                    range_text = textnum.get_text(strip=True)
+                    verses_covered = self.parse_verse_range(range_text, chapter_num)
 
-                    if total_verses == 0:
-                        print("[Scraper Log] Connection succeeded, but 0 verses found. The page structure may have changed or blocked the script.")
-                        return None
+                    # --- BLOCK ISOLATION MECHANISM ---
+                    # Instead of stepping blindly, gather all elements belonging exclusively to this specific text entry block
+                    block_elements = []
+                    current = textnum.find_next_sibling()
 
-                    purports = []
+                    while current:
+                        # Break if we hit the next verse entry header block
+                        if current.get('class') and 'Textnum' in current.get('class'):
+                            break
+                        block_elements.append(current)
+                        current = current.find_next_sibling()
 
-                    for i, textnum in enumerate(textnum_elements, start=1):
-                        # Throttled status updates to avoid Discord rate limiting
-                        if i == 1 or i % 5 == 0 or i == total_verses:
-                            await status_msg.edit(
-                                content=f"⏳ **[1/3]** Scraping Chapter {chapter_num}: Processing verse **{i}/{total_verses}**..."
-                            )
+                    # Find all div elements featuring the explicit class='Purport' inside this segment chunk
+                    purport_divs = []
+                    for el in block_elements:
+                        if el.name == 'div' and el.get('class') and 'Purport' in el.get('class'):
+                            purport_divs.append(el)
+                        # Fallback step: search child structural elements nested deep inside the container chunk 
+                        elif hasattr(el, 'find_all'):
+                            purport_divs.extend(el.find_all('div', class_='Purport'))
 
-                        purport_text = []
-                        current = textnum.find_next_sibling()
-                        found_purport = False
+                    # Strip away layout tags, normalize blank lines, and collect raw text content
+                    purport_paragraphs = []
+                    for div in purport_divs:
+                        text = ' '.join(div.get_text(strip=True).split())
+                        if text:
+                            purport_paragraphs.append(text)
 
-                        while current:
-                            if current.get('class') and 'Textnum' in current.get('class'):
-                                break
+                    full_purport_string = '\n\n'.join(purport_paragraphs)
 
-                            if current.get('class') and 'Titles' in current.get('class'):
-                                if 'PURPORT' in current.get_text(strip=True).upper():
-                                    found_purport = True
-                                    current = current.find_next_sibling()
-                                    continue
+                    for v_num in verses_covered:
+                        purport_map[str(v_num)] = full_purport_string
 
-                            if found_purport and current.get('class'):
-                                classes = current.get('class')
-                                if 'Purport' in classes or 'Normal-Level' in classes:
-                                    text = self.extract_clean_text(current)
-                                    if text:
-                                        purport_text.append(text)
+                thus_end = soup.find('div', class_='Thus-end')
+                chapter_end = ' '.join(thus_end.get_text(strip=True).split()) if thus_end else f"Thus end the Bhaktivedanta Purports to Chapter {chapter_num}"
 
-                            current = current.find_next_sibling()
+                return purport_map, chapter_end
 
-                        purports.append('\n\n'.join(purport_text))
+    def parse_verse_range(self, range_text, chapter_num):
+        clean_text = range_text.strip().upper()
+        numbers = []
 
-                    chapter_end = self.extract_chapter_end(soup, chapter_num)
+        if "BG" in clean_text:
+            numbers = re.findall(rf'BG\s+{chapter_num}\.(\d+)', clean_text)
+            if not numbers:
+                numbers = re.findall(r'\.(\d+)', clean_text)
+        elif "TEXT" in clean_text:
+            numbers = re.findall(r'TEXT\s+(\d+)', clean_text)
 
-                    return {
-                        "purports": purports,
-                        "chapter_end": chapter_end
-                    }
-        except Exception as scraping_error:
-            # Fallback error logger to catch structural failures or timeouts
-            print(f"[Scraper Critical Error] {str(scraping_error)}")
-            return None
+        if not numbers:
+            return []
 
-    def extract_clean_text(self, element):
-        return ' '.join(element.get_text(strip=True).split())
+        if '-' in clean_text or '–' in clean_text:
+            try:
+                start = int(numbers[0])
+                end = int(numbers[-1])
+                return list(range(start, end + 1))
+            except Exception:
+                pass
 
-    def extract_chapter_end(self, soup, chapter_num):
-        thus_end = soup.find('div', class_='Thus-end')
-        if thus_end:
-            return self.extract_clean_text(thus_end)
-        return f"Thus end the Bhaktivedanta Purports to Chapter {chapter_num}"
+        return [int(n) for n in numbers]
 
 
 async def setup(bot):
