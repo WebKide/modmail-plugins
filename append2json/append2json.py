@@ -70,8 +70,8 @@ class Append2Json(commands.Cog):
 
             await status_msg.edit(content=f"⏳ **[2/3]** Parsing HTML data for Chapter {chapter_num}...")
 
-            # Extract the purports using the updated range parser
-            purport_map = self.parse_purports_from_html(html_content, chapter_num)
+            # NOW RETURNS TWO VALUES: the map and the extracted closing text
+            purport_map, chapter_end_text = self.parse_purports_from_html(html_content, chapter_num)
 
             if not purport_map:
                 return await status_msg.edit(content=f"❌ Failed to find any purports matching `bg/{chapter_num}/` in the HTML file.")
@@ -92,9 +92,10 @@ class Append2Json(commands.Cog):
 
                 verse["Purport-En"] = purport_text if purport_text else "No purport for this śloka."
 
+                # FIXED: Uses the clean closing text found in the HTML file
                 if idx == len(verses):
                     verse["Chapter-end"] = "Chapter End"
-                    verse["Chapter-En"] = f"Thus end the Bhaktivedanta Purports to Chapter {chapter_num}."
+                    verse["Chapter-En"] = chapter_end_text
 
             await status_msg.edit(content="⏳ **[3/3]** Creating final JSON file package...")
             output_json = json.dumps(user_json_data, ensure_ascii=False, indent=2)
@@ -103,7 +104,7 @@ class Append2Json(commands.Cog):
                 return await status_msg.edit(content="❌ The final file is too large for Discord's upload limits.")
 
             await status_msg.edit(content=f"✅ **Success!** Processed {len(verses)} verses using offline HTML blocks.")
-
+            
             new_filename = json_attachment.filename.replace(".json", "_enhanced.json")
             await ctx.send(file=discord.File(io.StringIO(output_json), filename=new_filename))
 
@@ -112,43 +113,12 @@ class Append2Json(commands.Cog):
         except Exception as e:
             await ctx.send(f"❌ Processing Error: {str(e)}")
 
-    def extract_chapter_number(self, chapter_desc):
-        if not chapter_desc:
-            return None
-        match = re.search(r'(\d+)', chapter_desc)
-        return match.group(1) if match else None
-
-    def parse_verse_range(self, range_text, chapter_num):
-        if not range_text:
-            return []
-        clean_text = range_text.strip().upper()
-        numbers = re.findall(r'\d+', clean_text)
-        if not numbers:
-            return []
-
-        if '-' in clean_text or '\u2013' in clean_text or 'TEXTS' in clean_text:
-            try:
-                sub_numbers = re.findall(rf'(?:BG\s+{re.escape(chapter_num)}\.|\.)(\d+)', clean_text)
-                if len(sub_numbers) >= 2:
-                    start, end = int(sub_numbers[0]), int(sub_numbers[-1])
-                else:
-                    verse_nums = [int(n) for n in numbers if n != int(chapter_num)]
-                    if len(verse_nums) >= 2:
-                        start, end = verse_nums[0], verse_nums[-1]
-                    elif len(verse_nums) == 1:
-                        return [verse_nums[0]]
-                    else:
-                        start, end = int(numbers[0]), int(numbers[-1])
-                return list(range(start, end + 1))
-            except Exception:
-                return []
-        return [int(numbers[0])] if numbers else []
 
     def parse_purports_from_html(self, html_content, chapter_num):
-        """Extracts text paragraphs and unfolds ranges like '32-35' into separate keys."""
+        """Extracts text paragraphs and finds the beautiful closing colophon text."""
         purport_map = {}
-
-        # This matches either standard keys like "bg/1/1" or ranges like "bg/1/32-35"
+        
+        # 1. Extract the purports
         pattern = r'<p[^>]*data-section="purport"[^>]*data-verse-key="bg/' + re.escape(str(chapter_num)) + r'/([\d\-]+)"[^>]*>(.*?)</p>'
         matches = re.findall(pattern, html_content, re.DOTALL)
 
@@ -158,7 +128,6 @@ class Append2Json(commands.Cog):
             if not clean_p:
                 continue
 
-            # Check if the verse key is a range like "32-35"
             expanded_verses = []
             if '-' in verse_key_raw:
                 try:
@@ -171,7 +140,6 @@ class Append2Json(commands.Cog):
             else:
                 expanded_verses = [verse_key_raw]
 
-            # Assign the text to every individual verse in the group
             for v_num in expanded_verses:
                 if v_num not in temp_groups:
                     temp_groups[v_num] = []
@@ -180,7 +148,22 @@ class Append2Json(commands.Cog):
         for v_num, paragraphs in temp_groups.items():
             purport_map[str(v_num)] = "\n\n".join(paragraphs)
 
-        return purport_map
+        # 2. Extract the closing text from the end of the HTML
+        # Searches for the string pattern and captures everything until the tag closing element
+        colophon_match = re.search(r'(Thus end the Bhaktivedanta Purports to the.*?\.)', html_content, re.DOTALL)
+        
+        if colophon_match:
+            # Strip out internal tags like <em class="sk"> or </em> to make it clean text
+            raw_text = colophon_match.group(1)
+            chapter_end_text = re.sub(r'<[^>]+>', '', raw_text).strip()
+            # Normalize whitespace/line breaks into single clean spaces
+            chapter_end_text = re.sub(r'\s+', ' ', chapter_end_text)
+        else:
+            # Fallback if the pattern layout looks completely different in some chapters
+            chapter_end_text = f"Thus end the Bhaktivedanta Purports to Chapter {chapter_num}."
+
+        return purport_map, chapter_end_text
+
 
 async def setup(bot):
     await bot.add_cog(Append2Json(bot))
