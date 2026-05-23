@@ -26,7 +26,7 @@ import re
 import io
 from discord.ext import commands
 
-__version__ = "4.0 - Offline HTML Parser"
+__version__ = "4.1 - Multi-Verse HTML Range Support"
 
 class Append2Json(commands.Cog):
     """Append missing Purport fields to JSON using an attached HTML source file."""
@@ -40,14 +40,12 @@ class Append2Json(commands.Cog):
         Usage:
         Attach BOTH your template .json file AND the source .html file in one message.
         """
-        # Ensure there are exactly two files attached
         if len(ctx.message.attachments) != 2:
             return await ctx.send("❓ Please attach exactly **two files**: your `.json` file and the source `.html` file.")
 
         json_attachment = None
         html_attachment = None
 
-        # Sort the attachments by their file type extensions
         for attachment in ctx.message.attachments:
             if attachment.filename.endswith('.json'):
                 json_attachment = attachment
@@ -60,28 +58,24 @@ class Append2Json(commands.Cog):
         status_msg = await ctx.send("⏳ **[1/3]** Reading uploaded files from Discord...")
 
         try:
-            # Load the user's template JSON file
             json_bytes = await json_attachment.read()
             user_json_data = json.loads(json_bytes.decode('utf-8'))
 
-            # Load the source HTML file as a plain text string
             html_bytes = await html_attachment.read()
             html_content = html_bytes.decode('utf-8')
 
-            # Extract the chapter number from the JSON file
             chapter_num = self.extract_chapter_number(user_json_data.get("Chapter-Desc", ""))
             if not chapter_num:
                 return await status_msg.edit(content="❌ Could not find the chapter number in 'Chapter-Desc'.")
 
             await status_msg.edit(content=f"⏳ **[2/3]** Parsing HTML data for Chapter {chapter_num}...")
 
-            # Extract the purports from the HTML string
+            # Extract the purports using the updated range parser
             purport_map = self.parse_purports_from_html(html_content, chapter_num)
 
             if not purport_map:
                 return await status_msg.edit(content=f"❌ Failed to find any purports matching `bg/{chapter_num}/` in the HTML file.")
 
-            # Update the verses inside the JSON structure
             verses = user_json_data.get("Verses", [])
             for idx, verse in enumerate(verses, start=1):
                 verse["Purport-title"] = "PURPORT"
@@ -89,7 +83,6 @@ class Append2Json(commands.Cog):
                 text_num_raw = verse.get("Text-num", "")
                 verse_keys = self.parse_verse_range(text_num_raw, chapter_num)
 
-                # Match the verse keys against our extracted map
                 purport_text = None
                 for vk in verse_keys:
                     candidate = purport_map.get(str(vk))
@@ -99,16 +92,13 @@ class Append2Json(commands.Cog):
 
                 verse["Purport-En"] = purport_text if purport_text else "No purport for this śloka."
 
-                # If this is the last verse, attach standard closing text block markers
                 if idx == len(verses):
                     verse["Chapter-end"] = "Chapter End"
                     verse["Chapter-En"] = f"Thus end the Bhaktivedanta Purports to Chapter {chapter_num}."
 
-            # Save and export the finished JSON package
             await status_msg.edit(content="⏳ **[3/3]** Creating final JSON file package...")
             output_json = json.dumps(user_json_data, ensure_ascii=False, indent=2)
 
-            # Safety size check before uploading to Discord
             if len(output_json.encode('utf-8')) > 8000000:
                 return await status_msg.edit(content="❌ The final file is too large for Discord's upload limits.")
 
@@ -142,7 +132,7 @@ class Append2Json(commands.Cog):
                 if len(sub_numbers) >= 2:
                     start, end = int(sub_numbers[0]), int(sub_numbers[-1])
                 else:
-                    verse_nums = [int(n) for n in numbers if n != chapter_num]
+                    verse_nums = [int(n) for n in numbers if n != int(chapter_num)]
                     if len(verse_nums) >= 2:
                         start, end = verse_nums[0], verse_nums[-1]
                     elif len(verse_nums) == 1:
@@ -155,29 +145,40 @@ class Append2Json(commands.Cog):
         return [int(numbers[0])] if numbers else []
 
     def parse_purports_from_html(self, html_content, chapter_num):
-        """Extracts text paragraphs from elements with data-section="purport"."""
+        """Extracts text paragraphs and unfolds ranges like '32-35' into separate keys."""
         purport_map = {}
 
-        # Regex pattern finds paragraphs with data-section="purport" and grabs the verse number
-        # Example pattern matches: data-section="purport" data-verse-key="bg/18/1"
-        pattern = r'<p[^>]*data-section="purport"[^>]*data-verse-key="bg/' + re.escape(str(chapter_num)) + r'/(\d+)"[^>]*>(.*?)</p>'
+        # This matches either standard keys like "bg/1/1" or ranges like "bg/1/32-35"
+        pattern = r'<p[^>]*data-section="purport"[^>]*data-verse-key="bg/' + re.escape(str(chapter_num)) + r'/([\d\-]+)"[^>]*>(.*?)</p>'
         matches = re.findall(pattern, html_content, re.DOTALL)
 
-        # Temporary dictionary to collect multiple paragraphs for each verse
         temp_groups = {}
-        for verse_num, p_content in matches:
-            # Clean up residual inner HTML layout tags (like <em> or </em>)
+        for verse_key_raw, p_content in matches:
             clean_p = re.sub(r'<[^>]+>', '', p_content).strip()
             if not clean_p:
                 continue
 
-            if verse_num not in temp_groups:
-                temp_groups[verse_num] = []
-            temp_groups[verse_num].append(clean_p)
+            # Check if the verse key is a range like "32-35"
+            expanded_verses = []
+            if '-' in verse_key_raw:
+                try:
+                    parts = verse_key_raw.split('-')
+                    start = int(parts[0])
+                    end = int(parts[1])
+                    expanded_verses = [str(v) for v in range(start, end + 1)]
+                except ValueError:
+                    expanded_verses = [verse_key_raw]
+            else:
+                expanded_verses = [verse_key_raw]
 
-        # Merge the text fragments using double line breaks
-        for verse_num, paragraphs in temp_groups.items():
-            purport_map[str(verse_num)] = "\n\n".join(paragraphs)
+            # Assign the text to every individual verse in the group
+            for v_num in expanded_verses:
+                if v_num not in temp_groups:
+                    temp_groups[v_num] = []
+                temp_groups[v_num].append(clean_p)
+
+        for v_num, paragraphs in temp_groups.items():
+            purport_map[str(v_num)] = "\n\n".join(paragraphs)
 
         return purport_map
 
