@@ -20,19 +20,41 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-import discord
+import io
 import json
 import re
-import io
+from html import unescape
+
+import discord
 from discord.ext import commands
 
-__version__ = "4.1 - Multi-Verse HTML Range Support"
+__version__ = "5.0 -> Offline .json and .html combiner"
 
 class Append2Json(commands.Cog):
     """Append missing Purport fields to JSON using an attached HTML source file."""
 
     def __init__(self, bot):
         self.bot = bot
+
+    def extract_chapter_number(self, chapter_desc):
+        """Extracts the first number found in the chapter description string."""
+        match = re.search(r'\d+', str(chapter_desc))
+        return match.group(0) if match else None
+
+    def parse_verse_range(self, text_num_raw):
+        """Parses verse numbers or ranges like '1-2' into a list of strings."""
+        clean_text = str(text_num_raw)
+        clean_text = clean_text.replace('–', '-').replace('—', '-')
+        clean_text = re.sub(r'[^\d\-]', '', clean_text)
+        if '-' in clean_text:
+            try:
+                parts = clean_text.split('-')
+                start = int(parts[0]) # FIXED: Added index 0
+                end = int(parts[1])   # FIXED: Added index 1
+                return [str(v) for v in range(start, end + 1)]
+            except ValueError:
+                return [clean_text]
+        return [clean_text] if clean_text else []
 
     @commands.command(name='append2json')
     async def append_json(self, ctx):
@@ -47,9 +69,11 @@ class Append2Json(commands.Cog):
         html_attachment = None
 
         for attachment in ctx.message.attachments:
-            if attachment.filename.endswith('.json'):
+            filename = attachment.filename.lower()
+
+            if filename.endswith('.json'):
                 json_attachment = attachment
-            elif attachment.filename.endswith('.html') or attachment.filename.endswith('.htm'):
+            elif filename.endswith('.html') or filename.endswith('.htm'):
                 html_attachment = attachment
 
         if not json_attachment or not html_attachment:
@@ -70,7 +94,6 @@ class Append2Json(commands.Cog):
 
             await status_msg.edit(content=f"⏳ **[2/3]** Parsing HTML data for Chapter {chapter_num}...")
 
-            # NOW RETURNS TWO VALUES: the map and the extracted closing text
             purport_map, chapter_end_text = self.parse_purports_from_html(html_content, chapter_num)
 
             if not purport_map:
@@ -81,7 +104,7 @@ class Append2Json(commands.Cog):
                 verse["Purport-title"] = "PURPORT"
 
                 text_num_raw = verse.get("Text-num", "")
-                verse_keys = self.parse_verse_range(text_num_raw, chapter_num)
+                verse_keys = self.parse_verse_range(text_num_raw) # FIXED: Removed extra chapter_num argument
 
                 purport_text = None
                 for vk in verse_keys:
@@ -92,7 +115,6 @@ class Append2Json(commands.Cog):
 
                 verse["Purport-En"] = purport_text if purport_text else "No purport for this śloka."
 
-                # FIXED: Uses the clean closing text found in the HTML file
                 if idx == len(verses):
                     verse["Chapter-end"] = "Chapter End"
                     verse["Chapter-En"] = chapter_end_text
@@ -104,9 +126,19 @@ class Append2Json(commands.Cog):
                 return await status_msg.edit(content="❌ The final file is too large for Discord's upload limits.")
 
             await status_msg.edit(content=f"✅ **Success!** Processed {len(verses)} verses using offline HTML blocks.")
-            
+
             new_filename = json_attachment.filename.replace(".json", "_enhanced.json")
-            await ctx.send(file=discord.File(io.StringIO(output_json), filename=new_filename))
+            await ctx.send(
+                file=discord.File(
+                    io.BytesIO(output_json.encode("utf-8")),
+                    filename=new_filename
+                )
+            )
+
+            try:
+                await ctx.message.delete()
+            except (discord.Forbidden, discord.HTTPException):
+                pass
 
         except json.JSONDecodeError:
             await ctx.send("❌ The uploaded JSON file contains syntax errors.")
@@ -117,14 +149,21 @@ class Append2Json(commands.Cog):
     def parse_purports_from_html(self, html_content, chapter_num):
         """Extracts text paragraphs and finds the beautiful closing colophon text."""
         purport_map = {}
-        
+
         # 1. Extract the purports
-        pattern = r'<p[^>]*data-section="purport"[^>]*data-verse-key="bg/' + re.escape(str(chapter_num)) + r'/([\d\-]+)"[^>]*>(.*?)</p>'
+        pattern = r'<p[^>]*data-section="purport"[^>]*data-verse-key="bg/' + re.escape(str(chapter_num)) + r'/([\w\-]+)"[^>]*>(.*?)</p>'
         matches = re.findall(pattern, html_content, re.DOTALL)
 
         temp_groups = {}
         for verse_key_raw, p_content in matches:
+            verse_key_raw = (
+                verse_key_raw
+                .replace('–', '-')
+                .replace('—', '-')
+            )
             clean_p = re.sub(r'<[^>]+>', '', p_content).strip()
+            clean_p = unescape(clean_p)
+
             if not clean_p:
                 continue
 
@@ -149,17 +188,18 @@ class Append2Json(commands.Cog):
             purport_map[str(v_num)] = "\n\n".join(paragraphs)
 
         # 2. Extract the closing text from the end of the HTML
-        # Searches for the string pattern and captures everything until the tag closing element
-        colophon_match = re.search(r'(Thus end the Bhaktivedanta Purports to the.*?\.)', html_content, re.DOTALL)
-        
+        colophon_match = re.search(
+            r'(<p[^>]*>.*?Thus end the Bhaktivedānta Purports to the.*?</p>)',
+            html_content,
+            re.DOTALL
+        )
+
         if colophon_match:
-            # Strip out internal tags like <em class="sk"> or </em> to make it clean text
             raw_text = colophon_match.group(1)
             chapter_end_text = re.sub(r'<[^>]+>', '', raw_text).strip()
-            # Normalize whitespace/line breaks into single clean spaces
             chapter_end_text = re.sub(r'\s+', ' ', chapter_end_text)
+            chapter_end_text = unescape(chapter_end_text)
         else:
-            # Fallback if the pattern layout looks completely different in some chapters
             chapter_end_text = f"Thus end the Bhaktivedanta Purports to Chapter {chapter_num}."
 
         return purport_map, chapter_end_text
