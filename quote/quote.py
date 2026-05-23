@@ -49,6 +49,7 @@ class Quote(commands.Cog):
     # ╔════════════════════╦══════════════╦════════════════════════╗
     # ╠════════════════════╣CREATE_WEBHOOK╠════════════════════════╣
     # ╚════════════════════╩══════════════╩════════════════════════╝
+
     async def create_webhook(self, channel: discord.TextChannel) -> discord.Webhook:
         webhooks = await channel.webhooks()
         if webhooks:
@@ -66,6 +67,7 @@ class Quote(commands.Cog):
     # ╔════════════════════╦═════════════════════╦═════════════════╗
     # ╠════════════════════╣RESOLVE_MESSAGE LOGIC╠═════════════════╣
     # ╚════════════════════╩═════════════════════╩═════════════════╝
+
     async def resolve_message(self, ctx: commands.Context, query: str) -> Tuple[Optional[discord.Message], bool, Optional[discord.TextChannel], bool]:
         # Track if user explicitly supplied the flags "--clean" OR "--channel"
         has_channel_flag = False
@@ -123,7 +125,8 @@ class Quote(commands.Cog):
 
     # ╔════════════════════╦═════════════════════╦═════════════════╗
     # ╠════════════════════╣QUOTE_MESSAGE COMMAND╠═════════════════╣
-    # ╚════════════════════╩═════════════════════╩═════════════════╗
+    # ╚════════════════════╩═════════════════════╩═════════════════╝
+
     @commands.command(name="quote", aliases=["q"], description="Quote messages using WebHooks")
     @commands.guild_only()
     async def quote_message(self, ctx: commands.Context, *, query: str):
@@ -213,6 +216,113 @@ class Quote(commands.Cog):
                         continue
             except discord.Forbidden:
                 pass
+
+    # ╔════════════════════╦═══════════════╦═══════════════════════╗
+    # ╠════════════════════╣ EMBED TO TEXT ╠═══════════════════════╣
+    # ╚════════════════════╩═══════════════╩═══════════════════════╝
+
+    @commands.command(name='deconstruct', aliases=['deembed', 'embedcode'])
+    @commands.is_owner()
+    @commands.guild_only()
+    async def deconstruct_embed(self, ctx, message_link: str):
+        """Converts a target message link's embed into copy-pasteable Python code."""
+        # 1. Parse out the IDs from the Discord message link structure
+        link_pattern = r"channels/(\d+)/(\d+)/(\d+)"
+        match = re.search(link_pattern, message_link)
+        
+        if not match:
+            return await ctx.send("❌ **Invalid Link Format!** Please provide a standard Discord message URL.")
+        
+        guild_id, channel_id, message_id = map(int, match.groups())
+        
+        # 2. Fetch the target payload across server channels
+        try:
+            channel = self.bot.get_channel(channel_id) or await self.bot.fetch_channel(channel_id)
+            target_msg = await channel.fetch_message(message_id)
+        except discord.NotFound:
+            return await ctx.send("❌ **Message Not Found!** Ensure the message exists and the bot can read it.")
+        except discord.Forbidden:
+            return await ctx.send("❌ **Permission Denied!** I lack the access required to read that channel link.")
+        except Exception as e:
+            return await ctx.send(f"❌ **Fetch Failure:** `{str(e)}`")
+
+        if not target_msg.embeds:
+            return await ctx.send("❓ This target message link does not contain any functional layout embeds.")
+
+        # 3. Process and reverse-engineer the embed metrics
+        embed = target_msg.embeds[0]
+        code_lines = []
+        
+        # Base instantiation mapping
+        base_args = []
+        if embed.title:
+            base_args.append(f'title="{embed.title}"')
+        if embed.colour:
+            base_args.append(f'colour=discord.Colour(0x{embed.colour.value:06x})')
+        if embed.url:
+            base_args.append(f'url="{embed.url}"')
+        if embed.description:
+            # Escape inner double line breaks cleanly
+            clean_desc = embed.description.replace('\n', '\\n')
+            base_args.append(f'description="{clean_desc}"')
+        if embed.timestamp:
+            # Format cleanly using standard datetime builders
+            code_lines.append(f"# Ensure you imported: from datetime import datetime")
+            base_args.append(f'timestamp=datetime.fromisoformat("{embed.timestamp.isoformat()}")')
+            
+        code_lines.append(f"embed = discord.Embed({', '.join(base_args)})")
+        code_lines.append("") # Spacing line
+        
+        # Structural component maps
+        if embed.image and embed.image.url:
+            code_lines.append(f'embed.set_image(url="{embed.image.url}")')
+        if embed.thumbnail and embed.thumbnail.url:
+            code_lines.append(f'embed.set_thumbnail(url="{embed.thumbnail.url}")')
+            
+        if embed.author:
+            auth_args = []
+            if embed.author.name: auth_args.append(f'name="{embed.author.name}"')
+            if embed.author.url: auth_args.append(f'url="{embed.author.url}"')
+            if embed.author.icon_url: auth_args.append(f'icon_url="{embed.author.icon_url}"')
+            if auth_args:
+                code_lines.append(f"embed.set_author({', '.join(auth_args)})")
+                
+        if embed.footer:
+            foot_args = []
+            if embed.footer.text: foot_args.append(f'text="{embed.footer.text}"')
+            if embed.footer.icon_url: foot_args.append(f'icon_url="{embed.footer.icon_url}"')
+            if foot_args:
+                code_lines.append(f"embed.set_footer({', '.join(foot_args)})")
+                
+        if embed.fields:
+            code_lines.append("") # Spacing block before field layers
+            for field in embed.fields:
+                clean_val = field.value.replace('\n', '\\n')
+                inline_val = ", inline=True" if field.inline else ", inline=False"
+                code_lines.append(f'embed.add_field(name="{field.name}", value="{clean_val}"{inline_val})')
+
+        code_lines.append("") # Space before execution line
+        
+        # Final broadcast method matching discord.py 2.x formats
+        if target_msg.content:
+            clean_content = target_msg.content.replace('\n', '\\n')
+            code_lines.append(f'await ctx.send(content="{clean_content}", embed=embed)')
+        else:
+            code_lines.append('await ctx.send(embed=embed)')
+
+        # 4. Bundle output data securely into stream objects for transport
+        final_code = '\n'.join(code_lines)
+        
+        if len(final_code) <= 1980:
+            await ctx.send(f"```python\n{final_code}\n```")
+        else:
+            # Automatically turn it into a downloadable text file if it exceeds the message limit
+            file_stream = io.BytesIO(final_code.encode('utf-8'))
+            await ctx.send(
+                content="⚠️ **Code string exceeded channel limit!** Here is your layout source code package:",
+                file=discord.File(file_stream, filename="reconstructed_embed.py")
+            )
+
 
 async def setup(bot):
     await bot.add_cog(Quote(bot))
