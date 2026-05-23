@@ -24,72 +24,72 @@ import discord
 import json
 import re
 import io
-import aiohttp
 from discord.ext import commands
 
-__version__ = "3.1 - Fixed structural JSON extraction"
+__version__ = "4.0 - Offline HTML Parser"
 
 class Append2Json(commands.Cog):
-    """Append missing Purport fields to existing Bhagavad Gita JSON using backend data flow."""
+    """Append missing Purport fields to JSON using an attached HTML source file."""
 
     def __init__(self, bot):
         self.bot = bot
-        # Updated base to point to a stable open API or repository hosting the clean text map
-        self.data_base_url = "https://githubusercontent.com"
 
     @commands.command(name='append2json')
-    async def append_json(self, ctx, url: str = None):
+    async def append_json(self, ctx):
         """
         Usage:
-        !append2json <raw_json_url>
-        OR attach a JSON file
+        Attach BOTH your template .json file AND the source .html file in one message.
         """
+        # Ensure there are exactly two files attached
+        if len(ctx.message.attachments) != 2:
+            return await ctx.send("❓ Please attach exactly **two files**: your `.json` file and the source `.html` file.")
+
+        json_attachment = None
+        html_attachment = None
+
+        # Sort the attachments by their file type extensions
+        for attachment in ctx.message.attachments:
+            if attachment.filename.endswith('.json'):
+                json_attachment = attachment
+            elif attachment.filename.endswith('.html') or attachment.filename.endswith('.htm'):
+                html_attachment = attachment
+
+        if not json_attachment or not html_attachment:
+            return await ctx.send("❌ Missing files! Make sure you upload one `.json` file and one `.html` file.")
+
+        status_msg = await ctx.send("⏳ **[1/3]** Reading uploaded files from Discord...")
+
         try:
-            # -------------------------
-            # STEP 1: LOAD JSON
-            # -------------------------
-            if url:
-                data = await self.fetch_json_from_url(url)
-                if not data:
-                    return await ctx.send("❌ Failed to fetch or parse JSON from URL.")
-                filename = "downloaded.json"
-            elif ctx.message.attachments:
-                attachment = ctx.message.attachments[0]
-                if not attachment.filename.endswith('.json'):
-                    return await ctx.send("❌ Please attach a valid .json file.")
+            # Load the user's template JSON file
+            json_bytes = await json_attachment.read()
+            user_json_data = json.loads(json_bytes.decode('utf-8'))
 
-                json_content = (await attachment.read()).decode('utf-8')
-                data = json.loads(json_content)
-                filename = attachment.filename
-            else:
-                return await ctx.send("❓ Provide a JSON URL or attach a file.")
+            # Load the source HTML file as a plain text string
+            html_bytes = await html_attachment.read()
+            html_content = html_bytes.decode('utf-8')
 
-            # -------------------------
-            # STEP 2: EXTRACT CHAPTER
-            # -------------------------
-            chapter_num = self.extract_chapter_number(data.get("Chapter-Desc", ""))
+            # Extract the chapter number from the JSON file
+            chapter_num = self.extract_chapter_number(user_json_data.get("Chapter-Desc", ""))
             if not chapter_num:
-                return await ctx.send("❌ Could not extract chapter number from 'Chapter-Desc'.")
+                return await status_msg.edit(content="❌ Could not find the chapter number in 'Chapter-Desc'.")
 
-            status_msg = await ctx.send(f"⏳ **[1/3]** Initializing data isolation maps for Chapter {chapter_num}...")
+            await status_msg.edit(content=f"⏳ **[2/3]** Parsing HTML data for Chapter {chapter_num}...")
 
-            # -------------------------
-            # STEP 3 & 4: MAP & MERGE
-            # -------------------------
-            purport_map, chapter_end_text = await self.fetch_purport_map(chapter_num, status_msg)
+            # Extract the purports from the HTML string
+            purport_map = self.parse_purports_from_html(html_content, chapter_num)
 
-            if purport_map is None or not purport_map:
-                return await status_msg.edit(content=f"❌ Failed to extract structural data for Chapter {chapter_num}. Verified source map endpoint empty or blocked.")
+            if not purport_map:
+                return await status_msg.edit(content=f"❌ Failed to find any purports matching `bg/{chapter_num}/` in the HTML file.")
 
-            await status_msg.edit(content="⏳ **[2/3]** Merging precise paragraph sections into JSON positions...")
-            verses = data.get("Verses", [])
-
+            # Update the verses inside the JSON structure
+            verses = user_json_data.get("Verses", [])
             for idx, verse in enumerate(verses, start=1):
                 verse["Purport-title"] = "PURPORT"
 
                 text_num_raw = verse.get("Text-num", "")
                 verse_keys = self.parse_verse_range(text_num_raw, chapter_num)
 
+                # Match the verse keys against our extracted map
                 purport_text = None
                 for vk in verse_keys:
                     candidate = purport_map.get(str(vk))
@@ -99,39 +99,28 @@ class Append2Json(commands.Cog):
 
                 verse["Purport-En"] = purport_text if purport_text else "No purport for this śloka."
 
+                # If this is the last verse, attach standard closing text block markers
                 if idx == len(verses):
                     verse["Chapter-end"] = "Chapter End"
-                    verse["Chapter-En"] = chapter_end_text
+                    verse["Chapter-En"] = f"Thus end the Bhaktivedanta Purports to Chapter {chapter_num}."
 
-            # -------------------------
-            # STEP 5: OUTPUT HANDLER
-            # -------------------------
-            await status_msg.edit(content="⏳ **[3/3]** Saving and encoding output file stream...")
-            output_json = json.dumps(data, ensure_ascii=False, indent=2)
+            # Save and export the finished JSON package
+            await status_msg.edit(content="⏳ **[3/3]** Creating final JSON file package...")
+            output_json = json.dumps(user_json_data, ensure_ascii=False, indent=2)
 
-            # Safeguard check against Discord's 8MB standard attachment payload cap
+            # Safety size check before uploading to Discord
             if len(output_json.encode('utf-8')) > 8000000:
-                return await status_msg.edit(content="❌ Output payload exceeds Discord's file capacity limits.")
+                return await status_msg.edit(content="❌ The final file is too large for Discord's upload limits.")
 
-            await status_msg.edit(content=f"✅ **Success!** Verified and filled all {len(verses)} verses with structural purports.")
-            await ctx.send(file=discord.File(io.StringIO(output_json), filename=filename.replace(".json", "_enhanced.json")))
+            await status_msg.edit(content=f"✅ **Success!** Processed {len(verses)} verses using offline HTML blocks.")
+
+            new_filename = json_attachment.filename.replace(".json", "_enhanced.json")
+            await ctx.send(file=discord.File(io.StringIO(output_json), filename=new_filename))
 
         except json.JSONDecodeError:
-            await ctx.send("❌ Invalid JSON format provided.")
+            await ctx.send("❌ The uploaded JSON file contains syntax errors.")
         except Exception as e:
-            await ctx.send(f"❌ Structural Anchor Error: {str(e)}")
-
-    async def fetch_json_from_url(self, url):
-        if not re.match(r'^https?://', url):
-            return None
-        try:
-            async with aiohttp.ClientSession() as session:
-                async with session.get(url, timeout=20) as resp:
-                    if resp.status != 200:
-                        return None
-                    return json.loads(await resp.text())
-        except Exception:
-            return None
+            await ctx.send(f"❌ Processing Error: {str(e)}")
 
     def extract_chapter_number(self, chapter_desc):
         if not chapter_desc:
@@ -142,101 +131,55 @@ class Append2Json(commands.Cog):
     def parse_verse_range(self, range_text, chapter_num):
         if not range_text:
             return []
-
         clean_text = range_text.strip().upper()
         numbers = re.findall(r'\d+', clean_text)
-
         if not numbers:
             return []
 
         if '-' in clean_text or '\u2013' in clean_text or 'TEXTS' in clean_text:
             try:
-                sub_numbers = re.findall(
-                    rf'(?:BG\s+{re.escape(chapter_num)}\.|\.)(\d+)',
-                    clean_text
-                )
+                sub_numbers = re.findall(rf'(?:BG\s+{re.escape(chapter_num)}\.|\.)(\d+)', clean_text)
                 if len(sub_numbers) >= 2:
-                    start = int(sub_numbers[0])
-                    end = int(sub_numbers[-1])
+                    start, end = int(sub_numbers[0]), int(sub_numbers[-1])
                 else:
-                    verse_nums = [
-                        int(n) for n in numbers
-                        if n != chapter_num  
-                    ]
+                    verse_nums = [int(n) for n in numbers if n != chapter_num]
                     if len(verse_nums) >= 2:
                         start, end = verse_nums[0], verse_nums[-1]
                     elif len(verse_nums) == 1:
                         return [verse_nums[0]]
                     else:
                         start, end = int(numbers[0]), int(numbers[-1])
-
                 return list(range(start, end + 1))
-            except (ValueError, IndexError):
+            except Exception:
                 return []
-
         return [int(numbers[0])] if numbers else []
 
-    async def fetch_purport_map(self, chapter_num, status_msg: discord.Message):
-        # Fallback URL schema setup to parse data structurally
-        url = f"{self.data_base_url}/chapters/{chapter_num}.json"
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-            "Accept": "application/json"
-        }
-
+    def parse_purports_from_html(self, html_content, chapter_num):
+        """Extracts text paragraphs from elements with data-section="purport"."""
         purport_map = {}
-        chapter_end_text = f"Thus end the Bhaktivedanta Purports to Chapter {chapter_num}"
 
-        try:
-            async with aiohttp.ClientSession(headers=headers) as session:
-                async with session.get(url, timeout=30) as response:
-                    if response.status != 200:
-                        print(f"Server returned non-200 status code: {response.status}")
-                        return None, ""
+        # Regex pattern finds paragraphs with data-section="purport" and grabs the verse number
+        # Example pattern matches: data-section="purport" data-verse-key="bg/18/1"
+        pattern = r'<p[^>]*data-section="purport"[^>]*data-verse-key="bg/' + re.escape(str(chapter_num)) + r'/(\d+)"[^>]*>(.*?)</p>'
+        matches = re.findall(pattern, html_content, re.DOTALL)
 
-                    # Safe verification that content header is indeed structural json
-                    if "application/json" not in response.headers.get("Content-Type", "").lower():
-                        print("Error: Target endpoint did not return valid JSON data formats.")
-                        return None, ""
+        # Temporary dictionary to collect multiple paragraphs for each verse
+        temp_groups = {}
+        for verse_num, p_content in matches:
+            # Clean up residual inner HTML layout tags (like <em> or </em>)
+            clean_p = re.sub(r'<[^>]+>', '', p_content).strip()
+            if not clean_p:
+                continue
 
-                    site_data = await response.json()
-                    sections = site_data.get("sections", [])
-                    total_sections = len(sections)
+            if verse_num not in temp_groups:
+                temp_groups[verse_num] = []
+            temp_groups[verse_num].append(clean_p)
 
-                    if not sections:
-                        print("Warning: JSON retrieved safely but 'sections' node is completely empty.")
+        # Merge the text fragments using double line breaks
+        for verse_num, paragraphs in temp_groups.items():
+            purport_map[str(verse_num)] = "\n\n".join(paragraphs)
 
-                    for i, section in enumerate(sections):
-                        if i == 0 or (i + 1) % 5 == 0 or (i + 1) == total_sections:
-                            await status_msg.edit(
-                                content=f"⏳ Extracting purports: Section {i+1}/{total_sections}..."
-                            )
-
-                        header_text = section.get("title", "")
-                        verses_covered = self.parse_verse_range(header_text, chapter_num)
-                        if not verses_covered:
-                            continue
-
-                        purport_paragraphs = section.get("purport", [])
-                        clean_paragraphs = [p.strip() for p in purport_paragraphs if p.strip()]
-
-                        if clean_paragraphs:
-                            full_purport = "\n\n".join(clean_paragraphs)
-                        else:
-                            full_purport = None
-
-                        for v_num in verses_covered:
-                            if full_purport:
-                                purport_map[str(v_num)] = full_purport
-
-                    if "colophon" in site_data and site_data["colophon"].strip():
-                        chapter_end_text = site_data["colophon"].strip()
-
-            return purport_map, chapter_end_text
-
-        except Exception as e:
-            print(f"Error mapping purports via clean JSON stream: {e}")
-            return None, ""
+        return purport_map
 
 async def setup(bot):
     await bot.add_cog(Append2Json(bot))
