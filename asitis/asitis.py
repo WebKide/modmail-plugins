@@ -35,20 +35,17 @@ from .asitiscore import (
 __version__ = "v2.0 asitis.py — Modmail plugin entry point"
 
 class AsItIs(commands.Cog):
-    """Bhagavad Gītā As It Is* `(Original 1972 Macmillan edition)`
+    """Bhagavad Gītā As It Is* — Original 1972 Macmillan edition
     ```
-    █▀▀█░█▀▀░░▀█▀░▀▀█▀▀░░▀█▀░█▀▀
-    █▄▄█░▀▀█░░░█░░░░█░░░░░█░░▀▀█
-    ▀░░▀░▀▀▀░░▀▀▀░░░▀░░░░▀▀▀░▀▀▀
-    ╭─╮╭─┐ ┬┌┬┐ ┬╭─┐
-    ├─┤╰─╮ │ │  │╰─╮
-    ┴ ┴└─╯ ┴ ┴  ┴└─╯```
+    █▀▀█░█▀▀░░░▀█▀░▀▀█▀▀░░░▀█▀░█▀▀
+    █▄▄█░▀▀█░░░░█░░░░█░░░░░░█░░▀▀█
+    ▀░░▀░▀▀▀░░░▀▀▀░░░▀░░░░░▀▀▀░▀▀▀```
 
-    - Free Plugin to print Gītā verses inside a Discord text-channel.
-    - Full embed support, verse navigation, and purport reader.
-    - Śrīla Prabhupāda's original 1972 Macmillan Bhagavad-gītā As It Is —
-      original Sanskrit, English word meanings, and elaborate commentaries.
-    - First-class EXACT reproduction of the original hard cover book.
+    To ŚRĪLA BALADEVA VIDYĀBHŪṢAṆA who presented so nicely the
+    “Govinda-bhāṣya” commentary on Vedānta philosophy.
+
+    - Usage: `!bg <chapter> <verse>`  e.g.  `!bg 2 13`  or  `!bg 17 8-10`
+
     - No other philosophical or religious work reveals, in such a lucid and
       profound way, the nature of consciousness, the self, the universe and
       the Supreme.
@@ -70,18 +67,9 @@ class AsItIs(commands.Cog):
         """Bhagavad Gītā — As It Is (Original 1972 Macmillan edition)
 
         To ŚRĪLA BALADEVA VIDYĀBHŪṢAṆA who presented so nicely the
-        "Govinda-bhāṣya" commentary on Vedānta philosophy.
+        “Govinda-bhāṣya” commentary on Vedānta philosophy.
 
-        Usage: `!bg <chapter> <verse>`  e.g.  `!bg 2 13`  or  `!bg 17 8-10`
-
-        Features
-        --------
-        - Chapter title header
-        - Sanskrit devanāgarī transliteration
-        - Word-for-word synonym breakdown
-        - English translation
-        - Full purport reader with ebook-style pagination
-        - 𝖢𝗅𝗈𝗌𝖾 button
+        **Usage:** `!bg <chapter> <verse>`  e.g.  `!bg 2 13`  or  `!bg 17 8-10`
         """
         start_time = datetime.now()
 
