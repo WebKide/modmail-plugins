@@ -103,7 +103,7 @@ class PurportView(discord.ui.View):
         ctx: commands.Context,
         pages: List[str],
         current_page: int = 0,
-        timeout: float = 1800.0,
+        timeout: float = 300.0,  # 5 min
     ):
         super().__init__(timeout=timeout)
         self.cog          = cog
@@ -172,18 +172,11 @@ class PurportView(discord.ui.View):
     # ╠═══ timeout ═══════════════════════════════════════════════════════╣
 
     async def on_timeout(self):
-        # Clear all button components from the view
-        self.clear_items()
-
+        """Strip all buttons from the message completely when the purport times out."""
         if self.message:
             try:
-                # Pass view=None to strip the buttons from the message completely
                 await self.message.edit(view=None)
-
-            except (
-                discord.NotFound,
-                discord.HTTPException,
-            ):
+            except (discord.NotFound, discord.HTTPException):
                 pass
 
     # ╠═══ buttons ═══════════════════════════════════════════════════════╣
@@ -299,7 +292,7 @@ class NavigationButtons(discord.ui.View):
         chapter: int,
         verse_ref: str,
         ctx: commands.Context,
-        timeout: float = 1800.0,
+        timeout: float = 300.0,  # 5 min
     ):
         super().__init__(timeout=timeout)
         self.cog       = cog
@@ -348,12 +341,11 @@ class NavigationButtons(discord.ui.View):
     # ╠═══ timeout ═══════════════════════════════════════════════════════╣
 
     async def on_timeout(self):
-        for item in self.children:
-            item.disabled = True
+        """Strip all buttons from the message completely when the verse navigation times out."""
         if self.message:
             try:
-                await self.message.edit(view=self)
-            except discord.NotFound:
+                await self.message.edit(view=None)
+            except (discord.NotFound, discord.HTTPException):
                 pass
 
     # ╠═══ buttons ═══════════════════════════════════════════════════════╣
