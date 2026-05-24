@@ -55,7 +55,7 @@ NO_PURPORT = [
     "No Bhaktivedānta purport provided for this verse.",
     "No Bhaktivedānta purport accompanies this śloka.",
 ]
-PURPORT_MAX_CHARS  = 3600   # safe Discord embed description limit
+PURPORT_MAX_CHARS  = 2500   # safe Discord embed description limit
 FIELD_MAX_CHARS    = 1008   # Discord embed field value limit
 
 # ╔═══╦═══════════════════════════════╦══════════════════════════╗
@@ -393,7 +393,7 @@ def create_verse_embed(
         embed.add_field(
             name="\u200b",
             value=(
-                f"Thus end the Bhaktivedanta Purports to the {ordinal} Chapter of the "
+                f"Thus end the Bhaktivedānta Purports to the {ordinal} Chapter of the "
                 f"Śrīmad Bhagavad-gītā in the matter of {title}."
             ),
             inline=False,
@@ -410,17 +410,19 @@ def create_purport_embed(
     total_pages: int,
 ) -> discord.Embed:
     """Build a single purport-page embed."""
-    v_label = f"𝗏𝖾𝗋𝗌𝖾𝗌 {verse_ref}" if '-' in str(verse_ref) else f"𝗏𝖾𝗋𝗌𝖾 {verse_ref}"
-    total_v = BG_CHAPTER_INFO[chapter]['total_verses']
+    v_label      = f"𝗏𝖾𝗋𝗌𝖾𝗌 {verse_ref}" if '-' in str(verse_ref) else f"𝗏𝖾𝗋𝗌𝖾 {verse_ref}"
+    total_v      = BG_CHAPTER_INFO[chapter]['total_verses']
+    chapter_name = BG_CHAPTER_INFO[chapter]['chapter_title'].split('. ', 1)[-1]
+    pagination   = "" if total_pages == 1 else f" · 𝖯𝖺𝗀𝖾 {page_num} 𝗈𝖿 {total_pages}"
 
     embed = discord.Embed(
         color=EMBED_COLOR,
-        title=f"{page_num}/{total_pages}",
-        description=page_text,
+        title=f"Chapter {chapter} · {chapter_name}",
+        description=f"## 🖊️ 𝐏𝐔𝐑𝐏𝐎𝐑𝐓{pagination}\n\n{page_text}",
     )
     embed.set_author(name=AUTHOR_NAME, icon_url=AUTHOR_ICON)
     embed.set_footer(
-        text=f"𝖢𝗁𝖺𝗉𝗍𝖾𝗋 {chapter}, {v_label} 𝗈𝖿 {total_v}  ·  𝙿𝚄𝚁𝙿𝙾𝚁𝚃",
+        text=f"𝖢𝗁𝖺𝗉𝗍𝖾𝗋 {chapter}, {v_label} 𝗈𝖿 {total_v}  ·  𝖯𝖴𝖱𝖯𝖮𝖱𝖳",
         icon_url=FOOTER_ICON,
     )
     return embed
@@ -488,11 +490,11 @@ class PurportView(discord.ui.View):
     """
     Four-button view for reading a purport page by page.
 
-    Button layout: ◀ Prev  |  𝖵𝖾𝗋𝗌𝖾  |  𝖭𝖾𝗑𝗍 ▶  |  𝖢𝗅𝗈𝗌𝖾
+    Button layout: ◀ 𝖯𝗋𝖾𝗏  |  𝖵𝖾𝗋𝗌𝖾  |  𝖭𝖾𝗑𝗍 ▶  |  𝖢𝗅𝗈𝗌𝖾
 
-    ◀ Prev / 𝖭𝖾𝗑𝗍 ▶ behaviour:
+    ◀ 𝖯𝗋𝖾𝗏 / 𝖭𝖾𝗑𝗍 ▶ behaviour:
       • If the purport has multiple pages:
-          - On page 1,  ◀ Prev  navigates to the *previous verse* in the Gītā.
+          - On page 1,  ◀ 𝖯𝗋𝖾𝗏  navigates to the *previous verse* in the Gītā.
           - On page N,  𝖭𝖾𝗑𝗍 ▶  navigates to the *next verse* (ebook feel).
           - On inner pages both buttons step through purport pages.
       • If the purport fits in a single page both buttons navigate verse-to-verse
@@ -531,7 +533,7 @@ class PurportView(discord.ui.View):
 
     def _refresh_button_states(self):
         """
-        Enable/disable ◀ Prev and 𝖭𝖾𝗑𝗍 ▶ buttons.
+        Enable/disable ◀ 𝖯𝗋𝖾𝗏 and 𝖭𝖾𝗑𝗍 ▶ buttons.
         Both are always present; they're disabled only at the absolute
         boundaries of the entire Gītā.
         """
