@@ -351,6 +351,7 @@ def create_verse_embed(
     chapter: int,
     verse_ref: str,
     latency_ms: Optional[float] = None,
+    display_name: str = "",
 ) -> discord.Embed:
     """Build and return the full verse embed."""
     chapter_data = load_chapter_data(data_path, cache, chapter)
