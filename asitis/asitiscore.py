@@ -126,6 +126,13 @@ def _split_purport(raw: str, max_len: int = PURPORT_MAX_CHARS) -> List[str]:
     if current:
         pages.append(current)
 
+    # Append a teaser from the next page to all but the last page
+    for i in range(len(pages) - 1):
+        next_page  = pages[i + 1].lstrip()
+        words      = next_page.split()[:3]
+        teaser     = ' '.join(words)
+        pages[i]  += f"\n\n{teaser}... *(𝖱𝖾𝖺𝖽 𝗆𝗈𝗋𝖾)*"
+
     return pages or ["No purport available."]
 
 # ╔═══╦═════════════════════════════════════════════════════╦════╗
