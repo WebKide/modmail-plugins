@@ -351,7 +351,6 @@ def create_verse_embed(
     chapter: int,
     verse_ref: str,
     latency_ms: Optional[float] = None,
-    display_name: str = "",
 ) -> discord.Embed:
     """Build and return the full verse embed."""
     chapter_data = load_chapter_data(data_path, cache, chapter)
@@ -410,6 +409,7 @@ def create_purport_embed(
     page_text: str,
     page_num: int,
     total_pages: int,
+    display_name: str = "",
 ) -> discord.Embed:
     """Build a single purport-page embed."""
     v_label      = f"𝗏𝖾𝗋𝗌𝖾𝗌 {verse_ref}" if '-' in str(verse_ref) else f"𝗏𝖾𝗋𝗌𝖾 {verse_ref}"
