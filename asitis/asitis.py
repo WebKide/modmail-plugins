@@ -138,8 +138,12 @@ class AsItIs(commands.Cog):
             formatted_name = ctx.author.display_name.title()
 
             embed = create_verse_embed(
-                self.data_path, self._chapter_cache,
-                chapter, verse_ref, None, formatted_name
+                data_path=self.data_path,
+                cache=self._chapter_cache,
+                chapter=chapter,
+                verse_ref=verse_ref,
+                latency_ms=None,
+                display_name=formatted_name
             )
 
             # 3. Chart performance latency metric markers safely into embed footer
