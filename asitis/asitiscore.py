@@ -131,7 +131,7 @@ def _split_purport(raw: str, max_len: int = PURPORT_MAX_CHARS) -> List[str]:
         next_page  = pages[i + 1].lstrip()
         words      = next_page.split()[:3]
         teaser     = ' '.join(words)
-        pages[i]  += f"\n\n{teaser}... *(𝖱𝖾𝖺𝖽 𝗆𝗈𝗋𝖾)*"
+        pages[i]  += f"\n{teaser}... **(𝖱𝖾𝖺𝖽 𝗆𝗈𝗋𝖾)**"
 
     return pages or ["No purport available."]
 
