@@ -37,14 +37,12 @@ BG_CHAPTER_INFO = {
 # ╠═══╣ Embed constants ╠════════════════════════════════════════╣
 # ╚═══╩═════════════════╩════════════════════════════════════════╝
 
-EMBED_COLOR        = discord.Color(0xF5A623)
-AUTHOR_NAME        = "Bhagavad Gītā — As It Is (Original 1972 edition)"
-AUTHOR_ICON        = "https://i.imgur.com/iZ6CHAz.png"
-FOOTER_ICON        = "https://i.imgur.com/10jxmCh.png"
-DEDICATORY         = (
-    "```bf\nTo ŚRĪLA BALADEVA VIDYĀBHŪṢAṆA who presented so nicely the "
-    "\u201cGovinda-bhāṣya\u201d commentary on Vedānta philosophy.```"
-    "\n-# oṁ namo bhagavate vāsudevāya"
+EMBED_COLOR = discord.Color(0xF5A623)
+AUTHOR_NAME = "Bhagavad Gītā — As It Is (Original 1972 edition)"
+AUTHOR_ICON = "https://i.imgur.com/iZ6CHAz.png"
+FOOTER_ICON = "https://i.imgur.com/10jxmCh.png"
+DEDICATORY  = (
+    "-# 𝗈ṁ 𝗇𝖺𝗆𝗈 𝖻𝗁𝖺𝗀𝖺𝗏𝖺𝗍𝖾 𝗏ā𝗌𝗎𝖽𝖾𝗏ā𝗒𝖺"
 )
 NO_PURPORT = [
     "This śloka does not contain a purport.",
@@ -55,8 +53,8 @@ NO_PURPORT = [
     "No Bhaktivedānta purport provided for this verse.",
     "No Bhaktivedānta purport accompanies this śloka.",
 ]
-PURPORT_MAX_CHARS  = 2500   # safe Discord embed description limit
-FIELD_MAX_CHARS    = 1008   # Discord embed field value limit
+PURPORT_MAX_CHARS = 2500  # safe Discord embed description limit
+FIELD_MAX_CHARS = 1008  # Discord embed field value limit
 
 # ╔═══╦═══════════════════════════════╦══════════════════════════╗
 # ╠═══╣ Helper: purport page splitter ╠══════════════════════════╣
@@ -352,6 +350,7 @@ def create_verse_embed(
     chapter: int,
     verse_ref: str,
     latency_ms: Optional[float] = None,
+    display_name: str = "",
 ) -> discord.Embed:
     """Build and return the full verse embed."""
     chapter_data = load_chapter_data(data_path, cache, chapter)
@@ -360,7 +359,7 @@ def create_verse_embed(
     embed = discord.Embed(
         color=EMBED_COLOR,
         description=(
-            f"{DEDICATORY}\n\n"
+            f"{DEDICATORY}\nMy Dear {display_name},\nPlease accept my blessings.\n\n"
             f"📜 **𝖢𝗁𝖺𝗉𝗍𝖾𝗋 {chapter}. "
             f"{BG_CHAPTER_INFO[chapter]['chapter_title'].split('. ', 1)[-1]}**"
         ),
@@ -417,8 +416,8 @@ def create_purport_embed(
 
     embed = discord.Embed(
         color=EMBED_COLOR,
-        title=f"{chapter_name} · BG {chapter}/{v_label}",
-        description=f"### 🖊️ 𝐏𝐔𝐑𝐏𝐎𝐑𝐓{pagination}\n\n{page_text}",
+        title=f"{chapter_name} · 𝖡𝖦 {chapter}/{verse_ref}",
+        description=f"#### 🖊️ 𝐏𝐔𝐑𝐏𝐎𝐑𝐓{pagination}\n\n{page_text}",
     )
     embed.set_author(name=AUTHOR_NAME, icon_url=AUTHOR_ICON)
     embed.set_footer(
@@ -561,9 +560,10 @@ class PurportView(discord.ui.View):
         await interaction.response.defer()
         latency_ms = (time.time() - start_time) * 1000
         try:
-            embed    = create_verse_embed(
+            embed = create_verse_embed(
                 self.cog.data_path, self.cog._chapter_cache,
                 chapter, verse_ref, latency_ms,
+                display_name=self.author.display_name,
             )
             new_view = NavigationButtons(self.cog, chapter, verse_ref, self.ctx)
             new_view.message = interaction.message
@@ -607,9 +607,10 @@ class PurportView(discord.ui.View):
         await interaction.response.defer()
         latency_ms = (time.time() - start_time) * 1000
         try:
-            embed    = create_verse_embed(
+            embed = create_verse_embed(
                 self.cog.data_path, self.cog._chapter_cache,
-                self.chapter, self.verse_ref, latency_ms,
+                chapter, verse_ref, latency_ms,
+                display_name=self.author.display_name,
             )
             new_view = NavigationButtons(self.cog, self.chapter, self.verse_ref, self.ctx)
             new_view.message = interaction.message
@@ -692,9 +693,10 @@ class NavigationButtons(discord.ui.View):
         await interaction.response.defer()
         latency_ms = (time.time() - start_time) * 1000
         try:
-            embed    = create_verse_embed(
+            embed = create_verse_embed(
                 self.cog.data_path, self.cog._chapter_cache,
                 chapter, verse_ref, latency_ms,
+                display_name=self.author.display_name,
             )
             new_view = NavigationButtons(self.cog, chapter, verse_ref, self.ctx)
             new_view.message = interaction.message
