@@ -1,3 +1,5 @@
+# asitisnav.py
+
 import random
 import time
 from typing import List, Tuple, Optional
@@ -30,7 +32,7 @@ def parse_verse_ref(verse_ref) -> Tuple[int, int]:
         return verse_ref, verse_ref
     s = str(verse_ref)
     if '-' in s:
-        parts = s.split('-')
+        parts = s.split("-")
         return int(parts[0]), int(parts[-1])
     return int(s), int(s)
 
@@ -54,7 +56,7 @@ def get_adjacent_verses(
     else:
         pv = start - 1
         prev = (chapter, next(
-            (f"{rs}-{re}" for rs, re in BG_CHAPTER_INFO[chapter]['grouped_ranges'] if rs <= pv <= re),
+            (f"{rs}-{re}" for rs, re in BG_CHAPTER_INFO[chapter].get('grouped_ranges', []) if rs <= pv <= re),
             str(pv),
         ))
 
@@ -67,7 +69,7 @@ def get_adjacent_verses(
     else:
         nv = end + 1
         nxt = (chapter, next(
-            (f"{rs}-{re}" for rs, re in BG_CHAPTER_INFO[chapter]['grouped_ranges'] if rs <= nv <= re),
+            (f"{rs}-{re}" for rs, re in BG_CHAPTER_INFO[chapter].get('grouped_ranges', []) if rs <= nv <= re),
             str(nv),
         ))
 
@@ -150,29 +152,36 @@ class PurportView(discord.ui.View):
     async def _go_to_verse(self, interaction: discord.Interaction, chapter: int, verse_ref: str):
         """Switch message back to a full verse view (NavigationButtons)."""
         start_time = time.time()
-        await interaction.response.defer()
+        if not interaction.response.is_done():
+            await interaction.response.defer()
         latency_ms = (time.time() - start_time) * 1000
         try:
             embed = create_verse_embed(
                 self.cog.data_path, self.cog._chapter_cache,
-                self.chapter, self.verse_ref, latency_ms,
+                chapter, verse_ref, latency_ms,
                 display_name=self.author.display_name,
             )
             new_view = NavigationButtons(self.cog, chapter, verse_ref, self.ctx)
             new_view.message = interaction.message
             await interaction.message.edit(embed=embed, view=new_view)
         except Exception as e:
-            await interaction.followup.send(f"Navigation error: {e}", ephemeral=True)
+            await interaction.response.send_message(f"Navigation error: {e}", ephemeral=True)
 
     # ╠═══ timeout ═══════════════════════════════════════════════════════╣
 
     async def on_timeout(self):
+
         for item in self.children:
             item.disabled = True
+
         if self.message:
             try:
                 await self.message.edit(view=self)
-            except discord.NotFound:
+
+            except (
+                discord.NotFound,
+                discord.HTTPException,
+            ):
                 pass
 
     # ╠═══ buttons ═══════════════════════════════════════════════════════╣
@@ -188,7 +197,8 @@ class PurportView(discord.ui.View):
                 return
             await self._go_to_verse(interaction, self._prev_ch, self._prev_ref)
         else:
-            await interaction.response.defer()
+            if not interaction.response.is_done():
+                await interaction.response.defer()
             self.current_page -= 1
             self._refresh_button_states()
             await interaction.message.edit(embed=self._build_embed(), view=self)
@@ -197,7 +207,8 @@ class PurportView(discord.ui.View):
     async def verse_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         """Return to the verse embed (same verse, NavigationButtons view)."""
         start_time = time.time()
-        await interaction.response.defer()
+        if not interaction.response.is_done():
+            await interaction.response.defer()
         latency_ms = (time.time() - start_time) * 1000
         try:
             embed = create_verse_embed(
@@ -222,22 +233,50 @@ class PurportView(discord.ui.View):
                 return
             await self._go_to_verse(interaction, self._next_ch, self._next_ref)
         else:
-            await interaction.response.defer()
+            if not interaction.response.is_done():
+                await interaction.response.defer()
             self.current_page += 1
             self._refresh_button_states()
             await interaction.message.edit(embed=self._build_embed(), view=self)
 
-    @discord.ui.button(label="𝖢𝗅𝗈𝗌𝖾", style=discord.ButtonStyle.red, custom_id="purport_close")
-    async def close_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+    @discord.ui.button(
+        label="𝖢𝗅𝗈𝗌𝖾",
+        style=discord.ButtonStyle.red,
+        custom_id="nav_close",
+    )
+    async def close_button(
+        self,
+        interaction: discord.Interaction,
+        button: discord.ui.Button,
+    ):
+
         if interaction.user != self.author:
+
             await interaction.response.send_message(
-                "Only the command author can close this.", ephemeral=True
+                "Only the command author can close this.",
+                ephemeral=True,
             )
+
             return
-        await interaction.message.delete()
+
+        try:
+            await interaction.message.delete()
+
+        except (
+            discord.NotFound,
+            discord.Forbidden,
+            discord.HTTPException,
+        ):
+            pass
+
         try:
             await self.ctx.message.delete()
-        except (discord.NotFound, discord.Forbidden):
+
+        except (
+            discord.NotFound,
+            discord.Forbidden,
+            discord.HTTPException,
+        ):
             pass
 
 
@@ -273,22 +312,29 @@ class NavigationButtons(discord.ui.View):
 
         # Disable Prev/Next at absolute book boundaries
         # Button index order: 0=prev, 1=purport, 2=next, 3=close
+        """
         if self._prev_ch is None:
             self.children[0].disabled = True
         if self._next_ch is None:
             self.children[2].disabled = True
+        """
+
+        if len(self.children) >= 3:
+            if self._prev_ch is None: self.children[0].disabled = True
+            if self._next_ch is None: self.children[2].disabled = True
 
     # ╠═══ helpers ═══════════════════════════════════════════════════════╣
 
     async def _navigate(self, interaction: discord.Interaction, chapter: int, verse_ref: str):
         """Replace embed with another verse (same NavigationButtons view)."""
         start_time = time.time()
-        await interaction.response.defer()
+        if not interaction.response.is_done():
+            await interaction.response.defer()
         latency_ms = (time.time() - start_time) * 1000
         try:
             embed = create_verse_embed(
                 self.cog.data_path, self.cog._chapter_cache,
-                self.chapter, self.verse_ref, latency_ms,
+                chapter, verse_ref, latency_ms,
                 display_name=self.author.display_name,
             )
             new_view = NavigationButtons(self.cog, chapter, verse_ref, self.ctx)
@@ -322,7 +368,8 @@ class NavigationButtons(discord.ui.View):
     @discord.ui.button(label="𝖯𝗎𝗋𝗉𝗈𝗋𝗍", style=discord.ButtonStyle.blurple, custom_id="nav_purport")
     async def purport_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         """Load the purport for this verse and switch to PurportView."""
-        await interaction.response.defer()
+        if not interaction.response.is_done():
+            await interaction.response.defer()
         try:
             chapter_data = load_chapter_data(
                 self.cog.data_path, self.cog._chapter_cache, self.chapter
@@ -363,14 +410,12 @@ class NavigationButtons(discord.ui.View):
                     f"of the Śrīmad Bhagavad-gītā in the matter of {title}."
                 )
 
-            pages = _split_purport(raw_purport)
-            purport_view = PurportView(
-                self.cog, self.chapter, self.verse_ref, self.ctx, pages
-            )
+            pages = _split_purport(raw_purport, PURPORT_MAX_CHARS)
+            purport_view = PurportView(self.cog, self.chapter, self.verse_ref, self.ctx, pages)
             purport_view.message = interaction.message
-            await interaction.message.edit(
-                embed=purport_view._build_embed(), view=purport_view
-            )
+
+            await interaction.message.edit(embed=purport_view._build_embed(), view=purport_view)
+
         except Exception as e:
             await interaction.followup.send(f"Error loading purport: {e}", ephemeral=True)
 
@@ -383,19 +428,42 @@ class NavigationButtons(discord.ui.View):
             return
         await self._navigate(interaction, self._next_ch, self._next_ref)
 
-    @discord.ui.button(label="𝖢𝗅𝗈𝗌𝖾", style=discord.ButtonStyle.red, custom_id="nav_close")
-    async def close_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+    @discord.ui.button(
+        label="𝖢𝗅𝗈𝗌𝖾",
+        style=discord.ButtonStyle.red,
+        custom_id="nav_close",
+    )
+    async def close_button(
+        self,
+        interaction: discord.Interaction,
+        button: discord.ui.Button,
+    ):
+
         if interaction.user != self.author:
+
             await interaction.response.send_message(
-                "Only the command author can close this.", ephemeral=True
+                "Only the command author can close this.",
+                ephemeral=True,
             )
+
             return
-        await interaction.message.delete()
+
+        try:
+            await interaction.message.delete()
+
+        except (
+            discord.NotFound,
+            discord.Forbidden,
+            discord.HTTPException,
+        ):
+            pass
+
         try:
             await self.ctx.message.delete()
-        except discord.NotFound:
+
+        except (
+            discord.NotFound,
+            discord.Forbidden,
+            discord.HTTPException,
+        ):
             pass
-        except discord.Forbidden:
-            await interaction.response.send_message(
-                "I don't have permissions to delete the command message.", ephemeral=True
-            )
