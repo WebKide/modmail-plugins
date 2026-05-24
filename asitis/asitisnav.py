@@ -172,13 +172,13 @@ class PurportView(discord.ui.View):
     # ╠═══ timeout ═══════════════════════════════════════════════════════╣
 
     async def on_timeout(self):
-
-        for item in self.children:
-            item.disabled = True
+        # Clear all button components from the view
+        self.clear_items()
 
         if self.message:
             try:
-                await self.message.edit(view=self)
+                # Pass view=None to strip the buttons from the message completely
+                await self.message.edit(view=None)
 
             except (
                 discord.NotFound,
