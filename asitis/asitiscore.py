@@ -757,7 +757,15 @@ class NavigationButtons(discord.ui.View):
             #    raw_purport = random.choice(NO_PURPORT)
             # ╚═══╩══════════════════════════════════════════╩═══════════════╝
 
-            pages    = _split_purport(raw_purport)
+            verse_end = int(str(self.verse_ref).split('-')[-1])
+            if verse_end == BG_CHAPTER_INFO[self.chapter]['total_verses']:
+                ordinal, title = BG_CHAPTER_INFO[self.chapter]['chapter_title'].split('. ', 1)
+                raw_purport += (
+                    f"\n\nThus end the Bhaktivedānta Purports to the {ordinal} Chapter "
+                    f"of the Śrīmad Bhagavad-gītā in the matter of {title}."
+                )
+
+            pages = _split_purport(raw_purport)
             purport_view = PurportView(
                 self.cog, self.chapter, self.verse_ref, self.ctx, pages
             )
