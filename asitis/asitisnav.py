@@ -141,12 +141,14 @@ class PurportView(discord.ui.View):
         self.children[2].disabled = at_book_end
 
     def _build_embed(self) -> discord.Embed:
+        formatted_name = self.author.display_name.title()
         return create_purport_embed(
             self.chapter,
             self.verse_ref,
             self.pages[self.current_page],
             self.current_page + 1,
             len(self.pages),
+            display_name=formatted_name,
         )
 
     async def _go_to_verse(self, interaction: discord.Interaction, chapter: int, verse_ref: str):
