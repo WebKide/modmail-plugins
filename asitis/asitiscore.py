@@ -1,6 +1,7 @@
 # asitiscore.py
 
 import json
+import random
 import time
 from pathlib import Path
 from typing import List, Tuple, Optional
@@ -45,6 +46,15 @@ DEDICATORY         = (
     "\u201cGovinda-bhāṣya\u201d commentary on Vedānta philosophy.```"
     "\n-# oṁ namo bhagavate vāsudevāya"
 )
+NO_PURPORT = [
+    "This śloka does not contain a purport.",
+    "No purport for this śloka.",
+    "There is no purport provided for this śloka.",
+    "This verse has no accompanying purport.",
+    "This śloka does not include a Bhaktivedānta purport.",
+    "No Bhaktivedānta purport provided for this verse.",
+    "No Bhaktivedānta purport accompanies this śloka.",
+]
 PURPORT_MAX_CHARS  = 3600   # safe Discord embed description limit
 FIELD_MAX_CHARS    = 1008   # Discord embed field value limit
 
@@ -722,10 +732,11 @@ class NavigationButtons(discord.ui.View):
             )
             verse_data = find_verse_data(chapter_data, self.verse_ref)
             raw_purport = verse_data.get('Purport-En', '').strip()
+            raw_purport = "" if raw_purport == "No purport for this śloka." else raw_purport
 
             if not raw_purport:
                 await interaction.followup.send(
-                    "No purport is available for this verse.", ephemeral=True
+                    random.choice(NO_PURPORT), ephemeral=True
                 )
                 return
 
