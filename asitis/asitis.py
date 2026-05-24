@@ -91,7 +91,7 @@ class AsItIs(commands.Cog):
             embed = create_verse_embed(
                 self.data_path, self._chapter_cache,
                 chapter, verse_ref,
-                display_name=ctx.author.display_name,
+                display_name=ctx.author.display_name.title(),
             )
             # Append retrieval latency to footer
             latency_ms = (datetime.now() - start_time).total_seconds() * 1000
@@ -138,7 +138,7 @@ class AsItIs(commands.Cog):
             embed = create_verse_embed(
                 self.data_path, self._chapter_cache,
                 chapter, verse_ref,
-                display_name=ctx.author.display_name,
+                display_name=ctx.author.display_name.title(),
             )
 
             # 3. Chart performance latency metric markers safely into embed footer
