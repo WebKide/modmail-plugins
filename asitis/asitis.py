@@ -65,7 +65,7 @@ class AsItIs(commands.Cog):
     # ╠════════════════════╣ GITA COMMAND ╠════════════════════════╣
     # ╚════════════════════╩══════════════╩════════════════════════╝
 
-    @commands.command(name='asitis', aliases=['1972', 'bg'])
+    @commands.command(name='asitis', aliases=['1972', 'bg', 'gītā'])
     @commands.guild_only()
     async def gita_verse(self, ctx: commands.Context, chapter: int, verse: str):
         """Bhagavad Gītā — As It Is (Original 1972 Macmillan edition)
