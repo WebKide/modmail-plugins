@@ -135,10 +135,11 @@ class AsItIs(commands.Cog):
 
         try:
             # 2. Build the visual verse card component using cached chapter maps
+            formatted_name = ctx.author.display_name.title()
+
             embed = create_verse_embed(
                 self.data_path, self._chapter_cache,
-                chapter, verse_ref,
-                display_name=ctx.author.display_name.title(),
+                chapter, verse_ref, None, formatted_name
             )
 
             # 3. Chart performance latency metric markers safely into embed footer
