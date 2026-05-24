@@ -398,6 +398,8 @@ def create_verse_embed(
             inline=False,
         )
 
+    embed.set_image(url="https://i.imgur.com/BGsgSOi.png")
+
     return embed
 
 
@@ -424,4 +426,6 @@ def create_purport_embed(
         text=f"𝖢𝗁𝖺𝗉𝗍𝖾𝗋 {chapter}, {v_label} 𝗈𝖿 {total_v}  ·  𝖯𝖴𝖱𝖯𝖮𝖱𝖳",
         icon_url=FOOTER_ICON,
     )
+    embed.set_image(url="https://i.imgur.com/BGsgSOi.png")
+
     return embed
