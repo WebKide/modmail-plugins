@@ -736,13 +736,18 @@ class NavigationButtons(discord.ui.View):
             )
             verse_data = find_verse_data(chapter_data, self.verse_ref)
             raw_purport = verse_data.get('Purport-En', '').strip()
-            # raw_purport = "" if raw_purport == "No purport for this śloka." else raw_purport
-            # if not raw_purport:
-            #    await interaction.followup.send(random.choice(NO_PURPORT), ephemeral=True)
-            #    return
 
-            if not raw_purport or raw_purport == "No purport for this śloka.":
-                raw_purport = random.choice(NO_PURPORT)
+            # ╔═══╦════════════════════════════════════════════════╦═════════╗
+            # ╠═══╣ Ephemeral message for verses without a Purport ╠═════════╣
+            raw_purport = "" if raw_purport == "No purport for this śloka." else raw_purport
+            if not raw_purport:
+                await interaction.followup.send(random.choice(NO_PURPORT), ephemeral=True)
+                return
+
+            # ╠═══╣ Embed edit for verses without Purport ╠══════════════════╣
+            # if not raw_purport or raw_purport == "No purport for this śloka.":
+            #    raw_purport = random.choice(NO_PURPORT)
+            # ╚═══╩═══════════════════════════════════════╩══════════════════╝
 
             pages    = _split_purport(raw_purport)
             purport_view = PurportView(
