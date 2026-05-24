@@ -417,8 +417,8 @@ def create_purport_embed(
 
     embed = discord.Embed(
         color=EMBED_COLOR,
-        title=f"Chapter {chapter} · {chapter_name}",
-        description=f"## 🖊️ 𝐏𝐔𝐑𝐏𝐎𝐑𝐓{pagination}\n\n{page_text}",
+        title=f"{chapter_name} · BG {chapter}/{v_label}",
+        description=f"### 🖊️ 𝐏𝐔𝐑𝐏𝐎𝐑𝐓{pagination}\n\n{page_text}",
     )
     embed.set_author(name=AUTHOR_NAME, icon_url=AUTHOR_ICON)
     embed.set_footer(
@@ -734,13 +734,13 @@ class NavigationButtons(discord.ui.View):
             )
             verse_data = find_verse_data(chapter_data, self.verse_ref)
             raw_purport = verse_data.get('Purport-En', '').strip()
-            raw_purport = "" if raw_purport == "No purport for this śloka." else raw_purport
+            # raw_purport = "" if raw_purport == "No purport for this śloka." else raw_purport
+            # if not raw_purport:
+            #    await interaction.followup.send(random.choice(NO_PURPORT), ephemeral=True)
+            #    return
 
-            if not raw_purport:
-                await interaction.followup.send(
-                    random.choice(NO_PURPORT), ephemeral=True
-                )
-                return
+            if not raw_purport or raw_purport == "No purport for this śloka.":
+                raw_purport = random.choice(NO_PURPORT_MSGS)
 
             pages    = _split_purport(raw_purport)
             purport_view = PurportView(
