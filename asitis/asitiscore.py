@@ -416,8 +416,8 @@ def create_purport_embed(
 
     embed = discord.Embed(
         color=EMBED_COLOR,
-        title=f"{chapter_name} · 𝖡𝖦 {chapter}/{verse_ref}",
-        description=f"#### 🖊️ 𝐏𝐔𝐑𝐏𝐎𝐑𝐓{pagination}\n\n{page_text}",
+        title=f"{chapter_name} · 𝖡𝖦 {chapter}.{verse_ref}",
+        description=f"**🖊️ 𝐏𝐔𝐑𝐏𝐎𝐑𝐓**{pagination}\n\n{page_text}",
     )
     embed.set_author(name=AUTHOR_NAME, icon_url=AUTHOR_ICON)
     embed.set_footer(
@@ -562,7 +562,7 @@ class PurportView(discord.ui.View):
         try:
             embed = create_verse_embed(
                 self.cog.data_path, self.cog._chapter_cache,
-                chapter, verse_ref, latency_ms,
+                self.chapter, self.verse_ref, latency_ms,
                 display_name=self.author.display_name,
             )
             new_view = NavigationButtons(self.cog, chapter, verse_ref, self.ctx)
@@ -609,7 +609,7 @@ class PurportView(discord.ui.View):
         try:
             embed = create_verse_embed(
                 self.cog.data_path, self.cog._chapter_cache,
-                chapter, verse_ref, latency_ms,
+                self.chapter, self.verse_ref, latency_ms,
                 display_name=self.author.display_name,
             )
             new_view = NavigationButtons(self.cog, self.chapter, self.verse_ref, self.ctx)
@@ -695,7 +695,7 @@ class NavigationButtons(discord.ui.View):
         try:
             embed = create_verse_embed(
                 self.cog.data_path, self.cog._chapter_cache,
-                chapter, verse_ref, latency_ms,
+                self.chapter, self.verse_ref, latency_ms,
                 display_name=self.author.display_name,
             )
             new_view = NavigationButtons(self.cog, chapter, verse_ref, self.ctx)
