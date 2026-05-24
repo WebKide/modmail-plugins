@@ -41,6 +41,7 @@ EMBED_COLOR = discord.Color(0xF5A623)
 AUTHOR_NAME = "Bhagavad Gītā — As It Is (Original 1972 edition)"
 AUTHOR_ICON = "https://i.imgur.com/iZ6CHAz.png"
 FOOTER_ICON = "https://i.imgur.com/10jxmCh.png"
+SIGNATURE = "https://i.imgur.com/BGsgSOi.png"
 DEDICATORY  = (
     "-# 𝗈ṁ 𝗇𝖺𝗆𝗈 𝖻𝗁𝖺𝗀𝖺𝗏𝖺𝗍𝖾 𝗏ā𝗌𝗎𝖽𝖾𝗏ā𝗒𝖺"
 )
@@ -53,8 +54,8 @@ NO_PURPORT = [
     "No Bhaktivedānta purport provided for this verse.",
     "No Bhaktivedānta purport accompanies this śloka.",
 ]
-PURPORT_MAX_CHARS = 2500  # safe Discord embed description limit
-FIELD_MAX_CHARS = 1008  # Discord embed field value limit
+PURPORT_MAX_CHARS = 1080  # safe Discord embed description limit
+FIELD_MAX_CHARS = 1000  # Discord embed field value limit
 
 # ╔═══╦═══════════════════════════════╦══════════════════════════╗
 # ╠═══╣ Helper: purport page splitter ╠══════════════════════════╣
@@ -398,7 +399,7 @@ def create_verse_embed(
             inline=False,
         )
 
-    embed.set_image(url="https://i.imgur.com/BGsgSOi.png")
+    embed.set_image(url=SIGNATURE)
 
     return embed
 
@@ -419,13 +420,13 @@ def create_purport_embed(
     embed = discord.Embed(
         color=EMBED_COLOR,
         title=f"{chapter_name} · 𝖡𝖦 {chapter}.{verse_ref}",
-        description=f"**🖊️ 𝐏𝐔𝐑𝐏𝐎𝐑𝐓**{pagination}\n\n{page_text}",
+        description=f"**🖊️ 𝙿𝚄𝚁𝙿𝙾𝚁𝚃:**{pagination}\n\n{page_text}",
     )
     embed.set_author(name=AUTHOR_NAME, icon_url=AUTHOR_ICON)
     embed.set_footer(
         text=f"𝖢𝗁𝖺𝗉𝗍𝖾𝗋 {chapter}, {v_label} 𝗈𝖿 {total_v}  ·  𝖯𝖴𝖱𝖯𝖮𝖱𝖳",
         icon_url=FOOTER_ICON,
     )
-    embed.set_image(url="https://i.imgur.com/BGsgSOi.png")
+    # embed.set_image(url=SIGNATURE)
 
     return embed
