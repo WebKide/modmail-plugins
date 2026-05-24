@@ -360,7 +360,7 @@ def create_verse_embed(
     embed = discord.Embed(
         color=EMBED_COLOR,
         description=(
-            f"{DEDICATORY}\nMy Dear {display_name},\nPlease accept my blessings.\n\n"
+            f"{DEDICATORY}\n"
             f"📜 **𝖢𝗁𝖺𝗉𝗍𝖾𝗋 {chapter}. "
             f"{BG_CHAPTER_INFO[chapter]['chapter_title'].split('. ', 1)[-1]}**"
         ),
@@ -420,7 +420,8 @@ def create_purport_embed(
     embed = discord.Embed(
         color=EMBED_COLOR,
         title=f"{chapter_name} · 𝖡𝖦 {chapter}.{verse_ref}",
-        description=f"**🖊️ 𝙿𝚄𝚁𝙿𝙾𝚁𝚃:**{pagination}\n\n{page_text}",
+        description=f"𝖬𝗒 𝖣𝖾𝖺𝗋 {display_name},\n𝖯𝗅𝖾𝖺𝗌𝖾 𝖺𝖼𝖼𝖾𝗉𝗍 𝗆𝗒 𝖻𝗅𝖾𝗌𝗌𝗂𝗇𝗀𝗌.\n\n"
+        f"**🖊️ 𝙿𝚄𝚁𝙿𝙾𝚁𝚃:**{pagination}\n\n{page_text}",
     )
     embed.set_author(name=AUTHOR_NAME, icon_url=AUTHOR_ICON)
     embed.set_footer(
