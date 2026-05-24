@@ -424,7 +424,7 @@ def create_purport_embed(
     )
     embed.set_author(name=AUTHOR_NAME, icon_url=AUTHOR_ICON)
     embed.set_footer(
-        text=f"𝖢𝗁𝖺𝗉𝗍𝖾𝗋 {chapter}, {v_label} 𝗈𝖿 {total_v}  ·  𝖯𝖴𝖱𝖯𝖮𝖱𝖳",
+        text=f"𝖢𝗁𝖺𝗉𝗍𝖾𝗋 {chapter}, {v_label} (𝗈𝖿 {total_v})  ·  𝖯𝖴𝖱𝖯𝖮𝖱𝖳",
         icon_url=FOOTER_ICON,
     )
     # embed.set_image(url=SIGNATURE)
