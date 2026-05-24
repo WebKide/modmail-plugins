@@ -743,7 +743,9 @@ class NavigationButtons(discord.ui.View):
             if not raw_purport:
                 chapter_name = BG_CHAPTER_INFO[self.chapter]['chapter_title'].split('. ', 1)[-1]
                 await interaction.followup.send(
-                    f"Bhagavad Gītā As It Is: **{chapter_name}** · 𝖡𝖦 {self.chapter}.{self.verse_ref}\n\n"
+                    f"To ŚRĪLA BALADEVA VIDYĀBHŪṢAṆA who presented so nicely the “Govinda-bhāṣya” commentary on Vedānta philosophy.\n\n"
+                    f"Bhagavad Gītā As It Is — Original 1972 Macmillan edition\n"
+                    f"{chapter_name}\nChapter {self.chapter}, text {self.verse_ref}\n\n"
                     f"{random.choice(NO_PURPORT)}",
                     ephemeral=True,
                 )
