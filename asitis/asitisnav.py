@@ -7,7 +7,7 @@ from discord.ext import commands
 
 from .asitiscore import (
     BG_CHAPTER_INFO,
-    NO_PURPORT_MSGS,
+    NO_PURPORT,
     EMBED_COLOR,
     AUTHOR_NAME,
     AUTHOR_ICON,
