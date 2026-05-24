@@ -129,7 +129,7 @@ class AsItIs(commands.Cog):
         total     = BG_CHAPTER_INFO[chapter]['total_verses']
         verse_num = random.randint(1, total)
 
-        is_valid, verse_ref = self._validate_verse(chapter, str(verse_num))
+        is_valid, verse_ref = self.validate_verse(chapter, str(verse_num))
         if not is_valid:
             return await ctx.send(f"🚫 Random selection validation failure: {verse_ref}", delete_after=9)
 
