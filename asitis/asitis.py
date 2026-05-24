@@ -18,6 +18,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
+import random
 from datetime import datetime
 from pathlib import Path
 
@@ -64,7 +65,8 @@ class AsItIs(commands.Cog):
     # ╠════════════════════╣ GITA COMMAND ╠════════════════════════╣
     # ╚════════════════════╩══════════════╩════════════════════════╝
 
-    @commands.command(name='asitis', aliases=['1972', 'bg'], no_pm=True)
+    @commands.command(name='asitis', aliases=['1972', 'bg'])
+    @commands.guild_only()
     async def gita_verse(self, ctx: commands.Context, chapter: int, verse: str):
         """Bhagavad Gītā — As It Is (Original 1972 Macmillan edition)
 
@@ -101,6 +103,52 @@ class AsItIs(commands.Cog):
             # ╔═══════════╦════════════════════════════════════╦═══════════╗
             # ╠═══════════╣ 3. Attach navigation view and send ╠═══════════╣
             # ╚═══════════╩════════════════════════════════════╩═══════════╝
+            view         = NavigationButtons(self, chapter, verse_ref, ctx)
+            message      = await ctx.send(embed=embed, view=view)
+            view.message = message
+
+        except FileNotFoundError as e:
+            await ctx.send(f"🚫 {e}", delete_after=90)
+        except ValueError as e:
+            await ctx.send(f"🚫 Error in verse data:\n\n{e}", delete_after=90)
+        except Exception as e:
+            await ctx.send(f"🚫 Unexpected error retrieving verse:\n\n{e}", delete_after=90)
+
+    # ╔════════════════════╦══════════════╦════════════════════════╗
+    # ╠════════════════════╣ GITAS WISDOM ╠════════════════════════╣
+    # ╚════════════════════╩══════════════╩════════════════════════╝
+
+    @commands.command(name='wisdom', description="Inspiration from the Bhagavad Gītā")
+    @commands.guild_only()
+    async def _wisdom(self, ctx: commands.Context):
+        """Bhagavad Gītā’s wisdom, find inspiration reading a verse that was chosen just for you."""
+        start_time = datetime.now()
+
+        # 1. Select a completely random chapter and valid verse index
+        chapter   = random.choice(list(BG_CHAPTER_INFO.keys()))
+        total     = BG_CHAPTER_INFO[chapter]['total_verses']
+        verse_num = random.randint(1, total)
+
+        is_valid, verse_ref = self._validate_verse(chapter, str(verse_num))
+        if not is_valid:
+            return await ctx.send(f"🚫 Random selection validation failure: {verse_ref}", delete_after=9)
+
+        try:
+            # 2. Build the visual verse card component using cached chapter maps
+            embed = create_verse_embed(
+                self.data_path, self._chapter_cache,
+                chapter, verse_ref,
+                display_name=ctx.author.display_name,
+            )
+
+            # 3. Chart performance latency metric markers safely into embed footer
+            latency_ms = (datetime.now() - start_time).total_seconds() * 1000
+            embed.set_footer(
+                text=f"{embed.footer.text} ➜ 𝗋𝖾𝗍𝗋𝗂𝖾𝗏𝖾𝖽 𝗂𝗇 {latency_ms:.1f} 𝗆𝗌",
+                icon_url=embed.footer.icon_url,
+            )
+
+            # 4. Bind view structures to message context window trackers
             view         = NavigationButtons(self, chapter, verse_ref, ctx)
             message      = await ctx.send(embed=embed, view=view)
             view.message = message
