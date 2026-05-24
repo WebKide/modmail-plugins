@@ -84,8 +84,11 @@ class AsItIs(commands.Cog):
         # ╠════════════════════╣ 2. Build embed ╠══════════════════════╣
         # ╚════════════════════╩════════════════╩══════════════════════╝
         try:
-            embed = create_verse_embed(self.data_path, self._chapter_cache, chapter, verse_ref)
-
+            embed = create_verse_embed(
+                self.data_path, self._chapter_cache,
+                chapter, verse_ref,
+                display_name=ctx.author.display_name,
+            )
             # Append retrieval latency to footer
             latency_ms = (datetime.now() - start_time).total_seconds() * 1000
             embed.set_footer(
