@@ -740,7 +740,7 @@ class NavigationButtons(discord.ui.View):
             #    return
 
             if not raw_purport or raw_purport == "No purport for this śloka.":
-                raw_purport = random.choice(NO_PURPORT_MSGS)
+                raw_purport = random.choice(NO_PURPORT)
 
             pages    = _split_purport(raw_purport)
             purport_view = PurportView(
