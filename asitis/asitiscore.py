@@ -334,7 +334,7 @@ def build_footer_text(chapter: int, verse_ref: str, latency_ms: Optional[float] 
     """Compose the standard footer string for verse embeds."""
     v_label   = f"𝗏𝖾𝗋𝗌𝖾𝗌 {verse_ref}" if '-' in str(verse_ref) else f"𝗏𝖾𝗋𝗌𝖾 {verse_ref}"
     total_v   = BG_CHAPTER_INFO[chapter]['total_verses']
-    text      = f"𝖢𝗁𝖺𝗉𝗍𝖾𝗋 {chapter}, {v_label} 𝗈𝖿 {total_v}"
+    text      = f"𝖢𝗁𝖺𝗉𝗍𝖾𝗋 {chapter}, {v_label} (𝗈𝖿 {total_v})"
     if latency_ms is not None:
         text += f" ➜ 𝗇𝖺𝗏𝗂𝗀𝖺𝗍𝖾𝖽 𝗂𝗇 {latency_ms:.1f} 𝗆𝗌"
     return text
