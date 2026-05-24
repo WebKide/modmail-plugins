@@ -26,13 +26,15 @@ from discord.ext import commands
 
 from .asitiscore import (
     BG_CHAPTER_INFO,
-    NavigationButtons,
-    PurportView,
     create_verse_embed,
     validate_verse,
 )
+from .asitisnav import (
+    NavigationButtons,
+    PurportView,
+)
 
-__version__ = "v2.0 asitis.py — Modmail plugin entry point"
+__version__ = "v3.0 asitis.py — Modmail plugin entry point"
 
 class AsItIs(commands.Cog):
     """Bhagavad Gītā As It Is* — Original 1972 Macmillan edition
