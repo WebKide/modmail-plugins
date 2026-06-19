@@ -895,12 +895,12 @@ class Transform(commands.Cog):
     @commands.guild_only()
     async def sans(self, ctx, *, text: str):
         """Convert text to 𝖲𝖺𝗇𝗌-𝗌𝖾𝗋𝗂𝖿"""
-        import unicodedata
-        import time
-
         if not text:
             return await ctx.send("Please provide some text.", delete_after=23)
         start_time = time.time()
+
+        char = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+        tran = "𝖠𝖡𝖢𝖣𝖤𝖥𝖦𝖧𝖨𝖩𝖪𝖫𝖬𝖭𝖮𝖯𝖰𝖱𝖲𝖳𝖴𝖵𝖶𝖷𝖸𝖹𝖺𝖻𝖼𝖽𝖾𝖿𝗀𝗁𝗂𝗃𝗄𝗅𝗆𝗇𝗈𝗉𝗊𝗋𝗌𝗍𝗎𝗏𝗐𝗑𝗒𝗓"
 
         # Precomposed transliteration characters → ASCII base
         translit_map = str.maketrans({
@@ -924,11 +924,9 @@ class Transform(commands.Cog):
                 if unicodedata.category(c) != 'Mn'
             )
 
-        char = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
-        tran = "𝖠𝖡𝖢𝖣𝖤𝖥𝖦𝖧𝖨𝖩𝖪𝖫𝖬𝖭𝖮𝖯𝖰𝖱𝖲𝖳𝖴𝖵𝖶𝖷𝖸𝖹𝖺𝖻𝖼𝖽𝖾𝖿𝗀𝗁𝗂𝗃𝗄𝗅𝗆𝗇𝗈𝗉𝗊𝗋𝗌𝗍𝗎𝗏𝗐𝗑𝗒𝗓"
-
         # Apply transliteration, then strip remaining diacritics, then style
-        result = strip_diacritics(text.translate(translit_map)).translate(str.maketrans(char, tran))
+        cleaned = strip_diacritics(t.translate(translit_map))
+        result = cleaned.translate(str.maketrans(char, tran))
 
         em = discord.Embed(color=self.user_color)
         em.add_field(name='Input:', value=f'```\n{text}```', inline=False)
