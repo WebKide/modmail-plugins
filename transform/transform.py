@@ -926,8 +926,8 @@ class Transform(commands.Cog):
         def strip_diacritics(t: str) -> str:
             return "".join(
                 c
-                for c in unicodedata.normalize("NFD", t)
-                if unicodedata.category(c) != "Mn"
+                for c in ud2.normalize("NFD", t)
+                if ud2.category(c) != "Mn"
             )
 
         step1 = text.translate(translit_map)
