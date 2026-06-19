@@ -923,14 +923,19 @@ class Transform(commands.Cog):
             "ÿ": "y", "Ý": "Y", "Ÿ": "Y", "ø": "o", "Ø": "O", "å": "a", "Å": "A",
         })
 
-        def strip_diacritics(t: str) -> str:
-            return "".join(
-                c for c in ud2.normalize("NFKD", t)
-                if not ud2.combining(c)
-            )
+        def keep_diacritics(text: str, char: str, tran: str) -> str:
+            mapping = str.maketrans(char, tran)
+            result = []
 
-        cleaned = strip_diacritics(text)
-        result = cleaned.translate(str.maketrans(char, tran))
+            for c in ud2.normalize("NFKD", text):
+                if ud2.combining(c):
+                    result.append(c)
+                else:
+                    result.append(c.translate(mapping))
+
+            return "".join(result)
+
+        result = keep_diacritics(text, char, tran)
 
         em = discord.Embed(color=self.user_color)
         em.add_field(name="Input:", value=f"```\n{text}```", inline=False)
