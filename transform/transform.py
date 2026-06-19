@@ -18,12 +18,17 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-import discord, random, string, time, re
+import random
+import re
+import string
+import time
 import unicodedata as ud2
 
-from discord.ext import commands
 from collections import defaultdict
+
+import discord
 from discord import ui
+from discord.ext import commands
 
 
 class NameGeneratorView(discord.ui.View):
@@ -918,20 +923,23 @@ class Transform(commands.Cog):
             "ÿ": "y", "Ý": "Y", "Ÿ": "Y", "ø": "o", "Ø": "O", "å": "a", "Å": "A",
         })
 
-        def strip_diacritics(t):
-            return ''.join(
-                c for c in unicodedata.normalize('NFD', t)
-                if unicodedata.category(c) != 'Mn'
+        def strip_diacritics(t: str) -> str:
+            return "".join(
+                c
+                for c in unicodedata.normalize("NFD", t)
+                if unicodedata.category(c) != "Mn"
             )
 
-        # Apply transliteration, then strip remaining diacritics, then style
-        cleaned = strip_diacritics(t.translate(translit_map))
-        result = cleaned.translate(str.maketrans(char, tran))
+        step1 = text.translate(translit_map)
+        step2 = strip_diacritics(step1)
+        result = step2.translate(str.maketrans(char, tran))
 
         em = discord.Embed(color=self.user_color)
-        em.add_field(name='Input:', value=f'```\n{text}```', inline=False)
-        em.add_field(name='Result:', value=f'```\n{result}```', inline=False)
+        em.add_field(name="Input:", value=f"```\n{text}```", inline=False)
+        em.add_field(name="Result:", value=f"```\n{result}```", inline=False)
+
         em = await self._add_footer(em)
+
         await ctx.send(embed=em, allowed_mentions=discord.AllowedMentions.none())
 
     # +------------------------------------------------------------+
