@@ -925,14 +925,12 @@ class Transform(commands.Cog):
 
         def strip_diacritics(t: str) -> str:
             return "".join(
-                c
-                for c in ud2.normalize("NFD", t)
-                if ud2.category(c) != "Mn"
+                c for c in ud2.normalize("NFKD", t)
+                if not ud2.combining(c)
             )
 
-        step1 = text.translate(translit_map)
-        step2 = strip_diacritics(step1)
-        result = step2.translate(str.maketrans(char, tran))
+        cleaned = strip_diacritics(text)
+        result = cleaned.translate(str.maketrans(char, tran))
 
         em = discord.Embed(color=self.user_color)
         em.add_field(name="Input:", value=f"```\n{text}```", inline=False)
