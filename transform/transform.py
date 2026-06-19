@@ -895,14 +895,40 @@ class Transform(commands.Cog):
     @commands.guild_only()
     async def sans(self, ctx, *, text: str):
         """Convert text to 𝖲𝖺𝗇𝗌-𝗌𝖾𝗋𝗂𝖿"""
+        import unicodedata
+        import time
+
         if not text:
             return await ctx.send("Please provide some text.", delete_after=23)
         start_time = time.time()
 
+        # Precomposed transliteration characters → ASCII base
+        translit_map = str.maketrans({
+            "ḍ": "d", "Ḍ": "D", "ḥ": "h", "Ḥ": "H", "ḣ": "h", "Ḣ": "H", "ṁ": "m", 
+            "Ṁ": "M", "ḷ": "l", "Ḷ": "L", "ṇ": "n", "Ṇ": "N", "ṅ": "n", "Ṅ": "N", 
+            "ṛ": "r", "Ṛ": "R", "ś": "s", "Ś": "S", "ṣ": "s", "Ṣ": "S", "ṭ": "t", 
+            "Ṭ": "T", "ā": "a", "Ā": "A", "ū": "u", "Ū": "U", "ī": "i", "Ī": "I", 
+            "ñ": "n", "Ñ": "N", "ç": "c", "Ç": "C", "á": "a", "à": "a", "â": "a", 
+            "ã": "a", "ä": "a", "Á": "A", "À": "A", "Â": "A", "Ã": "A", "Ä": "A", 
+            "é": "e", "è": "e", "ê": "e", "ë": "e", "É": "E", "È": "E", "Ê": "E", 
+            "Ë": "E", "í": "i", "ì": "i", "î": "i", "ï": "i", "Í": "I", "Ì": "I", 
+            "Î": "I", "Ï": "I", "ó": "o", "ò": "o", "ô": "o", "õ": "o", "ö": "o", 
+            "Ó": "O", "Ò": "O", "Ô": "O", "Õ": "O", "Ö": "O", "ú": "u", "ù": "u", 
+            "û": "u", "ü": "u", "Ú": "U", "Ù": "U", "Û": "U", "Ü": "U", "ý": "y", 
+            "ÿ": "y", "Ý": "Y", "Ÿ": "Y", "ø": "o", "Ø": "O", "å": "a", "Å": "A",
+        })
+
+        def strip_diacritics(t):
+            return ''.join(
+                c for c in unicodedata.normalize('NFD', t)
+                if unicodedata.category(c) != 'Mn'
+            )
+
         char = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
         tran = "𝖠𝖡𝖢𝖣𝖤𝖥𝖦𝖧𝖨𝖩𝖪𝖫𝖬𝖭𝖮𝖯𝖰𝖱𝖲𝖳𝖴𝖵𝖶𝖷𝖸𝖹𝖺𝖻𝖼𝖽𝖾𝖿𝗀𝗁𝗂𝗃𝗄𝗅𝗆𝗇𝗈𝗉𝗊𝗋𝗌𝗍𝗎𝗏𝗐𝗑𝗒𝗓"
-        # result = text.upper().translate(str.maketrans(char, tran))
-        result = text.translate(str.maketrans(char, tran))
+
+        # Apply transliteration, then strip remaining diacritics, then style
+        result = strip_diacritics(text.translate(translit_map)).translate(str.maketrans(char, tran))
 
         em = discord.Embed(color=self.user_color)
         em.add_field(name='Input:', value=f'```\n{text}```', inline=False)
